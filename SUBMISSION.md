@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Public URL** | https://smartschedulerwebapp.vercel.app |
-| **GitHub** | https://github.com/BlakeBaird2/PrioritizedScheduleWebApp |
+| **GitHub** | https://github.com/BlakeBaird2/SmartSchedulerWebApp |
 | **Design library** | https://smartschedulerwebapp.vercel.app/design |
 
 ---
