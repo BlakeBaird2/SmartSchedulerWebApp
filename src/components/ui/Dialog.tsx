@@ -28,6 +28,7 @@ export function Dialog({
   size = "md",
   hideClose = false,
   elevated = false,
+  blurBackground = false,
   className = "",
   style,
   children,
@@ -46,6 +47,8 @@ export function Dialog({
   hideClose?: boolean;
   /** Draw above every other dialog (the prototype notice). */
   elevated?: boolean;
+  /** Softly blur the page behind, for moments that need full attention (the walkthrough). */
+  blurBackground?: boolean;
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
@@ -134,7 +137,7 @@ export function Dialog({
 
   return (
     <>
-      <div className={`fixed inset-0 bg-black/40 fade-in ${elevated ? "z-[79]" : "z-40"}`} onClick={dismissible ? onClose : undefined} aria-hidden />
+      <div className={`fixed inset-0 bg-black/40 fade-in ${elevated ? "z-[79]" : "z-40"} ${blurBackground ? "backdrop-soft-blur" : ""}`} onClick={dismissible ? onClose : undefined} aria-hidden />
       {onSubmit ? (
         <form ref={(n) => void (panel.current = n)} onSubmit={onSubmit} {...shared}>
           {content}

@@ -44,7 +44,7 @@ export function Tour({ steps, onClose, finishLabel = "Got it" }: { steps: TourSt
   }, [steps.length]);
 
   return (
-    <Dialog title={step.title} onClose={onClose} size="md">
+    <Dialog title={step.title} onClose={onClose} size="md" blurBackground>
       <p className="-mt-2 mb-4 section-title" aria-live="polite">
         Step {index + 1} of {steps.length}
       </p>

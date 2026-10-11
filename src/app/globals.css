@@ -795,3 +795,18 @@
     letter-spacing: 0.03em;
   }
 }
+
+/*
+ * A soft blur behind the walkthrough, so attention stays on it. The wireframe
+ * reset above turns backdrop filters off everywhere; this one class opts back in.
+ */
+.backdrop-soft-blur {
+  -webkit-backdrop-filter: blur(3px) !important;
+  backdrop-filter: blur(3px) !important;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-soft-blur {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
