@@ -1,9 +1,9 @@
-# Submission notes — Flows, Goal & Submission (Hannah)
+# Submission notes — SmartScheduler (Flows, Goal & Submission — Hannah)
 
 Notes for Hannah’s assigned slice of the **professor’s Low-Fidelity Prototype rubric**
-(fully functional / non-linear / goal-driven + instructions followed). The full group
-assignment is worth ~200 points; A/B/C are **only our team’s internal labels**, not
-official professor section titles.
+for **SmartScheduler** (fully functional / non-linear / goal-driven + instructions followed).
+The full group assignment is worth ~200 points; A/B/C are **only our team’s internal
+labels**, not official professor section titles.
 
 Claims below are limited to code, Git history, and existing project docs. Items marked
 `[TODO]` need a human fill-in. Do not invent research, commits, or deployment URLs.
@@ -85,7 +85,7 @@ Three working paths to the same goal:
 3. **Upcoming or Classes → task → Done**  
    Upcoming list **or** a Classes column → open a task → review → Mark done.
 
-Shared completion is in browser workspace storage (`prio:ws`). Full UI walkthroughs (including public URL incognito) remain **manual** for the team unless recorded separately.
+Shared completion is in browser workspace storage (localStorage key `prio:ws` — legacy key prefix; product name is SmartScheduler). Full UI walkthroughs (including public URL incognito) remain **manual** for the team unless recorded separately.
 
 ---
 

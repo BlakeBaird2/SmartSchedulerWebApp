@@ -158,7 +158,8 @@ wireframe rules are at the end of `src/app/globals.css`; the shared pieces
 (`PrototypeNotice`, `PrototypeBadge`, `CapabilityHero`, `WirePlaceholder`) are in
 `src/components/Prototype.tsx`.
 
-What the browser stores decides which state you see (all in localStorage):
+What the browser stores decides which state you see (all in localStorage).
+Keys keep a legacy `prio:` prefix for compatibility; the product name is **SmartScheduler**.
 
 | Key | Meaning |
 | --- | --- |
@@ -234,8 +235,8 @@ Step-by-step checklist (including where to paste the URL): [`SUBMISSION_NOTES.md
 **Docker:**
 
 ```bash
-docker build -t prio .
-docker run -p 3000:3000 prio
+docker build -t smartscheduler .
+docker run -p 3000:3000 smartscheduler
 ```
 
 ## Project layout

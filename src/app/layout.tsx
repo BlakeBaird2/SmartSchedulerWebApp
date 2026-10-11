@@ -3,7 +3,7 @@ import "./globals.css";
 import { DevStateSwitcher, EntryNotices } from "@/components/Prototype";
 
 export const metadata: Metadata = {
-  title: "SmartScheduler — Prioritized Schedule",
+  title: "SmartScheduler — One plan for school, work and life",
   description: "Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.",
   icons: { icon: "/icon.svg" },
 };

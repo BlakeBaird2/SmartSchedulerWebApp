@@ -55,7 +55,7 @@ function calendar(name: string, events: string[]): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Prioritized Schedule//Demo//EN",
+    "PRODID:-//SmartScheduler//Demo//EN",
     `X-WR-CALNAME:${name}`,
     ...events,
     "END:VCALENDAR",

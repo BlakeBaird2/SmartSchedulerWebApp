@@ -1,6 +1,6 @@
-# Screen inventory — Flows, Goal & Submission
+# Screen inventory — SmartScheduler (Flows, Goal & Submission)
 
-Meaningful screens / distinct user-facing states that support the core goal (find productive work in free time and mark it done). Count: **28**.
+Meaningful screens / distinct user-facing states in **SmartScheduler** that support the core goal (find productive work in free time and mark it done). Count: **28**.
 
 For each **new** destination added for this rubric, two entry points and a return path are listed.
 
