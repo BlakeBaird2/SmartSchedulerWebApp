@@ -9,8 +9,8 @@ For each **new** destination added for this rubric, two entry points and a retur
 | 1 | Home `/` | Direct URL; wordmark from onboarding | N/A (marketing) |
 | 2 | About `/about` | Direct URL; Settings → About → How it works | Browser Back / links to `/app` |
 | 3 | Design library `/design` | Direct URL; Settings → About | Browser Back |
-| 4 | Prototype notice dialog | First visit (auto); **Prototype** badge | Got it / Esc / backdrop |
-| 5 | **Goal notice dialog** *(new)* | Auto after prototype dismiss; **Goal** badge; Help; Settings → About | Got it / Esc / backdrop |
+| 4 | Welcome dialog: prototype notice + goal | First visit, any page (auto); **Prototype** / **Goal** tags; Help; Settings → About | Start / Got it / Esc / backdrop |
+| 5 | Walkthrough (4 steps) | **Show me around** in the welcome dialog; Settings → About → Show the walkthrough | Skip / Show my plan / Esc |
 | 6 | Onboarding step 1 — calendars | `/app` when setup incomplete | Skip / Continue / sample data |
 | 7 | Onboarding step 2 — class times | Continue from step 1 | Skip / Back / Continue |
 | 8 | Onboarding step 3 — hours | Continue from step 1/2 | Skip / Back / Build my plan |
@@ -41,7 +41,7 @@ Walkthrough (`AppTour`), change alerts, sync error banner, and sample-data banne
 
 | New screen | Entry 1 | Entry 2 | Return |
 | --- | --- | --- | --- |
-| Goal notice | After prototype Got it | Goal badge / Help / Settings → About | Got it |
+| Welcome (goal) | First visit, any page | Prototype or Goal tag / Help / Settings → About | Start / Got it |
 | Free-gap detail | Plan Open gap | Calendar free band (also Focus → Free gap details) | Close / Back to Plan |
 | Why this task? | Task detail button | Gap detail / Focus card | Back to task / Close |
 | Completed success | Plan Focus **Done**; free-gap panel **Done** | Task detail **Mark as done** (also Calendar→task→Done) | Back to Plan / Upcoming / Open this task / Close |

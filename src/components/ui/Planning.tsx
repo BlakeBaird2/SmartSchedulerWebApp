@@ -143,7 +143,7 @@ export function FreeGapBlock({
 /** The app's name, drawn the same way in every header. */
 export function Wordmark({ size = "md" }: { size?: "md" | "lg" }) {
   return (
-    <span className={`wordmark select-none ${size === "lg" ? "text-2xl" : "text-xl"}`}>
+    <span className={`wordmark select-none ${size === "lg" ? "text-2xl" : "text-lg sm:text-xl"}`}>
       SmartScheduler<span className="text-accent">.</span>
     </span>
   );

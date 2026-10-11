@@ -126,13 +126,17 @@ supports them.
 
 ### 10. Learnability (first visit)
 
-- **Walkthrough.** The first time someone opens the app, after the prototype notice,
-  a four-step walkthrough in a pop-up covers what to do now, the rest of today, what's
+- **One welcome pop-up, not a chain.** The prototype notice and the goal share one
+  pop-up, so a first visit opens a single dialog instead of three in a row. It
+  states plainly that this is an early prototype, then gives the goal in a boxed
+  section. Inside the app its buttons are **Show me around** (optional walkthrough)
+  and **Start**.
+- **Walkthrough, only on request.** A four-step walkthrough in a pop-up covers what to do now, the rest of today, what's
   due, and where everything else is. Each step has a small wireframe drawing and a
   sentence or two. It's built on the shared `Dialog`, so it closes the same way as every
   other pop-up and never follows the page around. It always shows "Step 2 of 4" with
   dots, has Back, Next and arrow keys, keeps "Skip" visible, and the last button says
-  what happens next ("Show my plan"). It never runs again by itself. Settings →
+  what happens next ("Show my plan"). It never runs by itself. Settings →
   **Show the walkthrough** replays it, and so does the development shortcut menu.
 - **Home page drawings.** The crossed-out image boxes are replaced by wireframe drawings
   of the real app, built from the same library parts. The biggest picture on the entry
@@ -144,6 +148,26 @@ supports them.
 | Problem | Fix |
 | --- | --- |
 | The plan's day picker ("Today, Tomorrow, Wed 14 …") scrolled sideways, so later days were hidden. | All seven days share one row: a short weekday on top and the date below, like a phone calendar's week strip. Screen readers hear the full date. |
+
+### 12. The header fits every screen
+
+| Width | Layout |
+| --- | --- |
+| Phones | Name, Prototype tag, Add task, Alerts, Settings. Help is reached from Settings and from the welcome pop-up. The main views sit on a second full-width row. |
+| Tablets and small laptops | Refresh and Help join the first row as icons. The views stay on the second row. |
+| Laptops (lg+) | The views move up beside the name, all on one row. |
+| Wide screens (xl+) | Tools get their text labels, and the Goal tag appears. |
+
+Icon-only tools always have their name as a tooltip and for screen readers. The
+"Synced just now" status moved into the refresh button's name, so it no longer
+wraps onto three lines.
+
+### 13. Calendar free time is background
+
+Free time on the week and day calendar was drawn as solid grey blocks with bold
+labels, so an empty Saturday looked like the busiest thing on the screen. Free
+time is now a faint dashed outline with a quiet label that darkens on hover. Events
+and planned work stay what the eye reads first, and the gaps can still be clicked.
 
 ## Before and after
 

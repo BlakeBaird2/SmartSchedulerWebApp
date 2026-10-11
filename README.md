@@ -163,9 +163,8 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 
 | Key | Meaning |
 | --- | --- |
-| `prio:prototype-notice` | Set when the "early prototype" notice is dismissed. Missing = notice shows on the next page load. |
-| `prio:goal-notice` | Set when the goal-setting pop-up is dismissed. Missing = goal shows right after the prototype notice. |
-| `prio:tour` | Set when the Plan walkthrough is finished or skipped. |
+| `prio:prototype-notice`, `prio:goal-notice` | Set when the welcome pop-up (prototype notice + goal) is closed. Missing = it shows on the next page load. |
+| `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Show me around, Settings, or `/app#tour`). |
 | `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
 
@@ -177,7 +176,7 @@ in development (`NODE_ENV=development`) and is not in production builds.
 
 | State | How to reach it | What to check |
 | --- | --- | --- |
-| First visit, prototype then goal | New private window → `/` (or `/about`, `/app`, `/app#demo`) | Prototype notice first; after **Got it**, the goal pop-up appears with the 45-minute example. Neither returns on refresh once dismissed. **Prototype** and **Goal** tags reopen each. |
+| First visit: welcome pop-up | New private window → `/` (or `/about`, `/app`, `/app#demo`) | One pop-up says it is an early prototype and gives the 45-minute goal. In the app it offers **Show me around** (the walkthrough) and **Start**. It doesn't return on refresh; the **Prototype** tag, **Goal** tag (wide screens) and Help reopen it. |
 | Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
 | About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
 | New user `/app` | Private window → `/app` | Onboarding: capability first; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |

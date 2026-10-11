@@ -15,82 +15,78 @@ const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
 ];
 
 /**
- * Laid out the way most web apps are, so nothing has to be learned:
- * name on the left (goes home), the main views next to it, and tools on the right.
+ * Laid out the way most web apps are, so nothing has to be learned: name on the
+ * left (goes to your plan), the main views next to it, tools on the right.
+ *
+ * It has to fit every width without anything falling off the edge:
+ * - wide screens (lg+): one row; the views sit beside the name
+ * - tablets and phones: the views move to a second, full-width row
+ * - tool labels show only where there is room (xl+); below that each tool is an
+ *   icon with its name on hover and for screen readers
+ * - phones: Help moves into Settings, and the Goal tag into the Prototype tag's
+ *   pop-up, so the first row is just the name, the Prototype tag and three tools
  */
 export function Header() {
   const { view, setView, snapshot, now, syncing, sync, openAddTask } = useApp();
   const status = syncing ? "Syncing…" : snapshot.at ? `Synced ${timeAgo(snapshot.at, now)}` : "Not synced yet";
+  const current = TABS.some((t) => t.id === view) ? view : "plan";
 
   return (
     <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2 sm:gap-3">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2">
         <button type="button" onClick={() => setView("plan")} className="shrink-0" aria-label="SmartScheduler, go to your plan" title="Go to your plan">
           <Wordmark />
         </button>
         <PrototypeBadge />
-        <GoalBadge />
+        <GoalBadge className="!hidden xl:!inline-flex" />
 
-        <nav className="ml-2 hidden md:block" aria-label="Main">
-          <SegmentedControl
-            label="Main views"
-            options={TABS}
-            value={TABS.some((t) => t.id === view) ? view : "plan"}
-            onChange={setView}
-          />
+        <nav className="ml-3 hidden lg:block" aria-label="Main">
+          <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} />
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
           <div className="hidden sm:flex items-center gap-1.5" role="group" aria-label="Calendar updates">
-            <span
-              className="hidden lg:inline text-xs text-muted tabular-nums"
-              aria-live="polite"
-              title={snapshot.at ? new Date(snapshot.at).toLocaleString() : undefined}
-            >
-              {status}
-            </span>
             <Button
               iconOnly
               icon={RefreshCw}
-              label="Refresh calendars now"
+              label={`Refresh calendars now (${status.toLowerCase()})`}
               onClick={() => void sync()}
               disabled={syncing}
               className={syncing ? "is-syncing" : ""}
             />
-            <span className="mx-1.5 h-6 w-px bg-line-strong" aria-hidden />
+            <span className="sr-only" aria-live="polite">
+              {status}
+            </span>
+            <span className="mx-1 h-6 w-px bg-line-strong" aria-hidden />
           </div>
           <Button icon={Plus} onClick={openAddTask} title="Add a task that isn't on any calendar" aria-label="Add task">
-            <span className="hidden sm:inline">Add task</span>
+            <span className="hidden xl:inline">Add task</span>
           </Button>
           <ChangesPopover />
           <Button
             icon={CircleHelp}
             onClick={() => setView("help")}
             aria-label="Help and goal"
+            title="Help and goal"
             aria-pressed={view === "help"}
-            className={view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}
+            className={`!hidden sm:!inline-flex ${view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
           >
-            <span className="hidden lg:inline">Help</span>
+            <span className="hidden xl:inline">Help</span>
           </Button>
           <Button
             icon={Settings}
             onClick={() => setView("settings")}
             aria-label="Settings"
+            title="Settings"
             aria-pressed={view === "settings"}
             className={view === "settings" ? "!bg-surface-2 underline underline-offset-4" : ""}
           >
-            <span className="hidden lg:inline">Settings</span>
+            <span className="hidden xl:inline">Settings</span>
           </Button>
         </div>
       </div>
-      <nav className="md:hidden px-4 pb-2" aria-label="Main">
-        <SegmentedControl
-          label="Main views"
-          options={TABS}
-          value={TABS.some((t) => t.id === view) ? view : "plan"}
-          onChange={setView}
-          stretch
-        />
+      <nav className="lg:hidden px-4 sm:px-6 pb-2 max-w-6xl mx-auto" aria-label="Main">
+        <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} stretch />
       </nav>
     </header>
   );

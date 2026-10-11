@@ -786,3 +786,12 @@
     font-weight: 700;
   }
 }
+
+/* Phones: the Prototype tag stays readable but takes less of the header row. */
+@media (max-width: 639px) {
+  .proto-badge {
+    font-size: 0.75rem;
+    padding: 0 0.35rem;
+    letter-spacing: 0.03em;
+  }
+}

@@ -93,8 +93,9 @@ function Nav() {
           </a>
         </nav>
         {/* Quiet on purpose: the hero holds this screen's one primary button. */}
-        <ButtonLink href="/app" className="ml-auto">
-          Open SmartScheduler
+        <ButtonLink href="/app" className="ml-auto shrink-0">
+          <span className="sm:hidden">Open app</span>
+          <span className="hidden sm:inline">Open SmartScheduler</span>
         </ButtonLink>
       </div>
     </header>

@@ -10,15 +10,16 @@
  * - DevStateSwitcher: development-only shortcuts to each entry state.
  */
 import { useEffect, useState } from "react";
-import { FlaskConical, Target } from "lucide-react";
+import { ArrowRight, Compass, FlaskConical, Target } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { startTour } from "./AppTour";
 import { KEYS, readStored, useHydrated, useStored, writeStored } from "./store";
 import { Button, Dialog } from "./ui";
 
 export const CAPABILITY = "See exactly what to work on in every free gap of your day.";
 export const PROTOTYPE_MESSAGE = "This is an early prototype. It looks simple on purpose and some things are placeholders.";
 export const GOAL_TITLE = "Your goal in this prototype";
-export const GOAL_EXAMPLE =
-  "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
+export const GOAL_EXAMPLE = "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
 export const GOAL_BODY =
   "SmartScheduler finds free gaps on your day and fills them with the work that is due soonest. Use Plan, Calendar, Upcoming, or Classes — any path that gets you to a task and a Done mark counts.";
 
@@ -36,102 +37,81 @@ export function openGoalNotice() {
 }
 
 /**
- * Prototype notice first; after Got it, the goal pop-up. Reopening either from a
- * badge only shows that dialog. Returning users with both keys set see nothing.
+ * One welcome pop-up on the first visit, whichever page someone lands on. It does
+ * the two jobs the prototype has to do up front, in one place rather than a chain
+ * of pop-ups: say plainly that this is an early prototype, and give the goal to try.
+ *
+ * Inside the app it also offers an optional walkthrough ("Show me around"); the
+ * main button just starts. The Prototype and Goal tags, Help and Settings all
+ * reopen it. Returning visitors see nothing.
  */
 export function EntryNotices() {
   const hydrated = useHydrated();
+  const pathname = usePathname();
   const protoDismissed = useStored(KEYS.prototypeNotice);
   const goalDismissed = useStored(KEYS.goalNotice);
-  const [forceProto, setForceProto] = useState(false);
-  const [forceGoal, setForceGoal] = useState(false);
+  const [reopened, setReopened] = useState(false);
 
   useEffect(() => {
-    const onProto = () => {
-      setForceGoal(false);
-      setForceProto(true);
-    };
-    const onGoal = () => {
-      setForceProto(false);
-      setForceGoal(true);
-    };
-    window.addEventListener(OPEN_PROTO, onProto);
-    window.addEventListener(OPEN_GOAL, onGoal);
+    const onOpen = () => setReopened(true);
+    window.addEventListener(OPEN_PROTO, onOpen);
+    window.addEventListener(OPEN_GOAL, onOpen);
     return () => {
-      window.removeEventListener(OPEN_PROTO, onProto);
-      window.removeEventListener(OPEN_GOAL, onGoal);
+      window.removeEventListener(OPEN_PROTO, onOpen);
+      window.removeEventListener(OPEN_GOAL, onOpen);
     };
   }, []);
 
   if (!hydrated) return null;
+  if (!reopened && protoDismissed !== null && goalDismissed !== null) return null;
 
-  const showProto = forceProto || protoDismissed === null;
-  const showGoal = !showProto && (forceGoal || goalDismissed === null);
+  const inApp = pathname?.startsWith("/app") ?? false;
+  const close = () => {
+    const at = new Date().toISOString();
+    writeStored(KEYS.prototypeNotice, at);
+    writeStored(KEYS.goalNotice, at);
+    setReopened(false);
+  };
 
-  if (showProto) {
-    return (
-      <Dialog elevated label="About this prototype" onClose={() => {
-        writeStored(KEYS.prototypeNotice, new Date().toISOString());
-        setForceProto(false);
-      }} size="md" className="!p-6">
-        <span className="proto-badge pointer-events-none" aria-hidden>
-          <FlaskConical size={14} />
-          Prototype
+  return (
+    <Dialog elevated label="Welcome to SmartScheduler" onClose={close} size="md" className="!p-6">
+      <span className="proto-badge pointer-events-none" aria-hidden>
+        <FlaskConical size={14} />
+        Prototype
+      </span>
+      <h2 className="mt-3 text-2xl font-bold leading-snug">This is an early prototype.</h2>
+      <p className="mt-1 text-base text-muted leading-relaxed">
+        It looks simple on purpose and some things are placeholders, but it really works: it plans your free time from your calendars or from sample data.
+      </p>
+
+      <div className="mt-5 border-2 border-fg bg-surface-2 p-4">
+        <span className="section-title inline-flex items-center gap-1.5">
+          <Target size={14} aria-hidden />
+          Your goal
         </span>
-        <h2 className="mt-4 text-2xl font-bold leading-snug">{PROTOTYPE_MESSAGE}</h2>
-        <p className="mt-3 text-base text-muted leading-relaxed">
-          SmartScheduler still works: add your calendars or try the sample data, and it plans your free time. You can read this again any time from the{" "}
-          <b className="text-fg">Prototype</b> tag at the top.
-        </p>
-        <Button
-          variant="primary"
-          block
-          className="mt-5"
-          data-autofocus
-          onClick={() => {
-            writeStored(KEYS.prototypeNotice, new Date().toISOString());
-            setForceProto(false);
-          }}
-        >
-          Got it
-        </Button>
-      </Dialog>
-    );
-  }
+        <p className="mt-1.5 text-lg font-semibold leading-snug">{GOAL_EXAMPLE}</p>
+        <p className="mt-1.5 text-sm text-muted leading-relaxed">Any route works: Plan, Calendar, Upcoming or Classes.</p>
+      </div>
 
-  if (showGoal) {
-    return (
-      <Dialog elevated label={GOAL_TITLE} onClose={() => {
-        writeStored(KEYS.goalNotice, new Date().toISOString());
-        setForceGoal(false);
-      }} size="md" className="!p-6">
-        <span className="proto-badge pointer-events-none" aria-hidden>
-          <Target size={14} />
-          Goal
-        </span>
-        <h2 className="mt-4 text-2xl font-bold leading-snug">{GOAL_TITLE}</h2>
-        <p className="mt-3 text-base text-fg leading-relaxed">{GOAL_EXAMPLE}</p>
-        <p className="mt-3 text-base text-muted leading-relaxed">{GOAL_BODY}</p>
-        <p className="mt-3 text-sm text-muted leading-relaxed">
-          Reopen these instructions any time from the <b className="text-fg">Goal</b> tag, Help, or Settings.
-        </p>
-        <Button
-          variant="primary"
-          block
-          className="mt-5"
-          data-autofocus
-          onClick={() => {
-            writeStored(KEYS.goalNotice, new Date().toISOString());
-            setForceGoal(false);
-          }}
-        >
-          Got it
+      <div className="mt-5 flex items-center gap-2 flex-wrap">
+        {inApp ? (
+          <Button
+            icon={Compass}
+            onClick={() => {
+              close();
+              startTour();
+            }}
+          >
+            Show me around
+          </Button>
+        ) : null}
+        <Button variant="primary" className="ml-auto" trailingIcon={ArrowRight} onClick={close} data-autofocus>
+          {inApp ? "Start" : "Got it"}
         </Button>
-      </Dialog>
-    );
-  }
-
-  return null;
+      </div>
+      <p className="mt-3 text-xs text-muted">Reopen this any time from the Prototype tag or Help.</p>
+    </Dialog>
+  );
 }
 
 /** @deprecated Prefer EntryNotices — kept for older imports. */
@@ -150,7 +130,13 @@ export function PrototypeBadge({ className = "" }: { className?: string }) {
 
 export function GoalBadge({ className = "" }: { className?: string }) {
   return (
-    <button type="button" className={`proto-badge ${className}`} onClick={openGoalNotice} title="Your goal in this prototype" aria-haspopup="dialog">
+    <button
+      type="button"
+      className={`proto-badge hidden sm:inline-flex ${className}`}
+      onClick={openGoalNotice}
+      title="Your goal in this prototype"
+      aria-haspopup="dialog"
+    >
       <Target size={14} className="hidden sm:block" aria-hidden />
       Goal
     </button>
@@ -252,25 +238,16 @@ export function DevStateSwitcher() {
       },
     },
     {
-      label: "Show the walkthrough again",
+      label: "Show the walkthrough",
       run: () => {
-        writeStored(KEYS.tour, null);
         markNoticesRead();
-        go("/app");
+        go("/app#tour");
       },
     },
     {
-      label: "Show prototype + goal on next load",
+      label: "Show the welcome pop-up on next load",
       run: () => {
         writeStored(KEYS.prototypeNotice, null);
-        writeStored(KEYS.goalNotice, null);
-        window.location.reload();
-      },
-    },
-    {
-      label: "Show goal notice only",
-      run: () => {
-        markNoticesRead();
         writeStored(KEYS.goalNotice, null);
         window.location.reload();
       },

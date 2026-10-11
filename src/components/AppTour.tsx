@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CalendarRange, Check, CircleAlert, LayoutGrid, ListChecks, Plus, Settings, Target } from "lucide-react";
 import { useApp } from "./context";
-import { KEYS, useStored, writeStored } from "./store";
+import { KEYS, writeStored } from "./store";
 import { DaySketch, Sketch } from "./LandingSketches";
 import { ClassChip, SectionLabel, Tour, type TourStep } from "./ui";
 
@@ -11,8 +11,12 @@ const START_EVENT = "prio:start-tour";
 
 /** Shows the walkthrough again, from Settings or the development shortcuts. */
 export function startTour() {
+  pending = true;
   window.dispatchEvent(new Event(START_EVENT));
 }
+
+/** Asked for before the app was on screen (from the welcome pop-up during setup); runs once it is. */
+let pending = false;
 
 /** Step 1: the "work on now" card, drawn the way the Plan screen draws it. */
 function NowPicture() {
@@ -131,25 +135,28 @@ const STEPS: TourStep[] = [
 ];
 
 /**
- * Runs the walkthrough once, the first time someone reaches the app, after they
- * have read the prototype notice and the goal pop-up, and while nothing else is
- * open. After that it only runs when asked for.
+ * The walkthrough runs only when asked for: "Show me around" in the welcome pop-up,
+ * Settings, or /app#tour. Nobody gets it on top of the welcome pop-up uninvited.
  */
 export function AppTour({ blocked }: { blocked: boolean }) {
   const { setView } = useApp();
-  const seen = useStored(KEYS.tour);
-  const noticeRead = useStored(KEYS.prototypeNotice);
-  const goalRead = useStored(KEYS.goalNotice);
   const [asked, setAsked] = useState(false);
 
   useEffect(() => {
-    const onStart = () => setAsked(true);
+    const onStart = () => {
+      pending = false;
+      setAsked(true);
+    };
+    if (window.location.hash === "#tour") {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      pending = true;
+    }
+    if (pending) onStart();
     window.addEventListener(START_EVENT, onStart);
     return () => window.removeEventListener(START_EVENT, onStart);
   }, []);
 
-  const firstTime = seen === null && noticeRead !== null && goalRead !== null;
-  if (blocked || !(asked || firstTime)) return null;
+  if (blocked || !asked) return null;
 
   return (
     <Tour

@@ -110,7 +110,7 @@ export function CalendarView() {
               <span className="w-3 h-3 plan-block" style={courseStyle("#64748b")} /> Planned work (dashed: it can move)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 border border-dashed border-line-strong bg-surface-2" /> Free gap (click to open)
+              <span className="w-3 h-3 border border-dashed border-line" /> Free time (click to open)
             </span>
           </>
         ) : (
@@ -382,11 +382,12 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={g.id}
                       type="button"
                       onClick={() => select({ kind: "gap", startMs: g.startMs })}
-                      className="absolute inset-x-0.5 z-0 border border-dashed border-line-strong bg-surface-2 text-left px-1 py-0.5 overflow-hidden"
+                      className="absolute inset-x-0.5 z-0 border border-dashed border-line text-left px-1 py-0.5 overflow-hidden transition-colors hover:bg-surface-2 hover:border-line-strong"
                       style={{ top: y + 1, height: gh }}
                       title={`Free · ${duration(g.minutes)} — open gap`}
                     >
-                      {gh > 22 ? <span className="text-[10px] font-bold">Free · {duration(g.minutes)}</span> : null}
+                      {/* Background, not content: a quiet outline and label, so events and planned work stay what the eye reads first. */}
+                      {gh > 22 ? <span className="text-[10px] text-muted">Free · {duration(g.minutes)}</span> : null}
                     </button>
                   );
                 })}
