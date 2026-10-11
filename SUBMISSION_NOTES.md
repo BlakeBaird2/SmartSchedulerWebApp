@@ -19,7 +19,7 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 | 5 | 20–30 meaningful screens; new screens ≥2 entry points + way back | **28** in `SCREEN_INVENTORY.md` |
 | 6 | Public deployment; incognito laptop + phone | **`[TODO: deploy + paste URL]`** |
 | 7 | Genuine GitHub commits from all three + README ownership | **Commits exist** — see Team responsibilities; Grace name/ownership TODOs |
-| 8 | Research-supported core feature + five-second evidence | **`[TODO from Grace]`** — First Impressions research owner |
+| 8 | Research-supported core feature + five-second evidence | **Recorded** — see below + `FIVE_SECOND_TEST.md` (2 participants; preliminary) |
 | 9 | Tangential features minimized / honest about limits | Documented below |
 | 10 | Commit remaining local fixes when Hannah approves | Uncommitted doc/code may still be local |
 
@@ -55,12 +55,17 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 - `DESIGN_REVIEW.md` — root user outcome: spend free time doing work, not figuring out what work to do.
 - Live design catalog at `/design`.
 
-**First Impressions research / five-second tests (Grace owns):**
+**First Impressions research / five-second tests (Grace owns):** see [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md).
 
-- `FIVE_SECOND_TEST.md` is still an empty template.
-- `[TODO — Grace: paste real discovery findings, interview themes, and five-second participant responses. Hannah: do not invent; copy from Grace when ready.]`
+| Finding | Detail |
+| --- | --- |
+| Purpose understood | Both participants (n=2) understood SmartScheduler’s main purpose after a five-second look at the entry screen. |
+| Next step / learning | One was unsure where to go next; the other expected a short learning curve before it felt easy. |
+| Implication | Entry screen communicates the core capability; the primary next step could be clearer for first-time users. |
+| Design change from this test | **None implemented.** A more prominent primary action is noted as a *potential* improvement only. |
+| Limits | Only two participants so far — preliminary, not representative of all users. |
 
-Until Grace fills that, discovery claims for grading are **incomplete**.
+Broader discovery interviews beyond this five-second test are not claimed here.
 
 ---
 
@@ -98,7 +103,7 @@ Shared completion is in browser workspace storage (localStorage key `prio:ws` �
 | Calendar fetch failures | Banner + last good snapshot; honest toasts | Depends on user links / network |
 | Multi-device setup | Clipboard / prompt of `#setup=` URL | Client-only |
 | Illustrations | Wire sketches / placeholders | Low-fidelity (First Impressions) |
-| Five-second / discovery write-ups | Empty until Grace supplies | Must not invent participant data |
+| Extra discovery interviews | Not claimed beyond the two five-second participants | Honest scope; see `FIVE_SECOND_TEST.md` |
 | Deep links per app view | Client view state on `/app` | Existing architecture |
 
 ---

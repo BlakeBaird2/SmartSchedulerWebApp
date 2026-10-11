@@ -197,7 +197,7 @@ reload: `Object.keys(localStorage).filter(k => k.startsWith("prio:")).forEach(k 
 Settings → Start over → **Remove everything** clears calendars and settings but keeps the theme and
 the prototype-notice dismissal.
 
-See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for the five-second test template.
+See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for five-second test results (preliminary; two participants).
 
 `npm run dev` accepts links whose site resolves to a private network address
 (common on campus Wi-Fi and VPNs). A production build refuses them unless started
@@ -218,7 +218,7 @@ before hand-in. Do not invent Git commits or ownership.
 | **Hannah Galindo** | `Hannah Galindo` / `hannahgalindo013@gmail.com` | **Flows, Goal & Submission** — fully functional, non-linear, goal-driven flows; instructions followed. App areas: onboarding, Settings, dialogs, new screens (goal notice, Help, free-gap / why / completion), deployment, and submission documentation (`SUBMISSION_NOTES.md`, `SCREEN_INVENTORY.md`). | Genuine commit under Hannah Galindo: `0f79fe0` *Complete goal flows and submission requirements*. An earlier agent-host baseline commit also appears under her name — graders should weigh the product commit. |
 
 See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
-First Impressions research and five-second results: coordinate with **Grace** — leave as TODO until she supplies real evidence (`FIVE_SECOND_TEST.md`).
+First Impressions five-second results are in [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) (preliminary; no design change claimed from that test alone).
 
 ## Deploy it (free)
 
