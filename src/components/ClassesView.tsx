@@ -15,7 +15,7 @@ import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
  * the class at the top, then its work in the order it's due.
  */
 export function ClassesView() {
-  const { model, update, setView } = useApp();
+  const { model, update, setSettingsPanel } = useApp();
   const [editing, setEditing] = useState<Course | null>(null);
   const visible = model.visibleCourses;
   const hidden = model.courses.filter((c) => c.hidden);
@@ -26,7 +26,7 @@ export function ClassesView() {
         icon={GraduationCap}
         title="No classes yet"
         action={
-          <Button variant="primary" onClick={() => setView("settings")}>
+          <Button variant="primary" onClick={() => setSettingsPanel("calendars")}>
             Add a school calendar
           </Button>
         }

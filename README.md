@@ -205,26 +205,29 @@ Never set it on a public deployment.
 
 ## Team contributions
 
-Ownership below is taken from Git history on this repository and the course split
-of the 200-point rubric. Fill in any `[TODO]` lines before submission if names
-need correcting.
+Team responsibilities below map to the **professor’s Low-Fidelity Prototype rubric**
+(the full ~200-point group assignment). Labels like “A / B / C” are only our
+internal shorthand — not official professor section titles. Fill `[TODO]` lines
+before hand-in. Do not invent Git commits or ownership.
 
-| Team member | Git identity (from history) | Responsibilities |
-| --- | --- | --- |
-| **Blake Baird** | `Blake Baird` / `blakebaird2@gmail.com` | Core product: planner, calendar feeds, Plan / Calendar / Upcoming / Classes, sync, design library, walkthrough, SmartScheduler branding, Docker/Vercel-ready structure. |
-| **Grace Farnsworth** | `gracefarns` / `gmfarnz@byu.edu` | Low-fidelity visual design and entry hierarchy contributions (prototype notice / package and related entry work on Grace’s branch). `[TODO: confirm preferred display name]` |
-| **Hannah Galindo** | `Hannah Galindo` / `hannahgalindo013@gmail.com` | Flows, Goal & Submission (60 pts): goal pop-up after prototype notice, skippable onboarding, three goal routes, free-gap / why-this-task / completion panels, Help + Settings sub-pages, `SUBMISSION_NOTES.md`, `SCREEN_INVENTORY.md`, contribution docs, build verification. |
+| Team member | Git identity (from history) | Responsibility (rubric + app areas) | Git evidence |
+| --- | --- | --- | --- |
+| **Grace** | `gracefarns` / `gmfarnz@byu.edu` | **First Impressions** — low-fidelity look and early-stage (prototype) notice; entry screens signify the overarching capability. App areas: home `/`, `/about`, first screen of `/app`, overall look. Also owns First Impressions research / five-second testing for the team. `[TODO: preferred display name]` | Genuine commits under `gracefarns`: `packages`, `modified package.json`, `fixed package.json`. Low-fidelity entry / prototype work also landed via Graces-branch merges with some commits authored as Claude — `[TODO: Grace confirm which visual/entry items she personally owns vs agent-assisted]` |
+| **Blake Baird** | `Blake Baird` / `blakebaird2@gmail.com` | **Design System & Usability** — design library and component reuse; conventions, attention, grouping, and usability principles. App areas: shared components (`src/components/ui`), Plan, Calendar, Upcoming, Classes. See also [`DESIGN_REVIEW.md`](DESIGN_REVIEW.md) and `/design`. | Multiple genuine commits under Blake Baird (e.g. planner/classes/feeds, class times, Wi‑Fi/dev server, PR merges). Later design-library / walkthrough commits on this branch are authored as Claude — still part of Blake’s owned product areas. |
+| **Hannah Galindo** | `Hannah Galindo` / `hannahgalindo013@gmail.com` | **Flows, Goal & Submission** — fully functional, non-linear, goal-driven flows; instructions followed. App areas: onboarding, Settings, dialogs, new screens (goal notice, Help, free-gap / why / completion), deployment, and submission documentation (`SUBMISSION_NOTES.md`, `SCREEN_INVENTORY.md`). | Genuine commit under Hannah Galindo: `0f79fe0` *Complete goal flows and submission requirements*. An earlier agent-host baseline commit also appears under her name — graders should weigh the product commit. |
 
 See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
-Do not invent research findings — mark gaps as TODO in those files.
+First Impressions research and five-second results: coordinate with **Grace** — leave as TODO until she supplies real evidence (`FIVE_SECOND_TEST.md`).
 
 ## Deploy it (free)
 
-**Vercel (primary):** push this repository to GitHub, then at
-[vercel.com/new](https://vercel.com/new) import it and click Deploy. There are no
-environment variables to fill in and no storage to add. The free Hobby plan is
-plenty. After deploy, open the public URL in an **incognito** window on a phone
-and a laptop (no login required).
+**Vercel (primary):** push the branch you want live (for this assignment, usually
+`Hannah-branch`) to GitHub, then at [vercel.com/new](https://vercel.com/new)
+import the repo and Deploy. Framework preset: Next.js. Build command:
+`npm run build`. There are **no** environment variables. After deploy, open the
+public URL in an **incognito** window on a phone and a laptop (no login).
+
+Step-by-step checklist (including where to paste the URL): [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md).
 
 **Public URL:** `[TODO: paste the verified Vercel URL after deploy — do not invent one]`
 

@@ -1,16 +1,26 @@
 ## Five-Second Test
 
+**Owner:** Grace (First Impressions — entry screens and overarching capability).  
+Hannah’s submission notes link here for research-supported claims; **do not invent answers**.
+
 Show each participant an entry screen for five seconds, then ask:
 
 "What does this do?"
 
+**Status:** Responses below are **empty until Grace (or the First Impressions owner) fills them** from people the team actually tested.
+
+Suggested entry screens (First Impressions surfaces): home `/`, `/about`, or the first screen of `/app` after the prototype notice.
+
 ### Participant 1
-Response:
+- Screen shown:
+- Response:
 
 ### Participant 2
-Response:
+- Screen shown:
+- Response:
 
 ### Participant 3
-Response:
+- Screen shown:
+- Response:
 
 ### Revision made based on feedback:

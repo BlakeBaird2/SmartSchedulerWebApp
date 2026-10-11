@@ -1,83 +1,133 @@
 # Submission notes — Flows, Goal & Submission (Hannah)
 
-Concise notes for the 60-point Flows / Goal / Submission portion of the Low-Fidelity Prototype rubric. Evidence is limited to what exists in this repository and Git history. Items marked `[TODO]` need a human fill-in before final hand-in.
+Notes for Hannah’s assigned slice of the **professor’s Low-Fidelity Prototype rubric**
+(fully functional / non-linear / goal-driven + instructions followed). The full group
+assignment is worth ~200 points; A/B/C are **only our team’s internal labels**, not
+official professor section titles.
 
-## Core design feature from discovery research
+Claims below are limited to code, Git history, and existing project docs. Items marked
+`[TODO]` need a human fill-in. Do not invent research, commits, or deployment URLs.
 
-**Core design feature (from the product):** A prioritized plan that finds free gaps between classes/events and fills them with unfinished work due soonest — so a student always has a concrete answer to “what should I work on in this free block?”
+## Before you submit — Hannah checklist
 
-**User need:** Students juggle class calendars, personal busy time, and assignment due dates across tools. The need is knowing **what productive work fits in the next free gap** and marking it done.
+| # | Professor-facing requirement | Status in this repo |
+| --- | --- | --- |
+| 1 | Goal pop-up after prototype notice + way to reopen | **In code** — confirm in browser |
+| 2 | ≥3 non-linear routes to the same user goal | **In code** — walk `/app#demo` |
+| 3 | Skip on every onboarding step | **In code** — test steps 1–3 |
+| 4 | No dead ends; controls work or give honest feedback | **In code** — spot-check Help/Settings/dialogs |
+| 5 | 20–30 meaningful screens; new screens ≥2 entry points + way back | **28** in `SCREEN_INVENTORY.md` |
+| 6 | Public deployment; incognito laptop + phone | **`[TODO: deploy + paste URL]`** |
+| 7 | Genuine GitHub commits from all three + README ownership | **Commits exist** — see Team responsibilities; Grace name/ownership TODOs |
+| 8 | Research-supported core feature + five-second evidence | **`[TODO from Grace]`** — First Impressions research owner |
+| 9 | Tangential features minimized / honest about limits | Documented below |
+| 10 | Commit remaining local fixes when Hannah approves | Uncommitted doc/code may still be local |
 
-**Research evidence in-repo:**
+---
 
-- Product rationale in `README.md` (plan algorithm, Canvas feed trade-offs, local-only data).
-- Design principles / library review in `DESIGN_REVIEW.md` and `/design`.
-- `FIVE_SECOND_TEST.md` exists as a template but **participant responses are empty**.
-- `[TODO: paste discovery research findings, interview themes, or class research citations your team actually collected. Do not invent quotes or stats.]`
+## Team responsibilities (full descriptions)
 
-Until that TODO is filled, discovery claims are **incomplete documentation**, not fabricated results.
+| Member | Responsibility | App areas |
+| --- | --- | --- |
+| **Grace** | **First Impressions** — low-fidelity look and early-stage notice; entry screens signify the overarching capability. Owns First Impressions research / five-second testing for the team. | Home `/`, `/about`, first screen of `/app`, overall look |
+| **Blake Baird** | **Design System & Usability** — design library and component reuse; conventions, attention, grouping, and usability principles. | Shared UI (`src/components/ui`), Plan, Calendar, Upcoming, Classes; `/design`, `DESIGN_REVIEW.md` |
+| **Hannah Galindo** | **Flows, Goal & Submission** — fully functional, non-linear, goal-driven; instructions followed. | Onboarding, Settings, dialogs, new screens (goal / Help / gap / why / completion), deployment, these notes |
+
+### Git evidence (do not invent)
+
+| Member | Identity in Git | Evidence | Uncertainty |
+| --- | --- | --- | --- |
+| Grace | `gracefarns` `<gmfarnz@byu.edu>` | Commits: `packages`, `modified package.json`, `fixed package.json` | Preferred display name `[TODO]`. Low-fi entry/prototype work also arrived via Graces-branch merges authored as Claude — `[TODO: Grace confirm personal ownership of visual/entry items]` |
+| Blake Baird | `Blake Baird` `<blakebaird2@gmail.com>` | Multiple product commits (planner, classes, feeds, class times, LAN/dev, PR merges) | Later design-library / walkthrough commits on this branch authored as Claude, in Blake’s owned areas |
+| Hannah Galindo | `Hannah Galindo` `<hannahgalindo013@gmail.com>` | `0f79fe0` *Complete goal flows and submission requirements* | Earlier agent-host baseline commit also under her name |
+
+---
+
+## Core design feature (research-supported)
+
+**Core design feature:** A prioritized plan that finds free gaps between classes/events and fills them with unfinished work due soonest — so a student always has a concrete answer to “what should I work on in this free block?”
+
+**User need:** Students juggle class calendars, personal busy time, and assignment due dates. They need to know **what productive work fits in the next free gap** and mark it done.
+
+**Evidence already in the repo (product/design docs — not invented interviews):**
+
+- `README.md` — gap-finding + soonest-deadline planning, Canvas feed trade-offs, local-only data.
+- `DESIGN_REVIEW.md` — root user outcome: spend free time doing work, not figuring out what work to do.
+- Live design catalog at `/design`.
+
+**First Impressions research / five-second tests (Grace owns):**
+
+- `FIVE_SECOND_TEST.md` is still an empty template.
+- `[TODO — Grace: paste real discovery findings, interview themes, and five-second participant responses. Hannah: do not invent; copy from Grace when ready.]`
+
+Until Grace fills that, discovery claims for grading are **incomplete**.
+
+---
 
 ## User goal
 
-**Goal (one sentence):** In a free stretch of time (for example, 45 minutes between class and work), find something productive to work on and mark it done.
+**One sentence:** In a free stretch of time (for example, 45 minutes between class and work), find something productive to work on and mark it done.
 
-The app supports that by surfacing free gaps, ranking unfinished work by soonest deadline, opening task details (including “Why this task?”), and marking Done with shared local task state across Plan, Calendar, Upcoming, and Classes.
+The app supports that by surfacing free gaps, ranking unfinished work by soonest deadline, opening task details (including “Why this task?”), and marking Done with shared local `done` state across Plan, Calendar, Upcoming, and Classes.
+
+---
 
 ## Multiple routes
 
-At least three working paths to the same goal (implemented on `Hannah-branch`):
+Three working paths to the same goal:
 
 1. **Plan → free gap → task → Done**  
    Plan “right now” / day schedule → open a free gap → pick planned work → review (optional Why) → Mark done → completion panel.
 
 2. **Calendar → free gap or planned work → task → Done**  
-   Calendar week or day → click a free-gap band or a planned-work block → review → Mark done.
+   Calendar week or day → free-gap band or planned-work block → review → Mark done.
 
 3. **Upcoming or Classes → task → Done**  
    Upcoming list **or** a Classes column → open a task → review → Mark done.
 
-Shared `done` state lives in browser workspace storage, so completing a task in one view updates the others.
+Shared completion is in browser workspace storage (`prio:ws`). Full UI walkthroughs (including public URL incognito) remain **manual** for the team unless recorded separately.
 
-**Automated testing:** lint, typecheck, unit tests, and production build were run in this environment. **Manual route walkthroughs in a browser (desktop + phone, including public URL incognito) remain for the submitter.**
+---
 
-## Team ownership
+## Tangential features minimized
 
-| Member | Role on this project |
-| --- | --- |
-| **Blake Baird** | Core SmartScheduler application: planner, feeds, sync, Plan/Calendar/Upcoming/Classes, design library, walkthrough (primary Git author of the product). |
-| **Grace Farnsworth** | Low-fidelity visual design / entry hierarchy contributions. Git author `gracefarns` — `[TODO: confirm preferred display name]`. |
-| **Hannah Galindo** | Flows, Goal & Submission: goal pop-up sequencing, skippable onboarding, goal routes, gap/why/completion panels, Help + Settings sub-pages, README contribution section, screen inventory, these notes, build checks. |
-
-All three must have genuine commits on GitHub for the course rule. Do not manufacture commits for others. Hannah’s functional work is on `Hannah-branch` and must be pushed/committed by Hannah.
-
-## Tangential features
-
-| Feature | How it is represented | Why simplified |
+| Feature | Representation | Why simplified |
 | --- | --- | --- |
-| Accounts / cloud sync | None — localStorage only; optional `#setup=` link | Course prototype; no backend accounts |
-| Canvas submission status | Manual Done ticks | Calendar feeds cannot report hand-ins (README) |
-| Live calendar fetch errors | Banner + last good snapshot; honest toast copy | Depends on user links / network |
-| Copy setup to another device | Clipboard / prompt of a `#setup=` link | Client-only |
-| Illustrations | Wire sketches / placeholders | Low-fidelity prototype style |
-| Five-second test results | Template only until filled | Must not invent participant data |
-| App views in the URL | Client view state on `/app` only | Existing architecture; refresh returns to Plan preference |
+| Accounts / cloud sync | None — localStorage; optional `#setup=` link | Course prototype; no server accounts |
+| Canvas submission status | Manual Done ticks | Feeds cannot report hand-ins (README) |
+| Calendar fetch failures | Banner + last good snapshot; honest toasts | Depends on user links / network |
+| Multi-device setup | Clipboard / prompt of `#setup=` URL | Client-only |
+| Illustrations | Wire sketches / placeholders | Low-fidelity (First Impressions) |
+| Five-second / discovery write-ups | Empty until Grace supplies | Must not invent participant data |
+| Deep links per app view | Client view state on `/app` | Existing architecture |
+
+---
 
 ## Screen inventory
 
-See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md) for the full list (**28** meaningful screens/states), including two entry points and return paths for each newly added destination.
+See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md): **28** meaningful screens/states, with two entry points and a return path for each newly added destination owned in Hannah’s flows (goal notice, free-gap detail, why-this-task, completion, Help, Settings sub-pages).
 
-## Public URL
+---
 
-- **Provider:** Vercel (documented in README); Docker also supported.
-- **Env vars:** none required for public deploy.
-- **Public URL:** `[TODO: verify after deploy — paste real URL; test in incognito on phone and laptop]`
-- Remaining manual steps if credentials are unavailable:
-  1. Commit and push `Hannah-branch` to GitHub.
-  2. Import the repo at https://vercel.com/new and Deploy.
-  3. Confirm the production URL loads `/` and `/app#demo` without login.
-  4. Incognito check on phone + laptop; paste the URL into README and this file.
+## Public URL (deployment)
 
-## Checks
+- **Provider:** Vercel (primary; see README). Docker also supported.
+- **Env vars:** none.
+- **Public URL:** `[TODO: paste after you verify deploy — do not invent one]`
+
+### Exact deploy steps (when Hannah approves)
+
+1. Commit any approved local fixes, then ensure `Hannah-branch` is on GitHub (`git push -u origin HEAD` if needed).
+2. Open https://vercel.com/new → import `BlakeBaird2/PrioritizedScheduleWebApp` (or your fork).
+3. Framework: Next.js · Build: `npm run build` · **Env vars: leave empty**.
+4. If asked for a production branch, select `Hannah-branch` (or merge into the branch Vercel tracks).
+5. Deploy → open the `.vercel.app` URL with **no login**.
+6. Incognito on **laptop** and **phone**: `/` then `/app#demo` — prototype → goal → Skip or sample data → complete a task on two routes.
+7. Paste the verified URL here and into README **Public URL**.
+
+---
+
+## Checks (commands)
 
 ```bash
 npm install
@@ -86,5 +136,3 @@ npm run typecheck
 npm test
 npm run build
 ```
-
-Results from the agent session are reported in the final audit response.

@@ -44,6 +44,6 @@ Walkthrough (`AppTour`), change alerts, sync error banner, and sample-data banne
 | Goal notice | After prototype Got it | Goal badge / Help / Settings → About | Got it |
 | Free-gap detail | Plan Open gap | Calendar free band (also Focus → Free gap details) | Close / Back to Plan |
 | Why this task? | Task detail button | Gap detail / Focus card | Back to task / Close |
-| Completed success | Done on Focus / gap / task detail | (same action from multiple routes) | Plan / Upcoming / Close |
-| Help | Header Help | Settings → Open Help | Back to Plan |
-| Settings sub-pages | Settings hub cards | Help → calendar settings / About panel | All settings |
+| Completed success | Plan Focus **Done**; free-gap panel **Done** | Task detail **Mark as done** (also Calendar→task→Done) | Back to Plan / Upcoming / Open this task / Close |
+| Help | Header **Help** | Settings hub **Open Help** and Settings → About | Back to Plan / Settings |
+| Settings sub-pages | Settings hub section cards | Help → Open calendar settings / Settings button | **All settings** back button |
