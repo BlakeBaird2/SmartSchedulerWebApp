@@ -71,8 +71,9 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
 
   return (
     <form onSubmit={submit} className="space-y-2">
-      <div className="flex gap-2">
-        <label className="relative flex-1 min-w-0">
+      {/* The field and its button share one height, so they read as one control. */}
+      <div className="flex items-stretch gap-2">
+        <label className="relative flex flex-1 min-w-0">
           <span className="sr-only">Calendar link</span>
           <LinkIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" />
           <input
@@ -87,7 +88,7 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
               setError(null);
             }}
             placeholder="Paste a calendar link (https://… or webcal://…)"
-            className="input pl-9"
+            className="input pl-9 h-full"
             disabled={busy}
           />
         </label>

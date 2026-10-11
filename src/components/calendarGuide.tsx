@@ -137,14 +137,14 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "work",
     label: "Work",
     color: "#0f766e",
-    does: "SmartScheduler plans around your shifts and meetings, so homework never lands on top of them.",
+    does: "SmartScheduler plans around your work schedule and meetings, so homework never lands on top of them.",
     cards: [
       help("outlook"),
       help("google"),
       {
         name: "Scheduling apps",
         steps: ["In your scheduling app's settings, look for “Calendar sync”, “Subscribe” or an iCal / webcal link.", "Copy the link."],
-        note: "No link at all? Add your shifts as a weekly busy time during setup.",
+        note: "No link at all? Add your work hours as a weekly busy time during setup.",
       },
     ],
   },

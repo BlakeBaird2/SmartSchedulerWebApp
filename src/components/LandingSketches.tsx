@@ -73,7 +73,7 @@ export function PlanSketch() {
             <div className="font-bold">The rest of today</div>
             <div className="mt-3 grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 items-start">
               <div className="pt-1 text-right text-xs">3:15 PM</div>
-              <SketchEvent title="Work shift" time="3:15 – 6 PM" />
+              <SketchEvent title="Work" time="3:15 – 6 PM" />
               <div className="pt-2 text-right text-xs">6:10 PM</div>
               <FreeGapBlock minutes={110} label="Free · 1h 50m">
                 <li>
@@ -191,7 +191,7 @@ export function DaySketch({ filled, className = "h-56" }: { filled: boolean; cla
       label={
         filled
           ? "A sketch of a day where each free gap between classes and work holds the task due soonest."
-          : "A sketch of a day with classes and a work shift blocked out, and the free gaps between them marked."
+          : "A sketch of a day with classes and work blocked out, and the free gaps between them marked."
       }
       className={`${className} px-4 py-3`}
     >
@@ -201,7 +201,7 @@ export function DaySketch({ filled, className = "h-56" }: { filled: boolean; cla
         <span className="pt-1 text-right">11 AM</span>
         <Gap minutes="1h 10m" task={filled ? { title: "Lab 6", code: "CS 142", color: "#d97706", time: "1h" } : null} />
         <span className="pt-1 text-right">12:30</span>
-        <SketchEvent title="Work shift" time="12:30 – 4 PM" />
+        <SketchEvent title="Work" time="12:30 – 4 PM" />
         <span className="pt-1 text-right">4 PM</span>
         <Gap minutes="45m" task={filled ? { title: "Reading: Ch. 5", code: "BUS 301", color: "#2563eb", time: "30m" } : null} />
       </div>

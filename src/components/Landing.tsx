@@ -109,7 +109,7 @@ function Hero({ variant }: { variant: LandingVariant }) {
         {/* The overarching capability comes first and is the biggest thing on the page. */}
         <CapabilityHero id="hero-title" size="page" className="mx-auto max-w-5xl">
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-pretty sm:text-xl">
-            SmartScheduler puts your classes and assignments from Canvas, your shifts and your plans from Google, Outlook or Apple on one calendar. Then it fills each
+            SmartScheduler puts your classes and assignments from Canvas, your work schedule and your plans from Google, Outlook or Apple on one calendar. Then it fills each
             free gap with whatever&apos;s due soonest.
           </p>
         </CapabilityHero>
@@ -169,7 +169,7 @@ function HowItWorks() {
             personal calendars tell SmartScheduler when you&apos;re busy.
           </Step>
           <Step n={2} title="SmartScheduler finds your free time" art={<DaySketch filled={false} />}>
-            Classes, shifts and plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
+            Classes, work and other plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
             time.
           </Step>
           <Step n={3} title="Each gap gets what's due soonest" art={<DaySketch filled />}>
@@ -306,7 +306,7 @@ const FAQ = [
   },
   {
     q: "What if my job isn't on any calendar?",
-    a: "Add your shifts as a weekly busy time during setup, the same way you'd add practice or a commute. SmartScheduler plans around them like anything else.",
+    a: "Add your work schedule as a weekly busy time during setup, the same way you'd add practice or a commute. SmartScheduler plans around them like anything else.",
   },
   {
     q: "How does SmartScheduler decide what comes first?",

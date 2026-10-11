@@ -171,7 +171,7 @@ function personalFeed(t: LocalDay, tz: string): string {
       `DTSTART;TZID=${tz}:${localStamp(firstTue, 13, 0)}`,
       `DTEND;TZID=${tz}:${localStamp(firstTue, 17, 0)}`,
       "RRULE:FREQ=WEEKLY;BYDAY=TU,TH;COUNT=30",
-      "SUMMARY:Work shift",
+      "SUMMARY:Work",
       "LOCATION:Campus Bookstore",
     ]),
     vevent([
