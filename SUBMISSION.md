@@ -1,22 +1,22 @@
 # Low-Fidelity Prototype submission — SmartScheduler
 
-**Team:** Blake Baird, Grace [last name], Hannah Galindo
+**Team:** Blake Baird, Grace Farnsworth, Hannah Galindo
 
 | | |
 | --- | --- |
-| **Public URL** | `[paste the Vercel URL here after deploying, then check it in a private window]` |
+| **Public URL** | https://smartschedulerwebapp.vercel.app |
 | **GitHub** | https://github.com/BlakeBaird2/PrioritizedScheduleWebApp |
-| **Design library** | `<public URL>/design` |
+| **Design library** | https://smartschedulerwebapp.vercel.app/design |
 
 ---
 
 ## Text for the submission box
 
-Copy everything between the lines into the comments box, with the public URL first.
+Copy everything between the lines into the comments box. The public URL is already at the top.
 
 ---
 
-**Public link:** [paste URL] (no login needed. Try it on a phone or a laptop.)
+**Public link:** https://smartschedulerwebapp.vercel.app (no login needed. Try it on a phone or a laptop.)
 
 **What SmartScheduler is for.** Our discovery work narrowed many student frustrations about time and workload down to one problem: students lose their free time deciding what to work on instead of working on it. SmartScheduler's core feature answers that directly. It reads your class and personal calendars, finds the free gaps in your day, and fills each one with the unfinished work that is due soonest. The result is one clear answer to "what should I do with the next 45 minutes?"
 
@@ -35,7 +35,7 @@ Copy everything between the lines into the comments box, with the public URL fir
 
 **Low fidelity and usability.** It is a deliberate wireframe: sketch font, greys, square outlines, wireframe drawings instead of pictures, and a Prototype tag in every header. We reviewed every screen once per principle (attention, grouping, conventions, consistency, signifiers, feedback and undo, error prevention, recognition over recall, touch targets) and logged each fix in `DESIGN_REVIEW.md`.
 
-**Who owned what.** Grace: first impressions (low-fi look, early-stage notice, entry screens, five-second test). Blake: design library and usability principles. Hannah: goal, non-linear flows, skippable onboarding, and these submission materials. All three worked through GitHub branches merged into `main`.
+**Who owned what.** Grace Farnsworth: first impressions (low-fi look, early-stage notice, entry screens, five-second test). Blake Baird: design library and usability principles. Hannah Galindo: goal, non-linear flows, skippable onboarding, and these submission materials. All three worked through GitHub branches merged into `main`.
 
 ---
 
@@ -54,8 +54,9 @@ Copy everything between the lines into the comments box, with the public URL fir
 
 ## Before you press Submit
 
-- [ ] Pull request from `Blakes-branch` into `main` merged.
-- [ ] Vercel project imported from GitHub, production branch `main`, no environment variables, deployed.
+- [x] Pull request from `Blakes-branch` into `main` merged ([#3](https://github.com/BlakeBaird2/PrioritizedScheduleWebApp/pull/3)).
+- [x] Deployed on Vercel from `main` at https://smartschedulerwebapp.vercel.app (home, `/app`, `/about` and `/design` all load).
+- [x] URL pasted at the top of this file.
 - [ ] Opened the public URL in a **private window** on a laptop: the welcome pop-up shows, Skip loads sample data, and a task can be marked Done from Plan and from Upcoming.
 - [ ] Same check on a **phone**.
-- [ ] Pasted the URL at the top of this file and into the submission box, followed by the text above.
+- [ ] Pasted the URL and the text above into the submission box.

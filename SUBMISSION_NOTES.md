@@ -7,8 +7,7 @@ for **SmartScheduler** (fully functional / non-linear / goal-driven + instructio
 The full group assignment is worth ~200 points; A/B/C are **only our team’s internal
 labels**, not official professor section titles.
 
-Claims below are limited to code, Git history, and existing project docs. Items marked
-`[TODO]` need a human fill-in. Do not invent research, commits, or deployment URLs.
+Claims below are limited to code, Git history, and existing project docs.
 
 ## Before you submit — Hannah checklist
 
@@ -19,8 +18,8 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 | 3 | Skip on every onboarding step | **In code** — test steps 1–3 |
 | 4 | No dead ends; controls work or give honest feedback | **In code** — spot-check Help/Settings/dialogs |
 | 5 | 20–30 meaningful screens; new screens ≥2 entry points + way back | **29** in `SCREEN_INVENTORY.md` |
-| 6 | Public deployment; incognito laptop + phone | **`[TODO: deploy + paste URL]`** |
-| 7 | Genuine GitHub commits from all three + README ownership | **Commits exist** — see Team responsibilities; Grace name/ownership TODOs |
+| 6 | Public deployment; incognito laptop + phone | **Deployed:** https://smartschedulerwebapp.vercel.app — do the incognito check on a laptop and a phone |
+| 7 | Genuine GitHub commits from all three + README ownership | **Commits exist** — see Team responsibilities |
 | 8 | Research-supported core feature + five-second evidence | **Recorded** — see below + `FIVE_SECOND_TEST.md` (2 participants; preliminary) |
 | 9 | Tangential features minimized / honest about limits | Documented below |
 | 10 | Commit remaining local fixes when Hannah approves | Uncommitted doc/code may still be local |
@@ -31,7 +30,7 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 
 | Member | Responsibility | App areas |
 | --- | --- | --- |
-| **Grace** | **First Impressions** — low-fidelity look and early-stage notice; entry screens signify the overarching capability. Owns First Impressions research / five-second testing for the team. | Home `/`, `/about`, first screen of `/app`, overall look |
+| **Grace Farnsworth** | **First Impressions** — low-fidelity look and early-stage notice; entry screens signify the overarching capability. Owns First Impressions research / five-second testing for the team. | Home `/`, `/about`, first screen of `/app`, overall look |
 | **Blake Baird** | **Design System & Usability** — design library and component reuse; conventions, attention, grouping, and usability principles. | Shared UI (`src/components/ui`), Plan, Calendar, Upcoming, Classes; `/design`, `DESIGN_REVIEW.md` |
 | **Hannah Galindo** | **Flows, Goal & Submission** — fully functional, non-linear, goal-driven; instructions followed. | Onboarding, Settings, dialogs, new screens (goal / Help / gap / why / completion), deployment, these notes |
 
@@ -39,7 +38,7 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 
 | Member | Identity in Git | Evidence | Uncertainty |
 | --- | --- | --- | --- |
-| Grace | `gracefarns` `<gmfarnz@byu.edu>` | Commits: `packages`, `modified package.json`, `fixed package.json` | Preferred display name `[TODO]`. Low-fi entry/prototype work also arrived via Graces-branch merges authored as Claude — `[TODO: Grace confirm personal ownership of visual/entry items]` |
+| Grace Farnsworth | `gracefarns` `<gmfarnz@byu.edu>` | Commits: `packages`, `modified package.json`, `fixed package.json` | Her low-fidelity look and entry-screen work was built with an AI coding agent on `Graces-branch`, so those commits are authored as Claude. |
 | Blake Baird | `Blake Baird` `<blakebaird2@gmail.com>` | Multiple product commits (planner, classes, feeds, class times, LAN/dev, PR merges) | Later design-library / walkthrough commits on this branch authored as Claude, in Blake’s owned areas |
 | Hannah Galindo | `Hannah Galindo` `<hannahgalindo013@gmail.com>` | `0f79fe0` *Complete goal flows and submission requirements* | Earlier agent-host baseline commit also under her name |
 
@@ -57,7 +56,7 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 - `DESIGN_REVIEW.md` — root user outcome: spend free time doing work, not figuring out what work to do.
 - Live design catalog at `/design`.
 
-**First Impressions research / five-second tests (Grace owns):** see [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md).
+**First Impressions research / five-second tests (Grace Farnsworth owns):** see [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md).
 
 | Finding | Detail |
 | --- | --- |
@@ -120,7 +119,7 @@ See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md): **29** meaningful screens/stat
 
 - **Provider:** Vercel (primary; see README). Docker also supported.
 - **Env vars:** none.
-- **Public URL:** `[TODO: paste after you verify deploy — do not invent one]`
+- **Public URL:** https://smartschedulerwebapp.vercel.app
 
 ### Exact deploy steps (when Hannah approves)
 
@@ -130,7 +129,7 @@ See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md): **29** meaningful screens/stat
 4. Production branch: `main` (merge `Blakes-branch` into `main` with a pull request first; it already contains Grace's and Hannah's work).
 5. Deploy → open the `.vercel.app` URL with **no login**.
 6. Incognito on **laptop** and **phone**: `/` then `/app` — welcome pop-up (prototype notice + goal) → Skip (sample data) → complete a task on two routes.
-7. Paste the verified URL here and into README **Public URL**.
+7. Paste the verified URL here and into README **Public URL** (done).
 
 ---
 

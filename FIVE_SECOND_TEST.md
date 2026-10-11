@@ -1,6 +1,6 @@
 # SmartScheduler Five-Second Test
 
-**Owner:** Grace (First Impressions — entry screens and overarching capability).
+**Owner:** Grace Farnsworth (First Impressions — entry screens and overarching capability).
 
 Show each participant a SmartScheduler entry screen for five seconds, then ask:
 
