@@ -75,8 +75,9 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           </Link>
           <PrototypeBadge />
           <GoalBadge />
-          <Button className="ml-auto" onClick={skip}>
-            Skip setup
+          {/* The one way out of setup, in the same place on every step (where onboarding usually puts Skip). */}
+          <Button className="ml-auto" icon={ws.feeds.length === 0 ? Sparkles : undefined} onClick={skip}>
+            {ws.feeds.length === 0 ? "Skip: try sample data" : "Skip setup"}
           </Button>
         </div>
         <CapabilityHero className="mt-6">
@@ -110,19 +111,16 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 variant={ws.feeds.length === 0 ? "secondary" : "primary"}
                 trailingIcon={ArrowRight}
                 disabled={ws.feeds.length === 0}
-                title={ws.feeds.length === 0 ? "Add a calendar first, or Skip" : undefined}
+                title={ws.feeds.length === 0 ? "Add a calendar first, or skip setup to try sample data" : undefined}
                 onClick={() => setStep(hasClasses ? 2 : 3)}
               >
                 Continue
               </Button>
-              <Button onClick={skip}>Skip</Button>
               {ws.feeds.length > 0 && !hasSchool ? (
                 <span className="text-xs text-muted">No school calendar yet. You can still add work by hand.</span>
               ) : null}
               {ws.feeds.length === 0 ? (
-                <Button icon={Sparkles} onClick={startDemo}>
-                  Just looking? Try sample data
-                </Button>
+                <span className="text-sm text-muted">No link handy? Use Skip at the top to try it with sample data.</span>
               ) : null}
             </div>
           </Card>
@@ -140,7 +138,6 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <Button icon={ArrowLeft} onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button onClick={skip}>Skip</Button>
               <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={() => setStep(3)}>
                 Continue
               </Button>
@@ -164,7 +161,6 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <Button icon={ArrowLeft} onClick={() => setStep(hasClasses ? 2 : 1)}>
                 Back
               </Button>
-              <Button onClick={skip}>Skip</Button>
               <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish}>
                 Build my plan
               </Button>
@@ -176,7 +172,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           <Lock size={14} className="shrink-0 mt-0.5" />
           <span>
             No account needed. Your calendar links and everything you set here stay in this browser. The server reads a calendar only to hand it back to you,
-            and keeps nothing. Setup is optional — Skip opens the app with sample data if you have not added calendars yet.
+            and keeps nothing. Setup is optional: Skip opens the app with sample data if you haven&apos;t added a calendar yet.
           </span>
         </p>
       </div>

@@ -190,13 +190,10 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
             </span>
             {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => select({ kind: "why", id: task.id })}>
-              Why this task?
-            </Button>
-            <Button size="sm" onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>
-              Free gap details
-            </Button>
+          {/* Follow-ups, not actions: quiet underlined links, so Done stays the one thing that stands out. */}
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+            <TextButton onClick={() => select({ kind: "why", id: task.id })}>Why this task?</TextButton>
+            <TextButton onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>See this free gap</TextButton>
           </div>
         </div>
         {/* The one primary action on the Plan screen. */}

@@ -32,6 +32,9 @@ Both participants understood SmartScheduler's main purpose after viewing the ent
 
 Only two participants have been recorded so far. These findings are preliminary and may not represent all users.
 
-## Revision made based on feedback
+## Changes made after this test that respond to it
 
-None yet from this five-second test. The potential improvement above is recorded as a recommendation only; no design change was implemented solely because of these responses.
+These changes came after the two sessions above and address what they found. They have not been re-tested yet.
+
+- **"Unsure where to go next."** Every entry screen now has exactly one blue main button ("Start planning" on the home page, "Add calendar" in setup, "Done" on Plan). First-time visitors also get a welcome pop-up that gives them a concrete goal and a **Start** button.
+- **"Might take a second to learn."** The welcome pop-up offers an optional four-step walkthrough ("Show me around") with a small drawing of each part of the Plan screen. It can be replayed from Settings.

@@ -1,6 +1,6 @@
 # Screen inventory — SmartScheduler (Flows, Goal & Submission)
 
-Meaningful screens / distinct user-facing states in **SmartScheduler** that support the core goal (find productive work in free time and mark it done). Count: **28**.
+Meaningful screens / distinct user-facing states in **SmartScheduler** that support the core goal (find productive work in free time and mark it done). Count: **29**.
 
 For each **new** destination added for this rubric, two entry points and a return path are listed.
 
@@ -16,7 +16,7 @@ For each **new** destination added for this rubric, two entry points and a retur
 | 8 | Onboarding step 3 — hours | Continue from step 1/2 | Skip / Back / Build my plan |
 | 9 | Plan | Header tab; wordmark; Help routes | Tabs |
 | 10 | Plan — empty / no-fit free time | Plan when nothing fits | Stay on Plan / Upcoming |
-| 11 | **Free-gap detail panel** *(new)* | Plan “Open gap”; Calendar free-gap band; Focus “Free gap details” | Close / Back to Plan / Upcoming |
+| 11 | **Free-gap detail panel** *(new)* | Plan “Open gap”; Calendar free-gap band; Focus “See this free gap” | Close / Back to Plan / Upcoming |
 | 12 | Calendar month | Header → Calendar → Month | Day click / tabs |
 | 13 | Calendar week | Header → Calendar → Week | Tabs |
 | 14 | Calendar day | Month day click; Week day header | Tabs |
@@ -34,15 +34,16 @@ For each **new** destination added for this rubric, two entry points and a retur
 | 26 | Import setup dialog | `#setup=` URL when calendars exist | Cancel / Confirm |
 | 27 | **Help** *(new)* | Header Help; Settings hub / About | Back to Plan; Settings; route Open buttons |
 | 28 | **Settings hub + sub-pages** *(new structure)* | Header Settings; Help → Settings | All settings / tabs |
+| 29 | Page not found (404) | Any mistyped or old address | Open SmartScheduler / Home page buttons |
 
-Walkthrough (`AppTour`), change alerts, sync error banner, and sample-data banner are additional operational states counted inside the above flows rather than as separate “screens.”
+Change alerts, sync error banner, and sample-data banner are additional operational states counted inside the above flows rather than as separate “screens.”
 
 ## New screens — reachability checklist
 
 | New screen | Entry 1 | Entry 2 | Return |
 | --- | --- | --- | --- |
 | Welcome (goal) | First visit, any page | Prototype or Goal tag / Help / Settings → About | Start / Got it |
-| Free-gap detail | Plan Open gap | Calendar free band (also Focus → Free gap details) | Close / Back to Plan |
+| Free-gap detail | Plan Open gap | Calendar free band (also Focus → See this free gap) | Close / Back to Plan |
 | Why this task? | Task detail button | Gap detail / Focus card | Back to task / Close |
 | Completed success | Plan Focus **Done**; free-gap panel **Done** | Task detail **Mark as done** (also Calendar→task→Done) | Back to Plan / Upcoming / Open this task / Close |
 | Help | Header **Help** | Settings hub **Open Help** and Settings → About | Back to Plan / Settings |

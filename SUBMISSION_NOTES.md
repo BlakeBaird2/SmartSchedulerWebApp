@@ -1,5 +1,7 @@
 # Submission notes — SmartScheduler (Flows, Goal & Submission — Hannah)
 
+> **The text to paste into the submission box is in [`SUBMISSION.md`](SUBMISSION.md).** This file is Hannah's working checklist and evidence log behind it.
+
 Notes for Hannah’s assigned slice of the **professor’s Low-Fidelity Prototype rubric**
 for **SmartScheduler** (fully functional / non-linear / goal-driven + instructions followed).
 The full group assignment is worth ~200 points; A/B/C are **only our team’s internal
@@ -16,7 +18,7 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 | 2 | ≥3 non-linear routes to the same user goal | **In code** — walk `/app#demo` |
 | 3 | Skip on every onboarding step | **In code** — test steps 1–3 |
 | 4 | No dead ends; controls work or give honest feedback | **In code** — spot-check Help/Settings/dialogs |
-| 5 | 20–30 meaningful screens; new screens ≥2 entry points + way back | **28** in `SCREEN_INVENTORY.md` |
+| 5 | 20–30 meaningful screens; new screens ≥2 entry points + way back | **29** in `SCREEN_INVENTORY.md` |
 | 6 | Public deployment; incognito laptop + phone | **`[TODO: deploy + paste URL]`** |
 | 7 | Genuine GitHub commits from all three + README ownership | **Commits exist** — see Team responsibilities; Grace name/ownership TODOs |
 | 8 | Research-supported core feature + five-second evidence | **Recorded** — see below + `FIVE_SECOND_TEST.md` (2 participants; preliminary) |
@@ -62,7 +64,7 @@ Claims below are limited to code, Git history, and existing project docs. Items 
 | Purpose understood | Both participants (n=2) understood SmartScheduler’s main purpose after a five-second look at the entry screen. |
 | Next step / learning | One was unsure where to go next; the other expected a short learning curve before it felt easy. |
 | Implication | Entry screen communicates the core capability; the primary next step could be clearer for first-time users. |
-| Design change from this test | **None implemented.** A more prominent primary action is noted as a *potential* improvement only. |
+| Changes since this test | One blue main button per entry screen, a welcome pop-up with the goal and a **Start** button, and an optional walkthrough. Not yet re-tested. |
 | Limits | Only two participants so far — preliminary, not representative of all users. |
 
 Broader discovery interviews beyond this five-second test are not claimed here.
@@ -110,7 +112,7 @@ Shared completion is in browser workspace storage (localStorage key `prio:ws` �
 
 ## Screen inventory
 
-See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md): **28** meaningful screens/states, with two entry points and a return path for each newly added destination owned in Hannah’s flows (goal notice, free-gap detail, why-this-task, completion, Help, Settings sub-pages).
+See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md): **29** meaningful screens/states, with two entry points and a return path for each newly added destination owned in Hannah’s flows (goal notice, free-gap detail, why-this-task, completion, Help, Settings sub-pages).
 
 ---
 
@@ -122,12 +124,12 @@ See [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md): **28** meaningful screens/stat
 
 ### Exact deploy steps (when Hannah approves)
 
-1. Commit any approved local fixes, then ensure `Hannah-branch` is on GitHub (`git push -u origin HEAD` if needed).
+1. Merge the pull request from `Blakes-branch` into `main`.
 2. Open https://vercel.com/new → import `BlakeBaird2/PrioritizedScheduleWebApp` (or your fork).
 3. Framework: Next.js · Build: `npm run build` · **Env vars: leave empty**.
-4. If asked for a production branch, select `Hannah-branch` (or merge into the branch Vercel tracks).
+4. Production branch: `main` (merge `Blakes-branch` into `main` with a pull request first; it already contains Grace's and Hannah's work).
 5. Deploy → open the `.vercel.app` URL with **no login**.
-6. Incognito on **laptop** and **phone**: `/` then `/app#demo` — prototype → goal → Skip or sample data → complete a task on two routes.
+6. Incognito on **laptop** and **phone**: `/` then `/app` — welcome pop-up (prototype notice + goal) → Skip (sample data) → complete a task on two routes.
 7. Paste the verified URL here and into README **Public URL**.
 
 ---

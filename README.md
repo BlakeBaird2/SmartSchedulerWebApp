@@ -10,6 +10,8 @@ and fills that time with the work that is due soonest.
 No accounts, no database, no API keys, no environment variables. Anyone can open
 it and start.
 
+> **Submitting the Low-Fidelity Prototype?** The paste-ready submission text and a rubric checklist are in [`SUBMISSION.md`](SUBMISSION.md).
+
 ## Pages
 
 - **`/`** — the home page for newcomers: what SmartScheduler does, how the plan is made,
