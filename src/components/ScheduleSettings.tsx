@@ -8,21 +8,11 @@ import { duration, hhmmToMinutes, minutesLabel, minutesToHHMM } from "@/lib/ui";
 import { useApp } from "./context";
 import { DayToggles } from "./ClassTimes";
 import { daysLabel } from "@/lib/meetings";
+import { Button, Field as UiField, Switch } from "./ui";
 
-export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return <button type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={() => onChange(!checked)} />;
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 py-2.5 flex-wrap">
-      <div className="min-w-0 flex-1 basis-48">
-        <div className="text-sm font-medium">{label}</div>
-        {hint ? <div className="text-xs text-muted mt-0.5 leading-relaxed">{hint}</div> : null}
-      </div>
-      <div className="flex items-center gap-2">{children}</div>
-    </div>
-  );
+/** Settings rows: label and hint on the left, the control on the right. */
+function Field(props: { label: string; hint?: string; children: React.ReactNode }) {
+  return <UiField layout="row" {...props} />;
 }
 
 function Minutes({ value, options, onChange, label }: { value: number; options: number[]; onChange: (v: number) => void; label: string }) {
@@ -60,7 +50,7 @@ export function HoursForm({ advanced = false }: { advanced?: boolean }) {
 
   return (
     <div className="divide-y divide-line">
-      <Field label="Working hours" hint={`Prio only plans work between ${minutesLabel(p.dayStart)} and ${minutesLabel(p.dayEnd)}.`}>
+      <Field label="Working hours" hint={`SmartScheduler only plans work between ${minutesLabel(p.dayStart)} and ${minutesLabel(p.dayEnd)}.`}>
         <input type="time" step={900} className="input input-sm" aria-label="Day starts" value={minutesToHHMM(p.dayStart)} onChange={(e) => setHours("dayStart", e.target.value)} />
         <span className="text-muted text-sm">to</span>
         <input
@@ -95,7 +85,7 @@ export function HoursForm({ advanced = false }: { advanced?: boolean }) {
 
 /** Recurring busy time that isn't in any calendar: a job, practice, a commute. */
 export function WeeklyEditor() {
-  const { ws, update } = useApp();
+  const { ws, update, toast } = useApp();
   const [label, setLabel] = useState("");
   const [days, setDays] = useState<number[]>([1, 3, 5]);
   const blocks = ws.weekly.filter((b) => !b.courseId);
@@ -126,20 +116,22 @@ export function WeeklyEditor() {
                   {daysLabel(b.days)} · {minutesLabel(hhmmToMinutes(b.start))} – {minutesLabel(hhmmToMinutes(b.end))}
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn btn-icon"
-                aria-label={`Remove ${b.label}`}
-                onClick={() => update((w) => ({ ...w, weekly: w.weekly.filter((x) => x.id !== b.id) }))}
-              >
-                <Trash size={15} />
-              </button>
+              <Button
+                variant="quiet"
+                iconOnly
+                icon={Trash}
+                label={`Remove ${b.label}`}
+                onClick={() => {
+                  update((w) => ({ ...w, weekly: w.weekly.filter((x) => x.id !== b.id) }));
+                  toast(`Removed ${b.label}`, { undo: () => update((w) => ({ ...w, weekly: [...w.weekly, b] })) });
+                }}
+              />
             </li>
           ))}
         </ul>
       ) : null}
 
-      <form onSubmit={add} className="rounded-xl border border-dashed border-line-strong p-3 space-y-2.5">
+      <form onSubmit={add} className="border border-dashed border-line-strong p-3 space-y-2.5">
         <input className="input" placeholder="What is it? (Work, practice, commute…)" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} />
         <div className="flex items-center gap-2 flex-wrap">
           <DayToggles value={days} onChange={setDays} />
@@ -148,10 +140,9 @@ export function WeeklyEditor() {
             <span className="text-muted text-sm">to</span>
             <input type="time" step={900} className="input input-sm" aria-label="Ends" value={end} onChange={(e) => setEnd(e.target.value)} />
           </div>
-          <button type="submit" className="btn ml-auto">
-            <Plus size={15} />
-            Add
-          </button>
+          <Button type="submit" icon={Plus} className="ml-auto">
+            Add busy time
+          </Button>
         </div>
         {error ? <p className="text-xs text-danger">{error}</p> : null}
       </form>

@@ -3,7 +3,7 @@ import { ClientApp } from "@/components/ClientApp";
 
 // The app itself renders in the browser, so there is nothing here for search engines.
 export const metadata: Metadata = {
-  title: "Prio",
+  title: "SmartScheduler",
   robots: { index: false },
 };
 

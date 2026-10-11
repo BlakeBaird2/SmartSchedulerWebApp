@@ -1,26 +1,32 @@
-# Prio.
+# SmartScheduler.
 
 Your classes, your job and the rest of your life on one calendar, and a plan for
 exactly what to work on in every free gap.
 
 Paste in calendar links from Canvas, Learning Suite, Google, Outlook or Apple.
-Prio finds your classes and assignments on its own, works out when you are free,
+SmartScheduler finds your classes and assignments on its own, works out when you are free,
 and fills that time with the work that is due soonest.
 
 No accounts, no database, no API keys, no environment variables. Anyone can open
 it and start.
 
+> **Submitting the Low-Fidelity Prototype?** The paste-ready submission text and a rubric checklist are in [`SUBMISSION.md`](SUBMISSION.md).
+
 ## Pages
 
-- **`/`** — the home page for newcomers: what Prio does, how the plan is made,
+- **`/`** — the home page for newcomers: what SmartScheduler does, how the plan is made,
   and where to find the calendar link in each app (Canvas, Learning Suite,
   Google, Outlook, Apple, scheduling apps), grouped by school, work and personal.
   It is rendered on the server, so it shows up at once and search engines can
   read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.
-- **`/about`** — the same home page, for people who already use Prio. It never
-  skips ahead to the app; Settings → **About Prio** links to it.
-- **`/app`** — Prio itself. `/app#demo` opens it with sample data, unless that
+- **`/about`** — the same home page, for people who already use SmartScheduler. It never
+  skips ahead to the app; Settings → **About SmartScheduler** links to it.
+- **`/design`** — the design library: every component the screens are built
+  from, drawn live, with when to use it and why it exists. Code in
+  [`src/components/ui`](src/components/ui); the screen-by-screen usability review
+  is in [`DESIGN_REVIEW.md`](DESIGN_REVIEW.md).
+- **`/app`** — SmartScheduler itself. `/app#demo` opens it with sample data, unless that
   browser already has calendars of its own.
 
 ## What it does
@@ -67,7 +73,7 @@ Two steps, kept simple on purpose so you can always tell why it says what it say
 
 Every kind of work has a starting estimate (reading 30m, assignment 1h,
 project 2h, exam 3h of study). Open any item to change how long it needs, which
-is also how you tell Prio you are part-way through. Exams on a class calendar
+is also how you tell SmartScheduler you are part-way through. Exams on a class calendar
 automatically get a "Study for …" task before them.
 
 The code is in [`src/lib/planner.ts`](src/lib/planner.ts), with tests in
@@ -76,7 +82,7 @@ The code is in [`src/lib/planner.ts`](src/lib/planner.ts), with tests in
 ## Adding calendars
 
 Every calendar app can give you a private link to a calendar (called iCal, ICS or
-webcal). Prio reads that link, so it always sees the latest version.
+webcal). SmartScheduler reads that link, so it always sees the latest version.
 
 | Where | How to get the link | Notes |
 | --- | --- | --- |
@@ -89,9 +95,9 @@ webcal). Prio reads that link, so it always sees the latest version.
 
 Each calendar is either **School** (its entries become classes and assignments)
 or **Personal** (its entries only mark you as busy and never turn into homework).
-Prio picks one when you add a link and you can switch it at any time.
+SmartScheduler picks one when you add a link and you can switch it at any time.
 
-**Staying up to date.** These links are live. Prio re-reads every calendar when
+**Staying up to date.** These links are live. SmartScheduler re-reads every calendar when
 you open it, when you come back to the tab, and every 30 minutes while it's open.
 Google and Apple reflect changes within minutes; Outlook can take a few hours to
 republish.
@@ -99,10 +105,10 @@ republish.
 **If a link won't add,** the message says why and what to copy instead. The
 common one: Google's "public address" only works for calendars shared with
 everyone, so use the "Secret address in iCal format". Canvas can also label a
-class with an unhelpful code like "All Sections"; Prio looks for the real code in
+class with an unhelpful code like "All Sections"; SmartScheduler looks for the real code in
 section names, and you can tap any class under its calendar to rename it.
 
-**What a calendar link can't tell Prio.** Feeds say when work is due, not whether
+**What a calendar link can't tell SmartScheduler.** Feeds say when work is due, not whether
 you handed it in. When you first add a school calendar, anything already past due
 is assumed done (you can untick it). After that, tick things off as you finish
 them.
@@ -129,7 +135,7 @@ Canvas's API needs either a personal access token or a developer key issued by
 each school. Canvas's API policy doesn't allow an app used by many people to ask
 them for personal tokens, and developer keys have to be approved school by
 school. The Canvas **Calendar Feed** needs neither and works at every school, so
-Prio uses that. The trade-off is that Prio can't see whether something was
+SmartScheduler uses that. The trade-off is that SmartScheduler can't see whether something was
 submitted, which is why you tick things off yourself.
 
 ## Run it
@@ -144,23 +150,94 @@ npm run lint
 No configuration is needed. Pick **Try it with sample data** on the home page to
 see it working without any calendars.
 
+## Testing the entry states (prototype)
+
+SmartScheduler is currently styled as a **low-fidelity prototype**: greys and one accent
+colour, a sketch font, square outlined boxes, and wireframe drawings of the app (`src/components/LandingSketches.tsx`) in place of pictures.
+Every entry screen leads with the same sentence — *"See exactly what to work on
+in every free gap of your day."* — and has one primary (accent) button. The
+wireframe rules are at the end of `src/app/globals.css`; the shared pieces
+(`PrototypeNotice`, `PrototypeBadge`, `CapabilityHero`, `WirePlaceholder`) are in
+`src/components/Prototype.tsx`.
+
+What the browser stores decides which state you see (all in localStorage).
+Keys keep a legacy `prio:` prefix for compatibility; the product name is **SmartScheduler**.
+
+| Key | Meaning |
+| --- | --- |
+| `prio:prototype-notice`, `prio:goal-notice` | Set when the welcome pop-up (prototype notice + goal) is closed. Missing = it shows on the next page load. |
+| `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Show me around, Settings, or `/app#tour`). |
+| `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
+| `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
+
+**Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
+bottom-left corner with one-click shortcuts to each state below. It only exists
+in development (`NODE_ENV=development`) and is not in production builds.
+
+**By hand** (works in any build; a private/incognito window is a clean first visit):
+
+| State | How to reach it | What to check |
+| --- | --- | --- |
+| First visit: welcome pop-up | New private window → `/` (or `/about`, `/app`, `/app#demo`) | One pop-up says it is an early prototype and gives the 45-minute goal. In the app it offers **Show me around** (the walkthrough) and **Start**. It doesn't return on refresh; the **Prototype** tag, **Goal** tag (wide screens) and Help reopen it. |
+| Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
+| About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
+| New user `/app` | Private window → `/app` | Onboarding: capability first; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |
+| Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
+| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary; goal/prototype do not auto-interrupt. |
+
+**Goal routes (same outcome: mark productive work done):**
+
+1. **Plan** → open a free gap → choose a task → review / Why this task? → **Done**
+2. **Calendar** (week/day) → open a free gap or planned-work block → review → **Done**
+3. **Upcoming** or **Classes** → open a task → review → **Done**
+
+Help (header) lists these routes. See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
+
+To start over without a private window, run this in the browser console, then
+reload: `Object.keys(localStorage).filter(k => k.startsWith("prio:")).forEach(k => localStorage.removeItem(k))`.
+Settings → Start over → **Remove everything** clears calendars and settings but keeps the theme and
+the prototype-notice dismissal.
+
+See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for five-second test results (preliminary; two participants).
+
 `npm run dev` accepts links whose site resolves to a private network address
 (common on campus Wi-Fi and VPNs). A production build refuses them unless started
 with `FEED_ALLOW_PRIVATE_HOSTS=1`, which is only for testing on your own machine.
 Never set it on a public deployment.
 
+## Team contributions
+
+Team responsibilities below map to the **professor’s Low-Fidelity Prototype rubric**
+(the full ~200-point group assignment). Labels like “A / B / C” are only our
+internal shorthand — not official professor section titles. Fill `[TODO]` lines
+before hand-in. Do not invent Git commits or ownership.
+
+| Team member | Git identity (from history) | Responsibility (rubric + app areas) | Git evidence |
+| --- | --- | --- | --- |
+| **Grace** | `gracefarns` / `gmfarnz@byu.edu` | **First Impressions** — low-fidelity look and early-stage (prototype) notice; entry screens signify the overarching capability. App areas: home `/`, `/about`, first screen of `/app`, overall look. Also owns First Impressions research / five-second testing for the team. `[TODO: preferred display name]` | Genuine commits under `gracefarns`: `packages`, `modified package.json`, `fixed package.json`. Low-fidelity entry / prototype work also landed via Graces-branch merges with some commits authored as Claude — `[TODO: Grace confirm which visual/entry items she personally owns vs agent-assisted]` |
+| **Blake Baird** | `Blake Baird` / `blakebaird2@gmail.com` | **Design System & Usability** — design library and component reuse; conventions, attention, grouping, and usability principles. App areas: shared components (`src/components/ui`), Plan, Calendar, Upcoming, Classes. See also [`DESIGN_REVIEW.md`](DESIGN_REVIEW.md) and `/design`. | Multiple genuine commits under Blake Baird (e.g. planner/classes/feeds, class times, Wi‑Fi/dev server, PR merges). Later design-library / walkthrough commits on this branch are authored as Claude — still part of Blake’s owned product areas. |
+| **Hannah Galindo** | `Hannah Galindo` / `hannahgalindo013@gmail.com` | **Flows, Goal & Submission** — fully functional, non-linear, goal-driven flows; instructions followed. App areas: onboarding, Settings, dialogs, new screens (goal notice, Help, free-gap / why / completion), deployment, and submission documentation (`SUBMISSION_NOTES.md`, `SCREEN_INVENTORY.md`). | Genuine commit under Hannah Galindo: `0f79fe0` *Complete goal flows and submission requirements*. An earlier agent-host baseline commit also appears under her name — graders should weigh the product commit. |
+
+See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
+First Impressions five-second results are in [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) (preliminary; no design change claimed from that test alone).
+
 ## Deploy it (free)
 
-**Vercel:** push this repository to GitHub, then at
-[vercel.com/new](https://vercel.com/new) import it and click Deploy. There are no
-environment variables to fill in and no storage to add. The free Hobby plan is
-plenty.
+**Vercel (primary):** push the branch you want live (for this assignment, usually
+`Hannah-branch`) to GitHub, then at [vercel.com/new](https://vercel.com/new)
+import the repo and Deploy. Framework preset: Next.js. Build command:
+`npm run build`. There are **no** environment variables. After deploy, open the
+public URL in an **incognito** window on a phone and a laptop (no login).
+
+Step-by-step checklist (including where to paste the URL): [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md).
+
+**Public URL:** `[TODO: paste the verified Vercel URL after deploy — do not invent one]`
 
 **Docker:**
 
 ```bash
-docker build -t prio .
-docker run -p 3000:3000 prio
+docker build -t smartscheduler .
+docker run -p 3000:3000 smartscheduler
 ```
 
 ## Project layout

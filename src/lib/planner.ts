@@ -1,5 +1,5 @@
 /**
- * The prioritized schedule.
+ * SmartScheduler's plan builder: find free gaps, then fill them by soonest deadline.
  *
  * Two steps, both deliberately simple so the result is easy to trust:
  *

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CALENDAR_KINDS, type CalendarKindId, type LinkSteps } from "./calendarGuide";
+import { wireGray } from "./context";
 
 /** Where to find each calendar link, grouped by what the calendar is for. */
 export function LinkGuide() {
@@ -14,7 +15,7 @@ export function LinkGuide() {
         <div className="seg" role="group" aria-label="What the calendar is for">
           {CALENDAR_KINDS.map((k) => (
             <button key={k.id} type="button" className="!px-4 !py-1.5 !text-sm" aria-pressed={k.id === kind} onClick={() => setKind(k.id)}>
-              <span className="h-2 w-2 rounded-full" style={{ background: k.color }} />
+              <span className="h-2 w-2 rounded-full" style={{ background: wireGray(k.color) }} />
               {k.label}
             </button>
           ))}

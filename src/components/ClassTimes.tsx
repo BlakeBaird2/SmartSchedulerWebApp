@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, MapPin, Pencil, Plus, Trash, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarClock, MapPin, Pencil, Plus, Trash } from "lucide-react";
 import { daysLabel, meetingPatterns, parseMeetingKey, type MeetingPattern } from "@/lib/meetings";
 import { randomId } from "@/lib/workspace";
 import type { Course, WeeklyBlock } from "@/lib/types";
 import { hhmmToMinutes, minutesLabel, minutesToHHMM } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
+import { Button, Dialog, DialogActions, TextButton } from "./ui";
 
 /** Monday-first day buttons. */
 export function DayToggles({ value, onChange }: { value: number[]; onChange: (days: number[]) => void }) {
@@ -24,7 +25,7 @@ export function DayToggles({ value, onChange }: { value: number[]; onChange: (da
             aria-pressed={on}
             aria-label={names[d]}
             onClick={() => onChange(on ? value.filter((x) => x !== d) : [...value, d])}
-            className={`w-8 h-8 rounded-full text-xs font-semibold border transition ${on ? "bg-accent text-white border-accent" : "border-line text-muted hover:border-line-strong"}`}
+            className={`w-9 h-9 text-sm font-semibold border transition ${on ? "bg-fg text-bg border-fg" : "border-line-strong text-muted hover:text-fg"}`}
           >
             {letters[d]}
           </button>
@@ -142,7 +143,7 @@ export function ClassTimeForm({
   };
 
   return (
-    <form onSubmit={save} className="mt-2 rounded-xl border border-dashed border-line-strong p-3 space-y-2.5">
+    <form onSubmit={save} className="mt-2 border border-dashed border-line-strong p-3 space-y-2.5">
       <DayToggles value={days} onChange={setDays} />
       <div className="flex items-center gap-1.5 flex-wrap">
         <input type="time" step={300} className="input input-sm" aria-label="Starts" value={start} onChange={(e) => setStart(e.target.value)} />
@@ -152,13 +153,13 @@ export function ClassTimeForm({
       </div>
       {note ? <p className="text-xs text-muted">{note}</p> : null}
       {error ? <p className="text-xs text-danger">{error}</p> : null}
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary !py-1.5 !text-[0.8125rem]">
-          Save
-        </button>
-        <button type="button" className="btn" onClick={onCancel}>
+      <div className="flex justify-end gap-2">
+        <Button size="sm" onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
+        <Button type="submit" size="sm">
+          Save time
+        </Button>
       </div>
     </form>
   );
@@ -167,7 +168,7 @@ export function ClassTimeForm({
 type Editing = { kind: "new" } | { kind: "block"; block: WeeklyBlock } | { kind: "feed"; pattern: MeetingPattern } | null;
 
 function ClassTimesRow({ course }: { course: Course }) {
-  const { update, model } = useApp();
+  const { update, model, toast } = useApp();
   const { entered, fromFeed, replaced } = useClassTimes(course);
   const actions = useClassTimeActions();
   const [editing, setEditing] = useState<Editing>(null);
@@ -175,9 +176,7 @@ function ClassTimesRow({ course }: { course: Course }) {
   const done = () => setEditing(null);
 
   const editButton = (onClick: () => void, what: string) => (
-    <button type="button" className="text-faint hover:text-fg p-1" aria-label={`Edit ${what}`} title="Change this time" onClick={onClick}>
-      <Pencil size={13} />
-    </button>
+    <Button variant="quiet" size="sm" iconOnly icon={Pencil} label={`Change ${what}`} onClick={onClick} />
   );
 
   return (
@@ -233,14 +232,17 @@ function ClassTimesRow({ course }: { course: Course }) {
               ) : null}
               <span className="ml-auto flex items-center">
                 {editButton(() => setEditing({ kind: "block", block: b }), `${course.code} time`)}
-                <button
-                  type="button"
-                  className="text-faint hover:text-danger p-1"
-                  aria-label={`Remove this ${course.code} time`}
-                  onClick={() => update((w) => ({ ...w, weekly: w.weekly.filter((x) => x.id !== b.id) }))}
-                >
-                  <Trash size={13} />
-                </button>
+                <Button
+                  variant="quiet"
+                  size="sm"
+                  iconOnly
+                  icon={Trash}
+                  label={`Remove this ${course.code} time`}
+                  onClick={() => {
+                    update((w) => ({ ...w, weekly: w.weekly.filter((x) => x.id !== b.id) }));
+                    toast(`Removed a ${course.code} class time`, { undo: () => update((w) => ({ ...w, weekly: [...w.weekly, b] })) });
+                  }}
+                />
               </span>
             </div>
           ),
@@ -250,9 +252,7 @@ function ClassTimesRow({ course }: { course: Course }) {
           return (
             <p key={key} className="text-xs text-muted">
               {feedName}&apos;s {timeRange(start, end)} meetings are hidden.{" "}
-              <button type="button" className="underline underline-offset-2 hover:text-fg" onClick={() => actions.restore(course.id, key)}>
-                Show them again
-              </button>
+              <TextButton onClick={() => actions.restore(course.id, key)}>Show them again</TextButton>
             </p>
           );
         })}
@@ -265,10 +265,9 @@ function ClassTimesRow({ course }: { course: Course }) {
             onCancel={done}
           />
         ) : (
-          <button type="button" className="inline-flex items-center gap-1 text-sm text-accent font-medium hover:underline" onClick={() => setEditing({ kind: "new" })}>
-            <Plus size={14} />
+          <Button size="sm" icon={Plus} onClick={() => setEditing({ kind: "new" })}>
             {entered.length || fromFeed.length ? "Add another time" : "Add class time"}
-          </button>
+          </Button>
         )}
       </div>
     </li>
@@ -289,36 +288,20 @@ export function ClassTimesEditor() {
 }
 
 export function ClassTimesDialog({ onClose }: { onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
   return (
-    <>
-      <div className="fixed inset-0 bg-black/30 z-50 fade-in" onClick={onClose} aria-hidden />
-      <div role="dialog" aria-modal="true" aria-labelledby="class-times-title" className="fixed z-50 inset-x-4 top-[6vh] mx-auto max-w-lg card p-5 fade-in max-h-[88dvh] overflow-y-auto scrollbar-thin">
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <h2 id="class-times-title" className="text-base font-semibold">
-              When do your classes meet?
-            </h2>
-            <p className="mt-0.5 text-sm text-muted">They&apos;ll show on your calendar, and Prio will plan work around them.</p>
-          </div>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            <X size={16} />
-          </button>
-        </div>
-        <div className="mt-2">
-          <ClassTimesEditor />
-        </div>
-        <button type="button" className="btn-primary mt-3 w-full" onClick={onClose}>
+    <Dialog
+      title="When do your classes meet?"
+      description="They'll show on your calendar, and SmartScheduler will plan work around them."
+      onClose={onClose}
+      size="lg"
+    >
+      <ClassTimesEditor />
+      <DialogActions>
+        <Button variant="primary" onClick={onClose}>
           Done
-        </button>
-      </div>
-    </>
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

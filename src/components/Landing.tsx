@@ -1,23 +1,32 @@
 /**
- * The home page: what Prio does, how it works, and where to find each calendar
+ * The home page: what SmartScheduler does, how it works, and where to find each calendar
  * link. It renders on the server so it shows up at once; only the link guide's
- * tabs run in the browser. Anyone who already has calendars set up skips it (see
- * the root layout) and goes straight to the app at /app.
+ * tabs and the Prototype tag run in the browser. Anyone who already has calendars
+ * set up skips it (see the root layout) and goes straight to the app at /app.
+ *
+ * The same page is served at /about (`variant="about"`) for people who already use
+ * SmartScheduler, where the main button opens the app instead of starting setup.
+ *
+ * This is a low-fidelity prototype: illustrations are grey placeholders, and each
+ * screen has one primary (accent) button, with every other action drawn quieter.
  */
 import Link from "next/link";
 import { ArrowRight, Bell, Check, CircleAlert, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
-import { CALENDAR_KINDS } from "./calendarGuide";
-import { GapsArt, LinkArt, OrderArt, PlanPreview } from "./LandingArt";
 import { LinkGuide } from "./LinkGuide";
+import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
+import { DaySketch, LinkSketch, PlanSketch } from "./LandingSketches";
+import { ButtonLink, Wordmark } from "./ui";
 
 const WRAP = "max-w-6xl mx-auto px-4 sm:px-6";
 
-export function Landing() {
+export type LandingVariant = "home" | "about";
+
+export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
   return (
     <div data-landing className="flex min-h-dvh flex-col">
       <Nav />
       <main className="flex-1">
-        <Hero />
+        <Hero variant={variant} />
         <WorksWith />
         <HowItWorks />
         <Features />
@@ -40,19 +49,19 @@ function SampleLink({ className, children = "Try it with sample data" }: { class
   );
 }
 
-function StartLink({ children = "Get started" }: { children?: React.ReactNode }) {
+/** Opens the app. Only the hero's copy is `primary`; repeats further down are quieter. */
+function StartLink({ children = "Start planning", primary = false }: { children?: React.ReactNode; primary?: boolean }) {
   return (
-    <Link href="/app" className="btn-primary btn-lg">
+    <ButtonLink href="/app" variant={primary ? "primary" : "secondary"} size="lg" trailingIcon={ArrowRight}>
       {children}
-      <ArrowRight size={18} />
-    </Link>
+    </ButtonLink>
   );
 }
 
 function SectionIntro({ id, eyebrow, title, lead }: { id: string; eyebrow: string; title: string; lead?: string }) {
   return (
     <div className="mx-auto max-w-2xl text-center">
-      <p className="text-sm font-semibold text-accent">{eyebrow}</p>
+      <p className="text-sm font-semibold uppercase tracking-wide text-muted">{eyebrow}</p>
       <h2 id={id} className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-balance sm:text-4xl">
         {title}
       </h2>
@@ -65,12 +74,14 @@ function SectionIntro({ id, eyebrow, title, lead }: { id: string; eyebrow: strin
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-30 border-b border-line/70 bg-bg/80 backdrop-blur-md">
-      <div className={`${WRAP} flex h-14 items-center gap-8`}>
-        <a href="#top" className="wordmark text-xl select-none" aria-label="Prio, back to top">
-          Prio<span className="text-accent">.</span>
+    <header className="sticky top-0 z-30 border-b border-line-strong bg-bg">
+      <div className={`${WRAP} flex h-14 items-center gap-3 sm:gap-6`}>
+        <a href="#top" className="shrink-0" aria-label="SmartScheduler, back to top">
+          <Wordmark />
         </a>
-        <nav aria-label="On this page" className="hidden items-center gap-7 text-sm text-muted md:flex">
+        <PrototypeBadge />
+        <GoalBadge />
+        <nav aria-label="On this page" className="hidden items-center gap-6 text-base text-muted md:flex">
           <a href="#how-it-works" className="transition-colors hover:text-fg">
             How it works
           </a>
@@ -81,52 +92,42 @@ function Nav() {
             FAQ
           </a>
         </nav>
-        <Link href="/app" className="btn-primary ml-auto">
-          Get started
-        </Link>
+        {/* Quiet on purpose: the hero holds this screen's one primary button. */}
+        <ButtonLink href="/app" className="ml-auto shrink-0">
+          <span className="sm:hidden">Open app</span>
+          <span className="hidden sm:inline">Open SmartScheduler</span>
+        </ButtonLink>
       </div>
     </header>
   );
 }
 
-function Hero() {
+function Hero({ variant }: { variant: LandingVariant }) {
   return (
-    <section aria-labelledby="hero-title" className="relative isolate overflow-hidden">
-      <div aria-hidden className="landing-glow absolute inset-x-0 top-0 -z-10 h-[44rem]" />
-      <div className={`${WRAP} pt-14 text-center sm:pt-20 lg:pt-24`}>
-        <p className="inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-full border border-line bg-surface/80 px-3.5 py-1.5 text-xs font-medium text-muted shadow-sm sm:text-[0.8125rem]">
-          {CALENDAR_KINDS.map((k) => (
-            <span key={k.id} className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: k.color }} />
-              {k.label}
-            </span>
-          ))}
-          <ArrowRight size={13} className="text-faint" aria-hidden />
-          <span className="text-fg">One plan</span>
-        </p>
-        <h1 id="hero-title" className="mx-auto mt-6 max-w-4xl text-[2.5rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-5xl lg:text-6xl">
-          <span className="block text-balance">Every calendar in one place.</span>
-          <span className="block text-balance text-accent">Every gap filled with what&apos;s due soonest.</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-pretty sm:text-xl">
-          Prio brings your assignments and classes from Canvas, your shifts from work and your plans from Google, Outlook or Apple into one calendar. Then it
-          finds the free time between them and fills each gap with whatever&apos;s due soonest.
-        </p>
-        <div className="mt-9 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <StartLink />
+    <section id="top" aria-labelledby="hero-title" className="scroll-mt-14">
+      <div className={`${WRAP} pt-12 text-center sm:pt-16 lg:pt-20`}>
+        {/* The overarching capability comes first and is the biggest thing on the page. */}
+        <CapabilityHero id="hero-title" size="page" className="mx-auto max-w-5xl">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-pretty sm:text-xl">
+            SmartScheduler puts your classes and assignments from Canvas, your work schedule and your plans from Google, Outlook or Apple on one calendar. Then it fills each
+            free gap with whatever&apos;s due soonest.
+          </p>
+        </CapabilityHero>
+        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          {variant === "about" ? <StartLink primary>Open SmartScheduler</StartLink> : <StartLink primary>Start planning</StartLink>}
           <SampleLink className="btn btn-lg" />
         </div>
-        <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted">
+        <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-base text-muted">
           {["Free", "No account or sign-up", "Saved only in your browser"].map((point) => (
             <li key={point} className="inline-flex items-center gap-1.5">
-              <Check size={15} strokeWidth={2.5} className="text-ok" />
+              <Check size={15} strokeWidth={2.5} />
               {point}
             </li>
           ))}
         </ul>
       </div>
-      <div className={`${WRAP} mt-14 pb-16 sm:mt-16 sm:pb-24`}>
-        <PlanPreview />
+      <div className={`${WRAP} mt-12 pb-16 sm:pb-20`}>
+        <PlanSketch />
       </div>
     </section>
   );
@@ -136,11 +137,11 @@ const APPS = ["Canvas", "Learning Suite", "Google Calendar", "Outlook", "Apple C
 
 function WorksWith() {
   return (
-    <section aria-label="Works with" className="border-y border-line bg-surface/60">
+    <section aria-label="Works with" className="border-y border-line-strong">
       <div className={`${WRAP} flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6`}>
         <span className="text-sm text-muted">Works with</span>
         {APPS.map((name) => (
-          <span key={name} className="text-[0.9375rem] font-semibold tracking-tight text-fg/75">
+          <span key={name} className="border border-line px-2 text-base text-fg">
             {name}
           </span>
         ))}
@@ -159,19 +160,19 @@ function HowItWorks() {
         <SectionIntro
           id="how-title"
           eyebrow="How it works"
-          title="Paste your links. Prio does the rest."
+          title="Paste your links. SmartScheduler does the rest."
           lead="Setting up takes a couple of minutes. After that, your plan keeps itself up to date."
         />
         <ol className="mt-12 grid gap-5 sm:mt-16 md:grid-cols-3">
-          <Step n={1} title="Add your calendar links" art={<LinkArt />}>
+          <Step n={1} title="Add your calendar links" art={<LinkSketch />}>
             Paste a private link from Canvas, Learning Suite, Google, Outlook or Apple. School calendars bring in your classes and assignments. Work and
-            personal calendars tell Prio when you&apos;re busy.
+            personal calendars tell SmartScheduler when you&apos;re busy.
           </Step>
-          <Step n={2} title="Prio finds your free time" art={<GapsArt />}>
-            Classes, shifts and plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
+          <Step n={2} title="SmartScheduler finds your free time" art={<DaySketch filled={false} />}>
+            Classes, work and other plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
             time.
           </Step>
-          <Step n={3} title="Each gap gets what's due soonest" art={<OrderArt />}>
+          <Step n={3} title="Each gap gets what's due soonest" art={<DaySketch filled />}>
             Free time fills with the most urgent work that fits. Big projects are split across gaps, and exams get study time before them.
           </Step>
         </ol>
@@ -183,12 +184,10 @@ function HowItWorks() {
 function Step({ n, title, art, children }: { n: number; title: string; art: React.ReactNode; children: React.ReactNode }) {
   return (
     <li className="card flex flex-col overflow-hidden">
-      <div aria-hidden className="pointer-events-none flex h-44 items-center justify-center border-b border-line bg-surface-2/60 px-5 select-none">
-        {art}
-      </div>
+      <div className="border-b border-line-strong">{art}</div>
       <div className="p-5 sm:p-6">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent/10 text-xs font-semibold text-accent tabular-nums">{n}</span>
+          <span className="grid h-6 w-6 shrink-0 place-items-center border border-line-strong text-sm font-semibold tabular-nums">{n}</span>
           <h3 className="font-semibold">{title}</h3>
         </div>
         <p className="mt-2.5 text-sm leading-relaxed text-muted">{children}</p>
@@ -203,12 +202,12 @@ const FEATURES = [
   {
     icon: Target,
     title: "What to do right now",
-    text: "Open Prio and the first thing you see is the one task to work on now, with a Done button.",
+    text: "Open SmartScheduler and the first thing you see is the one task to work on now, with a Done button.",
   },
   {
     icon: CircleAlert,
     title: "Warnings while there's still time",
-    text: "If something won't fit before it's due, Prio tells you early, while you can still make room for it.",
+    text: "If something won't fit before it's due, SmartScheduler tells you early, while you can still make room for it.",
   },
   {
     icon: Bell,
@@ -218,7 +217,7 @@ const FEATURES = [
   {
     icon: RefreshCw,
     title: "Always up to date",
-    text: "Calendar links are live. Prio re-reads them whenever you open it, and every 30 minutes while it's open.",
+    text: "Calendar links are live. SmartScheduler re-reads them whenever you open it, and every 30 minutes while it's open.",
   },
   {
     icon: GraduationCap,
@@ -234,18 +233,18 @@ const FEATURES = [
 
 function Features() {
   return (
-    <section aria-labelledby="features-title" className="border-y border-line bg-surface/60 py-20 sm:py-28">
+    <section aria-labelledby="features-title" className="border-y border-line-strong py-20 sm:py-28">
       <div className={WRAP}>
         <SectionIntro
           id="features-title"
-          eyebrow="Why Prio"
+          eyebrow="Why SmartScheduler"
           title="Always know what to work on next"
-          lead="No more checking three apps to work out when you'll get anything done. Prio keeps one plan, and keeps it current."
+          lead="No more checking three apps to work out when you'll get anything done. SmartScheduler keeps one plan, and keeps it current."
         />
         <div className="mt-12 grid gap-x-10 gap-y-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div key={f.title}>
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent/10 text-accent">
+              <span className="grid h-10 w-10 place-items-center border border-line-strong">
                 <f.icon size={19} />
               </span>
               <h3 className="mt-4 font-semibold">{f.title}</h3>
@@ -268,13 +267,13 @@ function GetYourLinks() {
           id="links-title"
           eyebrow="Get started"
           title="Where to find your calendar links"
-          lead="Every calendar app can share a private link to your calendar, usually called iCal, ICS or webcal. Copy one from each app you use and paste them into Prio. They stay up to date on their own."
+          lead="Every calendar app can share a private link to your calendar, usually called iCal, ICS or webcal. Copy one from each app you use and paste them into SmartScheduler. They stay up to date on their own."
         />
         <div className="mt-10 sm:mt-12">
           <LinkGuide />
         </div>
         <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <StartLink>Paste your links into Prio</StartLink>
+          <StartLink>Paste your links into SmartScheduler</StartLink>
           <SampleLink className="btn btn-lg">No links handy? Try sample data</SampleLink>
         </div>
         <p className="mt-5 text-center text-xs text-muted">
@@ -290,7 +289,7 @@ function GetYourLinks() {
 
 const FAQ = [
   {
-    q: "Is Prio free? Do I need an account?",
+    q: "Is SmartScheduler free? Do I need an account?",
     a: "It's free, and there's no account or sign-up. Open it, paste your calendar links and you have a plan.",
   },
   {
@@ -298,19 +297,19 @@ const FAQ = [
     a: "In your browser. Your calendar links, classes, done marks and settings are saved on your device. When a calendar is refreshed, the server reads it, hands it straight back and keeps nothing.",
   },
   {
-    q: "Can Prio tell when I've turned something in?",
+    q: "Can SmartScheduler tell when I've turned something in?",
     a: "No. Calendar links say when work is due, not whether you've handed it in, so you tick things off as you finish them. When you first add a school calendar, anything already past due is marked done for you.",
   },
   {
     q: "My class calendar doesn't say when class meets. Is that a problem?",
-    a: "Most don't, so Prio asks. Add each class's days and times once during setup, and Prio shows them on your calendar and plans around them.",
+    a: "Most don't, so SmartScheduler asks. Add each class's days and times once during setup, and SmartScheduler shows them on your calendar and plans around them.",
   },
   {
     q: "What if my job isn't on any calendar?",
-    a: "Add your shifts as a weekly busy time during setup, the same way you'd add practice or a commute. Prio plans around them like anything else.",
+    a: "Add your work schedule as a weekly busy time during setup, the same way you'd add practice or a commute. SmartScheduler plans around them like anything else.",
   },
   {
-    q: "How does Prio decide what comes first?",
+    q: "How does SmartScheduler decide what comes first?",
     a: "Whatever's due soonest goes first. If the most urgent thing is too long for a short gap, the next thing that fits goes there instead, so short gaps still get used. You can change how long anything takes and the plan updates.",
   },
   {
@@ -324,13 +323,13 @@ function Faq() {
     <section id="faq" aria-labelledby="faq-title" className="scroll-mt-14 border-t border-line py-20 sm:py-28">
       <div className={`${WRAP} grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16`}>
         <div>
-          <p className="text-sm font-semibold text-accent">FAQ</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-muted">FAQ</p>
           <h2 id="faq-title" className="mt-3 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
             Questions, answered
           </h2>
           <div className="card mt-8 p-5">
             <div className="flex items-center gap-2 font-semibold">
-              <Lock size={16} className="text-accent" />
+              <Lock size={16} />
               Private by design
             </div>
             <p className="mt-2 text-sm leading-relaxed text-muted">
@@ -343,7 +342,7 @@ function Faq() {
             <details key={item.q} className="group">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-medium [&::-webkit-details-marker]:hidden">
                 {item.q}
-                <Plus size={18} className="shrink-0 text-muted transition-transform duration-200 group-open:rotate-45" />
+                <Plus size={18} className="shrink-0 text-muted group-open:rotate-45" />
               </summary>
               <p className="pr-8 pb-5 leading-relaxed text-muted">{item.a}</p>
             </details>
@@ -358,8 +357,7 @@ function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="pb-20 sm:pb-28">
       <div className={WRAP}>
-        <div className="relative isolate overflow-hidden rounded-[1.75rem] border border-line bg-surface px-6 py-14 text-center shadow-[var(--shadow)] sm:px-12 sm:py-20">
-          <div aria-hidden className="landing-glow absolute inset-0 -z-10" />
+        <div className="border border-line-strong bg-surface px-6 py-14 text-center sm:px-12 sm:py-20">
           <h2 id="closing-title" className="mx-auto max-w-2xl text-3xl leading-[1.1] font-semibold tracking-[-0.03em] text-balance sm:text-5xl">
             Stop juggling calendars. Start knowing what&apos;s next.
           </h2>
@@ -378,13 +376,11 @@ function ClosingCta() {
 
 function Footer() {
   return (
-    <footer className="border-t border-line">
+    <footer className="border-t border-line-strong">
       <div className={`${WRAP} flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between`}>
         <div>
-          <div className="wordmark text-lg select-none">
-            Prio<span className="text-accent">.</span>
-          </div>
-          <p className="mt-1 text-sm text-muted">One calendar for school, work and life, with a plan for every gap.</p>
+          <Wordmark />
+          <p className="mt-1 text-sm text-muted">One calendar for school, work and life, with a plan for every gap. An early prototype.</p>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
           <a href="#how-it-works" className="hover:text-fg">
@@ -396,8 +392,11 @@ function Footer() {
           <a href="#faq" className="hover:text-fg">
             FAQ
           </a>
+          <Link href="/design" className="hover:text-fg">
+            Design library
+          </Link>
           <Link href="/app" className="hover:text-fg">
-            Open Prio
+            Open SmartScheduler
           </Link>
         </nav>
       </div>

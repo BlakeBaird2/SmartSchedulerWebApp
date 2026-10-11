@@ -1,38 +1,47 @@
+/* Sketch-style font for the low-fidelity prototype. Loaded from Google Fonts with no
+   npm dependency; if it can't load, the handwritten system fonts below take over. */
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
-  --bg: #f6f5f1;
+  /*
+   * Low-fidelity wireframe palette: greys only, plus ONE accent (a "blue pen")
+   * for the primary action on each screen and the few things that must stand out.
+   * Warnings and errors are near-black and always carry an icon or words, so
+   * nothing depends on colour alone.
+   */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f1efe9;
-  --line: #e6e3db;
-  --line-strong: #d3cfc4;
-  --fg: #1c1b18;
-  --muted: #6f6b62;
-  --faint: #a19c91;
-  --accent: #4f46e5;
-  --danger: #dc2626;
-  --warn: #d97706;
-  --ok: #059669;
-  --shadow: 0 1px 2px rgb(28 27 24 / 0.05), 0 8px 24px -12px rgb(28 27 24 / 0.18);
+  --surface-2: #efefef;
+  --line: #9a9a9a;
+  --line-strong: #4a4a4a;
+  --fg: #1a1a1a;
+  --muted: #5c5c5c;
+  --faint: #8f8f8f;
+  --accent: #2459d6;
+  --danger: #111111;
+  --warn: #3d3d3d;
+  --ok: #3d3d3d;
+  --shadow: none;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg: #121212;
-  --surface: #1b1b1c;
-  --surface-2: #232325;
-  --line: #2b2b2e;
-  --line-strong: #3a3a3e;
-  --fg: #ecebe6;
-  --muted: #a3a09a;
-  --faint: #6b6963;
-  --accent: #8b85ff;
-  --danger: #f87171;
-  --warn: #fbbf24;
-  --ok: #34d399;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -12px rgb(0 0 0 / 0.7);
+  --bg: #161616;
+  --surface: #161616;
+  --surface-2: #262626;
+  --line: #6a6a6a;
+  --line-strong: #b5b5b5;
+  --fg: #ededed;
+  --muted: #b0b0b0;
+  --faint: #7d7d7d;
+  --accent: #7aa2ff;
+  --danger: #ffffff;
+  --warn: #d0d0d0;
+  --ok: #d0d0d0;
+  --shadow: none;
   color-scheme: dark;
 }
 
@@ -49,9 +58,9 @@
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-ok: var(--ok);
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --radius-xl: 14px;
-  --radius-2xl: 18px;
+  --font-sans: "Patrick Hand", "Comic Neue", "Segoe Print", "Chalkboard SE", "Comic Sans MS", cursive, ui-sans-serif, system-ui, sans-serif;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
 }
 
 @layer base {
@@ -59,7 +68,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "cv11", "ss01", "tnum";
+    font-feature-settings: "tnum";
   }
 
   body {
@@ -81,8 +90,8 @@
 /* Component classes live in the components layer so Tailwind utilities (hidden, flex, ...) still win. */
 @layer components {
   .wordmark {
-    font-weight: 800;
-    letter-spacing: -0.04em;
+    font-weight: 700;
+    letter-spacing: 0;
   }
 
   .card {
@@ -491,47 +500,313 @@
  * Home page
  * ------------------------------------------------------------------------- */
 
-/* A soft wash of the accent colour behind the hero and the closing call to action. */
-.landing-glow {
-  background: radial-gradient(60% 55% at 50% 0%, color-mix(in oklab, var(--accent) 13%, transparent), transparent 72%);
-}
-
-/* Planned work settles into its free time, one piece after another. Set --delay inline. */
-@keyframes landing-settle {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.landing-settle {
-  animation: landing-settle 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  animation-delay: var(--delay, 0ms);
-}
-
 @media (prefers-reduced-motion: no-preference) {
   /* Links to sections of the home page glide rather than jump. */
   html:has([data-landing]) {
     scroll-behavior: smooth;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .landing-settle {
-    animation: none;
+
+.skeleton {
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+}
+
+/* ---------------------------------------------------------------------------
+ * Low-fidelity wireframe layer
+ *
+ * The prototype is meant to look like an early sketch: thin outlined boxes,
+ * square controls, greys and one accent, no shadows, gradients, blur or glossy
+ * effects. The reset just below sits outside every layer and uses !important
+ * so it wins over the Tailwind utilities scattered through the components
+ * (rounded-*, shadow-*, backdrop-blur). The component overrides after it live in
+ * the components layer, so utilities on a single element still apply.
+ * Remove this block to go back to a polished look.
+ * ------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@layer components {
+  /* Boxes read as outlines. */
+  .card {
+    border-color: var(--line-strong);
+  }
+
+  /* Every control is a plain rectangle with a visible outline. */
+  .btn,
+  .input,
+  .seg {
+    border-color: var(--line-strong);
+  }
+  .btn {
+    font-size: 0.9375rem;
+    font-weight: 400;
+  }
+  .btn:active {
+    transform: none;
+  }
+  .btn-primary {
+    border: 2px solid var(--accent);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary:hover {
+    filter: none;
+    background: color-mix(in oklab, var(--accent) 85%, black);
+  }
+  /* Dark text on the lighter dark-mode accent, so the label stays readable. */
+  [data-theme="dark"] .btn-primary {
+    color: #0d0d0d;
+  }
+  .btn-lg {
+    font-size: 1.15rem;
+  }
+  .input:focus {
+    border-color: var(--accent);
+    outline: 2px solid color-mix(in oklab, var(--accent) 35%, transparent);
+    outline-offset: 0;
+  }
+  .seg {
+    background: var(--surface);
+    padding: 2px;
+  }
+  .seg > button[aria-pressed="true"] {
+    background: var(--surface-2);
+    outline: 1px solid var(--line-strong);
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .switch::after {
+    border: 1px solid var(--line-strong);
+  }
+
+  /* Planned work keeps its dashed edge, which is already wireframe language. */
+  .event-block,
+  .task-card {
+    border-color: var(--line-strong);
+  }
+
+  /* Grey placeholder for any picture or illustration, labelled in plain words. */
+  .wire-placeholder {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    color: var(--muted);
+    text-align: center;
+  }
+  .wire-placeholder > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    stroke: var(--line);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .wire-placeholder > span {
+    position: relative;
+    background: var(--surface-2);
+    padding: 0.15rem 0.5rem;
+    font-size: 1rem;
+  }
+
+  /* The overarching capability: the first and biggest thing on each entry screen. */
+  .capability {
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    text-wrap: balance;
+  }
+
+  /* "Prototype" badge in every header: a hand-drawn dashed tag. */
+  .proto-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: 1.5px dashed var(--fg);
+    background: var(--surface);
+    color: var(--fg);
+    padding: 0.05rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .proto-badge:hover {
+    background: var(--surface-2);
+  }
+  .proto-badge:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 
-.skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-  border-radius: 8px;
+/* Shadows are off, so Tailwind's ring-* indicators are gone too. Outlines replace them. */
+:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: -2px;
 }
-@keyframes shimmer {
-  to {
-    background-position: -200% 0;
+[role="radio"][aria-checked="true"] {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Design library additions (src/components/ui). Shown live at /design.
+ * ------------------------------------------------------------------------- */
+@layer components {
+  /* Low-stakes action in a dense list: no outline until you point at it. */
+  .btn-quiet {
+    border-color: transparent;
+    color: var(--muted);
+  }
+  .btn-quiet:hover {
+    color: var(--fg);
+    border-color: var(--line-strong);
+  }
+  /* Removes something. Heavier outline and a warning word, never just colour. */
+  .btn-danger {
+    border-width: 2px;
+    border-color: var(--fg);
+    font-weight: 700;
+  }
+  .btn-sm {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.875rem;
+  }
+  /* An action inside a sentence looks like a link: underlined. */
+  .text-link {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    color: inherit;
+    cursor: pointer;
+  }
+  .text-link:hover {
+    color: var(--fg);
+    text-decoration-thickness: 2px;
+  }
+  .check-sm {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  /* Ticked work: filled black box with a white tick. */
+  .check[aria-checked="true"] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+  .check:hover {
+    border-color: var(--fg);
+    color: var(--muted);
+  }
+  .switch[aria-checked="true"] {
+    background: var(--fg);
+  }
+  .switch::after {
+    background: var(--surface);
+  }
+}
+
+/* Fingers are bigger than cursors: on touch screens every control is at least 44px tall. */
+@media (pointer: coarse) {
+  .btn,
+  .btn-primary,
+  .seg > button,
+  .pill {
+    min-height: 44px;
+  }
+  .btn-icon {
+    min-width: 44px;
+    justify-content: center;
+  }
+  .check {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+@layer components {
+  .check[aria-checked="true"]:hover {
+    color: var(--bg);
+  }
+}
+.is-syncing svg {
+  animation: spin 900ms linear infinite;
+}
+
+/* Figure and ground: a task card is a white card, so it stands out on the grey of a free gap or a list. */
+@layer components {
+  .task-card,
+  [data-theme="dark"] .task-card {
+    background: var(--surface);
+  }
+  .task-card:hover,
+  [data-theme="dark"] .task-card:hover {
+    background: var(--surface);
+    border-color: var(--fg);
+  }
+
+  /*
+   * Pills: "off" must not look disabled (no fading). Off is a plain outline with
+   * muted text; on is shaded, bold and outlined in ink.
+   */
+  .pill {
+    border-color: var(--line-strong);
+    font-size: 0.875rem;
+  }
+  .pill[aria-pressed="false"],
+  .pill[aria-pressed="false"].pill-course {
+    opacity: 1;
+    background: var(--surface);
+    color: var(--muted);
+    border-style: dashed;
+  }
+  .pill[aria-pressed="true"],
+  .pill[aria-pressed="true"].pill-course {
+    background: var(--surface-2);
+    border-color: var(--fg);
+    color: var(--fg);
+    font-weight: 700;
+  }
+}
+
+/* Phones: the Prototype tag stays readable but takes less of the header row. */
+@media (max-width: 639px) {
+  .proto-badge {
+    font-size: 0.75rem;
+    padding: 0 0.35rem;
+    letter-spacing: 0.03em;
+  }
+}
+
+/*
+ * A soft blur behind the walkthrough, so attention stays on it. The wireframe
+ * reset above turns backdrop filters off everywhere; this one class opts back in.
+ */
+.backdrop-soft-blur {
+  -webkit-backdrop-filter: blur(3px) !important;
+  backdrop-filter: blur(3px) !important;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-soft-blur {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 }

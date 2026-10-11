@@ -26,7 +26,8 @@ export function FilterBar() {
     });
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filters">
+      {courses.length > 1 ? <span className="text-sm text-muted mr-1">Show:</span> : null}
       {courses.length > 1 ? (
         <>
           <button type="button" className="pill" aria-pressed={filters.courses === null} onClick={() => setFilters((f) => ({ ...f, courses: null }))}>
@@ -45,15 +46,15 @@ export function FilterBar() {
           })}
         </>
       ) : null}
+      {/* A plain on/off: pressed means finished work is shown. */}
       <button
         type="button"
         className="pill ml-auto"
-        aria-pressed={true}
+        aria-pressed={filters.showCompleted}
         onClick={() => setFilters((f) => ({ ...f, showCompleted: !f.showCompleted }))}
-        title={filters.showCompleted ? "Hide finished work" : "Show finished work"}
       >
-        {filters.showCompleted ? <Eye size={13} className="text-ok" /> : <EyeOff size={13} className="text-muted" />}
-        {filters.showCompleted ? "Showing done" : "Done hidden"}
+        {filters.showCompleted ? <Eye size={13} aria-hidden /> : <EyeOff size={13} aria-hidden />}
+        Show finished work
       </button>
     </div>
   );

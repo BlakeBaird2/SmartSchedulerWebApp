@@ -9,20 +9,24 @@ import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, sanitizeWorkspace } from "@/lib/workspace";
 import { type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
-import { AppContext, type AppContextValue, type CalMode, type Selection, type View } from "./context";
+import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
 import { Banners } from "./Banners";
 import { Onboarding, startDemo } from "./Onboarding";
-import { PlanView } from "./PlanView";
+import { PlanHeading, PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
 import { UpcomingView } from "./UpcomingView";
 import { ClassesView } from "./ClassesView";
 import { SettingsView } from "./SettingsView";
+import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
+import { Toast } from "./ui";
+import { AppTour } from "./AppTour";
+import { openGoalNotice } from "./Prototype";
 
 // ---------------------------------------------------------------------------
 // Reading what the browser has stored
@@ -35,11 +39,20 @@ interface UiPrefs {
   /** Whether the first-run setup has been finished. */
   setupDone: boolean;
   hideClassTimesTip: boolean;
+  settingsPanel: SettingsPanel;
 }
 
-const VIEWS: View[] = ["plan", "calendar", "upcoming", "classes", "settings"];
+const VIEWS: View[] = ["plan", "calendar", "upcoming", "classes", "settings", "help"];
 const CAL_MODES: CalMode[] = ["month", "week", "day"];
-const DEFAULT_UI: UiPrefs = { view: "plan", calMode: "week", filters: DEFAULT_FILTERS, setupDone: false, hideClassTimesTip: false };
+const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "schedule", "estimates", "browser", "about"];
+const DEFAULT_UI: UiPrefs = {
+  view: "plan",
+  calMode: "week",
+  filters: DEFAULT_FILTERS,
+  setupDone: false,
+  hideClassTimesTip: false,
+  settingsPanel: "main",
+};
 
 function parseUi(raw: string | null): UiPrefs {
   const p = parseJson<Partial<UiPrefs>>(raw);
@@ -56,6 +69,7 @@ function parseUi(raw: string | null): UiPrefs {
     },
     setupDone: p.setupDone === true,
     hideClassTimesTip: p.hideClassTimesTip === true,
+    settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
   };
 }
 
@@ -148,7 +162,13 @@ function takeDemoFromUrl(): Incoming | null {
 let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
-  opened ??= takeDemoFromUrl() ?? takeSetupFromUrl();
+  if (!opened) {
+    // Every visit opens on the Plan screen, which leads with what SmartScheduler does. The
+    // calendar mode and filters are still remembered.
+    const raw = readStored(KEYS.ui);
+    if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
+    opened = takeDemoFromUrl() ?? takeSetupFromUrl();
+  }
   return opened;
 }
 
@@ -205,12 +225,13 @@ export function App() {
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
-  const [toastMsg, setToastMsg] = useState<string | null>(incoming.message);
+  const [toastMsg, setToastMsg] = useState<{ message: string; undo?: () => void } | null>(incoming.message ? { message: incoming.message } : null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const toast = useCallback((message: string) => {
-    setToastMsg(message);
+  const toast = useCallback((message: string, options?: { undo?: () => void }) => {
+    setToastMsg({ message, undo: options?.undo });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToastMsg(null), 3600);
+    // Leave a little longer to read and reach Undo.
+    toastTimer.current = setTimeout(() => setToastMsg(null), options?.undo ? 6000 : 3600);
   }, []);
   useEffect(() => {
     if (!incoming.message) return;
@@ -237,7 +258,7 @@ export function App() {
 
   const saveSnapshot = useCallback(
     (s: Snapshot) => {
-      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open Prio.");
+      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open SmartScheduler.");
     },
     [toast],
   );
@@ -390,14 +411,37 @@ export function App() {
 
   const toggleDone = useCallback(
     (task: Task) => {
-      update((w) => {
-        const done = { ...w.done };
-        if (done[task.id]) delete done[task.id];
-        else done[task.id] = new Date().toISOString();
-        return { ...w, done };
-      });
+      const flip = () =>
+        update((w) => {
+          const done = { ...w.done };
+          if (done[task.id]) delete done[task.id];
+          else done[task.id] = new Date().toISOString();
+          return { ...w, done };
+        });
+      flip();
+      // Ticking something off moves the whole plan, so say so and offer a way back.
+      toast(task.done ? `Moved back to your plan: ${task.title}` : `Done: ${task.title}`, { undo: flip });
     },
-    [update],
+    [update, toast],
+  );
+
+  const completeTask = useCallback(
+    (task: Task, opts?: { celebrate?: boolean }) => {
+      if (task.done) {
+        toggleDone(task);
+        return;
+      }
+      const flip = () =>
+        update((w) => {
+          const done = { ...w.done };
+          delete done[task.id];
+          return { ...w, done };
+        });
+      update((w) => ({ ...w, done: { ...w.done, [task.id]: new Date().toISOString() } }));
+      if (opts?.celebrate === false) toast(`Done: ${task.title}`, { undo: flip });
+      else setSelected({ kind: "completed", id: task.id });
+    },
+    [update, toggleDone, toast],
   );
 
   const setEstimate = useCallback(
@@ -412,7 +456,10 @@ export function App() {
     [update],
   );
 
-  const setView = useCallback((v: View) => writeUi({ view: v }), []);
+  const setView = useCallback((v: View) => {
+    writeUi(v === "settings" ? { view: v, settingsPanel: "main" } : { view: v });
+  }, []);
+  const setSettingsPanel = useCallback((p: SettingsPanel) => writeUi({ view: "settings", settingsPanel: p }), []);
   const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m }), []);
   const setFilters = useCallback((f: Filters | ((prev: Filters) => Filters)) => {
     const prev = parseUi(readStored(KEYS.ui)).filters;
@@ -456,6 +503,8 @@ export function App() {
     sync,
     view: ui.view,
     setView,
+    settingsPanel: ui.settingsPanel,
+    setSettingsPanel,
     calMode: ui.calMode,
     setCalMode,
     calCursor,
@@ -473,6 +522,8 @@ export function App() {
     hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
     clearChanges,
     toast,
+    openGoal: openGoalNotice,
+    completeTask,
   };
 
   const finishSetup = useCallback(() => writeUi({ setupDone: true, view: "plan" }), []);
@@ -485,18 +536,21 @@ export function App() {
         <div className="min-h-dvh flex flex-col">
           <Header />
           <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+            {ui.view === "plan" ? <PlanHeading /> : null}
             <Banners />
-            <div className="mt-4 fade-in" key={ui.view}>
+            <div className="mt-4 fade-in" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
               {ui.view === "plan" && <PlanView />}
               {ui.view === "calendar" && <CalendarView />}
               {ui.view === "upcoming" && <UpcomingView />}
               {ui.view === "classes" && <ClassesView />}
               {ui.view === "settings" && <SettingsView />}
+              {ui.view === "help" && <HelpView />}
             </div>
           </main>
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
+          <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
         </div>
       )}
       {incoming.pending ? (
@@ -511,12 +565,14 @@ export function App() {
         />
       ) : null}
       {toastMsg ? (
-        <div
-          role="status"
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-full bg-fg text-bg text-sm font-medium px-4 py-2 shadow-lg fade-in text-center"
-        >
-          {toastMsg}
-        </div>
+        <Toast
+          message={toastMsg.message}
+          action={toastMsg.undo ? "Undo" : undefined}
+          onAction={() => {
+            toastMsg.undo?.();
+            setToastMsg(null);
+          }}
+        />
       ) : null}
     </AppContext.Provider>
   );

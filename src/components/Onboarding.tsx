@@ -11,6 +11,8 @@ import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
+import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
+import { Button, Card, Wordmark } from "./ui";
 
 function demoWorkspace(): Workspace {
   const feed = (url: string, name: string, role: FeedConfig["role"], provider: FeedConfig["provider"], color: string): FeedConfig => ({
@@ -47,83 +49,106 @@ export function startDemo() {
 }
 
 export function Onboarding({ onFinish }: { onFinish: () => void }) {
-  const { ws, model } = useApp();
+  const { ws, model, toast } = useApp();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const hasSchool = ws.feeds.some((f) => f.role === "school");
   const hasClasses = model.visibleCourses.length > 0;
 
+  /** Leave setup and open a usable Plan. Keeps calendars already added; otherwise loads sample data. */
+  const skip = () => {
+    const hadFeeds = ws.feeds.length > 0;
+    if (!hadFeeds) startDemo();
+    onFinish();
+    toast(
+      hadFeeds
+        ? "Setup skipped — your calendars are ready on Plan."
+        : "Setup skipped — sample data loaded so you can try the goal.",
+    );
+  };
+
   return (
     <div className="min-h-dvh px-4 py-10 sm:py-16">
       <div className="max-w-xl mx-auto">
-        <Link href="/" className="wordmark inline-block text-3xl select-none" aria-label="Prio home page">
-          Prio<span className="text-accent">.</span>
-        </Link>
-        <p className="mt-2 text-[1.0625rem] text-muted leading-relaxed">
-          Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.
-        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link href="/" className="inline-block" aria-label="SmartScheduler home page">
+            <Wordmark size="lg" />
+          </Link>
+          <PrototypeBadge />
+          <GoalBadge />
+          {/* The one way out of setup, in the same place on every step (where onboarding usually puts Skip). */}
+          <Button className="ml-auto" icon={ws.feeds.length === 0 ? Sparkles : undefined} onClick={skip}>
+            {ws.feeds.length === 0 ? "Skip: try sample data" : "Skip setup"}
+          </Button>
+        </div>
+        <CapabilityHero className="mt-6">
+          <p className="mt-3 text-lg text-muted leading-relaxed">
+            Add your calendars and SmartScheduler puts your classes, work and life in one place, then plans each free gap for you.
+          </p>
+        </CapabilityHero>
 
         <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${step} of 3`}>
           {[1, 2, 3].map((n) => (
-            <span key={n} className={`h-1 w-10 rounded-full ${step >= n ? "bg-accent" : "bg-line"}`} />
+            <span key={n} className={`h-1.5 w-10 border border-line-strong ${step >= n ? "bg-fg" : "bg-surface"}`} />
           ))}
           <span className="ml-1">Step {step} of 3</span>
         </div>
 
         {step === 1 ? (
-          <section className="card p-5 sm:p-6 mt-3 space-y-5">
+          <Card padding="lg" className="mt-3 space-y-5">
             <div>
-              <h1 className="text-lg font-semibold">Add your calendars</h1>
+              <h2 className="text-xl font-semibold">Add your calendars</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                Start with your school calendar from Canvas, Learning Suite or any course site. Prio finds your classes and assignments on its own. Then add
+                Start with your school calendar from Canvas, Learning Suite or any course site. SmartScheduler finds your classes and assignments on its own. Then add
                 your work and personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
               </p>
             </div>
-            <FeedAdder autoFocus />
+            {/* Until a calendar is added, Add calendar is the main action; after that, Continue is. */}
+            <FeedAdder autoFocus primary={ws.feeds.length === 0} />
             <FeedList />
             <ProviderHelp />
             <div className="flex items-center gap-3 flex-wrap pt-1">
-              <button type="button" className="btn-primary" disabled={ws.feeds.length === 0} onClick={() => setStep(hasClasses ? 2 : 3)}>
+              <Button
+                variant={ws.feeds.length === 0 ? "secondary" : "primary"}
+                trailingIcon={ArrowRight}
+                disabled={ws.feeds.length === 0}
+                title={ws.feeds.length === 0 ? "Add a calendar first, or skip setup to try sample data" : undefined}
+                onClick={() => setStep(hasClasses ? 2 : 3)}
+              >
                 Continue
-                <ArrowRight size={16} />
-              </button>
+              </Button>
               {ws.feeds.length > 0 && !hasSchool ? (
                 <span className="text-xs text-muted">No school calendar yet. You can still add work by hand.</span>
               ) : null}
               {ws.feeds.length === 0 ? (
-                <button type="button" className="btn" onClick={startDemo}>
-                  <Sparkles size={15} />
-                  Just looking? Try sample data
-                </button>
+                <span className="text-sm text-muted">No link handy? Use Skip at the top to try it with sample data.</span>
               ) : null}
             </div>
-          </section>
+          </Card>
         ) : step === 2 ? (
-          <section className="card p-5 sm:p-6 mt-3 space-y-4">
+          <Card padding="lg" className="mt-3 space-y-4">
             <div>
-              <h1 className="text-lg font-semibold">When do your classes meet?</h1>
+              <h2 className="text-xl font-semibold">When do your classes meet?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times once so they show on your calendar and
-                Prio plans around them. Skip any class that doesn&apos;t meet in person.
+                SmartScheduler plans around them. Skip any class that doesn&apos;t meet in person.
               </p>
             </div>
             <ClassTimesEditor />
-            <div className="flex items-center gap-2 pt-1">
-              <button type="button" className="btn" onClick={() => setStep(1)}>
-                <ArrowLeft size={15} />
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <Button icon={ArrowLeft} onClick={() => setStep(1)}>
                 Back
-              </button>
-              <button type="button" className="btn-primary ml-auto" onClick={() => setStep(3)}>
+              </Button>
+              <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={() => setStep(3)}>
                 Continue
-                <ArrowRight size={16} />
-              </button>
+              </Button>
             </div>
-          </section>
+          </Card>
         ) : (
-          <section className="card p-5 sm:p-6 mt-3 space-y-5">
+          <Card padding="lg" className="mt-3 space-y-5">
             <div>
-              <h1 className="text-lg font-semibold">When do you like to work?</h1>
+              <h2 className="text-xl font-semibold">When do you like to work?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                Prio fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
+                SmartScheduler fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
               </p>
             </div>
             <HoursForm />
@@ -132,24 +157,22 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <p className="mt-0.5 mb-3 text-xs text-muted leading-relaxed">A job, practice, or commute that isn&apos;t on a calendar you added. You can skip this.</p>
               <WeeklyEditor />
             </div>
-            <div className="flex items-center gap-2 pt-1">
-              <button type="button" className="btn" onClick={() => setStep(hasClasses ? 2 : 1)}>
-                <ArrowLeft size={15} />
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <Button icon={ArrowLeft} onClick={() => setStep(hasClasses ? 2 : 1)}>
                 Back
-              </button>
-              <button type="button" className="btn-primary ml-auto" onClick={onFinish}>
+              </Button>
+              <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish}>
                 Build my plan
-                <ArrowRight size={16} />
-              </button>
+              </Button>
             </div>
-          </section>
+          </Card>
         )}
 
         <p className="mt-5 text-xs text-muted leading-relaxed flex gap-2">
           <Lock size={14} className="shrink-0 mt-0.5" />
           <span>
             No account needed. Your calendar links and everything you set here stay in this browser. The server reads a calendar only to hand it back to you,
-            and keeps nothing.
+            and keeps nothing. Setup is optional: Skip opens the app with sample data if you haven&apos;t added a calendar yet.
           </span>
         </p>
       </div>

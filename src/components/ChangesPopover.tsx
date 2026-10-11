@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ArrowRight, Bell, CalendarDays, Minus, Plus } from "lucide-react";
 import { courseStyle, useApp } from "./context";
+import { Button, EmptyState } from "./ui";
 import { KEYS, useStored, writeStored } from "./store";
 
 export function ChangesPopover() {
@@ -40,36 +41,46 @@ export function ChangesPopover() {
 
   return (
     <div className="relative" ref={ref}>
-      <button type="button" className="btn btn-icon relative" onClick={toggle} aria-label="Changes from your classes" title="Changes from your classes">
-        <Bell size={16} />
+      <Button
+        icon={Bell}
+        className="relative"
+        onClick={toggle}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label={unseen > 0 ? `Alerts: ${unseen} new changes in your classes` : "Alerts: changes in your classes"}
+        title="Changes in your classes"
+      >
+        <span className="hidden xl:inline">Alerts</span>
         {unseen > 0 ? (
-          <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+          <span className="absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 bg-fg text-bg text-[10px] font-bold flex items-center justify-center tabular-nums" aria-hidden>
             {unseen > 9 ? "9+" : unseen}
           </span>
         ) : null}
-      </button>
+      </Button>
       {open ? (
         <div className="card fixed sm:absolute right-4 sm:right-0 top-14 sm:top-auto sm:mt-2 w-[min(22rem,calc(100vw-2rem))] max-h-[60vh] overflow-y-auto scrollbar-thin z-50 fade-in">
           <div className="px-3.5 py-2.5 border-b border-line flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">What changed in your classes</div>
+              <div className="font-bold">Alerts</div>
               <div className="text-xs text-muted mt-0.5">Due dates that moved, and work added or removed, over the last 30 days.</div>
             </div>
             {changes.length > 0 ? (
-              <button
-                type="button"
-                className="btn shrink-0"
+              <Button
+                size="sm"
+                className="shrink-0"
                 onClick={() => {
                   clearChanges();
                   setOpen(false);
                 }}
               >
-                Clear
-              </button>
+                Clear all
+              </Button>
             ) : null}
           </div>
           {changes.length === 0 ? (
-            <p className="px-3.5 py-6 text-sm text-muted text-center">Nothing has changed yet. Prio checks every time your calendars refresh.</p>
+            <EmptyState compact icon={Bell} title="No changes yet">
+              SmartScheduler checks every time your calendars refresh, and lists due dates that move and work that is added or removed.
+            </EmptyState>
           ) : (
             <ul className="divide-y divide-line">
               {changes.map((c) => {
@@ -106,12 +117,12 @@ export function ChangesPopover() {
                           </>
                         ) : c.kind === "added" ? (
                           <>
-                            <Plus size={11} className="text-ok" />
+                            <Plus size={11} />
                             New {c.to ? `· due ${format(new Date(c.to), "MMM d")}` : ""}
                           </>
                         ) : (
                           <>
-                            <Minus size={11} className="text-danger" />
+                            <Minus size={11} />
                             Removed
                           </>
                         )}

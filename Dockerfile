@@ -1,6 +1,6 @@
 # Self-hosting image. Needs no configuration, no database and no volume.
-# Build: docker build -t prio .
-# Run:   docker run -p 3000:3000 prio
+# Build: docker build -t smartscheduler .
+# Run:   docker run -p 3000:3000 smartscheduler
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./

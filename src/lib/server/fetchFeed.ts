@@ -82,7 +82,7 @@ function allowPrivateHosts(): boolean {
   return process.env.FEED_ALLOW_PRIVATE_HOSTS === "1" || process.env.NODE_ENV === "development";
 }
 
-const PRIVATE = "That link points at a private address on a local network, which Prio isn't allowed to read.";
+const PRIVATE = "That link points at a private address on a local network, which SmartScheduler isn't allowed to read.";
 
 type Problem = "denied" | "missing" | "webpage";
 
@@ -205,7 +205,7 @@ export async function fetchFeedText(rawUrl: string, options: FetchOptions = {}):
           cache: "no-store",
           headers: {
             Accept: "text/calendar, text/plain;q=0.9, */*;q=0.5",
-            "User-Agent": "PrioritizedSchedule/1.0 (+calendar import)",
+            "User-Agent": "SmartScheduler/1.0 (+calendar import)",
           },
         });
       } catch (e) {

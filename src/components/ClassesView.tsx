@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Eye, Pencil, Plus, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ExternalLink, Eye, GraduationCap, Pencil, Plus, RotateCcw } from "lucide-react";
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit, Task } from "@/lib/types";
 import { duration, relativeDue, typeIconClass, typeMeta, whenLabel } from "@/lib/ui";
-import { courseStyle, useApp } from "./context";
-import { Switch } from "./ScheduleSettings";
-import { DoneToggle } from "./TaskRow";
+import { courseStyle, useApp, wireGray } from "./context";
+import { AppTaskCard } from "./TaskRow";
+import { Button, buttonClass, Dialog, DialogActions, EmptyState, Field, Switch, TextButton } from "./ui";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
 
 /**
@@ -15,17 +15,24 @@ import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
  * the class at the top, then its work in the order it's due.
  */
 export function ClassesView() {
-  const { model, update } = useApp();
+  const { model, update, setSettingsPanel } = useApp();
   const [editing, setEditing] = useState<Course | null>(null);
   const visible = model.visibleCourses;
   const hidden = model.courses.filter((c) => c.hidden);
 
   if (model.courses.length === 0) {
     return (
-      <div className="card p-10 text-center">
-        <p className="font-semibold">No classes yet</p>
-        <p className="mt-1 text-sm text-muted">Classes appear on their own once you add a school calendar in Settings.</p>
-      </div>
+      <EmptyState
+        icon={GraduationCap}
+        title="No classes yet"
+        action={
+          <Button variant="primary" onClick={() => setSettingsPanel("calendars")}>
+            Add a school calendar
+          </Button>
+        }
+      >
+        Classes appear on their own once you add a school calendar.
+      </EmptyState>
     );
   }
 
@@ -98,13 +105,11 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
           </h2>
           <div className="ml-auto flex items-center shrink-0">
             {course.url ? (
-              <a href={course.url} target="_blank" rel="noreferrer" className="p-1 text-faint hover:text-fg" title={`Open in ${feed?.name ?? "the class site"}`} aria-label={`Open ${course.code}`}>
+              <a href={course.url} target="_blank" rel="noreferrer" className={buttonClass({ variant: "quiet", iconOnly: true })} title={`Open in ${feed?.name ?? "the class site"}`} aria-label={`Open ${course.code}`}>
                 <ExternalLink size={14} />
               </a>
             ) : null}
-            <button type="button" className="p-1 text-faint hover:text-fg" onClick={onEdit} title="Rename, recolour or hide" aria-label={`Edit ${course.code}`}>
-              <Pencil size={14} />
-            </button>
+            <Button variant="quiet" iconOnly icon={Pencil} label={`Edit ${course.code}: rename, recolour or hide`} onClick={onEdit} />
           </div>
         </div>
         <p className="text-xs text-muted truncate" title={course.title}>
@@ -114,8 +119,8 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
         <div className="mt-1.5 min-h-[2.125rem]">
           <MeetsLine course={course} />
         </div>
-        <div className="mt-2.5 h-1 rounded-full bg-surface-2 overflow-hidden">
-          <div className="h-full rounded-full course-bar transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        <div className="mt-2.5 h-1.5 border border-line-strong bg-surface overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${course.code}: ${pct}% done`}>
+          <div className="h-full bg-fg transition-[width] duration-500" style={{ width: `${pct}%` }} />
         </div>
         <div className="mt-1 flex items-center text-[11px] text-muted tabular-nums">
           <span>
@@ -134,39 +139,31 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
         {stats.left.length === 0 ? <li className="px-1 py-3 text-xs text-muted text-center">All caught up</li> : null}
       </ul>
       {stats.left.length > PAGE ? (
-        <button type="button" className="mx-2 mb-2 text-xs text-muted hover:text-fg rounded-lg py-1.5 hover:bg-surface-2 transition" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? "Show less" : `${stats.left.length - PAGE} more`}
-        </button>
+        <Button variant="quiet" size="sm" className="mx-2 mb-2 justify-center" onClick={() => setExpanded((e) => !e)}>
+          {expanded ? "Show less" : `Show ${stats.left.length - PAGE} more`}
+        </Button>
       ) : null}
     </section>
   );
 }
 
 function ClassItem({ task }: { task: Task }) {
-  const { select, now } = useApp();
+  const { now } = useApp();
   const due = task.dueAt ? new Date(task.dueAt) : null;
   const late = due ? due.getTime() < now.getTime() : false;
   const meta = typeMeta(task.type);
   return (
-    <li
-      role="button"
-      tabIndex={0}
-      onClick={() => select({ kind: "task", id: task.id })}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") select({ kind: "task", id: task.id });
-      }}
-      className="task-card flex items-start gap-2 px-2 py-1.5 cursor-pointer"
-    >
-      <span className="pt-px">
-        <DoneToggle task={task} size="sm" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium leading-snug line-clamp-2">{task.title}</div>
-        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
-          {meta.loud ? <meta.icon size={11} className={typeIconClass(task.type)} strokeWidth={2.5} /> : null}
-          <span className={late ? "text-danger font-medium" : ""}>{due ? (late ? relativeDue(due, now) : whenLabel(due, now, !task.allDay)) : "No due date"}</span>
-        </div>
-      </div>
+    <li>
+      <AppTaskCard
+        task={task}
+        density="compact"
+        meta={
+          <>
+            {meta.loud ? <meta.icon size={11} className={typeIconClass(task.type)} strokeWidth={2.5} aria-label={meta.label} /> : null}
+            <span className={late ? "text-danger font-semibold" : ""}>{due ? (late ? relativeDue(due, now) : whenLabel(due, now, !task.allDay)) : "No due date"}</span>
+          </>
+        }
+      />
     </li>
   );
 }
@@ -182,37 +179,20 @@ function MeetsLine({ course }: { course: Course }) {
     );
   }
   return (
-    <button type="button" onClick={openClassTimes} className="inline-flex items-center gap-1 text-xs text-accent font-medium hover:underline">
-      <Plus size={12} />
+    <TextButton onClick={openClassTimes} className="inline-flex items-center gap-1 text-xs font-semibold">
+      <Plus size={12} aria-hidden />
       Add class times
-    </button>
+    </TextButton>
   );
 }
 
 function ClassEditDialog({ course, onClose }: { course: Course; onClose: () => void }) {
   const { snapshot } = useApp();
   const original = snapshot.feeds[course.feedId]?.result?.courses.find((c) => `${course.feedId}:${c.key}` === course.id);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
   return (
-    <>
-      <div className="fixed inset-0 bg-black/30 z-50 fade-in" onClick={onClose} aria-hidden />
-      <div role="dialog" aria-modal="true" aria-label={`Edit ${course.code}`} className="fixed z-50 inset-x-4 top-[12vh] mx-auto max-w-md card p-5 fade-in" style={courseStyle(course.color)}>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="course-dot" />
-          <h2 className="text-base font-semibold flex-1">Edit {course.code}</h2>
-          <button type="button" className="btn btn-icon" onClick={onClose} aria-label="Close">
-            <X size={16} />
-          </button>
-        </div>
-        <CourseEditor course={course} original={original} onDone={onClose} />
-      </div>
-    </>
+    <Dialog title={`Edit ${course.code}`} description="Rename it, change its shade, or hide it from your plan." onClose={onClose} style={courseStyle(course.color)}>
+      <CourseEditor course={course} original={original} onDone={onClose} />
+    </Dialog>
   );
 }
 
@@ -244,46 +224,48 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
   };
 
   return (
-    <form onSubmit={save} className="space-y-3">
-      <div className="grid grid-cols-[7rem_1fr] gap-2">
-        <label className="text-xs text-muted">
-          Short name
-          <input className="input input-sm !w-full mt-1" value={code} onChange={(e) => setCode(e.target.value)} maxLength={24} />
-        </label>
-        <label className="text-xs text-muted">
-          Full name
-          <input className="input input-sm !w-full mt-1" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} />
-        </label>
+    <form onSubmit={save} className="space-y-4">
+      <div className="grid grid-cols-[8rem_1fr] gap-3">
+        <Field label="Short name">
+          <input className="input" value={code} onChange={(e) => setCode(e.target.value)} maxLength={24} />
+        </Field>
+        <Field label="Full name">
+          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} />
+        </Field>
       </div>
-      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Colour">
-        {COURSE_COLORS.map((c) => (
-          <button
-            key={c}
-            type="button"
-            role="radio"
-            aria-checked={color === c}
-            aria-label={c}
-            onClick={() => setColor(c)}
-            className={`w-6 h-6 rounded-full transition ${color === c ? "ring-2 ring-offset-2 ring-offset-surface ring-fg/60" : "hover:scale-110"}`}
-            style={{ background: c }}
-          />
-        ))}
-      </div>
+      <fieldset>
+        <legend className="text-sm font-semibold">Shade</legend>
+        <div className="mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label="Shade">
+          {COURSE_COLORS.map((c, i) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={color === c}
+              aria-label={`Shade ${i + 1}`}
+              onClick={() => setColor(c)}
+              className="w-7 h-7 border border-line-strong"
+              style={{ background: wireGray(c) }}
+            />
+          ))}
+        </div>
+      </fieldset>
       <label className="flex items-center gap-2.5 text-sm">
         <Switch checked={hidden} onChange={setHidden} label="Hide this class" />
         Hide this class and leave its work out of the plan
       </label>
-      <div className="flex items-center gap-2">
-        <button type="submit" className="btn-primary !py-1.5">
+      <DialogActions
+        aside={
+          <Button variant="quiet" icon={RotateCcw} onClick={reset} title="Go back to the name and shade from the calendar">
+            Reset
+          </Button>
+        }
+      >
+        <Button onClick={onDone}>Cancel</Button>
+        <Button type="submit" variant="primary">
           Save
-        </button>
-        <button type="button" className="btn" onClick={onDone}>
-          Cancel
-        </button>
-        <button type="button" className="btn ml-auto" onClick={reset} title="Go back to the name and colour from the calendar">
-          Reset
-        </button>
-      </div>
+        </Button>
+      </DialogActions>
     </form>
   );
 }

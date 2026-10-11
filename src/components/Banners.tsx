@@ -1,9 +1,10 @@
 "use client";
 
-import { CircleAlert, Sparkles } from "lucide-react";
 import { useApp } from "./context";
 import { resetEverything } from "./store";
+import { Button, Callout, TextButton } from "./ui";
 
+/** Messages about the whole app, shown above every screen while they apply. */
 export function Banners() {
   const { ws, snapshot, setView } = useApp();
   const broken = ws.feeds.filter((f) => f.enabled && snapshot.feeds[f.id]?.error);
@@ -11,32 +12,24 @@ export function Banners() {
   return (
     <>
       {ws.demo ? (
-        <div className="mt-4 rounded-xl border border-accent/30 bg-accent/8 px-3.5 py-2.5 text-sm flex items-center gap-3 flex-wrap">
-          <Sparkles size={16} className="text-accent shrink-0" />
-          <span className="flex-1 min-w-0">
-            <b className="font-semibold">Sample data.</b> <span className="text-muted">Everything here is made up, so poke around.</span>
-          </span>
-          <button type="button" className="btn-primary !py-1.5 !text-[0.8125rem]" onClick={resetEverything}>
-            Use my own calendars
-          </button>
-        </div>
+        <Callout
+          tone="sample"
+          className="mt-4"
+          title="You're looking at sample data."
+          actions={<Button onClick={resetEverything}>Use my own calendars</Button>}
+        >
+          Everything here is made up. Press Done on the top task to see the plan move.
+        </Callout>
       ) : null}
       {broken.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-warn/40 bg-warn/10 px-3.5 py-2.5 text-sm flex gap-3">
-          <CircleAlert size={16} className="text-warn shrink-0 mt-0.5" />
-          <div className="min-w-0 flex-1">
-            <b className="font-semibold">
-              {broken.length === 1 ? `${broken[0].name} couldn't be read` : `${broken.length} calendars couldn't be read`}
-            </b>
-            <span className="text-muted">
-              {" "}
-              {broken.length === 1 ? snapshot.feeds[broken[0].id]?.error : "Their last good copies are still shown."}{" "}
-              <button type="button" className="underline underline-offset-2 hover:text-fg" onClick={() => setView("settings")}>
-                Check calendars
-              </button>
-            </span>
-          </div>
-        </div>
+        <Callout
+          tone="warning"
+          className="mt-4"
+          title={broken.length === 1 ? `${broken[0].name} couldn't be read` : `${broken.length} calendars couldn't be read`}
+        >
+          {broken.length === 1 ? snapshot.feeds[broken[0].id]?.error : "Their last good copies are still shown."}{" "}
+          <TextButton onClick={() => setView("settings")}>Check calendars</TextButton>
+        </Callout>
       ) : null}
     </>
   );

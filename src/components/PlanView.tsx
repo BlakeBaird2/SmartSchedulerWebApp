@@ -2,30 +2,27 @@
 
 import { useMemo } from "react";
 import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
 import type { PlannedWork, ScheduleItem } from "@/lib/timeline";
 import { buildDaySchedule, nowStatus } from "@/lib/timeline";
 import type { Task } from "@/lib/types";
 import { clock, clockRange, dueIn, duration, minutesLabel, plural, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
-import { DoneToggle, PlanNote } from "./TaskRow";
-import { TypeChip } from "./TypeChip";
+import { AppTaskCard, PlanNote } from "./TaskRow";
 import { useClassesWithoutTimes } from "./ClassTimes";
+import { CapabilityHero } from "./Prototype";
+import { Button, Callout, Card, CardHeader, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TypeChip } from "./ui";
 
 /**
  * The home screen. Three questions, in order:
  * what should I do right now, how does the rest of my day look, and what's due soon.
  */
 export function PlanView() {
-  const { snapshot, syncing, now } = useApp();
+  const { snapshot, syncing } = useApp();
   if (!snapshot.at && syncing) return <Loading />;
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{format(now, "EEEE, MMMM d")}</h1>
-        <p className="mt-0.5 text-sm text-muted">Prio fills your free time with whatever is due soonest. Tick things off as you finish them.</p>
-      </header>
       <ClassTimesPrompt />
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <div className="space-y-5 min-w-0">
@@ -38,6 +35,22 @@ export function PlanView() {
   );
 }
 
+/**
+ * The top of the Plan screen, drawn above any banners (such as the sample-data
+ * one) so what SmartScheduler does is the first and biggest thing someone sees here.
+ */
+export function PlanHeading() {
+  const { now } = useApp();
+  return (
+    <CapabilityHero className="pt-6">
+      <p className="mt-2 text-lg text-muted">
+        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span> · SmartScheduler fills each free gap with whatever is due soonest. Tick things off as you
+        finish them.
+      </p>
+    </CapabilityHero>
+  );
+}
+
 /** Asks for class times until every class has them, or the person says not now. */
 function ClassTimesPrompt() {
   const { openClassTimes, classTimesTipHidden, hideClassTimesTip } = useApp();
@@ -46,24 +59,23 @@ function ClassTimesPrompt() {
   const names = missing.map((c) => c.code);
   const list = names.length <= 3 ? names.join(", ") : `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
   return (
-    <section className="rounded-[var(--radius-xl)] border border-accent/30 bg-accent/[0.06] p-4 flex items-start gap-3 flex-wrap">
-      <CalendarClock size={18} className="text-accent shrink-0 mt-0.5" />
-      <div className="min-w-0 flex-1 basis-60">
-        <p className="text-sm font-semibold">When do your classes meet?</p>
-        <p className="mt-0.5 text-sm text-muted">
-          Your class calendars don&apos;t include class times for {list}. Add them once and they&apos;ll show on your calendar, so your real free time is
-          clear.
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <button type="button" className="btn-primary !py-1.5 !text-[0.8125rem]" onClick={openClassTimes}>
-          Add class times
-        </button>
-        <button type="button" className="btn" onClick={hideClassTimesTip}>
-          Not now
-        </button>
-      </div>
-    </section>
+    <Callout
+      icon={CalendarClock}
+      title="When do your classes meet?"
+      actions={
+        <>
+          <Button variant="quiet" onClick={hideClassTimesTip}>
+            Not now
+          </Button>
+          <Button icon={Plus} onClick={openClassTimes}>
+            Add class times
+          </Button>
+        </>
+      }
+    >
+      Your class calendars don&apos;t include class times for {list}. Add them once and they&apos;ll show on your calendar, so your real free time is
+      clear.
+    </Callout>
   );
 }
 
@@ -111,7 +123,7 @@ function NowCard() {
     work = status.work;
     if (status.next) lead = `At ${clock(status.next.start)}, work on`;
   } else if (status.state === "later") {
-    dot = "bg-accent";
+    dot = "bg-fg";
     headline = `Free from ${clock(status.next.start)} to ${clock(status.next.end)}`;
     const first = model.events.find((e) => e.busy && !e.allDay && Date.parse(e.start) >= now.getTime() && Date.parse(e.start) < status.next.start.getTime());
     detail = first ? `${first.title} at ${clock(new Date(first.start))} comes first` : `Your day starts at ${minutesLabel(ws.prefs.dayStart)}`;
@@ -126,7 +138,8 @@ function NowCard() {
   const [first, second] = work;
 
   return (
-    <section className="card p-5">
+    // The focal point of the whole app: a heavier outline than any other card, so the eye lands here first.
+    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now">
       <div className="flex items-center gap-2 text-sm font-medium">
         <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
         <span className="truncate">{headline}</span>
@@ -143,19 +156,18 @@ function NowCard() {
           ) : null}
         </>
       ) : status.state === "done" ? (
-        <button type="button" className="btn mt-4" onClick={() => setPlanDay(1)}>
-          See tomorrow
-          <ArrowRight size={14} />
-        </button>
+        <Button variant="primary" className="mt-4" trailingIcon={ArrowRight} onClick={() => setPlanDay(1)}>
+          See tomorrow&apos;s plan
+        </Button>
       ) : (
         <p className="mt-4 text-[0.9375rem]">{hasWork ? "Nothing due soon fits in this time. Enjoy the break." : "You're all caught up."}</p>
       )}
-    </section>
+    </Card>
   );
 }
 
 function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
-  const { toggleDone, select, now } = useApp();
+  const { completeTask, select, now } = useApp();
   const { task, block } = item;
   const course = useCourse(task);
   const due = task.dueAt ? new Date(task.dueAt) : null;
@@ -163,14 +175,14 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
 
   return (
     <div className="mt-4">
-      <div className="section-title">{lead}</div>
+      <SectionLabel>{lead}</SectionLabel>
       <div className="mt-2 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <button type="button" onClick={() => select({ kind: "task", id: task.id })} className="text-left text-xl font-semibold leading-snug hover:underline underline-offset-4 decoration-line-strong">
             {task.title}
           </button>
           <div className="mt-1.5 flex items-center gap-x-2 gap-y-1 flex-wrap text-sm text-muted" style={courseStyle(course?.color)}>
-            {course ? <span className="course-chip rounded-md px-1.5 py-0.5 text-xs font-semibold">{course.code}</span> : null}
+            {course ? <ClassChip variant="tag" code={course.code} color={course.color} title={course.title} /> : null}
             {typeMeta(task.type).loud ? <TypeChip type={task.type} /> : null}
             <span>
               {duration(block.minutes)}
@@ -178,11 +190,16 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
             </span>
             {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
           </div>
+          {/* Follow-ups, not actions: quiet underlined links, so Done stays the one thing that stands out. */}
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+            <TextButton onClick={() => select({ kind: "why", id: task.id })}>Why this task?</TextButton>
+            <TextButton onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>See this free gap</TextButton>
+          </div>
         </div>
-        <button type="button" className="btn-primary shrink-0" onClick={() => toggleDone(task)}>
-          <Check size={16} strokeWidth={2.5} />
+        {/* The one primary action on the Plan screen. */}
+        <Button variant="primary" size="lg" icon={Check} className="shrink-0" onClick={() => completeTask(task)}>
           Done
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -192,24 +209,25 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
 // One day: what's on, and the free time between it
 // ---------------------------------------------------------------------------
 
+/**
+ * The next seven days as one row that always fits: a short weekday on top and the
+ * date under it, like the week strip in a phone's calendar. Nothing scrolls sideways.
+ */
 function DayPicker() {
   const { plan, planDay, setPlanDay } = useApp();
   return (
-    <div className="-mx-1 px-1 overflow-x-auto scrollbar-thin">
-      <div className="flex gap-1 w-max">
-        {plan.days.slice(0, 7).map((d, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setPlanDay(i)}
-            aria-pressed={i === planDay}
-            className={`rounded-lg px-2.5 py-1 text-sm transition ${i === planDay ? "bg-accent text-white font-medium" : "text-muted hover:bg-surface-2 hover:text-fg"}`}
-          >
-            {i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(d.date, "EEE d")}
-          </button>
-        ))}
-      </div>
-    </div>
+    <SegmentedControl
+      label="Day to show"
+      stretch
+      value={planDay}
+      onChange={setPlanDay}
+      options={plan.days.slice(0, 7).map((d, i) => ({
+        id: i,
+        label: i === 0 ? "Today" : format(d.date, "EEE"),
+        sub: format(d.date, "d"),
+        ariaLabel: i === 0 ? `Today, ${format(d.date, "MMMM d")}` : i === 1 ? `Tomorrow, ${format(d.date, "EEEE MMMM d")}` : format(d.date, "EEEE, MMMM d"),
+      }))}
+    />
   );
 }
 
@@ -224,23 +242,21 @@ function DaySchedule() {
   const dueAllDay = schedule.dueAllDay.filter((t) => !t.done);
 
   return (
-    <section className="card p-4 sm:p-5">
-      <div className="flex items-center gap-3 flex-wrap">
-        <h2 className="text-base font-semibold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
-        <div className="ml-auto min-w-0 max-w-full">
-          <DayPicker />
-        </div>
+    <Card>
+      <h2 className="text-lg font-bold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
+      <div className="mt-3">
+        <DayPicker />
       </div>
 
       {schedule.allDayEvents.length > 0 || dueAllDay.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {schedule.allDayEvents.map((e) => (
-            <button key={e.id} type="button" onClick={() => select({ kind: "event", id: e.id })} className="course-chip rounded-md px-2 py-0.5 text-xs font-medium" style={courseStyle(e.color)}>
+            <button key={e.id} type="button" onClick={() => select({ kind: "event", id: e.id })} className="course-chip px-2 py-0.5 text-xs font-medium" style={courseStyle(e.color)}>
               {e.title}
             </button>
           ))}
           {dueAllDay.map((t) => (
-            <button key={t.id} type="button" onClick={() => select({ kind: "task", id: t.id })} className="inline-flex items-center gap-1 rounded-md border border-line-strong px-2 py-0.5 text-xs">
+            <button key={t.id} type="button" onClick={() => select({ kind: "task", id: t.id })} className="inline-flex items-center gap-1 border border-line-strong px-2 py-0.5 text-xs">
               <Flag size={11} className={t.type === "exam" ? "text-danger" : "text-muted"} />
               Due {isToday ? "today" : "this day"}: {t.title}
             </button>
@@ -251,9 +267,7 @@ function DaySchedule() {
       {!day.working ? (
         <p className="mt-4 text-sm text-muted">
           You have weekends off, so no work is planned.{" "}
-          <button type="button" className="underline underline-offset-2 hover:text-fg" onClick={() => setView("settings")}>
-            Change this
-          </button>
+          <TextButton onClick={() => setView("settings")}>Change this</TextButton>
         </p>
       ) : null}
 
@@ -266,7 +280,7 @@ function DaySchedule() {
           ))}
         </ol>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -317,56 +331,47 @@ function EventRow({ item }: { item: Extract<ScheduleItem, { kind: "event" }> }) 
 }
 
 function FreeBlock({ item, capReached }: { item: Extract<ScheduleItem, { kind: "free" }>; capReached: boolean }) {
+  const { select } = useApp();
+  const note =
+    item.leftover >= 15
+      ? item.work.length === 0
+        ? capReached
+          ? "You've hit your daily work limit, so this time stays free."
+          : "Nothing due soon fits here. It's yours."
+        : `${duration(item.leftover)} left over${capReached ? " (daily work limit reached)" : ""}`
+      : null;
   return (
-    <div className="rounded-xl border border-ok/30 bg-ok/[0.06] p-1.5 sm:p-2.5">
-      <div className="px-1 pt-0.5 text-sm font-semibold text-ok">Free · {duration(item.minutes)}</div>
-      {item.work.length > 0 ? (
-        <ul className="mt-2 space-y-1.5">
-          {item.work.map((w) => (
-            <WorkRow key={`${w.task.id}:${w.block.part}`} work={w} />
-          ))}
-        </ul>
-      ) : null}
-      {item.leftover >= 15 ? (
-        <p className="mt-1.5 px-1 text-xs text-muted">
-          {item.work.length === 0
-            ? capReached
-              ? "You've hit your daily work limit, so this time stays free."
-              : "Nothing due soon fits here. It's yours."
-            : `${duration(item.leftover)} left over${capReached ? " (daily work limit reached)" : ""}`}
-        </p>
-      ) : null}
-    </div>
+    <FreeGapBlock
+      minutes={item.minutes}
+      label={`Free · ${duration(item.minutes)}`}
+      note={note}
+      onOpen={() => select({ kind: "gap", startMs: item.start.getTime() })}
+    >
+      {item.work.length > 0 ? item.work.map((w) => <WorkRow key={`${w.task.id}:${w.block.part}`} work={w} />) : null}
+    </FreeGapBlock>
   );
 }
 
+/** Work planned into a free gap: the class, when it's due, and the time it takes from this gap. */
 function WorkRow({ work }: { work: PlannedWork }) {
-  const { select, now } = useApp();
+  const { now } = useApp();
   const { task, block } = work;
   const course = useCourse(task);
   const due = task.dueAt ? new Date(task.dueAt) : null;
   const late = due ? due.getTime() < now.getTime() : false;
   return (
-    <li
-      className="task-card flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 cursor-pointer"
-      style={courseStyle(course?.color ?? "var(--accent)")}
-      onClick={() => select({ kind: "task", id: task.id })}
-    >
-      <DoneToggle task={task} size="sm" />
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium leading-snug line-clamp-2">{task.title}</div>
-        <div className="mt-0.5 text-xs text-muted flex items-center gap-x-1.5 flex-wrap">
-          {course ? (
-            <span className="inline-flex items-center gap-1.5 course-text font-medium">
-              <span className="course-dot" />
-              {course.code}
-            </span>
-          ) : null}
-          {due ? <span className={late ? "text-danger" : ""}>{dueIn(due, now)}</span> : null}
-          {block.parts > 1 ? <span className="text-faint">part {block.part} of {block.parts}</span> : null}
-        </div>
-      </div>
-      <span className="text-sm font-medium tabular-nums shrink-0">{duration(block.minutes)}</span>
+    <li>
+      <AppTaskCard
+        task={task}
+        meta={
+          <>
+            {course ? <ClassChip code={course.code} color={course.color} /> : null}
+            {due ? <span className={late ? "text-danger font-semibold" : ""}>{dueIn(due, now)}</span> : null}
+            {block.parts > 1 ? <span>part {block.part} of {block.parts}</span> : null}
+          </>
+        }
+        trailing={<span className="text-sm font-semibold tabular-nums">{duration(block.minutes)}</span>}
+      />
     </li>
   );
 }
@@ -433,10 +438,10 @@ function DueSoon() {
   const risky = plan.atRisk.filter((r) => r.dueAt && r.dueAt.getTime() < addDays(startOfDay(now), DUE_SOON_DAYS).getTime()).length;
 
   return (
-    <section className="card p-4 sm:p-5">
-      <h2 className="text-base font-semibold">Due this week</h2>
+    <Card>
+      <CardHeader title="Due this week" />
       {risky > 0 ? (
-        <p className="mt-1 text-sm text-danger flex items-start gap-1.5">
+        <p className="mt-1 text-sm text-danger font-semibold flex items-start gap-1.5">
           <CircleAlert size={15} className="shrink-0 mt-0.5" />
           {risky === 1 ? "1 thing won't fit before it's due." : `${risky} things won't fit before they're due.`} Open it to see why.
         </p>
@@ -454,7 +459,9 @@ function DueSoon() {
             shown += tasks.length;
             return (
               <div key={g.label}>
-                <div className={`section-title mb-1.5 ${g.late ? "!text-danger" : ""}`}>{g.label}</div>
+                <SectionLabel tone={g.late ? "alert" : "default"} className="mb-1.5">
+                  {g.label}
+                </SectionLabel>
                 <ul className="space-y-1.5">
                   {tasks.map((t) => (
                     <DueItem key={t.id} task={t} />
@@ -466,32 +473,31 @@ function DueSoon() {
         </div>
       )}
 
-      <button type="button" className="btn mt-4 w-full justify-center" onClick={() => setView("upcoming")}>
-        {total > shown ? `See all ${plural(total, "item")}` : "See everything coming up"}
-        <ArrowRight size={14} />
-      </button>
-    </section>
+      <Button block className="mt-4" trailingIcon={ArrowRight} onClick={() => setView("upcoming")}>
+        {total > shown ? `See all ${plural(total, "task")}` : "See everything coming up"}
+      </Button>
+    </Card>
   );
 }
 
 function DueItem({ task }: { task: Task }) {
-  const { select, now } = useApp();
+  const { now } = useApp();
   const course = useCourse(task);
   const due = new Date(task.dueAt!);
   const late = due.getTime() < now.getTime();
   return (
-    <li className="task-card flex items-start gap-2.5 px-2.5 py-2 cursor-pointer" style={courseStyle(course?.color)} onClick={() => select({ kind: "task", id: task.id })}>
-      <span className="pt-0.5">
-        <DoneToggle task={task} size="sm" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium leading-snug">{task.title}</div>
-        <div className="mt-0.5 flex items-center gap-x-2 gap-y-0.5 flex-wrap text-xs text-muted">
-          {course ? <span className="course-text font-medium">{course.code}</span> : null}
-          <span className={late ? "text-danger" : ""}>{late ? dueIn(due, now) : task.allDay ? "end of day" : clock(due)}</span>
-          <PlanNote task={task} />
-        </div>
-      </div>
+    <li>
+      <AppTaskCard
+        task={task}
+        density="compact"
+        meta={
+          <>
+            {course ? <ClassChip code={course.code} color={course.color} /> : null}
+            <span className={late ? "text-danger font-semibold" : ""}>{late ? dueIn(due, now) : task.allDay ? "end of day" : clock(due)}</span>
+            <PlanNote task={task} />
+          </>
+        }
+      />
     </li>
   );
 }

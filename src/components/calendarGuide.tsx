@@ -1,5 +1,5 @@
 /**
- * Where to find the calendar link in each app, and what Prio does with each kind
+ * Where to find the calendar link in each app, and what SmartScheduler does with each kind
  * of calendar. Shared by the setup screens and the home page, so nothing here
  * points at a particular spot on either one.
  */
@@ -29,7 +29,7 @@ export const LINK_HELP: LinkHelp[] = [
       </>,
       "Copy the link it shows. One link covers all of your Canvas classes.",
     ],
-    note: "Prio sorts the feed into classes automatically, and each assignment links straight back to Canvas.",
+    note: "SmartScheduler sorts the feed into classes automatically, and each assignment links straight back to Canvas.",
   },
   {
     id: "learningsuite",
@@ -98,7 +98,7 @@ export const LINK_HELP: LinkHelp[] = [
     name: "Anything else",
     steps: [
       "Any calendar that gives you an iCal, ICS or webcal link works: work rosters, sports schedules, clubs.",
-      "Prio guesses whether it holds coursework or just busy time. You can switch it after adding.",
+      "SmartScheduler guesses whether it holds coursework or just busy time. You can switch it after adding.",
     ],
   },
 ];
@@ -111,7 +111,7 @@ export interface CalendarKind {
   id: CalendarKindId;
   label: string;
   color: string;
-  /** What Prio does with this kind of calendar. */
+  /** What SmartScheduler does with this kind of calendar. */
   does: string;
   cards: LinkSteps[];
 }
@@ -122,14 +122,14 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "school",
     label: "School",
     color: "#4f46e5",
-    does: "Prio pulls in every assignment, quiz and exam, sorted by class.",
+    does: "SmartScheduler pulls in every assignment, quiz and exam, sorted by class.",
     cards: [
       help("canvas"),
       help("learningsuite"),
       {
         name: "Other course sites",
         steps: ["Look on the course site for a calendar, iCal or “subscribe” link.", "Copy it. Each course calendar becomes one class."],
-        note: "Class calendars rarely say when class meets. Prio asks for your class times during setup.",
+        note: "Class calendars rarely say when class meets. SmartScheduler asks for your class times during setup.",
       },
     ],
   },
@@ -137,14 +137,14 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "work",
     label: "Work",
     color: "#0f766e",
-    does: "Prio plans around your shifts and meetings, so homework never lands on top of them.",
+    does: "SmartScheduler plans around your work schedule and meetings, so homework never lands on top of them.",
     cards: [
       help("outlook"),
       help("google"),
       {
         name: "Scheduling apps",
         steps: ["In your scheduling app's settings, look for “Calendar sync”, “Subscribe” or an iCal / webcal link.", "Copy the link."],
-        note: "No link at all? Add your shifts as a weekly busy time during setup.",
+        note: "No link at all? Add your work hours as a weekly busy time during setup.",
       },
     ],
   },
@@ -152,7 +152,7 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "personal",
     label: "Personal",
     color: "#9333ea",
-    does: "Prio plans around everything else you have going on, so the free time it finds is really free.",
+    does: "SmartScheduler plans around everything else you have going on, so the free time it finds is really free.",
     cards: [
       help("google"),
       help("icloud"),
