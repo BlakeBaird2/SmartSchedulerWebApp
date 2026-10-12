@@ -251,6 +251,22 @@ On phones, the Plan timeline's time column is narrower: "AM" and "PM" are set
 small ("9:30AM"), and the gaps around the line are tighter, so the cards gain
 about 16px of width.
 
+### 18. Settings: sections always in view (web)
+
+Settings was a hub of five cards; opening one replaced the page, and getting to
+another section meant going back first. On a computer it now works like most
+web apps' settings:
+
+| Before | After (768px and wider) |
+| --- | --- |
+| A list of five sections; opening one hid the others | The five sections stay in a sidebar on the left the whole time. The open one is highlighted (indigo icon, tinted row, `aria-current`). |
+| A "‹ Settings" back link to switch sections | One click on another section. Its name, what it covers and its settings fill the right side. |
+| Opening Settings showed only the list | The first section, Calendars & class times, opens straight away. |
+| Open Help and Reopen goal above the list | Quiet links under the sidebar. |
+
+Phones keep the list-then-page flow for now; the phone layout is being
+redesigned separately.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

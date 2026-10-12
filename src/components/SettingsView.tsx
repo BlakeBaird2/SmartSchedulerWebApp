@@ -34,23 +34,112 @@ export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string
   { id: "about", label: "About, Help & walkthrough", hint: "Goal instructions, tour, design library", icon: CircleHelp },
 ];
 
+/**
+ * Settings.
+ *
+ * On a computer (md and up) it works like most web apps' settings: the five
+ * sections stay listed on the left the whole time, the open one is highlighted,
+ * and its settings fill the right. Nothing is ever more than one click away, and
+ * you never lose your place.
+ *
+ * On phones it stays a list of sections, each opening as its own page with a
+ * "‹ Settings" link back (the phone layout will be redesigned separately).
+ */
 export function SettingsView() {
-  const { settingsPanel, setSettingsPanel, setView } = useApp();
-
-  if (settingsPanel !== "main") {
-    return (
-      <div className="max-w-3xl space-y-4">
-        {settingsPanel === "calendars" ? <CalendarsPanel /> : null}
-        {settingsPanel === "schedule" ? <SchedulePanel /> : null}
-        {settingsPanel === "estimates" ? <EstimatesPanel /> : null}
-        {settingsPanel === "browser" ? <BrowserPanel /> : null}
-        {settingsPanel === "about" ? <AboutPanel /> : null}
-      </div>
-    );
-  }
+  const { settingsPanel } = useApp();
+  // On a computer, "no section chosen yet" opens the first one.
+  const desktopPanel: SettingsPanel = settingsPanel === "main" ? SETTINGS_SECTIONS[0].id : settingsPanel;
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <>
+      {settingsPanel === "main" ? (
+        <div className="md:hidden">
+          <SettingsHub />
+        </div>
+      ) : null}
+      <div className={`${settingsPanel === "main" ? "hidden md:grid" : "grid"} md:grid-cols-[15rem_minmax(0,1fr)] lg:grid-cols-[17rem_minmax(0,1fr)] gap-6 items-start`}>
+        <SettingsSidebar active={desktopPanel} />
+        <div className="min-w-0 max-w-3xl">
+          <SectionHeading id={desktopPanel} />
+          <div className="space-y-4">
+            {desktopPanel === "calendars" ? <CalendarsPanel /> : null}
+            {desktopPanel === "schedule" ? <SchedulePanel /> : null}
+            {desktopPanel === "estimates" ? <EstimatesPanel /> : null}
+            {desktopPanel === "browser" ? <BrowserPanel /> : null}
+            {desktopPanel === "about" ? <AboutPanel /> : null}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Computer only: the five sections, always visible, with the open one highlighted. */
+function SettingsSidebar({ active }: { active: SettingsPanel }) {
+  const { setSettingsPanel, setView } = useApp();
+  return (
+    <aside className="hidden md:block md:sticky md:top-32 lg:top-20">
+      <nav className="card p-2" aria-label="Settings sections">
+        <ul className="space-y-0.5">
+          {SETTINGS_SECTIONS.map((item) => {
+            const on = item.id === active;
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  aria-current={on ? "page" : undefined}
+                  onClick={() => setSettingsPanel(item.id)}
+                  className={`w-full text-left flex items-center gap-3 rounded-[10px] px-2.5 py-2 transition-colors ${
+                    on ? "bg-accent-soft" : "hover:bg-surface-2"
+                  }`}
+                >
+                  <span
+                    className={`grid place-items-center h-8 w-8 shrink-0 rounded-lg ${on ? "bg-accent text-white" : "bg-surface-2 text-muted"}`}
+                    aria-hidden
+                  >
+                    <item.icon size={17} />
+                  </span>
+                  <span className={`min-w-0 text-sm leading-snug ${on ? "font-semibold text-fg" : "font-medium text-muted"}`}>{item.label}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      <div className="mt-3 px-1 flex flex-col items-start gap-1">
+        <Button variant="quiet" size="sm" icon={CircleHelp} onClick={() => setView("help")}>
+          Open Help
+        </Button>
+        <Button variant="quiet" size="sm" icon={Target} onClick={openGoalNotice}>
+          Reopen goal
+        </Button>
+      </div>
+    </aside>
+  );
+}
+
+/** Computer only: the open section's name and what it covers, above its settings. */
+function SectionHeading({ id }: { id: SettingsPanel }) {
+  const section = SETTINGS_SECTIONS.find((s) => s.id === id);
+  if (!section) return null;
+  return (
+    <div className="hidden md:flex items-start gap-3 mb-4">
+      <span className="grid place-items-center h-9 w-9 shrink-0 rounded-lg bg-accent-soft text-accent" aria-hidden>
+        <section.icon size={18} />
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-xl font-bold tracking-tight leading-tight">{section.label}</h2>
+        <p className="mt-0.5 text-sm text-muted">{section.hint}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Phones: the list of sections, each opening as its own page. */
+function SettingsHub() {
+  const { setSettingsPanel, setView } = useApp();
+  return (
+    <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <Button icon={CircleHelp} onClick={() => setView("help")}>
           Open Help

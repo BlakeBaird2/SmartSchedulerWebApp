@@ -27,19 +27,26 @@ export function ViewHeading() {
   }
   if (view === "settings") {
     const section = SETTINGS_SECTIONS.find((s) => s.id === settingsPanel);
-    if (!section) return <PageHeader icon={Settings} title="Settings" description="Your calendars, your schedule and how SmartScheduler plans around them." />;
+    const main = <PageHeader icon={Settings} title="Settings" description="Your calendars, your schedule and how SmartScheduler plans around them." />;
+    if (!section) return main;
+    // Computer: the sections stay in a sidebar, so the page keeps its "Settings" title.
+    // Phone: each section is its own page, with a link back to the list.
     return (
-      <PageHeader
-        icon={section.icon}
-        title={section.label}
-        description={section.hint}
-        eyebrow={
-          <button type="button" className="inline-flex items-center gap-0.5 hover:text-fg" onClick={() => setSettingsPanel("main")}>
-            <ChevronLeft size={15} aria-hidden />
-            Settings
-          </button>
-        }
-      />
+      <>
+        <div className="hidden md:block">{main}</div>
+        <PageHeader
+          className="md:hidden"
+          icon={section.icon}
+          title={section.label}
+          description={section.hint}
+          eyebrow={
+            <button type="button" className="inline-flex items-center gap-0.5 hover:text-fg" onClick={() => setSettingsPanel("main")}>
+              <ChevronLeft size={15} aria-hidden />
+              Settings
+            </button>
+          }
+        />
+      </>
     );
   }
   return null;
