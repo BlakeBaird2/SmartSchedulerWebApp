@@ -267,6 +267,19 @@ web apps' settings:
 Phones keep the list-then-page flow for now; the phone layout is being
 redesigned separately.
 
+### 19. A roomier calendar
+
+The week view felt crammed: an hour was 48px tall, days were about 140px wide,
+and blocks touched each other. Changes:
+
+| Problem | Fix |
+| --- | --- |
+| Half-hour blocks only fit a cut-off title | Each hour is 64px, so a 30-minute block shows its title and time. |
+| Seven narrow columns on big monitors | On wide screens (1536px+), the Calendar screen, and only that screen, grows to 88rem; the header widens with it so the edges line up. |
+| Blocks touched their neighbours | 2px of space above and below each block and 3px at the sides, with a little more padding inside. |
+| Long titles cut off with "…" | Tall blocks let the title wrap to two lines. Text is a step larger (12px titles, 11px details). |
+| "Free · 1h 30m" peeked out from under planned work | The label sits in the first open stretch of the gap, or is left out if there isn't room. |
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

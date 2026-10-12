@@ -2,7 +2,7 @@
 
 import { CalendarRange, CircleHelp, LayoutGrid, ListChecks, Plus, RefreshCw, Settings, Target } from "lucide-react";
 import { timeAgo } from "@/lib/ui";
-import { useApp, type View } from "./context";
+import { pageWidth, useApp, type View } from "./context";
 import { ChangesPopover } from "./ChangesPopover";
 import { GoalBadge, PrototypeBadge } from "./Prototype";
 import { Button, SegmentedControl, Wordmark } from "./ui";
@@ -33,7 +33,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 bg-bg/85 backdrop-blur border-b border-line">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2">
+      <div className={`${pageWidth(view)} mx-auto px-4 sm:px-6 h-14 flex items-center gap-2`}>
         <button type="button" onClick={() => setView("plan")} className="shrink-0" aria-label="SmartScheduler, go to your plan" title="Go to your plan">
           <Wordmark collapse />
         </button>
@@ -85,7 +85,7 @@ export function Header() {
           </Button>
         </div>
       </div>
-      <nav className="lg:hidden px-4 sm:px-6 pb-2 max-w-6xl mx-auto" aria-label="Main">
+      <nav className={`lg:hidden px-4 sm:px-6 pb-2 ${pageWidth(view)} mx-auto`} aria-label="Main">
         <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} stretch />
       </nav>
     </header>

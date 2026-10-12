@@ -32,7 +32,7 @@ const MODES: { id: CalMode; label: string }[] = [
 ];
 
 const WEEK = { weekStartsOn: 1 } as const;
-const HOUR_PX = 48;
+const HOUR_PX = 64;
 
 /** Tasks and events that pass the filters, plus planned work, grouped for quick lookup by day. */
 function useCalendarData() {
@@ -299,12 +299,12 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
 
   return (
     <div ref={scroller} className="card overflow-x-auto scrollbar-thin">
-      <div className={single ? "" : "min-w-[720px]"}>
+      <div className={single ? "" : "min-w-[840px]"}>
         {/* Day headers, all-day events and deadlines */}
         <div className="flex border-b border-line bg-surface-2/40">
-          <div className="w-12 shrink-0 sticky left-0 z-20 bg-surface" />
+          <div className="w-14 shrink-0 sticky left-0 z-20 bg-surface" />
           {columns.map((c) => (
-            <div key={c.from} data-today={isToday(c.day) || undefined} className="flex-1 min-w-0 border-l border-line px-1.5 py-1.5">
+            <div key={c.from} data-today={isToday(c.day) || undefined} className="flex-1 min-w-0 border-l border-line px-2 py-2">
               {!single ? (
                 <button
                   type="button"
@@ -322,13 +322,13 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                   </span>
                 </button>
               ) : null}
-              <div className="space-y-[3px] mt-0.5">
+              <div className="space-y-1 mt-1">
                 {c.allDay.map((e) => (
                   <button
                     key={e.id}
                     type="button"
                     onClick={() => select({ kind: "event", id: e.id })}
-                    className="course-chip w-full truncate text-left px-1 py-px text-[10.5px] font-medium"
+                    className="course-chip w-full truncate text-left px-1.5 py-0.5 text-[11px] font-medium"
                     style={courseStyle(e.color)}
                     title={e.title}
                   >
@@ -342,7 +342,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={t.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: t.id })}
-                      className={`w-full flex items-center gap-1 text-left px-1 py-px text-[10.5px] course-tint ${t.done ? "opacity-45 line-through" : ""}`}
+                      className={`w-full flex items-center gap-1 rounded-md text-left px-1.5 py-0.5 text-[11px] course-tint ${t.done ? "opacity-45 line-through" : ""}`}
                       style={courseStyle(course?.color)}
                       title={`Due ${t.allDay ? "today" : clock(new Date(t.dueAt!))}: ${t.title}`}
                     >
@@ -361,9 +361,9 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
 
         {/* Hours */}
         <div className="flex relative">
-          <div className="w-12 shrink-0 sticky left-0 z-20 bg-surface">
+          <div className="w-14 shrink-0 sticky left-0 z-20 bg-surface">
             {hours.map((h) => (
-              <div key={h} className={`text-[10px] text-faint text-right pr-1.5 tabular-nums ${h === startHour ? "pt-0.5" : "-translate-y-1.5"}`} style={{ height: HOUR_PX }}>
+              <div key={h} className={`text-[11px] text-faint text-right pr-2 tabular-nums ${h === startHour ? "pt-0.5" : "-translate-y-1.5"}`} style={{ height: HOUR_PX }}>
                 {h === 0 ? "" : clock(new Date(2000, 0, 1, h))}
               </div>
             ))}
@@ -380,6 +380,15 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                   const y = top(g.start, c.from);
                   const gh = Math.max(14, top(g.end, c.from) - y - 2);
                   if (y + gh < 0 || y > hours.length * HOUR_PX) return null;
+                  // Put the label in the first stretch of the gap that nothing is planned in, so it never peeks out from under a block.
+                  const need = 25 * 60_000;
+                  let labelAt: number | null = g.start;
+                  for (const it of [...c.items].sort((p, q) => p.start - q.start)) {
+                    if (labelAt === null || it.end <= labelAt || it.start >= g.end) continue;
+                    if (it.start - labelAt >= need) break;
+                    labelAt = it.end;
+                  }
+                  if (labelAt !== null && g.end - labelAt < need) labelAt = null;
                   return (
                     <button
                       key={g.id}
@@ -390,19 +399,26 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       title={`Free · ${duration(g.minutes)} — open gap`}
                     >
                       {/* Background, not content: just open space with a quiet label (tinted on hover), so events and planned work stay what the eye reads first. */}
-                      {gh > 22 ? <span className="text-[10px] text-muted">Free · {duration(g.minutes)}</span> : null}
+                      {labelAt !== null ? (
+                        <span className="absolute left-2 text-[11px] text-muted" style={{ top: top(labelAt, c.from) - y + 3 }}>
+                          Free · {duration(g.minutes)}
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
                 {placed.map(({ item, col, cols }) => {
                   const y = top(item.start, c.from);
-                  const h = Math.max(18, top(item.end, c.from) - y - 2);
+                  // A little air between blocks: 2px above and below, 3px at the sides.
+                  const h = Math.max(22, top(item.end, c.from) - y - 4);
                   const style: React.CSSProperties = {
-                    top: y + 1,
+                    top: y + 2,
                     height: h,
-                    left: `calc(${(col / cols) * 100}% + 2px)`,
-                    width: `calc(${100 / cols}% - 4px)`,
+                    left: `calc(${(col / cols) * 100}% + 3px)`,
+                    width: `calc(${100 / cols}% - 6px)`,
                   };
+                  // Tall blocks let the title wrap to two lines instead of cutting it off.
+                  const titleFit = h >= 56 ? "line-clamp-2" : "truncate";
                   if (item.kind === "event") {
                     const e = item.event;
                     return (
@@ -410,12 +426,12 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                         key={item.id}
                         type="button"
                         onClick={() => select({ kind: "event", id: e.id })}
-                        className={`event-block absolute z-[1] flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${e.busy ? "" : "opacity-60"}`}
+                        className={`event-block absolute z-[1] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 ${e.busy ? "" : "opacity-60"}`}
                         style={{ ...style, ...courseStyle(e.color) }}
                         title={`${e.title} · ${clockRange(new Date(e.start), new Date(e.end))}`}
                       >
-                        <div className="event-title text-[11px] font-semibold leading-tight truncate">{e.title}</div>
-                        {h > 30 ? <div className="text-[10px] text-muted leading-tight truncate">{clockRange(new Date(e.start), new Date(e.end))}</div> : null}
+                        <div className={`event-title text-xs font-semibold leading-tight ${titleFit}`}>{e.title}</div>
+                        {h >= 40 ? <div className="text-[11px] text-muted leading-tight truncate">{clockRange(new Date(e.start), new Date(e.end))}</div> : null}
                       </button>
                     );
                   }
@@ -425,16 +441,16 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={item.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: item.task.id })}
-                      className={`plan-block absolute z-[1] flex flex-col justify-start text-left overflow-hidden px-1.5 py-1 ${item.task.done ? "opacity-50" : ""}`}
+                      className={`plan-block absolute z-[1] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 ${item.task.done ? "opacity-50" : ""}`}
                       style={{ ...style, ...courseStyle(course?.color) }}
                       title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
                     >
-                      <div className="flex items-center gap-1 min-w-0">
-                        <span className="plan-tick" data-done={item.task.done || undefined} aria-hidden />
-                        <span className="text-[11px] font-semibold leading-tight truncate">{item.task.title}</span>
+                      <div className="flex items-start gap-1.5 min-w-0">
+                        <span className="plan-tick mt-[3px]" data-done={item.task.done || undefined} aria-hidden />
+                        <span className={`text-xs font-semibold leading-tight ${titleFit}`}>{item.task.title}</span>
                       </div>
-                      {h > 30 ? (
-                        <div className="text-[10px] text-muted leading-tight truncate">
+                      {h >= 40 ? (
+                        <div className="text-[11px] text-muted leading-tight truncate">
                           {course ? <span className="course-text">{course.code} · </span> : null}
                           {duration(item.block.minutes)}
                         </div>
