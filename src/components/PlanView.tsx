@@ -27,9 +27,18 @@ export function PlanView() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <div className="space-y-5 min-w-0">
           <NowCard />
+          {/* Phones and tablets: right under the focus card, before the long day list. */}
+          <div className="lg:hidden">
+            <AddTaskTile />
+          </div>
           <DaySchedule />
         </div>
-        <DueSoon />
+        <div className="space-y-5 min-w-0">
+          <div className="hidden lg:block">
+            <AddTaskTile />
+          </div>
+          <DueSoon />
+        </div>
       </div>
     </div>
   );
@@ -139,22 +148,21 @@ function NowCard() {
 
   return (
     // The focal point of the whole app: a heavier outline than any other card, so the eye lands here first.
-    <Card padding="lg" className="card-focal" aria-label="What to work on now">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-        <span className="truncate">{headline}</span>
-      </div>
-      {detail ? <p className="mt-0.5 pl-4 text-sm text-muted">{detail}</p> : null}
+    <Card className="card-focal" aria-label="What to work on now">
+      {/* Where you are in the day, on one line: the state, then what's next in a quieter tone. */}
+      <p className="flex items-baseline gap-x-2 flex-wrap text-sm">
+        <span className={`w-2 h-2 rounded-full shrink-0 self-center ${dot}`} aria-hidden />
+        <span className="font-medium">{headline}</span>
+        {detail ? (
+          <span className="text-muted basis-full pl-4 sm:basis-auto sm:pl-0">
+            <span className="hidden sm:inline">· </span>
+            {detail}
+          </span>
+        ) : null}
+      </p>
 
       {first ? (
-        <>
-          <FocusTask lead={lead} item={first} />
-          {second ? (
-            <p className="mt-3 pt-3 border-t border-line text-sm text-muted">
-              Then <span className="text-fg font-medium">{second.task.title}</span> · {duration(second.block.minutes)}
-            </p>
-          ) : null}
-        </>
+        <FocusTask lead={lead} item={first} next={second} />
       ) : status.state === "done" ? (
         <Button variant="primary" className="mt-4" trailingIcon={ArrowRight} onClick={() => setPlanDay(1)}>
           See tomorrow&apos;s plan
@@ -166,7 +174,7 @@ function NowCard() {
   );
 }
 
-function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
+function FocusTask({ lead, item, next }: { lead: string; item: PlannedWork; next?: PlannedWork }) {
   const { completeTask, select, now } = useApp();
   const { task, block } = item;
   const course = useCourse(task);
@@ -176,7 +184,7 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
   return (
     <div className="mt-4">
       <SectionLabel>{lead}</SectionLabel>
-      <div className="mt-2 flex items-start gap-3">
+      <div className="mt-1.5 flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <button type="button" onClick={() => select({ kind: "task", id: task.id })} className="text-left text-xl font-semibold leading-snug hover:underline underline-offset-4 decoration-line-strong">
             {task.title}
@@ -190,18 +198,49 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
             </span>
             {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
           </div>
-          {/* Follow-ups, not actions: quiet underlined links, so Done stays the one thing that stands out. */}
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-            <TextButton onClick={() => select({ kind: "why", id: task.id })}>Why this task?</TextButton>
-            <TextButton onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>See this free gap</TextButton>
-          </div>
         </div>
         {/* The one primary action on the Plan screen. */}
         <Button variant="primary" size="lg" icon={Check} className="shrink-0" onClick={() => completeTask(task)}>
           Done
         </Button>
       </div>
+      {/* One footer line: what comes next on the left, quiet follow-up links on the right. */}
+      <div className="mt-4 pt-3 border-t border-line flex items-center gap-x-4 gap-y-1.5 flex-wrap text-sm text-muted">
+        {next ? (
+          <span className="min-w-0 truncate">
+            Then <span className="text-fg font-medium">{next.task.title}</span> · {duration(next.block.minutes)}
+          </span>
+        ) : null}
+        <span className="sm:ml-auto flex flex-wrap gap-x-4 gap-y-1">
+          <TextButton onClick={() => select({ kind: "why", id: task.id })}>Why this task?</TextButton>
+          <TextButton onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>See this free gap</TextButton>
+        </span>
+      </div>
     </div>
+  );
+}
+
+/**
+ * A big, easy target for adding something to the plan straight from the
+ * dashboard. White, not blue, so Done stays the one primary button on the screen;
+ * its size and the accent icon make it easy to find.
+ */
+function AddTaskTile() {
+  const { openAddTask } = useApp();
+  return (
+    <button
+      type="button"
+      onClick={openAddTask}
+      className="card w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition hover:border-accent/50 hover:shadow-[var(--shadow-md)] group"
+    >
+      <span className="grid place-items-center h-11 w-11 shrink-0 rounded-xl bg-accent-soft text-accent transition group-hover:bg-accent group-hover:text-white" aria-hidden>
+        <Plus size={22} strokeWidth={2.4} />
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold">Add a task</span>
+        <span className="block text-sm text-muted">Homework, study time, anything else</span>
+      </span>
+    </button>
   );
 }
 

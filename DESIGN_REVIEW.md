@@ -324,6 +324,22 @@ The header now sits in exactly the same place on every screen:
 Checked at 1024, 1280 and 1536px: the logo and the Settings button are at the
 same position on Plan, Calendar, Upcoming, Classes, Settings and Help.
 
+### 23. A tighter focus card and a big Add task on Plan
+
+The "work on now" card was tall and left a wide empty strip on its right. It
+keeps the same information, rearranged so it reads in three lines:
+
+| Before | After |
+| --- | --- |
+| Status on one line, its detail on the next | One line: "● Class until 3:15 PM · Next free time 3:25 – 10 PM" |
+| "Why this task?" and "See this free gap" on their own line under the task | On the footer line, at the right, beside "Then *next task* · 1h" |
+| Extra-large padding | Normal card padding; the focus still comes from the indigo outline and Done |
+
+**Add a task** is now a large tile at the top of the right column, level with
+the focus card (right under the focus card on phones and tablets). It's white
+with an indigo icon, not a blue button, so Done stays the one primary action on
+the screen (attention); its size makes it an easy target (Fitts's law).
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.
