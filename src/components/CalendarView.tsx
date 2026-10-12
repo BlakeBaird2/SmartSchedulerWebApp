@@ -113,7 +113,7 @@ export function CalendarView() {
               Planned work (white with a tick box: it can move)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 border-l-2 border-dashed border-ok/60" /> Free time (click to open)
+              <span className="w-3 h-3 rounded-[3px] bg-ok-soft border border-ok/30" /> Free time: the open space (click to open)
             </span>
           </>
         ) : (
@@ -385,12 +385,12 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={g.id}
                       type="button"
                       onClick={() => select({ kind: "gap", startMs: g.startMs })}
-                      className="absolute inset-x-0.5 z-0 border-l-2 border-dashed border-ok/40 rounded-r-md text-left pl-1.5 pr-1 py-0.5 overflow-hidden transition-colors hover:bg-ok-soft hover:border-ok"
+                      className="absolute inset-x-0.5 z-0 rounded-md text-left px-1.5 py-0.5 overflow-hidden transition-colors hover:bg-ok-soft"
                       style={{ top: y + 1, height: gh }}
                       title={`Free · ${duration(g.minutes)} — open gap`}
                     >
-                      {/* Background, not content: the same dashed green line as free time on Plan, and a quiet label, so events and planned work stay what the eye reads first. */}
-                      {gh > 22 ? <span className="text-[10px] font-medium text-ok/80">Free · {duration(g.minutes)}</span> : null}
+                      {/* Background, not content: just open space with a quiet label (tinted on hover), so events and planned work stay what the eye reads first. */}
+                      {gh > 22 ? <span className="text-[10px] text-muted">Free · {duration(g.minutes)}</span> : null}
                     </button>
                   );
                 })}

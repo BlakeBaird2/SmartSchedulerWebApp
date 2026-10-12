@@ -61,7 +61,7 @@ export function TaskCard({
   done?: boolean;
   onToggleDone: () => void;
   onOpen: () => void;
-  /** Class colour, drawn as a grey shade. */
+  /** Class colour, drawn as the tile's outline. */
   color?: string | null;
   density?: "regular" | "compact";
   /** A chip next to the title, such as "Exam". */

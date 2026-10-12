@@ -404,6 +404,7 @@ function CoreParts() {
           "Tick box on the left finishes it; clicking anywhere else opens its details. The two never overlap.",
           "Title first, in the heaviest weight. Details (class, time, plan) on one quieter line.",
           "Exams and quizzes get a TypeChip next to the title so they stand out.",
+          "A white tile outlined in its class colour, the same look as planned work on the calendar. Solid colour is kept for fixed events.",
           "Finished tasks are struck through and faded, not removed, until you hide them.",
         ]}
         why="The same task appears on several screens. One card means it is recognised at a glance everywhere, instead of being re-read on each screen."

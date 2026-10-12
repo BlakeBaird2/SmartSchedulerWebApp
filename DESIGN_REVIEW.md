@@ -238,9 +238,14 @@ looked busy. Now the difference is carried by **fill and a familiar signifier**:
 | --- | --- | --- |
 | Event or class | Solid tint of its class colour | Fixed. It happens whether you like it or not. |
 | Planned work | White card with a thin outline in its class colour, a small shadow and a **tick box** before the title (ticked and green when done) | A task you planned, which can move. The tick box is the same "to-do" mark as on Plan. |
-| Free time | A dashed green line down the left of the gap, with a green "Free · 6h 20m" label | Open time, the same line as on Plan. |
+| Free time | Plain open space with a quiet "Free · 6h 20m" label, tinted green on hover | Open time. Nothing drawn around it, so it stays background. |
 
 The legend under the calendar shows all three.
+
+**One task tile everywhere.** The same white tile with a class-coloured outline
+is used for every task: Plan (the free-gap timeline and Due this week),
+Upcoming, Classes and the calendar. Solid colour is only ever a fixed event, so
+"white tile = a task of yours, solid = fixed" holds on every screen.
 
 On phones, the Plan timeline's time column is narrower: "AM" and "PM" are set
 small ("9:30AM"), and the gaps around the line are tighter, so the cards gain
