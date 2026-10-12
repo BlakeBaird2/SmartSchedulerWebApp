@@ -130,7 +130,7 @@ export function PrototypeBadge({ className = "" }: { className?: string }) {
 
 const HERO_SIZE = {
   page: "text-[2.5rem] sm:text-6xl lg:text-7xl",
-  app: "text-3xl sm:text-[2.6rem]",
+  app: "text-[1.75rem] leading-[1.1] sm:text-[2.6rem]",
 } as const;
 
 export function CapabilityHero({

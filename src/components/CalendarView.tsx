@@ -21,7 +21,7 @@ import { layoutColumns } from "@/lib/layout";
 import type { PlannedBlock } from "@/lib/planner";
 import type { CalEvent, Task } from "@/lib/types";
 import { applyFilters, clock, clockRange, dayKey, duration, typeIconClass, typeMeta } from "@/lib/ui";
-import { courseStyle, useApp, type CalMode } from "./context";
+import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
 import { Button, SegmentedControl } from "./ui";
 
@@ -30,6 +30,20 @@ const MODES: { id: CalMode; label: string }[] = [
   { id: "week", label: "Week" },
   { id: "day", label: "Day" },
 ];
+
+/** Phones get Google Calendar's app views: an agenda list, one day, three days, and the month. */
+const PHONE_MODES: { id: CalMode; label: string }[] = [
+  { id: "schedule", label: "Schedule" },
+  { id: "day", label: "Day" },
+  { id: "3day", label: "3 days" },
+  { id: "month", label: "Month" },
+];
+
+/** The same saved choice, shown the closest way the screen allows. */
+function modeFor(mode: CalMode, phone: boolean): CalMode {
+  if (phone) return mode === "week" ? "schedule" : mode;
+  return mode === "3day" || mode === "schedule" ? "week" : mode;
+}
 
 const WEEK = { weekStartsOn: 1 } as const;
 const HOUR_PX = 64;
@@ -62,47 +76,77 @@ function useCalendarData() {
 }
 
 export function CalendarView() {
-  const { calMode, setCalMode, calCursor, setCalCursor, timezone } = useApp();
+  const { calMode: saved, setCalMode, calCursor, setCalCursor, timezone } = useApp();
+  const phone = useIsPhone();
+  const calMode = modeFor(saved, phone);
   const data = useCalendarData();
 
   const step = (dir: number) => {
     if (calMode === "month") setCalCursor(addMonths(calCursor, dir));
-    else if (calMode === "week") setCalCursor(addWeeks(calCursor, dir));
+    else if (calMode === "week" || calMode === "schedule") setCalCursor(addWeeks(calCursor, dir));
+    else if (calMode === "3day") setCalCursor(addDays(calCursor, 3 * dir));
     else setCalCursor(addDays(calCursor, dir));
   };
+  const unit = calMode === "3day" ? "3 days" : calMode === "schedule" ? "week" : calMode;
 
   const title =
     calMode === "month"
       ? format(calCursor, "MMMM yyyy")
       : calMode === "week"
         ? `${format(startOfWeek(calCursor, WEEK), "MMM d")} – ${format(endOfWeek(calCursor, WEEK), "MMM d, yyyy")}`
-        : format(calCursor, "EEEE, MMMM d");
+        : calMode === "day"
+          ? format(calCursor, phone ? "EEE, MMM d" : "EEEE, MMMM d")
+          : format(calCursor, "MMMM yyyy");
 
   const weekDays = useMemo(() => eachDayOfInterval({ start: startOfWeek(calCursor, WEEK), end: endOfWeek(calCursor, WEEK) }), [calCursor]);
+  const threeDays = useMemo(() => [0, 1, 2].map((i) => addDays(startOfDay(calCursor), i)), [calCursor]);
 
   return (
     <div className="space-y-3">
       <FilterBar />
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Same order as Google and Outlook calendars: Today, back, forward, then the range. */}
-        <div className="flex items-center gap-1">
-          <Button onClick={() => setCalCursor(new Date())} className="mr-1">
-            Today
-          </Button>
-          <Button iconOnly icon={ChevronLeft} label={`Previous ${calMode}`} onClick={() => step(-1)} />
-          <Button iconOnly icon={ChevronRight} label={`Next ${calMode}`} onClick={() => step(1)} />
+      {phone ? (
+        // Phones: Google Calendar's app header. The month on the left, Today and the arrows on the right, the views underneath.
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-1">
+            <h2 className="text-xl font-bold tracking-tight flex-1 min-w-0 truncate" aria-live="polite">
+              {title}
+            </h2>
+            <Button size="sm" onClick={() => setCalCursor(new Date())}>
+              Today
+            </Button>
+            <Button variant="quiet" iconOnly icon={ChevronLeft} label={`Previous ${unit}`} onClick={() => step(-1)} />
+            <Button variant="quiet" iconOnly icon={ChevronRight} label={`Next ${unit}`} onClick={() => step(1)} />
+          </div>
+          <SegmentedControl label="Calendar view" stretch options={PHONE_MODES} value={calMode} onChange={setCalMode} />
         </div>
-        <h2 className="text-lg font-bold ml-1" aria-live="polite">
-          {title}
-        </h2>
-        <SegmentedControl label="Calendar range" className="ml-auto" options={MODES} value={calMode} onChange={setCalMode} />
-      </div>
+      ) : (
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Same order as Google and Outlook calendars: Today, back, forward, then the range. */}
+          <div className="flex items-center gap-1">
+            <Button onClick={() => setCalCursor(new Date())} className="mr-1">
+              Today
+            </Button>
+            <Button iconOnly icon={ChevronLeft} label={`Previous ${calMode}`} onClick={() => step(-1)} />
+            <Button iconOnly icon={ChevronRight} label={`Next ${calMode}`} onClick={() => step(1)} />
+          </div>
+          <h2 className="text-lg font-bold ml-1" aria-live="polite">
+            {title}
+          </h2>
+          <SegmentedControl label="Calendar range" className="ml-auto" options={MODES} value={calMode} onChange={setCalMode} />
+        </div>
+      )}
 
-      {calMode === "month" ? <MonthGrid data={data} /> : null}
+      {calMode === "month" ? <MonthGrid data={data} phone={phone} /> : null}
+      {calMode === "month" && phone ? (
+        // Phones: tap a day in the month and its events and work are listed underneath.
+        <Agenda data={data} count={1} />
+      ) : null}
       {calMode === "week" ? <TimeGrid days={weekDays} data={data} /> : null}
+      {calMode === "3day" ? <TimeGrid days={threeDays} data={data} /> : null}
       {calMode === "day" ? <TimeGrid days={[startOfDay(calCursor)]} data={data} /> : null}
+      {calMode === "schedule" ? <Agenda data={data} /> : null}
 
-      <div className="flex items-center gap-4 flex-wrap text-xs text-muted">
+      <div className="hidden md:flex items-center gap-4 flex-wrap text-xs text-muted">
         {calMode !== "month" ? (
           <>
             <span className="inline-flex items-center gap-1.5">
@@ -127,13 +171,149 @@ export function CalendarView() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Schedule (phones): Google Calendar's agenda list
+// ---------------------------------------------------------------------------
+
+const AGENDA_DAYS = 14;
+
+type AgendaRow =
+  | { kind: "event"; key: string; sort: number; event: CalEvent }
+  | { kind: "work"; key: string; sort: number; block: PlannedBlock; task: Task }
+  | { kind: "due"; key: string; sort: number; task: Task };
+
+/**
+ * Two weeks as one scrolling list, like Google Calendar's Schedule view: the date
+ * in a narrow column on the left, that day's events and planned work stacked on
+ * the right in time order. Days with nothing on them are left out; today always
+ * shows, so you can see where you are.
+ */
+function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }) {
+  const { calCursor, select, model, now } = useApp();
+  const startMs = startOfDay(calCursor).getTime();
+
+  const days = useMemo(() => {
+    const start = new Date(startMs);
+    const out: { day: Date; rows: AgendaRow[] }[] = [];
+    for (let i = 0; i < count; i++) {
+      const day = addDays(start, i);
+      const from = day.getTime();
+      const to = addDays(day, 1).getTime();
+      const rows: AgendaRow[] = [];
+      for (const e of data.events) {
+        const s = Date.parse(e.start);
+        const en = Date.parse(e.end);
+        if (en <= from || s >= to) continue;
+        rows.push({ kind: "event", key: `e:${e.id}`, sort: e.allDay ? -1 : Math.max(s, from), event: e });
+      }
+      for (const w of data.workByDay.get(dayKey(day)) ?? []) {
+        rows.push({ kind: "work", key: `w:${w.task.id}:${w.block.part}`, sort: w.block.start.getTime(), ...w });
+      }
+      for (const t of data.dueByDay.get(dayKey(day)) ?? []) {
+        rows.push({ kind: "due", key: `d:${t.id}`, sort: t.allDay ? -0.5 : Date.parse(t.dueAt!), task: t });
+      }
+      rows.sort((a, b) => a.sort - b.sort);
+      if (rows.length || isToday(day) || count === 1) out.push({ day, rows });
+    }
+    return out;
+  }, [data, startMs, count]);
+
+  return (
+    <ol className="space-y-4">
+      {days.map(({ day, rows }) => {
+        const today = isToday(day);
+        return (
+          <li key={dayKey(day)} className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2.5" data-today={today || undefined}>
+            <div className="text-center pt-0.5">
+              <div className={`text-[11px] font-semibold uppercase tracking-wide ${today ? "text-accent" : "text-muted"}`}>{format(day, "EEE")}</div>
+              <div
+                className={`mx-auto mt-0.5 grid place-items-center text-lg font-semibold tabular-nums leading-none ${
+                  today ? "h-9 w-9 rounded-full bg-accent text-white" : "h-9"
+                }`}
+              >
+                {format(day, "d")}
+              </div>
+            </div>
+            <div className="min-w-0 space-y-1.5">
+              {rows.length === 0 ? <p className="pt-2.5 text-sm text-muted">{today ? "Nothing on today." : "Nothing on this day."}</p> : null}
+              {rows.map((r) => {
+                if (r.kind === "event") {
+                  const e = r.event;
+                  return (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => select({ kind: "event", id: e.id })}
+                      className={`event-block w-full text-left px-3 py-2 ${e.busy ? "" : "opacity-60"}`}
+                      style={courseStyle(e.color)}
+                    >
+                      <div className="event-title text-sm font-semibold truncate">{e.title}</div>
+                      <div className="text-xs text-muted truncate">
+                        {e.allDay ? "All day" : clockRange(new Date(e.start), new Date(e.end))}
+                        {e.location ? ` · ${e.location}` : ""}
+                      </div>
+                    </button>
+                  );
+                }
+                if (r.kind === "work") {
+                  const course = r.task.courseId ? model.courseById.get(r.task.courseId) : undefined;
+                  return (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => select({ kind: "task", id: r.task.id })}
+                      className={`plan-block w-full text-left px-3 py-2 flex items-start gap-2 ${r.task.done ? "opacity-50" : ""}`}
+                      style={courseStyle(course?.color)}
+                    >
+                      <span className="plan-tick mt-1" data-done={r.task.done || undefined} aria-hidden />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold truncate">{r.task.title}</span>
+                        <span className="block text-xs text-muted truncate">
+                          {clockRange(r.block.start, r.block.end)}
+                          {course ? (
+                            <>
+                              {" · "}
+                              <span className="course-text">{course.code}</span>
+                            </>
+                          ) : null}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                }
+                const t = r.task;
+                const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+                const late = !t.done && t.dueAt ? Date.parse(t.dueAt) < now.getTime() : false;
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => select({ kind: "task", id: t.id })}
+                    className={`w-full text-left flex items-center gap-1.5 px-1 py-1 text-xs ${t.done ? "text-faint line-through" : late || t.type === "exam" ? "text-danger" : "text-muted"}`}
+                    style={courseStyle(course?.color)}
+                  >
+                    <Flag size={12} className="shrink-0" aria-hidden />
+                    <span className="truncate">
+                      Due {t.allDay ? "today" : clock(new Date(t.dueAt!))}: <span className="font-medium text-fg">{t.title}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 type CalData = ReturnType<typeof useCalendarData>;
 
 // ---------------------------------------------------------------------------
 // Month
 // ---------------------------------------------------------------------------
 
-function MonthGrid({ data }: { data: CalData }) {
+function MonthGrid({ data, phone }: { data: CalData; phone: boolean }) {
   const { calCursor, setCalCursor, setCalMode, model, select } = useApp();
   const days = useMemo(
     () => eachDayOfInterval({ start: startOfWeek(startOfMonth(calCursor), WEEK), end: endOfWeek(endOfMonth(calCursor), WEEK) }),
@@ -174,7 +354,8 @@ function MonthGrid({ data }: { data: CalData }) {
               tabIndex={0}
               onClick={() => {
                 setCalCursor(d);
-                setCalMode("day");
+                // Computers open the day; phones list it under the month instead.
+                if (!phone) setCalMode("day");
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -182,7 +363,9 @@ function MonthGrid({ data }: { data: CalData }) {
                   setCalMode("day");
                 }
               }}
-              className={`text-left min-h-[92px] sm:min-h-[112px] border-b border-r border-line p-1 sm:p-1.5 cursor-pointer transition hover:bg-surface-2/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-inset ${inMonth ? "" : "bg-surface-2/30"}`}
+              aria-pressed={phone ? isSameDay(d, calCursor) : undefined}
+              aria-label={phone ? `${format(d, "EEEE, MMMM d")}: ${due.length} due` : undefined}
+              className={`text-left ${phone ? "min-h-[64px]" : "min-h-[92px] sm:min-h-[112px]"} border-b border-r border-line p-1 sm:p-1.5 cursor-pointer transition hover:bg-surface-2/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-inset ${inMonth ? "" : "bg-surface-2/30"} ${phone && isSameDay(d, calCursor) && !today ? "!bg-accent-soft" : ""}`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span
@@ -194,29 +377,40 @@ function MonthGrid({ data }: { data: CalData }) {
                 </span>
                 {events.length > 0 ? <span className="text-[10px] text-muted tabular-nums hidden sm:inline">{events.length === 1 ? "1 event" : `${events.length} events`}</span> : null}
               </div>
-              <div className="space-y-[3px]">
-                {shown.map((t) => {
-                  const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
-                  const meta = typeMeta(t.type);
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      style={courseStyle(course?.color)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        select({ kind: "task", id: t.id });
-                      }}
-                      title={t.title}
-                      className={`w-full text-left flex items-center gap-1 px-1 sm:px-1.5 py-[3px] text-[11px] leading-tight course-tint hover:brightness-95 dark:hover:brightness-110 transition ${t.done ? "opacity-45 line-through" : ""}`}
-                    >
-                      <meta.icon size={11} className={`shrink-0 hidden sm:block ${t.type === "exam" || t.type === "quiz" ? typeIconClass(t.type) : "course-text"}`} strokeWidth={2.5} />
-                      <span className={`truncate ${t.type === "exam" ? "font-semibold" : ""}`}>{t.title}</span>
-                    </button>
-                  );
-                })}
-                {due.length > shown.length ? <div className="text-[10px] text-muted pl-1.5">+{due.length - shown.length} more</div> : null}
-              </div>
+              {phone ? (
+                // Phones: a small coloured bar per thing due, like Google Calendar's month on a phone.
+                <div className="space-y-[3px] px-0.5">
+                  {due.slice(0, 3).map((t) => {
+                    const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+                    return <span key={t.id} className={`block h-1.5 rounded-full course-bar ${t.done ? "opacity-30" : ""}`} style={courseStyle(course?.color)} />;
+                  })}
+                  {due.length > 3 ? <span className="block text-[9px] leading-none text-muted">+{due.length - 3}</span> : null}
+                </div>
+              ) : (
+                <div className="space-y-[3px]">
+                  {shown.map((t) => {
+                    const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+                    const meta = typeMeta(t.type);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        style={courseStyle(course?.color)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          select({ kind: "task", id: t.id });
+                        }}
+                        title={t.title}
+                        className={`w-full text-left flex items-center gap-1 px-1 sm:px-1.5 py-[3px] text-[11px] leading-tight course-tint hover:brightness-95 dark:hover:brightness-110 transition ${t.done ? "opacity-45 line-through" : ""}`}
+                      >
+                        <meta.icon size={11} className={`shrink-0 hidden sm:block ${t.type === "exam" || t.type === "quiz" ? typeIconClass(t.type) : "course-text"}`} strokeWidth={2.5} />
+                        <span className={`truncate ${t.type === "exam" ? "font-semibold" : ""}`}>{t.title}</span>
+                      </button>
+                    );
+                  })}
+                  {due.length > shown.length ? <div className="text-[10px] text-muted pl-1.5">+{due.length - shown.length} more</div> : null}
+                </div>
+              )}
             </div>
           );
         })}
@@ -301,10 +495,10 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
 
   return (
     <div ref={scroller} className="card overflow-x-auto scrollbar-thin">
-      <div className={single ? "" : "min-w-[840px]"}>
+      <div className={days.length === 7 ? "min-w-[840px]" : ""}>
         {/* Day headers, all-day events and deadlines */}
         <div className="flex border-b border-line bg-surface-2/40">
-          <div className="w-14 shrink-0 sticky left-0 z-20 bg-surface" />
+          <div className="w-11 md:w-14 shrink-0 sticky left-0 z-20 bg-surface" />
           {columns.map((c) => (
             <div key={c.from} data-today={isToday(c.day) || undefined} className="flex-1 min-w-0 border-l border-line px-2 py-2">
               {!single ? (
@@ -363,7 +557,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
 
         {/* Hours, with a little room under the day headers */}
         <div className="flex relative">
-          <div className="w-14 shrink-0 sticky left-0 z-20 bg-surface" style={{ paddingTop: TOP_PAD }}>
+          <div className="w-11 md:w-14 shrink-0 sticky left-0 z-20 bg-surface" style={{ paddingTop: TOP_PAD }}>
             {hours.map((h) => (
               <div key={h} className="text-[11px] text-faint text-right pr-2 tabular-nums -translate-y-1.5" style={{ height: HOUR_PX }}>
                 {h === 0 ? "" : clock(new Date(2000, 0, 1, h))}

@@ -165,14 +165,15 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <div className={`pt-6 pb-1 flex items-start gap-4 flex-wrap ${className}`}>
-      <span className="grid place-items-center h-11 w-11 shrink-0 rounded-xl bg-accent-soft text-accent" aria-hidden>
-        <Icon size={22} />
+    <div className={`pt-4 md:pt-6 pb-1 flex items-start gap-3 md:gap-4 flex-wrap ${className}`}>
+      <span className="grid place-items-center h-9 w-9 md:h-11 md:w-11 shrink-0 rounded-xl bg-accent-soft text-accent" aria-hidden>
+        <Icon size={20} className="md:size-[22px]" />
       </span>
       <div className="min-w-0 flex-1 basis-60">
         {eyebrow ? <div className="mb-0.5 text-sm text-muted">{eyebrow}</div> : null}
-        <h1 className="text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight">{title}</h1>
-        {description ? <p className="mt-1 text-[0.95rem] text-muted leading-relaxed max-w-2xl">{description}</p> : null}
+        <h1 className="text-[1.6rem] md:text-[1.75rem] font-bold tracking-tight leading-tight md:pt-0 pt-0.5">{title}</h1>
+        {/* Phones skip the explainer line: the tab bar and the content already say where you are. */}
+        {description ? <p className="hidden md:block mt-1 text-[0.95rem] text-muted leading-relaxed max-w-2xl">{description}</p> : null}
       </div>
       {actions ? <div className="flex items-center gap-2 flex-wrap">{actions}</div> : null}
     </div>

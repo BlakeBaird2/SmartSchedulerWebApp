@@ -45,7 +45,7 @@ interface UiPrefs {
 }
 
 const VIEWS: View[] = ["plan", "calendar", "upcoming", "classes", "settings", "help"];
-const CAL_MODES: CalMode[] = ["month", "week", "day"];
+const CAL_MODES: CalMode[] = ["month", "week", "day", "3day", "schedule"];
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
   view: "plan",

@@ -357,6 +357,36 @@ the dev menu sit above it, and pop-ups and side sheets cover it. While Settings
 or Help is open no tab is highlighted, since neither is one of the four views.
 Tablets and computers keep the top navigation.
 
+### 25. A real phone layout
+
+Every screen was checked at 390px and reworked for a phone (under 768px).
+Computers and tablets are unchanged.
+
+**Calendar, modelled on Google Calendar's app**
+
+| Before | After (phones) |
+| --- | --- |
+| A seven-day grid squeezed to the screen, scrolling sideways | Four phone views: **Schedule** (the default), Day, 3 days and Month |
+| Toolbar wrapped over three lines | The month on the left, Today and ‹ › on the right, the views in one row underneath |
+| — | **Schedule**: two weeks as one list, the date in a narrow column (today in an indigo circle) and that day's events, planned work and deadlines stacked in time order. Empty days are skipped. |
+| Month cells with cut-off titles ("Rea…") | A small coloured bar per thing due (its class colour). Tapping a day lists its events and work under the month. |
+| Legend and time zone under every view | Hidden on phones |
+| Class filters wrapped onto three rows | One row that scrolls sideways, edge to edge; "Show finished work" becomes "Finished" |
+
+**Every screen**
+
+- Page headers are smaller and drop the explainer line; the tab bar already says where you are.
+- The sample-data notice is one slim line ("Sample data. Nothing here is real." · Use mine).
+- Plan's capability sentence is smaller (still the biggest text on the screen) and shows only the date under it.
+- Upcoming: rows keep to two lines (the kind of work and "in 3 days" move into the details), and the day headings stick under the slimmer header. Add task is the round + button.
+- Classes: a stack of cards, one per class, each showing its next three tasks, instead of a board that scrolled sideways.
+- Settings: each calendar's name gets the full first line, with School / Personal and Remove under it; class codes no longer wrap.
+- Setup: the link box takes the full width with Add calendar under it.
+
+**Slide between views.** The highlighted pill in the bottom bar can be grabbed
+and slid: it follows the finger, the tab under it lights up, and letting go
+opens that view. Tapping a tab still works as before.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

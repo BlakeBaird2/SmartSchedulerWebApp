@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import { useApp } from "./context";
 import { resetEverything } from "./store";
 import { Button, Callout, TextButton } from "./ui";
@@ -12,14 +13,23 @@ export function Banners() {
   return (
     <>
       {ws.demo ? (
-        <Callout
-          tone="sample"
-          className="mt-4"
-          title="You're looking at sample data."
-          actions={<Button onClick={resetEverything}>Use my own calendars</Button>}
-        >
-          Everything here is made up. Press Done on the top task to see the plan move.
-        </Callout>
+        <>
+          {/* Phones: one slim line, so the screen's own content starts sooner. */}
+          <div role="note" className="md:hidden mt-3 flex items-center gap-2.5 rounded-xl border border-accent/25 bg-accent-soft pl-3 pr-1.5 py-1.5 text-sm">
+            <Sparkles size={16} className="shrink-0" aria-hidden />
+            <span className="flex-1 min-w-0 leading-snug">
+              <b className="font-semibold">Sample data.</b> <span className="text-muted">Nothing here is real.</span>
+            </span>
+            <Button size="sm" onClick={resetEverything}>
+              Use mine
+            </Button>
+          </div>
+          <div className="hidden md:block">
+            <Callout tone="sample" className="mt-4" title="You're looking at sample data." actions={<Button onClick={resetEverything}>Use my own calendars</Button>}>
+              Everything here is made up. Press Done on the top task to see the plan move.
+            </Callout>
+          </div>
+        </>
       ) : null}
       {broken.length > 0 ? (
         <Callout

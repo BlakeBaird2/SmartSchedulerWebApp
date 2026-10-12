@@ -185,8 +185,8 @@ function ClassTimesRow({ course }: { course: Course }) {
     <li className="py-3" style={courseStyle(course.color)}>
       <div className="flex items-center gap-2 min-w-0">
         <span className="course-dot" />
-        <span className="course-text font-semibold text-sm">{course.code}</span>
-        {course.title !== course.code ? <span className="text-sm text-muted truncate">{course.title}</span> : null}
+        <span className="course-text font-semibold text-sm whitespace-nowrap">{course.code}</span>
+        {course.title !== course.code ? <span className="hidden sm:inline text-sm text-muted truncate">{course.title}</span> : null}
         {renaming ? null : (
           <span className="ml-auto shrink-0">
             <RenameClassButton course={course} onClick={() => setRenaming(true)} />

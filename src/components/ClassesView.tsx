@@ -5,7 +5,7 @@ import { ExternalLink, Eye, GraduationCap, Pencil, Plus, RotateCcw } from "lucid
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit, Task } from "@/lib/types";
 import { duration, relativeDue, typeIconClass, typeMeta, whenLabel } from "@/lib/ui";
-import { courseStyle, useApp, wireGray } from "./context";
+import { courseStyle, useApp, useIsPhone, wireGray } from "./context";
 import { AppTaskCard } from "./TaskRow";
 import { Button, buttonClass, Dialog, DialogActions, EmptyState, Field, Switch, TextButton } from "./ui";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
@@ -17,6 +17,7 @@ import { useOriginalCourseName, withCourseNames } from "./ClassName";
  */
 export function ClassesView() {
   const { model, update, setSettingsPanel } = useApp();
+  const phone = useIsPhone();
   const [editing, setEditing] = useState<Course | null>(null);
   const visible = model.visibleCourses;
   const hidden = model.courses.filter((c) => c.hidden);
@@ -39,7 +40,16 @@ export function ClassesView() {
 
   return (
     <div className="space-y-3">
-      {visible.length > 0 ? (
+      {visible.length > 0 && phone ? (
+        // Phones: one card per class, stacked, each showing its next few tasks.
+        <div className="space-y-3">
+          {visible.map((c) => (
+            <div key={c.id} className="card overflow-hidden">
+              <ClassColumn course={c} onEdit={() => setEditing(c)} page={3} />
+            </div>
+          ))}
+        </div>
+      ) : visible.length > 0 ? (
         <div className="card overflow-x-auto scrollbar-thin snap-x snap-mandatory">
           <div className="grid divide-x divide-line" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(13.5rem, 1fr))` }}>
             {visible.map((c) => (
@@ -77,7 +87,7 @@ export function ClassesView() {
 
 const PAGE = 8;
 
-function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void }) {
+function ClassColumn({ course, onEdit, page = PAGE }: { course: Course; onEdit: () => void; page?: number }) {
   const { model, now } = useApp();
   const [expanded, setExpanded] = useState(false);
   const feed = model.feedById.get(course.feedId);
@@ -94,7 +104,7 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
   }, [model.tasks, course.id, now]);
 
   const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
-  const shown = expanded ? stats.left : stats.left.slice(0, PAGE);
+  const shown = expanded ? stats.left : stats.left.slice(0, page);
 
   return (
     <section className="min-w-0 flex flex-col snap-start" style={courseStyle(course.color)}>
@@ -119,7 +129,7 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
           {course.title !== course.code ? course.title : `from ${feed?.name ?? "a calendar"}`}
         </p>
         {/* Room for two lines, so every column's work starts at the same height. */}
-        <div className="mt-1.5 min-h-[2.125rem]">
+        <div className={`mt-1.5 ${page === PAGE ? "min-h-[2.125rem]" : ""}`}>
           <MeetsLine course={course} />
         </div>
         <div className="mt-2.5 h-2 rounded-full bg-surface-2 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${course.code}: ${pct}% done`}>
@@ -141,9 +151,9 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
         ))}
         {stats.left.length === 0 ? <li className="px-1 py-3 text-xs text-muted text-center">All caught up</li> : null}
       </ul>
-      {stats.left.length > PAGE ? (
+      {stats.left.length > page ? (
         <Button variant="quiet" size="sm" className="mx-2 mb-2 justify-center" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? "Show less" : `Show ${stats.left.length - PAGE} more`}
+          {expanded ? "Show less" : `Show ${stats.left.length - page} more`}
         </Button>
       ) : null}
     </section>

@@ -26,18 +26,23 @@ export function FilterBar() {
     });
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filters">
-      {courses.length > 1 ? <span className="text-sm text-muted mr-1">Show:</span> : null}
+    // Phones: one row that scrolls sideways, edge to edge, instead of three wrapped rows.
+    <div
+      className="flex items-center gap-1.5 flex-nowrap overflow-x-auto scrollbar-none -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible"
+      role="group"
+      aria-label="Filters"
+    >
+      {courses.length > 1 ? <span className="hidden md:inline text-sm text-muted mr-1">Show:</span> : null}
       {courses.length > 1 ? (
         <>
-          <button type="button" className="pill" aria-pressed={filters.courses === null} onClick={() => setFilters((f) => ({ ...f, courses: null }))}>
+          <button type="button" className="pill shrink-0" aria-pressed={filters.courses === null} onClick={() => setFilters((f) => ({ ...f, courses: null }))}>
             All classes
           </button>
           {courses.map((c) => {
             const on = filters.courses === null || filters.courses.includes(c.id);
             const n = remaining.get(c.id) ?? 0;
             return (
-              <button key={c.id} type="button" className="pill pill-course" style={courseStyle(c.color)} aria-pressed={on} onClick={() => toggleCourse(c.id)} title={c.title}>
+              <button key={c.id} type="button" className="pill pill-course shrink-0" style={courseStyle(c.color)} aria-pressed={on} onClick={() => toggleCourse(c.id)} title={c.title}>
                 <span className="course-dot" />
                 <span className="course-text">{c.code}</span>
                 {n > 0 ? <span className="text-[11px] text-muted tabular-nums">{n}</span> : null}
@@ -49,12 +54,13 @@ export function FilterBar() {
       {/* A plain on/off: pressed means finished work is shown. */}
       <button
         type="button"
-        className="pill ml-auto"
+        className="pill shrink-0 md:ml-auto"
         aria-pressed={filters.showCompleted}
         onClick={() => setFilters((f) => ({ ...f, showCompleted: !f.showCompleted }))}
       >
         {filters.showCompleted ? <Eye size={13} aria-hidden /> : <EyeOff size={13} aria-hidden />}
-        Show finished work
+        <span className="md:hidden">Finished</span>
+        <span className="hidden md:inline">Show finished work</span>
       </button>
     </div>
   );

@@ -457,6 +457,13 @@
     scrollbar-width: thin;
     scrollbar-color: var(--line-strong) transparent;
   }
+  /* Sideways rows on phones (filters): swipe, no visible bar. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes spin {

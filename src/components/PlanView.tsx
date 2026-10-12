@@ -51,10 +51,10 @@ export function PlanView() {
 export function PlanHeading() {
   const { now } = useApp();
   return (
-    <CapabilityHero className="pt-6">
-      <p className="mt-2 text-lg text-muted">
-        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span> · SmartScheduler fills each free gap with whatever is due soonest. Tick things off as you
-        finish them.
+    <CapabilityHero className="pt-4 md:pt-6">
+      <p className="mt-1.5 md:mt-2 text-base md:text-lg text-muted">
+        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span>
+        <span className="hidden md:inline"> · SmartScheduler fills each free gap with whatever is due soonest. Tick things off as you finish them.</span>
       </p>
     </CapabilityHero>
   );

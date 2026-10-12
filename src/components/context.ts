@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Model } from "@/lib/model";
 import type { Plan } from "@/lib/planner";
 import type { PlanIndex } from "@/lib/schedule";
@@ -8,7 +8,8 @@ import type { Change, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/
 import type { Filters } from "@/lib/ui";
 
 export type View = "plan" | "calendar" | "upcoming" | "classes" | "settings" | "help";
-export type CalMode = "month" | "week" | "day";
+/** "schedule" (an agenda list) and "3day" are the phone views, as in Google Calendar's app. */
+export type CalMode = "month" | "week" | "day" | "3day" | "schedule";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
 export type SettingsPanel = "main" | "calendars" | "schedule" | "estimates" | "browser" | "about";
 export type Selection =
@@ -95,4 +96,25 @@ export function wireGray(color: string | undefined | null): string {
 
 export function courseStyle(color: string | undefined | null): React.CSSProperties {
   return { "--c": wireGray(color ?? "#64748b") } as React.CSSProperties;
+}
+
+// ---------------------------------------------------------------------------
+// Phone or not
+// ---------------------------------------------------------------------------
+
+const PHONE_QUERY = "(max-width: 767px)";
+
+function subscribePhone(onChange: () => void) {
+  const m = window.matchMedia(PHONE_QUERY);
+  m.addEventListener("change", onChange);
+  return () => m.removeEventListener("change", onChange);
+}
+
+/** True below 768px, where screens get their phone layout (bottom bar, agenda calendar, stacked classes). */
+export function useIsPhone(): boolean {
+  return useSyncExternalStore(
+    subscribePhone,
+    () => window.matchMedia(PHONE_QUERY).matches,
+    () => false,
+  );
 }

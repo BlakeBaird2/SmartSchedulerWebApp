@@ -49,7 +49,8 @@ export function UpcomingView() {
         <div className="flex-1 min-w-0">
           <FilterBar />
         </div>
-        <Button icon={Plus} className="shrink-0" onClick={openAddTask}>
+        {/* Phones add from the round + in the bottom bar. */}
+        <Button icon={Plus} className="hidden md:inline-flex shrink-0" onClick={openAddTask}>
           Add task
         </Button>
       </div>
@@ -75,10 +76,10 @@ export function UpcomingView() {
         const loud = g.items.filter((t) => typeMeta(t.type).loud).length;
         return (
           <section key={g.key}>
-            <div className="flex items-baseline gap-2 mb-2 sticky top-[6.25rem] md:top-14 bg-bg py-1 z-10 border-b border-line">
+            <div className="flex items-baseline gap-2 mb-2 sticky top-14 md:top-[6.5rem] lg:top-14 bg-bg/95 backdrop-blur py-1.5 z-10 border-b border-line">
               <h2 className="text-sm font-semibold">{h.title}</h2>
-              <span className="text-xs text-muted">{h.sub}</span>
-              <span className="ml-auto text-xs text-muted tabular-nums">
+              <span className="hidden sm:inline text-xs text-muted">{h.sub}</span>
+              <span className="ml-auto text-xs text-muted tabular-nums whitespace-nowrap">
                 {plural(g.items.length, "task")} · {duration(minutes)}
                 {loud > 0 ? <span className="text-warn font-medium"> · {loud} quiz/exam</span> : null}
               </span>
