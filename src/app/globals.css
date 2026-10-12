@@ -1156,3 +1156,16 @@
     border-radius: 8px;
   }
 }
+
+/*
+ * iPhones zoom the page in when a field with text under 16px is tapped (pasting a
+ * calendar link, adding a task). Touch screens get 16px text in every field, so
+ * the page stays put. Pinch-zoom is left alone on purpose.
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
