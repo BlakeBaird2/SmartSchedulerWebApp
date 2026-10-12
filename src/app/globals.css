@@ -735,7 +735,9 @@
   .pill {
     min-height: 44px;
   }
-  .btn-icon {
+  .btn-icon,
+  /* Header tools whose label is hidden: square, as wide as they are tall. */
+  .tool-square {
     min-width: 44px;
     justify-content: center;
   }

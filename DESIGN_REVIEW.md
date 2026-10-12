@@ -383,9 +383,13 @@ Computers and tablets are unchanged.
 - Settings: each calendar's name gets the full first line, with School / Personal and Remove under it; class codes no longer wrap.
 - Setup: the link box takes the full width with Add calendar under it.
 
-**Slide between views.** The highlighted pill in the bottom bar can be grabbed
-and slid: it follows the finger, the tab under it lights up, and letting go
-opens that view. Tapping a tab still works as before.
+**Slide between views.** The whole bottom bar is one control: touch it anywhere
+and the highlighted pill glides to your finger, slide and it follows, and letting
+go opens the tab it's on. A quick tap is the same gesture, so tapping a tab works
+as before; keyboards still use Tab and Enter.
+
+**Square header tools.** On touch screens the header's icon buttons (Alerts,
+Settings) are 44 × 44 squares, not 36-wide rectangles.
 
 ## Before and after
 

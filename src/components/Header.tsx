@@ -60,7 +60,7 @@ export function Header() {
             </span>
             <span className="mx-1 h-6 w-px bg-line-strong" aria-hidden />
           </div>
-          <Button icon={Plus} onClick={openAddTask} className="hidden md:inline-flex min-w-9 px-2 xl:px-3" title="Add a task that isn't on any calendar" aria-label="Add task">
+          <Button icon={Plus} onClick={openAddTask} className="tool-square hidden md:inline-flex min-w-9 px-2 xl:px-3" title="Add a task that isn't on any calendar" aria-label="Add task">
             <span className="hidden xl:inline">Add task</span>
           </Button>
           <ChangesPopover />
@@ -70,7 +70,7 @@ export function Header() {
             aria-label="Help and goal"
             title="Help and goal"
             aria-pressed={view === "help"}
-            className={`min-w-9 px-2 2xl:px-3 !hidden sm:!inline-flex ${view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
+            className={`tool-square min-w-9 px-2 2xl:px-3 !hidden sm:!inline-flex ${view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
           >
             <span className="hidden 2xl:inline">Help</span>
           </Button>
@@ -80,7 +80,7 @@ export function Header() {
             aria-label="Settings"
             title="Settings"
             aria-pressed={view === "settings"}
-            className={`min-w-9 px-2 2xl:px-3 ${view === "settings" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
+            className={`tool-square min-w-9 px-2 2xl:px-3 ${view === "settings" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
           >
             <span className="hidden 2xl:inline">Settings</span>
           </Button>
