@@ -43,7 +43,7 @@ export function ChangesPopover() {
     <div className="relative" ref={ref}>
       <Button
         icon={Bell}
-        className="relative"
+        className="relative min-w-9 px-2 2xl:px-3"
         onClick={toggle}
         aria-expanded={open}
         aria-haspopup="dialog"

@@ -1074,6 +1074,22 @@
     text-decoration-color: currentColor;
   }
 
+  /*
+   * One height for every button, with or without text, so a row of tools lines
+   * up. Icon-only buttons are square. Touch screens still raise this to 44px.
+   */
+  .btn,
+  .btn-primary {
+    min-height: 2.25rem;
+    justify-content: center;
+  }
+  .btn-sm {
+    min-height: 2rem;
+  }
+  .btn-icon {
+    min-width: 2.25rem;
+  }
+
   /* The wordmark's full stop, in the accent: "SmartScheduler." */
   .wordmark-dot {
     color: var(--accent);
