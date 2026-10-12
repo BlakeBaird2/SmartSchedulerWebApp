@@ -33,6 +33,8 @@ const MODES: { id: CalMode; label: string }[] = [
 
 const WEEK = { weekStartsOn: 1 } as const;
 const HOUR_PX = 64;
+/** Room between the day headers and the first hour, so the grid doesn't start right against them. */
+const TOP_PAD = 12;
 
 /** Tasks and events that pass the filters, plus planned work, grouped for quick lookup by day. */
 function useCalendarData() {
@@ -284,7 +286,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
   startHour = Math.max(0, startHour);
   endHour = Math.min(24, Math.max(endHour, startHour + 1));
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
-  const top = (ms: number, from: number) => ((ms - from) / MIN - startHour * 60) * (HOUR_PX / 60);
+  const top = (ms: number, from: number) => TOP_PAD + ((ms - from) / MIN - startHour * 60) * (HOUR_PX / 60);
 
   // On a narrow screen the week scrolls sideways; start it at today.
   const scroller = useRef<HTMLDivElement>(null);
@@ -359,11 +361,11 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
           ))}
         </div>
 
-        {/* Hours */}
+        {/* Hours, with a little room under the day headers */}
         <div className="flex relative">
-          <div className="w-14 shrink-0 sticky left-0 z-20 bg-surface">
+          <div className="w-14 shrink-0 sticky left-0 z-20 bg-surface" style={{ paddingTop: TOP_PAD }}>
             {hours.map((h) => (
-              <div key={h} className={`text-[11px] text-faint text-right pr-2 tabular-nums ${h === startHour ? "pt-0.5" : "-translate-y-1.5"}`} style={{ height: HOUR_PX }}>
+              <div key={h} className="text-[11px] text-faint text-right pr-2 tabular-nums -translate-y-1.5" style={{ height: HOUR_PX }}>
                 {h === 0 ? "" : clock(new Date(2000, 0, 1, h))}
               </div>
             ))}
@@ -372,14 +374,14 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
             const placed = layoutColumns(c.items, (i) => i.start, (i) => i.end);
             const showNow = isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour;
             return (
-              <div key={c.from} className="flex-1 min-w-0 relative border-l border-line" style={{ height: hours.length * HOUR_PX }}>
+              <div key={c.from} className="flex-1 min-w-0 relative border-l border-line" style={{ height: TOP_PAD + hours.length * HOUR_PX }}>
                 {hours.map((h, i) => (
-                  <div key={h} className="absolute inset-x-0 border-t border-line/70" style={{ top: i * HOUR_PX }} />
+                  <div key={h} className="absolute inset-x-0 border-t border-line/70" style={{ top: TOP_PAD + i * HOUR_PX }} />
                 ))}
                 {c.gaps.map((g) => {
                   const y = top(g.start, c.from);
                   const gh = Math.max(14, top(g.end, c.from) - y - 2);
-                  if (y + gh < 0 || y > hours.length * HOUR_PX) return null;
+                  if (y + gh < 0 || y > TOP_PAD + hours.length * HOUR_PX) return null;
                   return (
                     <button
                       key={g.id}
