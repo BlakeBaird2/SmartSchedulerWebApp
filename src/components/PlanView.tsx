@@ -27,8 +27,8 @@ export function PlanView() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <div className="space-y-5 min-w-0">
           <NowCard />
-          {/* Phones and tablets: right under the focus card, before the long day list. */}
-          <div className="lg:hidden">
+          {/* Tablets: right under the focus card. (Phones have the round + button in the bottom bar.) */}
+          <div className="hidden md:block lg:hidden">
             <AddTaskTile />
           </div>
           <DaySchedule />

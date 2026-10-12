@@ -241,7 +241,7 @@ export function Toast({ message, action, onAction }: { message: string; action?:
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-xl bg-fg text-bg shadow-[var(--shadow-lg)] text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
+      className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-xl bg-fg text-bg shadow-[var(--shadow-lg)] text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
     >
       <span className="min-w-0">{message}</span>
       {action && onAction ? (

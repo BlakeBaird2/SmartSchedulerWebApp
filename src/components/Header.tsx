@@ -7,7 +7,7 @@ import { ChangesPopover } from "./ChangesPopover";
 import { PrototypeBadge } from "./Prototype";
 import { Button, SegmentedControl, Wordmark } from "./ui";
 
-const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
+export const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
   { id: "plan", label: "Plan", icon: Target },
   { id: "calendar", label: "Calendar", icon: CalendarRange },
   { id: "upcoming", label: "Upcoming", icon: ListChecks },
@@ -20,7 +20,8 @@ const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
  *
  * It has to fit every width without anything falling off the edge:
  * - wide screens (lg+): one row; the views sit beside the name
- * - tablets and phones: the views move to a second, full-width row
+ * - tablets: the views move to a second, full-width row
+ * - phones: the views and Add task move to a floating bar at the bottom (BottomNav)
  * - tool labels show only where there is room (xl+); below that each tool is an
  *   icon with its name on hover and for screen readers
  * - phones: Help moves into Settings, so the first row is just the name, the
@@ -59,7 +60,7 @@ export function Header() {
             </span>
             <span className="mx-1 h-6 w-px bg-line-strong" aria-hidden />
           </div>
-          <Button icon={Plus} onClick={openAddTask} className="min-w-9 px-2 xl:px-3" title="Add a task that isn't on any calendar" aria-label="Add task">
+          <Button icon={Plus} onClick={openAddTask} className="hidden md:inline-flex min-w-9 px-2 xl:px-3" title="Add a task that isn't on any calendar" aria-label="Add task">
             <span className="hidden xl:inline">Add task</span>
           </Button>
           <ChangesPopover />
@@ -85,7 +86,7 @@ export function Header() {
           </Button>
         </div>
       </div>
-      <nav className="lg:hidden px-4 sm:px-6 pb-2 max-w-6xl mx-auto" aria-label="Main">
+      <nav className="hidden md:block lg:hidden px-4 sm:px-6 pb-2 max-w-6xl mx-auto" aria-label="Main">
         <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} stretch />
       </nav>
     </header>

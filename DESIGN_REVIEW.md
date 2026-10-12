@@ -340,6 +340,23 @@ the focus card (right under the focus card on phones and tablets). It's white
 with an indigo icon, not a blue button, so Done stays the one primary action on
 the screen (attention); its size makes it an easy target (Fitts's law).
 
+### 24. Phones: navigation moves to the bottom
+
+On phones the main views were a second row under the header, at the top of the
+screen and out of thumb reach. Phones (under 768px) now follow the mobile
+convention:
+
+| Before | After (phones) |
+| --- | --- |
+| Views in a row under the header | A floating, rounded bar at the bottom: Plan, Calendar, Upcoming, Classes. The open view is a raised, tinted pill with an indigo icon. Each tab keeps a short label (icons are always named). |
+| Add task as a small + in the header | Its own round button beside the bar, always in reach of a thumb (Fitts's law). |
+| Header: name, Prototype tag, +, Alerts, Settings, plus the views row | One slim row: the mark, the Prototype tag, Alerts and Settings. More of the screen is content. |
+
+The bar respects the iPhone home indicator (safe area), the "Done" message and
+the dev menu sit above it, and pop-ups and side sheets cover it. While Settings
+or Help is open no tab is highlighted, since neither is one of the four views.
+Tablets and computers keep the top navigation.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.
