@@ -211,6 +211,23 @@ and applied the handoff's rules:
 Blue stays the one main action per screen. The chosen tab is now a raised white
 option with dark text, so only its icon is indigo.
 
+### 16. Free time on the timeline, not in a box
+
+Free gaps on Plan were green dashed boxes with the planned tasks nested inside.
+It was clear, but each gap shrank its tasks into a box, which was cramped on
+phones. Now "The rest of today" reads like a phone calendar's agenda:
+
+| Before | After |
+| --- | --- |
+| A box around each free gap, with tasks inside it | No box. The time column marks the gap: its start time at the top and its end time at the bottom, joined by a dashed green line. "Free · 1h 50m" sits beside the start. |
+| Tasks narrowed by the box's border and padding | Tasks use the full width of the card. |
+| Events had no marker on the timeline | Every row has a marker: a dot in the class colour for events, a small grey dot for deadlines, and an open green circle at each end of a free gap. |
+
+The dashed line keeps the meaning of "dashed = open time, not fixed" (Gestalt
+continuity and common fate: everything beside the line belongs to that
+stretch of time). The new library part is `TimelineRow`, used on Plan, in the
+home page drawings and on `/design`.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

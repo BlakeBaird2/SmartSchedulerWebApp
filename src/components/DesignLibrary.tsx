@@ -18,6 +18,7 @@ import {
   EmptyState,
   Field,
   FreeGapBlock,
+  TimelineRow,
   SectionLabel,
   SegmentedControl,
   Switch,
@@ -363,30 +364,34 @@ function CoreParts() {
         use="Every free gap in a day's plan."
         rules={[
           'The gap\'s length is the headline ("Free · 50m").',
-          'Tasks that fit sit inside it, so the box itself says "these belong to this time".',
-          "Dashed outline: it is open time, not a fixed event.",
+          "No box: it sits in a TimelineRow, whose dashed green line joins the gap's start and end times, so the tasks beside it plainly belong to that time and keep the full width.",
+          "Dashed line: it is open time, not a fixed event.",
           "Time left over is always said, never left blank.",
         ]}
         why="Our discovery research narrowed to one problem: students lose free time deciding what to work on instead of working on it. This shows the gap with the decision already made."
         usedIn="Plan → The rest of today"
       >
-        <FreeGapBlock minutes={50} label="Free · 50m" note="20m left over">
-          <li>
-            <TaskCard
-              title="Reading: Chapter 5"
-              done={done.gap}
-              onToggleDone={() => toggle("gap")}
-              onOpen={() => setOpened("Reading: Chapter 5")}
-              meta={
-                <>
-                  <ClassChip code="BUS 301" color="#2563eb" />
-                  <span>due in 2 days</span>
-                </>
-              }
-              trailing={<span className="text-sm font-semibold">30m</span>}
-            />
-          </li>
-        </FreeGapBlock>
+        <ol>
+          <TimelineRow marker="free" start="3:25 PM" end="4:15 PM">
+            <FreeGapBlock minutes={50} label="Free · 50m" note="20m left over">
+              <li>
+                <TaskCard
+                  title="Reading: Chapter 5"
+                  done={done.gap}
+                  onToggleDone={() => toggle("gap")}
+                  onOpen={() => setOpened("Reading: Chapter 5")}
+                  meta={
+                    <>
+                      <ClassChip code="BUS 301" color="#2563eb" />
+                      <span>due in 2 days</span>
+                    </>
+                  }
+                  trailing={<span className="text-sm font-semibold">30m</span>}
+                />
+              </li>
+            </FreeGapBlock>
+          </TimelineRow>
+        </ol>
         {opened ? <p className="mt-2 text-sm text-muted">Opened details for {opened}.</p> : null}
       </Entry>
 

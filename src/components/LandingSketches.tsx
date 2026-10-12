@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Link as LinkIcon, Plus } from "lucide-react";
-import { ClassChip, FreeGapBlock, SectionLabel, TaskCard, Wordmark } from "./ui";
+import { ClassChip, FreeGapBlock, SectionLabel, TaskCard, TimelineRow, Wordmark } from "./ui";
 
 /**
  * Wireframe drawings of the app for the home page, built from the real design
@@ -71,33 +71,35 @@ export function PlanSketch() {
           </div>
           <div className="rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
             <div className="font-bold">The rest of today</div>
-            <div className="mt-3 grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 items-start">
-              <div className="pt-1 text-right text-xs">3:15 PM</div>
-              <SketchEvent title="Work" time="3:15 – 6 PM" />
-              <div className="pt-2 text-right text-xs">6:10 PM</div>
-              <FreeGapBlock minutes={110} label="Free · 1h 50m">
-                <li>
-                  <TaskCard
-                    title="Reading: Chapter 5"
-                    onToggleDone={noop}
-                    onOpen={noop}
-                    color="#2563eb"
-                    meta={<ClassChip code="BUS 301" color="#2563eb" />}
-                    trailing={<span className="text-sm font-semibold">30m</span>}
-                  />
-                </li>
-                <li>
-                  <TaskCard
-                    title="Problem Set 5"
-                    onToggleDone={noop}
-                    onOpen={noop}
-                    color="#16a34a"
-                    meta={<ClassChip code="ACC 200" color="#16a34a" />}
-                    trailing={<span className="text-sm font-semibold">1h</span>}
-                  />
-                </li>
-              </FreeGapBlock>
-            </div>
+            <ol className="mt-3 space-y-2.5">
+              <TimelineRow start="3:15 PM" end="6 PM" color="#78716c">
+                <SketchEvent title="Work" time="3:15 – 6 PM" />
+              </TimelineRow>
+              <TimelineRow marker="free" start="6:10 PM" end="8 PM">
+                <FreeGapBlock minutes={110} label="Free · 1h 50m">
+                  <li>
+                    <TaskCard
+                      title="Reading: Chapter 5"
+                      onToggleDone={noop}
+                      onOpen={noop}
+                      color="#2563eb"
+                      meta={<ClassChip code="BUS 301" color="#2563eb" />}
+                      trailing={<span className="text-sm font-semibold">30m</span>}
+                    />
+                  </li>
+                  <li>
+                    <TaskCard
+                      title="Problem Set 5"
+                      onToggleDone={noop}
+                      onOpen={noop}
+                      color="#16a34a"
+                      meta={<ClassChip code="ACC 200" color="#16a34a" />}
+                      trailing={<span className="text-sm font-semibold">1h</span>}
+                    />
+                  </li>
+                </FreeGapBlock>
+              </TimelineRow>
+            </ol>
           </div>
         </div>
         <div className="hidden md:block rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
@@ -195,26 +197,30 @@ export function DaySketch({ filled, className = "h-56" }: { filled: boolean; cla
       }
       className={`${className} px-4 py-3`}
     >
-      <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 gap-y-1.5 items-stretch text-[11px]">
-        <span className="pt-1 text-right">10 AM</span>
-        <SketchEvent title="Class · CS 142" time="10 – 10:50 AM" color="#d97706" />
-        <span className="pt-1 text-right">11 AM</span>
-        <Gap minutes="1h 10m" task={filled ? { title: "Lab 6", code: "CS 142", color: "#d97706", time: "1h" } : null} />
-        <span className="pt-1 text-right">12:30</span>
-        <SketchEvent title="Work" time="12:30 – 4 PM" />
-        <span className="pt-1 text-right">4 PM</span>
-        <Gap minutes="45m" task={filled ? { title: "Reading: Ch. 5", code: "BUS 301", color: "#2563eb", time: "30m" } : null} />
-      </div>
+      <ol className="space-y-1.5 text-[11px]">
+        <TimelineRow start="10 AM" end="10:50" color="#d97706">
+          <SketchEvent title="Class · CS 142" time="10 – 10:50 AM" color="#d97706" />
+        </TimelineRow>
+        <TimelineRow marker="free" start="11 AM" end="12:10">
+          <Gap minutes="1h 10m" task={filled ? { title: "Lab 6", code: "CS 142", color: "#d97706", time: "1h" } : null} />
+        </TimelineRow>
+        <TimelineRow start="12:30" end="4 PM">
+          <SketchEvent title="Work" time="12:30 – 4 PM" />
+        </TimelineRow>
+        <TimelineRow marker="free" start="4 PM" end="4:45">
+          <Gap minutes="45m" task={filled ? { title: "Reading: Ch. 5", code: "BUS 301", color: "#2563eb", time: "30m" } : null} />
+        </TimelineRow>
+      </ol>
     </Sketch>
   );
 }
 
 function Gap({ minutes, task }: { minutes: string; task: { title: string; code: string; color: string; time: string } | null }) {
   return (
-    <div className="rounded-lg border-[1.5px] border-dashed border-ok/45 bg-ok-soft px-2 py-1">
-      <div className="font-bold text-[12px] leading-tight">Free · {minutes}</div>
+    <div className="pb-0.5">
+      <div className="pt-1.5 font-bold text-[12px] leading-tight text-ok">Free · {minutes}</div>
       {task ? (
-        <div className="mt-1 flex items-center gap-2 rounded-md border border-line bg-surface px-1.5 py-0.5">
+        <div className="task-card mt-1 flex items-center gap-2 px-1.5 py-0.5" style={{ "--c": task.color } as React.CSSProperties}>
           <span className="w-3 h-3 rounded-[4px] border border-line-strong bg-surface shrink-0" aria-hidden />
           <span className="font-semibold truncate">{task.title}</span>
           <ClassChip code={task.code} color={task.color} />

@@ -11,7 +11,7 @@ import { courseStyle, useApp } from "./context";
 import { AppTaskCard, PlanNote } from "./TaskRow";
 import { useClassesWithoutTimes } from "./ClassTimes";
 import { CapabilityHero } from "./Prototype";
-import { Button, Callout, Card, CardHeader, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TypeChip } from "./ui";
+import { Button, Callout, Card, CardHeader, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TimelineRow, TypeChip } from "./ui";
 
 /**
  * The home screen. Three questions, in order:
@@ -277,7 +277,7 @@ function DaySchedule() {
       {items.length === 0 ? (
         <p className="mt-4 text-sm text-muted">{isToday ? "Nothing else today." : "Nothing on this day."}</p>
       ) : (
-        <ol className="mt-4 space-y-2">
+        <ol className="mt-4 space-y-2.5">
           {items.map((item) => (
             <Row key={item.key} item={item} capReached={capReached} />
           ))}
@@ -288,18 +288,24 @@ function DaySchedule() {
 }
 
 function Row({ item, capReached }: { item: ScheduleItem; capReached: boolean }) {
+  if (item.kind === "free") {
+    return (
+      <TimelineRow marker="free" start={clock(item.start)} end={clock(item.end)}>
+        <FreeBlock item={item} capReached={capReached} />
+      </TimelineRow>
+    );
+  }
+  if (item.kind === "due") {
+    return (
+      <TimelineRow marker="due" start={clock(item.start)}>
+        <DueRow task={item.task} />
+      </TimelineRow>
+    );
+  }
   return (
-    <li className="flex gap-2 sm:gap-3">
-      <div className="w-14 sm:w-[4.5rem] shrink-0 text-right pt-2">
-        <div className="text-xs font-medium tabular-nums">{clock(item.start)}</div>
-        {item.kind !== "due" ? <div className="text-[11px] text-faint tabular-nums">{clock(item.end)}</div> : null}
-      </div>
-      <div className="min-w-0 flex-1">
-        {item.kind === "event" ? <EventRow item={item} /> : null}
-        {item.kind === "free" ? <FreeBlock item={item} capReached={capReached} /> : null}
-        {item.kind === "due" ? <DueRow task={item.task} /> : null}
-      </div>
-    </li>
+    <TimelineRow start={clock(item.start)} end={clock(item.end)} color={item.event.color}>
+      <EventRow item={item} />
+    </TimelineRow>
   );
 }
 

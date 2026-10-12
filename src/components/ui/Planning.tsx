@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, Clock, Undo2 } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, Undo2 } from "lucide-react";
 import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
@@ -106,9 +106,58 @@ export function TaskCard({
 }
 
 /**
+ * One row of a day, read top to bottom like a phone calendar's agenda: the time on
+ * the left, a marker on the timeline, and what happens then on the right.
+ *
+ * Free time is shown by the timeline itself, not a box: its start and end times
+ * are joined by a dashed green line, so the work beside it plainly sits inside
+ * that stretch of time, and the work keeps the full width of the screen.
+ */
+export function TimelineRow({
+  start,
+  end,
+  marker = "event",
+  color,
+  children,
+}: {
+  start: string;
+  /** End time. For free time it sits at the bottom of the line; for events, under the start. */
+  end?: string;
+  marker?: "event" | "free" | "due";
+  /** Class colour for an event's dot. */
+  color?: string | null;
+  children: React.ReactNode;
+}) {
+  const free = marker === "free";
+  return (
+    <li className="grid grid-cols-[3.4rem_0.75rem_minmax(0,1fr)] sm:grid-cols-[4rem_0.75rem_minmax(0,1fr)] gap-x-1.5 sm:gap-x-2">
+      <div className={`pt-2 text-right tabular-nums whitespace-nowrap flex flex-col items-end ${free ? "pb-0.5" : ""}`}>
+        <span className={`text-xs font-medium ${free ? "text-ok" : ""}`}>{start}</span>
+        {end ? <span className={`text-[11px] text-faint ${free ? "mt-auto" : ""}`}>{end}</span> : null}
+      </div>
+      <div className="relative" aria-hidden>
+        {free ? (
+          <>
+            <span className="absolute left-1/2 -translate-x-1/2 top-[0.8rem] h-2 w-2 rounded-full border-2 border-ok bg-surface" />
+            <span className="absolute left-1/2 -translate-x-1/2 top-[1.45rem] bottom-[0.55rem] border-l-2 border-dashed border-ok/55" />
+            {end ? <span className="absolute left-1/2 -translate-x-1/2 bottom-[0.2rem] h-2 w-2 rounded-full border-2 border-ok bg-surface" /> : null}
+          </>
+        ) : marker === "due" ? (
+          <span className="absolute left-1/2 -translate-x-1/2 top-[0.8rem] h-1.5 w-1.5 rounded-full bg-line-strong" />
+        ) : (
+          <span className="absolute left-1/2 -translate-x-1/2 top-[0.75rem] h-2 w-2 rounded-full" style={{ background: wireGray(color) }} />
+        )}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </li>
+  );
+}
+
+/**
  * A stretch of free time and the work planned into it. This is the product's
  * core idea made visible: the gap's length is the headline, the work that fits
- * sits inside it, and any time left over is said out loud.
+ * follows it at full width, and any time left over is said out loud. Put it in
+ * a `TimelineRow` with `marker="free"`, whose dashed line marks the time as free.
  */
 export function FreeGapBlock({
   minutes,
@@ -125,21 +174,24 @@ export function FreeGapBlock({
   onOpen?: () => void;
 }) {
   return (
-    <div className="rounded-xl border-[1.5px] border-dashed border-ok/45 bg-ok-soft p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
+    <div className="pb-1" aria-label={`${label}, ${minutes} minutes`}>
       {onOpen ? (
-        <button type="button" className="group px-1 pt-0.5 text-sm font-semibold text-ok text-left w-full inline-flex items-center gap-1.5" onClick={onOpen}>
+        <button type="button" className="group py-1.5 text-sm font-semibold text-ok text-left w-full inline-flex items-center gap-1.5" onClick={onOpen}>
           <Clock size={14} aria-hidden />
           <span className="group-hover:underline underline-offset-2">{label}</span>
-          <span className="ml-auto text-xs font-normal text-muted">Open gap</span>
+          <span className="ml-auto inline-flex items-center gap-0.5 text-xs font-normal text-muted group-hover:text-fg">
+            Open gap
+            <ChevronRight size={13} aria-hidden />
+          </span>
         </button>
       ) : (
-        <div className="px-1 pt-0.5 text-sm font-semibold text-ok inline-flex items-center gap-1.5">
+        <div className="py-1.5 text-sm font-semibold text-ok inline-flex items-center gap-1.5">
           <Clock size={14} aria-hidden />
           {label}
         </div>
       )}
-      {children ? <ul className="mt-2 space-y-1.5">{children}</ul> : null}
-      {note ? <p className="mt-1.5 px-1 text-xs text-muted">{note}</p> : null}
+      {children ? <ul className="mt-1 space-y-1.5">{children}</ul> : null}
+      {note ? <p className="mt-1.5 text-xs text-muted">{note}</p> : null}
     </div>
   );
 }
