@@ -182,7 +182,7 @@ function MonthGrid({ data }: { data: CalData }) {
               <div className="flex items-center justify-between mb-1">
                 <span
                   className={`inline-flex items-center justify-center text-xs tabular-nums ${
-                    today ? "bg-accent text-white font-bold w-6 h-6" : inMonth ? "text-fg" : "text-faint"
+                    today ? "bg-accent text-white font-bold w-6 h-6 rounded-full" : inMonth ? "text-fg" : "text-faint"
                   }`}
                 >
                   {format(d, "d")}
@@ -313,7 +313,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                 >
                   <span className="text-[11px] uppercase tracking-wide text-muted font-semibold">{format(c.day, "EEE")} </span>
                   <span
-                    className={`text-sm tabular-nums inline-flex items-center justify-center ${isToday(c.day) ? "bg-accent text-white font-bold w-6 h-6" : "font-semibold"}`}
+                    className={`text-sm tabular-nums inline-flex items-center justify-center ${isToday(c.day) ? "bg-accent text-white font-bold w-6 h-6 rounded-full" : "font-semibold"}`}
                   >
                     {format(c.day, "d")}
                   </span>

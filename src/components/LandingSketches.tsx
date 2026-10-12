@@ -22,10 +22,10 @@ export function Sketch({ label, className = "", children }: { label: string; cla
   );
 }
 
-export function SketchEvent({ title, time, className = "" }: { title: string; time: string; className?: string }) {
+export function SketchEvent({ title, time, color = "#78716c", className = "" }: { title: string; time: string; color?: string; className?: string }) {
   return (
-    <div className={`event-block px-2 py-1 ${className}`} style={{ "--c": "#8a8a8a" } as React.CSSProperties}>
-      <div className="text-[12px] font-semibold leading-tight">{title}</div>
+    <div className={`event-block px-2 py-1 ${className}`} style={{ "--c": color } as React.CSSProperties}>
+      <div className="event-title text-[12px] font-semibold leading-tight">{title}</div>
       <div className="text-[11px] text-muted leading-tight">{time}</div>
     </div>
   );
@@ -43,7 +43,7 @@ export function PlanSketch() {
           <Wordmark />
         </span>
         <span className="ml-2 hidden sm:flex gap-1 text-sm">
-          <span className="rounded-md bg-accent-soft text-accent font-semibold px-2">Plan</span>
+          <span className="rounded-md bg-surface-2 border border-line text-fg font-semibold px-2">Plan</span>
           <span className="px-2 text-muted">Calendar</span>
           <span className="px-2 text-muted">Upcoming</span>
           <span className="px-2 text-muted">Classes</span>
@@ -51,7 +51,7 @@ export function PlanSketch() {
       </div>
       <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-4 min-w-0">
-          <div className="rounded-xl border border-accent/35 bg-surface p-4 shadow-[var(--shadow-md)]">
+          <div className="rounded-xl border-2 border-accent/50 bg-surface p-4 shadow-[var(--shadow-md)]">
             <div className="text-sm">Free until 3:15 PM · 45m</div>
             <SectionLabel className="mt-3">Work on</SectionLabel>
             <div className="mt-1 flex items-center gap-3">
@@ -197,7 +197,7 @@ export function DaySketch({ filled, className = "h-56" }: { filled: boolean; cla
     >
       <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-2 gap-y-1.5 items-stretch text-[11px]">
         <span className="pt-1 text-right">10 AM</span>
-        <SketchEvent title="Class · CS 142" time="10 – 10:50 AM" />
+        <SketchEvent title="Class · CS 142" time="10 – 10:50 AM" color="#d97706" />
         <span className="pt-1 text-right">11 AM</span>
         <Gap minutes="1h 10m" task={filled ? { title: "Lab 6", code: "CS 142", color: "#d97706", time: "1h" } : null} />
         <span className="pt-1 text-right">12:30</span>
@@ -211,11 +211,11 @@ export function DaySketch({ filled, className = "h-56" }: { filled: boolean; cla
 
 function Gap({ minutes, task }: { minutes: string; task: { title: string; code: string; color: string; time: string } | null }) {
   return (
-    <div className="rounded-lg border border-dashed border-ok/50 bg-ok-soft px-2 py-1">
+    <div className="rounded-lg border-[1.5px] border-dashed border-ok/45 bg-ok-soft px-2 py-1">
       <div className="font-bold text-[12px] leading-tight">Free · {minutes}</div>
       {task ? (
         <div className="mt-1 flex items-center gap-2 rounded-md border border-line bg-surface px-1.5 py-0.5">
-          <span className="w-3 h-3 border border-line-strong bg-surface shrink-0" aria-hidden />
+          <span className="w-3 h-3 rounded-[4px] border border-line-strong bg-surface shrink-0" aria-hidden />
           <span className="font-semibold truncate">{task.title}</span>
           <ClassChip code={task.code} color={task.color} />
           <span className="ml-auto font-semibold">{task.time}</span>

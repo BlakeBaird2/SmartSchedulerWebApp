@@ -47,7 +47,7 @@ export function CardHeader({
   return (
     <div className={`flex items-start gap-3 flex-wrap ${className}`}>
       <div className="min-w-0 flex-1 basis-48">
-        <H className="text-lg font-semibold leading-snug tracking-tight inline-flex items-center gap-2">
+        <H className="text-lg font-bold leading-snug tracking-tight inline-flex items-center gap-2">
           {Icon ? <Icon size={18} className="text-muted shrink-0" aria-hidden /> : null}
           {title}
         </H>
@@ -76,7 +76,7 @@ export function SectionLabel({
 const CALLOUT: Record<"info" | "warning" | "sample", { icon: LucideIcon; frame: string }> = {
   info: { icon: Info, frame: "rounded-xl border border-line bg-surface shadow-[var(--shadow-sm)]" },
   sample: { icon: Sparkles, frame: "rounded-xl border border-accent/25 bg-accent-soft" },
-  warning: { icon: CircleAlert, frame: "rounded-xl border border-danger/40 bg-danger/5 text-fg" },
+  warning: { icon: CircleAlert, frame: "rounded-xl border-2 border-danger/45 bg-danger/5 text-fg" },
 };
 
 /**

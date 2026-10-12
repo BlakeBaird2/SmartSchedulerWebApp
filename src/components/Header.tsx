@@ -32,7 +32,7 @@ export function Header() {
   const current = TABS.some((t) => t.id === view) ? view : "plan";
 
   return (
-    <header className="sticky top-0 z-30 bg-surface border-b border-line shadow-[var(--shadow-sm)]">
+    <header className="sticky top-0 z-30 bg-bg/85 backdrop-blur border-b border-line">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2">
         <button type="button" onClick={() => setView("plan")} className="shrink-0" aria-label="SmartScheduler, go to your plan" title="Go to your plan">
           <Wordmark collapse />

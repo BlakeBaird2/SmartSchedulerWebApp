@@ -125,7 +125,7 @@ export function FreeGapBlock({
   onOpen?: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-ok/50 bg-ok-soft p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
+    <div className="rounded-xl border-[1.5px] border-dashed border-ok/45 bg-ok-soft p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
       {onOpen ? (
         <button type="button" className="group px-1 pt-0.5 text-sm font-semibold text-ok text-left w-full inline-flex items-center gap-1.5" onClick={onOpen}>
           <Clock size={14} aria-hidden />
@@ -149,10 +149,15 @@ export function Wordmark({ size = "md", collapse = false }: { size?: "md" | "lg"
   const lg = size === "lg";
   return (
     <span className="inline-flex items-center gap-2 select-none">
-      <span className={`grid place-items-center shrink-0 rounded-lg bg-accent text-white ${lg ? "h-9 w-9" : "h-7 w-7 sm:h-8 sm:w-8"}`} aria-hidden>
-        <CalendarCheck size={lg ? 20 : 17} strokeWidth={2.4} />
+      {/* On phones the header only has room for the mark; everywhere else the name is the logo. */}
+      {collapse ? (
+        <span className="grid place-items-center shrink-0 rounded-lg bg-accent text-white h-8 w-8 sm:hidden" aria-hidden>
+          <CalendarCheck size={17} strokeWidth={2.4} />
+        </span>
+      ) : null}
+      <span className={`wordmark ${lg ? "text-2xl" : "text-xl"} ${collapse ? "hidden sm:inline" : ""}`}>
+        SmartScheduler<span className="wordmark-dot">.</span>
       </span>
-      <span className={`wordmark font-bold tracking-tight ${lg ? "text-2xl" : "text-lg sm:text-xl"} ${collapse ? "hidden sm:inline" : ""}`}>SmartScheduler</span>
     </span>
   );
 }
@@ -166,7 +171,7 @@ export function Toast({ message, action, onAction }: { message: string; action?:
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] bg-fg text-bg text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-xl bg-fg text-bg shadow-[var(--shadow-lg)] text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
     >
       <span className="min-w-0">{message}</span>
       {action && onAction ? (

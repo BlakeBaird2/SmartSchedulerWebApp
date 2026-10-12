@@ -4,51 +4,52 @@
 
 :root {
   /*
-   * Medium-fidelity palette. The page is an off-white "desk"; content sits on white
-   * cards above it (figure and ground). Blue is still reserved for the one main
-   * action on each screen; green, amber and red only ever mean done, soon and
-   * late, and always come with an icon or words.
+   * Full-colour Prio palette (design handoff, section 3): warm neutrals, one indigo
+   * accent, and one soft shadow. The page is a warm off-white "desk"; content sits
+   * on white cards above it. Indigo is reserved for the one main action on each
+   * screen, today's date and focus. Green, amber and red only mean free or done,
+   * soon, and late, and always come with an icon or words.
    */
-  --bg: #f4f5f8;
+  --bg: #f6f5f1;
   --surface: #ffffff;
-  --surface-2: #f1f3f7;
-  --line: #e2e5eb;
-  --line-strong: #c4cad3;
-  --fg: #111827;
-  --muted: #4b5563;
-  --faint: #8a93a3;
-  --accent: #2563eb;
-  --accent-soft: #eef3fe;
+  --surface-2: #f1efe9;
+  --line: #e6e3db;
+  --line-strong: #d3cfc4;
+  --fg: #1c1b18;
+  --muted: #6f6b62;
+  --faint: #a19c91;
+  --accent: #4f46e5;
+  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
   --danger: #dc2626;
-  --warn: #b45309;
-  --ok: #15803d;
-  --ok-soft: #eefaf2;
-  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.06);
-  --shadow-md: 0 4px 10px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.05);
-  --shadow-lg: 0 18px 40px -12px rgb(16 24 40 / 0.25);
-  --shadow: var(--shadow-sm);
+  --warn: #d97706;
+  --ok: #059669;
+  --ok-soft: color-mix(in oklab, var(--ok) 7%, var(--surface));
+  --shadow: 0 1px 2px rgb(28 27 24 / 0.05), 0 8px 24px -12px rgb(28 27 24 / 0.18);
+  --shadow-sm: var(--shadow);
+  --shadow-md: 0 1px 2px rgb(28 27 24 / 0.06), 0 12px 28px -12px rgb(28 27 24 / 0.26);
+  --shadow-lg: 0 2px 4px rgb(28 27 24 / 0.06), 0 24px 48px -16px rgb(28 27 24 / 0.32);
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg: #0e1116;
-  --surface: #171b22;
-  --surface-2: #1f242d;
-  --line: #2b313c;
-  --line-strong: #444c59;
-  --fg: #eef0f4;
-  --muted: #b2b9c5;
-  --faint: #7b8494;
-  --accent: #6b9bff;
-  --accent-soft: #1b2740;
+  --bg: #121212;
+  --surface: #1b1b1c;
+  --surface-2: #232325;
+  --line: #2b2b2e;
+  --line-strong: #3a3a3e;
+  --fg: #ecebe6;
+  --muted: #a3a09a;
+  --faint: #6b6963;
+  --accent: #8b85ff;
+  --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
   --danger: #f87171;
   --warn: #fbbf24;
-  --ok: #4ade80;
-  --ok-soft: #142a1e;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 18px 40px -12px rgb(0 0 0 / 0.7);
-  --shadow: var(--shadow-sm);
+  --ok: #34d399;
+  --ok-soft: color-mix(in oklab, var(--ok) 10%, var(--surface));
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -12px rgb(0 0 0 / 0.7);
+  --shadow-sm: var(--shadow);
+  --shadow-md: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -12px rgb(0 0 0 / 0.75);
+  --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 24px 56px -16px rgb(0 0 0 / 0.85);
   color-scheme: dark;
 }
 
@@ -77,7 +78,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "tnum";
+    font-feature-settings: "cv11", "ss01", "tnum";
   }
 
   body {
@@ -99,8 +100,8 @@
 /* Component classes live in the components layer so Tailwind utilities (hidden, flex, ...) still win. */
 @layer components {
   .wordmark {
-    font-weight: 700;
-    letter-spacing: 0;
+    font-weight: 800;
+    letter-spacing: -0.04em;
   }
 
   .card {
@@ -801,98 +802,103 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Medium-fidelity layer
+ * Full-colour layer (design handoff: "restore full colour")
  *
  * Feedback: low fidelity directed people down a path, but new users needed more
- * visual hierarchy to make sense of a screen with a lot on it. This layer gives
- * the shared components depth and weight so importance reads at a glance:
+ * fidelity and a clearer hierarchy. This layer brings back the full-colour Prio
+ * look from the handoff, over the same components:
  *
- *   page (off-white)  <  cards (white, soft shadow)  <  focal card (stronger shadow,
- *   blue edge)  <  dialogs (largest shadow)
+ *   page (warm off-white)  <  cards (white, one soft shadow)  <  focal card
+ *   (indigo outline, deeper shadow)  <  dialogs (deepest shadow)
  *
- * and real type weights instead of one sketch font. Everything still comes from
- * the same components, so every screen changes together.
+ * Radii: cards 14px, task cards 12px, buttons, inputs and events 10px, pills round.
+ * Class colour is always visible as a soft wash, a dot or a tag. Never as a
+ * coloured stripe down the left edge (the owner asked for that to go).
  * ------------------------------------------------------------------------- */
 @layer components {
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 14px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow);
   }
-  /* The one card per screen that matters most. */
+  /* The one card per screen that matters most: a heavier indigo outline and a deeper shadow. */
   .card-focal {
-    border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+    border: 2px solid color-mix(in oklab, var(--accent) 55%, var(--line));
     box-shadow: var(--shadow-md);
-    position: relative;
-    overflow: hidden;
-  }
-  .card-focal::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    background: var(--accent);
   }
 
   .btn {
     border-radius: 10px;
-    border-color: var(--line-strong);
+    border: 1px solid var(--line);
     background: var(--surface);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    box-shadow: 0 1px 1px rgb(16 24 40 / 0.04);
+    box-shadow: none;
   }
   .btn:hover {
     background: var(--surface-2);
     border-color: var(--line-strong);
   }
+  .btn:active {
+    transform: translateY(1px);
+  }
   .btn-primary {
     border-radius: 10px;
     border: 1px solid transparent;
-    font-size: 0.95rem;
+    color: #fff;
+    font-size: 0.9375rem;
     font-weight: 600;
     letter-spacing: 0;
-    box-shadow: 0 1px 2px rgb(37 99 235 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.12);
+    box-shadow: 0 1px 2px color-mix(in oklab, var(--accent) 35%, transparent);
   }
   .btn-primary:hover {
-    background: color-mix(in oklab, var(--accent) 88%, black);
+    filter: brightness(1.08);
+    background: var(--accent);
   }
   [data-theme="dark"] .btn-primary {
-    color: #0b1020;
+    color: #0f0e1a;
   }
   .btn-lg {
     border-radius: 12px;
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
   .btn-quiet {
     border-color: transparent;
-    box-shadow: none;
     background: transparent;
+    color: var(--muted);
   }
   .btn-quiet:hover {
     background: var(--surface-2);
     border-color: transparent;
+    color: var(--fg);
   }
   .btn-danger {
     border-width: 1px;
-    border-color: color-mix(in oklab, var(--danger) 45%, var(--line));
+    border-color: color-mix(in oklab, var(--danger) 40%, var(--line));
     color: var(--danger);
     font-weight: 600;
+  }
+  .btn-danger:hover {
+    background: color-mix(in oklab, var(--danger) 7%, var(--surface));
+    border-color: color-mix(in oklab, var(--danger) 60%, var(--line));
   }
 
   .input {
     border-radius: 10px;
-    border-color: var(--line-strong);
+    border-color: var(--line);
     background: var(--surface);
+  }
+  .input:hover:not(:focus):not(:disabled) {
+    border-color: var(--line-strong);
   }
   .input:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
   }
 
-  /* Pick-one controls (main views, Month/Week/Day, days): a raised white "tab" on a grey track. */
+  /* Pick one: a raised white option on a warm grey track. Clear without colour. */
   .seg {
     border-radius: 12px;
     background: var(--surface-2);
@@ -906,74 +912,97 @@
   }
   .seg > button:hover {
     color: var(--fg);
-    background: color-mix(in oklab, var(--surface) 60%, transparent);
   }
   .seg > button[aria-pressed="true"] {
     background: var(--surface);
-    color: var(--accent);
+    color: var(--fg);
     outline: none;
     text-decoration: none;
     font-weight: 600;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px var(--line);
+  }
+  .seg > button[aria-pressed="true"] svg {
+    color: var(--accent);
+  }
+  [data-theme="dark"] .seg > button[aria-pressed="true"] {
+    background: var(--line-strong);
+    box-shadow: none;
   }
 
+  /* Small choices: round pills. Off is a dashed outline (never faded); on is filled. */
   .pill {
     border-radius: 9999px;
-    border-style: solid;
+    font-size: 0.8125rem;
   }
   .pill[aria-pressed="false"],
   .pill[aria-pressed="false"].pill-course {
-    border-style: solid;
-    border-color: var(--line);
-    background: var(--surface);
+    opacity: 1;
+    border-style: dashed;
+    border-color: var(--line-strong);
+    background: transparent;
     color: var(--muted);
     font-weight: 500;
   }
+  .pill[aria-pressed="false"]:hover {
+    color: var(--fg);
+    border-color: var(--muted);
+  }
   .pill[aria-pressed="true"] {
+    border-style: solid;
     background: var(--accent-soft);
-    border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+    border-color: color-mix(in oklab, var(--accent) 40%, transparent);
     color: var(--fg);
     font-weight: 600;
   }
   .pill[aria-pressed="true"].pill-course {
-    background: color-mix(in oklab, var(--c) 12%, var(--surface));
-    border-color: color-mix(in oklab, var(--c) 45%, var(--line));
+    background: color-mix(in oklab, var(--c) 10%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 40%, transparent);
   }
 
-  /* A piece of work: white card with its class colour down the left edge. */
-  .task-card,
+  /* A piece of work: always washed in its class colour, with a matching hairline. */
+  .task-card {
+    background: color-mix(in oklab, var(--c) 8%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--c) 24%, var(--line));
+    border-radius: 12px;
+    box-shadow: none;
+  }
+  .task-card:hover {
+    background: color-mix(in oklab, var(--c) 13%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 40%, var(--line));
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  }
   [data-theme="dark"] .task-card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--c);
-    border-radius: 10px;
-    box-shadow: 0 1px 1px rgb(16 24 40 / 0.04);
+    background: color-mix(in oklab, var(--c) 13%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 28%, var(--line));
   }
-  .task-card:hover,
   [data-theme="dark"] .task-card:hover {
-    background: var(--surface);
-    border-color: var(--line-strong);
-    border-left-color: var(--c);
-    box-shadow: var(--shadow-md);
+    background: color-mix(in oklab, var(--c) 19%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 42%, var(--line));
   }
 
+  /* Calendar events: soft tinted blocks with a same-hue hairline, no side stripe. */
   .event-block {
-    border-radius: 8px;
-    border-left: 3px solid var(--c);
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklab, var(--c) 24%, transparent);
+  }
+  [data-theme="dark"] .event-block {
+    border-color: color-mix(in oklab, var(--c) 32%, transparent);
   }
   .plan-block {
-    border-radius: 8px;
+    border-radius: 10px;
   }
   .course-chip {
-    border-radius: 6px;
+    border-radius: 7px;
   }
   .type-chip {
-    border-radius: 6px;
+    border-radius: 7px;
   }
 
+  /* Tick box: a rounded square, so it still reads as a checkbox. Ticked = green. */
   .check {
-    border-radius: 6px;
-    border-color: var(--line-strong);
+    border-radius: 7px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
   }
   .check:hover {
     border-color: var(--ok);
@@ -985,6 +1014,10 @@
     border-color: var(--ok);
     color: #fff;
   }
+  [data-theme="dark"] .check[aria-checked="true"],
+  [data-theme="dark"] .check[aria-checked="true"]:hover {
+    color: #0b1f17;
+  }
 
   .switch {
     border-radius: 9999px;
@@ -992,55 +1025,69 @@
   .switch::after {
     border-radius: 9999px;
     border: none;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
   }
   .switch[aria-checked="true"] {
     background: var(--accent);
   }
 
   .section-title {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     color: var(--muted);
   }
 
   .capability {
     font-weight: 800;
-    letter-spacing: -0.025em;
-    line-height: 1.05;
+    letter-spacing: -0.03em;
+    line-height: 1.06;
   }
 
-  /* The Prototype / Goal tags: small rounded labels, not sketchy dashed boxes. */
+  /* The Prototype tag: dashed means "not finished", in a small round label. */
   .proto-badge {
-    border: 1px solid color-mix(in oklab, var(--warn) 45%, var(--line));
-    background: color-mix(in oklab, var(--warn) 10%, var(--surface));
-    color: var(--warn);
+    border: 1.5px dashed color-mix(in oklab, var(--fg) 55%, transparent);
+    background: var(--surface);
+    color: var(--fg);
     border-radius: 9999px;
-    font-size: 0.72rem;
+    font-size: 0.6875rem;
     font-weight: 600;
+    letter-spacing: 0.06em;
     padding: 0.1rem 0.55rem;
   }
   .proto-badge:hover {
-    background: color-mix(in oklab, var(--warn) 18%, var(--surface));
+    background: var(--surface-2);
   }
 
   .wire-placeholder {
     border-radius: 12px;
+    border-color: var(--line);
   }
 
   .text-link {
     color: var(--accent);
-    text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
+    text-decoration-color: color-mix(in oklab, var(--accent) 35%, transparent);
   }
   .text-link:hover {
-    color: color-mix(in oklab, var(--accent) 80%, black);
+    color: var(--accent);
+    text-decoration-color: currentColor;
+  }
+
+  /* The wordmark's full stop, in the accent: "SmartScheduler." */
+  .wordmark-dot {
+    color: var(--accent);
+  }
+
+  /* A soft wash of the accent behind the home page hero and its closing call to action. */
+  .landing-glow {
+    background: radial-gradient(60% 55% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 72%);
   }
 }
 
-/* Coarse pointers keep the round tick boxes big enough to hit. */
+/* Coarse pointers keep the tick boxes big enough to hit. */
 @media (pointer: coarse) {
   .check {
-    border-radius: 7px;
+    border-radius: 8px;
   }
 }

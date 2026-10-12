@@ -178,10 +178,10 @@ at the same level. He also suggested icons in the menus. Changes:
 
 | Problem | Fix |
 | --- | --- |
-| Everything was the same flat outline, so nothing stood out from anything else. | Layers of depth: an off-white page, white cards with a soft shadow above it, the focal "work on now" card with a stronger shadow and a blue edge, and dialogs above everything. |
+| Everything was the same flat outline, so nothing stood out from anything else. | Layers of depth: an off-white page, white cards with a soft shadow above it, the focal "work on now" card with a stronger shadow and a heavier outline, and dialogs above everything. |
 | One sketch font at a few sizes. | Inter, with a real scale: page title → card title → task title → details. |
 | Screens other than Plan had no title, so it wasn't clear where you were. | Every main screen opens with a page header: an icon tile, the screen's name (same icon as its tab) and one line on what it's for. Settings sub-pages show a "‹ Settings" breadcrumb. |
-| Classes were shades of grey, so they were hard to tell apart. | Each class has its real colour again, as a stripe down the left of its tasks and on its tags, the same on every screen. |
+| Classes were shades of grey, so they were hard to tell apart. | Each class has its real colour again, as a soft wash on its tasks and on its tags, the same on every screen. |
 | Colour carried no meaning. | Blue = the main action, the current tab and today. Green = free time and finished work. Red = late or won't fit, always with an icon or words. |
 | Menus were words only. | Icons on the main tabs (larger, blue when selected), on every Settings section, on the Help routes, on card headings, and on the home page links. |
 | The logo was just text. | A small calendar-check mark next to the name. On phones only the mark shows, so the header tools still fit. |
@@ -189,6 +189,27 @@ at the same level. He also suggested icons in the menus. Changes:
 The early-stage notice is unchanged in purpose. It now says "Some things are
 placeholders, and nothing is saved to an account" instead of "It looks simple on
 purpose."
+
+### 15. Full-colour look from the design handoff
+
+The design handoff left one open question: restore the full-colour Prio look or
+evolve the wireframe. We restored it, with the same screens, words and behaviour,
+and applied the handoff's rules:
+
+| Handoff rule | What changed |
+| --- | --- |
+| Full-colour Prio tokens | Warm off-white page (#f6f5f1), white cards, warm greys, indigo accent (#4f46e5; #8b85ff in dark mode), and green, amber and red only for free/done, soon and late. |
+| Inter with its stylistic sets | Inter Variable with `cv11`, `ss01` and tabular figures. |
+| Rounded shapes and one soft shadow | Cards 14px, task cards 12px, buttons, inputs and events 10px, pills fully round. A single soft shadow lifts cards off the page; the focal card and dialogs go one step deeper. |
+| Class colour always visible, **no coloured stripe down the left edge** (the owner's request) | Task cards are washed in their class colour with a hairline in the same hue. Events are soft tinted blocks. Class tags, dots and filter pills use the class colour. |
+| One heavy-outlined card per screen | The "work on now" card has a 2px indigo outline instead of a coloured left bar. |
+| Kind-of-work chips | Exam red, Quiz amber, Project teal, Reading sky, Assignment grey. Each still has its icon and word. |
+| Wordmark "SmartScheduler." with an accent full stop | Used in every header. On phones the header shows the small calendar mark so the tools still fit. |
+| Off pills never look disabled | Off is a dashed round outline with muted text. On is filled and bold. |
+| Dashed means "not fixed" | Free gaps, planned work on the calendar, off pills and the Prototype tag are dashed. |
+
+Blue stays the one main action per screen. The chosen tab is now a raised white
+option with dark text, so only its icon is indigo.
 
 ## Before and after
 

@@ -255,7 +255,7 @@ export function DevStateSwitcher() {
   ];
 
   return (
-    <details className="fixed bottom-3 left-3 z-[70] max-w-[calc(100vw-1.5rem)] border border-dashed border-fg bg-surface text-sm">
+    <details className="fixed bottom-3 left-3 z-[70] max-w-[calc(100vw-1.5rem)] rounded-xl border border-line bg-surface shadow-[var(--shadow-md)] text-sm">
       <summary className="cursor-pointer select-none px-2 py-1">Dev: entry states</summary>
       <div className="flex flex-col gap-1 p-2 pt-0">
         <p className="text-xs text-muted">Development only. Not shown in production.</p>

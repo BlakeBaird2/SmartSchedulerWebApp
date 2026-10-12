@@ -52,7 +52,7 @@ export function ChangesPopover() {
       >
         <span className="hidden 2xl:inline">Alerts</span>
         {unseen > 0 ? (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 bg-fg text-bg text-[10px] font-bold flex items-center justify-center tabular-nums" aria-hidden>
+          <span className="absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center tabular-nums" aria-hidden>
             {unseen > 9 ? "9+" : unseen}
           </span>
         ) : null}

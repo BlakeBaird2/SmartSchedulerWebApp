@@ -74,7 +74,7 @@ function SectionIntro({ id, eyebrow, title, lead }: { id: string; eyebrow: strin
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[var(--shadow-sm)]">
+    <header className="sticky top-0 z-30 border-b border-line/70 bg-bg/80 backdrop-blur-md">
       <div className={`${WRAP} flex h-14 items-center gap-3 sm:gap-6`}>
         <a href="#top" className="shrink-0" aria-label="SmartScheduler, back to top">
           <Wordmark collapse />
@@ -105,7 +105,8 @@ function Nav() {
 
 function Hero({ variant }: { variant: LandingVariant }) {
   return (
-    <section id="top" aria-labelledby="hero-title" className="scroll-mt-14">
+    <section id="top" aria-labelledby="hero-title" className="relative isolate scroll-mt-14">
+      <div aria-hidden className="landing-glow absolute inset-x-0 top-0 -z-10 h-[44rem]" />
       <div className={`${WRAP} pt-12 text-center sm:pt-16 lg:pt-20`}>
         {/* The overarching capability comes first and is the biggest thing on the page. */}
         <CapabilityHero id="hero-title" size="page" className="mx-auto max-w-5xl">
@@ -358,7 +359,8 @@ function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="pb-20 sm:pb-28">
       <div className={WRAP}>
-        <div className="rounded-3xl border border-line bg-surface shadow-[var(--shadow-md)] px-6 py-14 text-center sm:px-12 sm:py-20">
+        <div className="relative isolate overflow-hidden rounded-3xl border border-line bg-surface shadow-[var(--shadow-md)] px-6 py-14 text-center sm:px-12 sm:py-20">
+          <div aria-hidden className="landing-glow absolute inset-0 -z-10" />
           <h2 id="closing-title" className="mx-auto max-w-2xl text-3xl leading-[1.1] font-semibold tracking-[-0.03em] text-balance sm:text-5xl">
             Stop juggling calendars. Start knowing what&apos;s next.
           </h2>

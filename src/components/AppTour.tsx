@@ -22,7 +22,7 @@ let pending = false;
 function NowPicture() {
   return (
     <Sketch label="The card at the top of the Plan screen: the task to work on now, and its Done button." className="h-full p-4 flex items-center">
-      <div className="w-full rounded-xl border border-accent/35 bg-surface p-4 shadow-[var(--shadow-md)]">
+      <div className="w-full rounded-xl border-2 border-accent/50 bg-surface p-4 shadow-[var(--shadow-md)]">
         <div className="text-sm">Free until 3:15 PM · 45m</div>
         <SectionLabel className="mt-2">Work on</SectionLabel>
         <div className="mt-1 flex items-center gap-3">
