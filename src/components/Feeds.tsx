@@ -9,6 +9,7 @@ import { plural, timeAgo } from "@/lib/ui";
 import { courseStyle, useApp, wireGray } from "./context";
 import { LINK_HELP } from "./calendarGuide";
 import { Button } from "./ui";
+import { ClassNameForm } from "./ClassName";
 
 /** What a calendar contributed, in a few words. */
 export function feedSummary(result: FeedResult | null | undefined, role: FeedRole): string {
@@ -190,64 +191,36 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
   );
 }
 
-/** The classes a school calendar brought in. Click one to give it a better short name. */
+/** The classes a school calendar brought in. Click one to fix its name. */
 function ClassChips({ feedId }: { feedId: string }) {
-  const { model, update } = useApp();
+  const { model } = useApp();
   const [editing, setEditing] = useState<string | null>(null);
-  const [value, setValue] = useState("");
   const courses = model.courses.filter((c) => c.feedId === feedId);
   if (courses.length === 0) return null;
-
-  const save = (id: string) => {
-    const code = value.trim().slice(0, 24);
-    if (code) update((w) => ({ ...w, courseEdits: { ...w.courseEdits, [id]: { ...w.courseEdits[id], code } } }));
-    setEditing(null);
-  };
+  const editingCourse = courses.find((c) => c.id === editing);
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-5">
-      {courses.map((c) =>
-        editing === c.id ? (
-          <form
-            key={c.id}
-            onSubmit={(e) => {
-              e.preventDefault();
-              save(c.id);
-            }}
-          >
-            <input
-              autoFocus
-              aria-label={`New short name for ${c.title}`}
-              className="input input-sm !w-32 !py-0.5"
-              value={value}
-              maxLength={24}
-              onChange={(e) => setValue(e.target.value)}
-              onBlur={() => save(c.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") setEditing(null);
-              }}
-            />
-          </form>
-        ) : (
+    <div className="mt-2 pl-5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {courses.map((c) => (
           <button
             key={c.id}
             type="button"
             className="pill pill-course"
             aria-pressed={true}
+            aria-expanded={editing === c.id}
             style={courseStyle(c.color)}
-            title={c.title === c.code ? "Click to rename" : `${c.title} · click to rename`}
-            onClick={() => {
-              setEditing(c.id);
-              setValue(c.code);
-            }}
+            title={c.title === c.code ? `Rename ${c.code}` : `${c.title} · click to rename`}
+            onClick={() => setEditing((e) => (e === c.id ? null : c.id))}
           >
             <span className="course-dot" />
             <span className="course-text">{c.code}</span>
-            <Pencil size={11} className="text-faint" />
+            <Pencil size={11} className="text-faint" aria-hidden />
           </button>
-        ),
-      )}
-      <span className="text-[11px] text-faint">Tap a class to rename it.</span>
+        ))}
+        {editing ? null : <span className="text-[11px] text-faint">Name not right? Click a class to rename it.</span>}
+      </div>
+      {editingCourse ? <ClassNameForm key={editingCourse.id} course={editingCourse} onDone={() => setEditing(null)} /> : null}
     </div>
   );
 }

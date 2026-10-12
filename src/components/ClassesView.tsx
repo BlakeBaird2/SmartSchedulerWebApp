@@ -9,6 +9,7 @@ import { courseStyle, useApp, wireGray } from "./context";
 import { AppTaskCard } from "./TaskRow";
 import { Button, buttonClass, Dialog, DialogActions, EmptyState, Field, Switch, TextButton } from "./ui";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
+import { useOriginalCourseName, withCourseNames } from "./ClassName";
 
 /**
  * Every class side by side, one column each, like the days of the week view:
@@ -109,7 +110,9 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
                 <ExternalLink size={14} />
               </a>
             ) : null}
-            <Button variant="quiet" iconOnly icon={Pencil} label={`Edit ${course.code}: rename, recolour or hide`} onClick={onEdit} />
+            <Button variant="quiet" size="sm" icon={Pencil} onClick={onEdit} title={`Rename, recolour or hide ${course.code}`} aria-label={`Edit ${course.code}: rename, recolour or hide`}>
+              Edit
+            </Button>
           </div>
         </div>
         <p className="text-xs text-muted truncate" title={course.title}>
@@ -187,10 +190,9 @@ function MeetsLine({ course }: { course: Course }) {
 }
 
 function ClassEditDialog({ course, onClose }: { course: Course; onClose: () => void }) {
-  const { snapshot } = useApp();
-  const original = snapshot.feeds[course.feedId]?.result?.courses.find((c) => `${course.feedId}:${c.key}` === course.id);
+  const original = useOriginalCourseName(course);
   return (
-    <Dialog title={`Edit ${course.code}`} description="Rename it, change its shade, or hide it from your plan." onClose={onClose} style={courseStyle(course.color)}>
+    <Dialog title={`Edit ${course.code}`} description="Fix its name if the calendar got it wrong, change its colour, or hide it from your plan." onClose={onClose} style={courseStyle(course.color)}>
       <CourseEditor course={course} original={original} onDone={onClose} />
     </Dialog>
   );
@@ -205,20 +207,26 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    const edit: CourseEdit = {};
-    if (code.trim() && code.trim() !== original?.code) edit.code = code.trim().slice(0, 24);
-    if (title.trim() && title.trim() !== original?.title) edit.title = title.trim().slice(0, 80);
-    edit.color = color;
-    if (hidden) edit.hidden = true;
-    update((w) => ({ ...w, courseEdits: { ...w.courseEdits, [course.id]: edit } }));
+    update((w) => {
+      // Keep anything else set for this class (such as corrected class times).
+      const named = withCourseNames(w, course.id, { code, title }, original);
+      const edit: CourseEdit = { ...named.courseEdits[course.id], color };
+      if (hidden) edit.hidden = true;
+      else delete edit.hidden;
+      return { ...named, courseEdits: { ...named.courseEdits, [course.id]: edit } };
+    });
     onDone();
   };
 
   const reset = () => {
     update((w) => {
-      const courseEdits = { ...w.courseEdits };
-      delete courseEdits[course.id];
-      return { ...w, courseEdits };
+      // Back to the calendar's name and colour, shown again; corrected class times stay.
+      const rest: CourseEdit = { ...w.courseEdits[course.id] };
+      delete rest.code;
+      delete rest.title;
+      delete rest.color;
+      delete rest.hidden;
+      return { ...w, courseEdits: { ...w.courseEdits, [course.id]: rest } };
     });
     onDone();
   };

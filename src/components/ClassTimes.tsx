@@ -8,6 +8,7 @@ import type { Course, WeeklyBlock } from "@/lib/types";
 import { hhmmToMinutes, minutesLabel, minutesToHHMM } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
 import { Button, Dialog, DialogActions, TextButton } from "./ui";
+import { ClassNameForm, RenameClassButton } from "./ClassName";
 
 /** Monday-first day buttons. */
 export function DayToggles({ value, onChange }: { value: number[]; onChange: (days: number[]) => void }) {
@@ -172,6 +173,7 @@ function ClassTimesRow({ course }: { course: Course }) {
   const { entered, fromFeed, replaced } = useClassTimes(course);
   const actions = useClassTimeActions();
   const [editing, setEditing] = useState<Editing>(null);
+  const [renaming, setRenaming] = useState(false);
   const feedName = model.feedById.get(course.feedId)?.name ?? "its calendar";
   const done = () => setEditing(null);
 
@@ -185,7 +187,13 @@ function ClassTimesRow({ course }: { course: Course }) {
         <span className="course-dot" />
         <span className="course-text font-semibold text-sm">{course.code}</span>
         {course.title !== course.code ? <span className="text-sm text-muted truncate">{course.title}</span> : null}
+        {renaming ? null : (
+          <span className="ml-auto shrink-0">
+            <RenameClassButton course={course} onClick={() => setRenaming(true)} />
+          </span>
+        )}
       </div>
+      {renaming ? <ClassNameForm course={course} onDone={() => setRenaming(false)} /> : null}
       <div className="pl-4 mt-1.5 space-y-1">
         {fromFeed.map((p) =>
           editing?.kind === "feed" && editing.pattern.key === p.key ? (

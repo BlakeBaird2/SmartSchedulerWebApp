@@ -292,6 +292,25 @@ and blocks touched each other. Changes:
 - **No green tint on hover over free time.** It flashed colour across big empty
   areas whenever the pointer crossed the calendar.
 
+### 21. Rename a class anywhere it's listed
+
+Calendars don't always name classes well (Learning Suite sends "Principles of
+Finance" with no course code). Renaming existed but was hard to find: a small
+pencil on the Classes board, and an inline box in Settings that only changed the
+short name. Now one rename form, with **Short name** (shown everywhere, like
+FIN 201) and **Full name**, is offered wherever a class is listed:
+
+| Where | How |
+| --- | --- |
+| Setup, step 1, right after a calendar is added | Click a class chip ("Name not right? Click a class to rename it.") |
+| Settings → Calendars | The same class chips under each calendar |
+| Class times (setup step 2, Settings, the Class times pop-up) | A "Rename" button beside each class |
+| Classes board | An "Edit" button (was an unlabelled pencil) for name, colour and hiding |
+
+A rename is confirmed with a message, sticks when the calendar refreshes, and
+"Use the calendar's name" undoes it. Saving a name or colour no longer wipes a
+class's corrected meeting times.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.
