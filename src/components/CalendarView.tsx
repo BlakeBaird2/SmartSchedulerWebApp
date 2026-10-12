@@ -113,7 +113,7 @@ export function CalendarView() {
               Planned work (white with a tick box: it can move)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[3px] bg-ok-soft border border-ok/30" /> Free time: the open space (click to open)
+              <span className="w-3 h-3 rounded-[3px] bg-surface border border-line-strong" /> Open space is free time (click it to see what fits)
             </span>
           </>
         ) : (
@@ -380,31 +380,16 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                   const y = top(g.start, c.from);
                   const gh = Math.max(14, top(g.end, c.from) - y - 2);
                   if (y + gh < 0 || y > hours.length * HOUR_PX) return null;
-                  // Put the label in the first stretch of the gap that nothing is planned in, so it never peeks out from under a block.
-                  const need = 25 * 60_000;
-                  let labelAt: number | null = g.start;
-                  for (const it of [...c.items].sort((p, q) => p.start - q.start)) {
-                    if (labelAt === null || it.end <= labelAt || it.start >= g.end) continue;
-                    if (it.start - labelAt >= need) break;
-                    labelAt = it.end;
-                  }
-                  if (labelAt !== null && g.end - labelAt < need) labelAt = null;
                   return (
                     <button
                       key={g.id}
                       type="button"
                       onClick={() => select({ kind: "gap", startMs: g.startMs })}
-                      className="absolute inset-x-0.5 z-0 rounded-md text-left px-1.5 py-0.5 overflow-hidden transition-colors hover:bg-ok-soft"
+                      className="absolute inset-x-0.5 z-0 cursor-pointer"
                       style={{ top: y + 1, height: gh }}
                       title={`Free · ${duration(g.minutes)} — open gap`}
-                    >
-                      {/* Background, not content: just open space with a quiet label (tinted on hover), so events and planned work stay what the eye reads first. */}
-                      {labelAt !== null ? (
-                        <span className="absolute left-2 text-[11px] text-muted" style={{ top: top(labelAt, c.from) - y + 3 }}>
-                          Free · {duration(g.minutes)}
-                        </span>
-                      ) : null}
-                    </button>
+                      aria-label={`Free time, ${duration(g.minutes)}. Open to see what fits.`}
+                    />
                   );
                 })}
                 {placed.map(({ item, col, cols }) => {

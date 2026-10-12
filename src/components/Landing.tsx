@@ -13,7 +13,7 @@
 import Link from "next/link";
 import { ArrowRight, Bell, Check, CircleAlert, CircleHelp, Link as LinkIcon, Workflow, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
 import { LinkGuide } from "./LinkGuide";
-import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
+import { CapabilityHero, PrototypeBadge } from "./Prototype";
 import { DaySketch, LinkSketch, PlanSketch } from "./LandingSketches";
 import { ButtonLink, Wordmark } from "./ui";
 
@@ -80,7 +80,6 @@ function Nav() {
           <Wordmark collapse />
         </a>
         <PrototypeBadge />
-        <GoalBadge />
         <nav aria-label="On this page" className="hidden items-center gap-1 text-[0.95rem] text-muted lg:flex">
           {[
             { href: "#how-it-works", label: "How it works", icon: Workflow },

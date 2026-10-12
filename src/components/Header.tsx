@@ -4,7 +4,7 @@ import { CalendarRange, CircleHelp, LayoutGrid, ListChecks, Plus, RefreshCw, Set
 import { timeAgo } from "@/lib/ui";
 import { pageWidth, useApp, type View } from "./context";
 import { ChangesPopover } from "./ChangesPopover";
-import { GoalBadge, PrototypeBadge } from "./Prototype";
+import { PrototypeBadge } from "./Prototype";
 import { Button, SegmentedControl, Wordmark } from "./ui";
 
 const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
@@ -23,8 +23,9 @@ const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
  * - tablets and phones: the views move to a second, full-width row
  * - tool labels show only where there is room (xl+); below that each tool is an
  *   icon with its name on hover and for screen readers
- * - phones: Help moves into Settings, and the Goal tag into the Prototype tag's
- *   pop-up, so the first row is just the name, the Prototype tag and three tools
+ * - phones: Help moves into Settings, so the first row is just the name, the
+ *   Prototype tag and three tools
+ * - the goal lives in the Prototype tag's pop-up, not a tag of its own
  */
 export function Header() {
   const { view, setView, snapshot, now, syncing, sync, openAddTask } = useApp();
@@ -38,7 +39,6 @@ export function Header() {
           <Wordmark collapse />
         </button>
         <PrototypeBadge />
-        <GoalBadge className="!hidden 2xl:!inline-flex" />
 
         <nav className="ml-3 hidden lg:block" aria-label="Main">
           <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} />

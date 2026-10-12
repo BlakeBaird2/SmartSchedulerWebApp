@@ -5,7 +5,7 @@
  *
  * - EntryNotices: prototype notice first, then the goal-setting pop-up. Each dismissal
  *   is remembered in this browser (localStorage) so returning users are not interrupted.
- * - PrototypeBadge / GoalBadge: reopen each notice from headers and Help/Settings.
+ * - PrototypeBadge: reopens the welcome pop-up (prototype notice and goal) from every header.
  * - CapabilityHero / WirePlaceholder: shared entry-screen pieces.
  * - DevStateSwitcher: development-only shortcuts to each entry state.
  */
@@ -42,7 +42,7 @@ export function openGoalNotice() {
  * of pop-ups: say plainly that this is an early prototype, and give the goal to try.
  *
  * Inside the app it also offers an optional walkthrough ("Show me around"); the
- * main button just starts. The Prototype and Goal tags, Help and Settings all
+ * main button just starts. The Prototype tag, Help and Settings all
  * reopen it. Returning visitors see nothing.
  */
 export function EntryNotices() {
@@ -124,21 +124,6 @@ export function PrototypeBadge({ className = "" }: { className?: string }) {
     <button type="button" className={`proto-badge ${className}`} onClick={openPrototypeNotice} title="About this prototype" aria-haspopup="dialog">
       <FlaskConical size={14} className="hidden sm:block" aria-hidden />
       Prototype
-    </button>
-  );
-}
-
-export function GoalBadge({ className = "" }: { className?: string }) {
-  return (
-    <button
-      type="button"
-      className={`proto-badge hidden sm:inline-flex ${className}`}
-      onClick={openGoalNotice}
-      title="Your goal in this prototype"
-      aria-haspopup="dialog"
-    >
-      <Target size={14} className="hidden sm:block" aria-hidden />
-      Goal
     </button>
   );
 }

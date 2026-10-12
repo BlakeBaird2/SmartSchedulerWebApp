@@ -156,7 +156,7 @@ supports them.
 | Phones | Name, Prototype tag, Add task, Alerts, Settings. Help is reached from Settings and from the welcome pop-up. The main views sit on a second full-width row. |
 | Tablets and small laptops | Refresh and Help join the first row as icons. The views stay on the second row. |
 | Laptops (lg+) | The views move up beside the name, all on one row. |
-| Wide screens (xl+) | Tools get their text labels, and the Goal tag appears. |
+| Wide screens (xl+) | Tools get their text labels. (The separate Goal tag was later removed: the Prototype tag opens the same pop-up, which holds the goal.) |
 
 Icon-only tools always have their name as a tooltip and for screen readers. The
 "Synced just now" status moved into the refresh button's name, so it no longer
@@ -279,6 +279,18 @@ and blocks touched each other. Changes:
 | Blocks touched their neighbours | 2px of space above and below each block and 3px at the sides, with a little more padding inside. |
 | Long titles cut off with "…" | Tall blocks let the title wrap to two lines. Text is a step larger (12px titles, 11px details). |
 | "Free · 1h 30m" peeked out from under planned work | The label sits in the first open stretch of the gap, or is left out if there isn't room. |
+
+### 20. Less text, less noise
+
+- **No Goal tag in the header.** It opened the same pop-up as the Prototype tag
+  (the pop-up holds both the notice and the goal), so it only took up space.
+  The goal is still one click away from the Prototype tag, Help and Settings.
+- **No "Free · 6h 20m" labels on the calendar.** Open space already reads as
+  free time; the label repeated it in every column. Free time is still clickable
+  and opens the free-gap details, and its length is in the tooltip and spoken
+  name.
+- **No green tint on hover over free time.** It flashed colour across big empty
+  areas whenever the pointer crossed the calendar.
 
 ## Before and after
 
