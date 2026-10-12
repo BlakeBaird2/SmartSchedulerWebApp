@@ -107,10 +107,13 @@ export function CalendarView() {
               <span className="w-3 h-3 event-block" style={courseStyle("#64748b")} /> Events and classes (busy)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 plan-block" style={courseStyle("#64748b")} /> Planned work (dashed: it can move)
+              <span className="w-4 h-3.5 plan-block !rounded-[4px] grid place-items-center" style={courseStyle("#64748b")}>
+                <span className="plan-tick !w-2 !h-2 !rounded-[2px]" />
+              </span>{" "}
+              Planned work (white with a tick box: it can move)
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 border border-dashed border-line" /> Free time (click to open)
+              <span className="w-3 h-3 border-l-2 border-dashed border-ok/60" /> Free time (click to open)
             </span>
           </>
         ) : (
@@ -382,12 +385,12 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={g.id}
                       type="button"
                       onClick={() => select({ kind: "gap", startMs: g.startMs })}
-                      className="absolute inset-x-0.5 z-0 border border-dashed border-line text-left px-1 py-0.5 overflow-hidden transition-colors hover:bg-surface-2 hover:border-line-strong"
+                      className="absolute inset-x-0.5 z-0 border-l-2 border-dashed border-ok/40 rounded-r-md text-left pl-1.5 pr-1 py-0.5 overflow-hidden transition-colors hover:bg-ok-soft hover:border-ok"
                       style={{ top: y + 1, height: gh }}
                       title={`Free · ${duration(g.minutes)} — open gap`}
                     >
-                      {/* Background, not content: a quiet outline and label, so events and planned work stay what the eye reads first. */}
-                      {gh > 22 ? <span className="text-[10px] text-muted">Free · {duration(g.minutes)}</span> : null}
+                      {/* Background, not content: the same dashed green line as free time on Plan, and a quiet label, so events and planned work stay what the eye reads first. */}
+                      {gh > 22 ? <span className="text-[10px] font-medium text-ok/80">Free · {duration(g.minutes)}</span> : null}
                     </button>
                   );
                 })}
@@ -426,7 +429,10 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       style={{ ...style, ...courseStyle(course?.color) }}
                       title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
                     >
-                      <div className="event-title text-[11px] font-semibold leading-tight truncate">{item.task.title}</div>
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="plan-tick" data-done={item.task.done || undefined} aria-hidden />
+                        <span className="text-[11px] font-semibold leading-tight truncate">{item.task.title}</span>
+                      </div>
                       {h > 30 ? (
                         <div className="text-[10px] text-muted leading-tight truncate">
                           {course ? <span className="course-text">{course.code} · </span> : null}

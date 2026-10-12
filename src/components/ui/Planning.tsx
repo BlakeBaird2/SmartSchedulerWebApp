@@ -130,10 +130,16 @@ export function TimelineRow({
 }) {
   const free = marker === "free";
   return (
-    <li className="grid grid-cols-[3.4rem_0.75rem_minmax(0,1fr)] sm:grid-cols-[4rem_0.75rem_minmax(0,1fr)] gap-x-1.5 sm:gap-x-2">
+    <li className="grid grid-cols-[2.6rem_0.5rem_minmax(0,1fr)] sm:grid-cols-[4rem_0.75rem_minmax(0,1fr)] gap-x-1 sm:gap-x-2">
       <div className={`pt-2 text-right tabular-nums whitespace-nowrap flex flex-col items-end ${free ? "pb-0.5" : ""}`}>
-        <span className={`text-xs font-medium ${free ? "text-ok" : ""}`}>{start}</span>
-        {end ? <span className={`text-[11px] text-faint ${free ? "mt-auto" : ""}`}>{end}</span> : null}
+        <span className={`text-xs font-medium ${free ? "text-ok" : ""}`}>
+          <Time value={start} />
+        </span>
+        {end ? (
+          <span className={`text-[11px] text-faint ${free ? "mt-auto" : ""}`}>
+            <Time value={end} />
+          </span>
+        ) : null}
       </div>
       <div className="relative" aria-hidden>
         {free ? (
@@ -150,6 +156,18 @@ export function TimelineRow({
       </div>
       <div className="min-w-0">{children}</div>
     </li>
+  );
+}
+
+/** A clock time. On phones "AM"/"PM" is set small so the time column stays narrow. */
+function Time({ value }: { value: string }) {
+  const m = /^(.*?)\s?(AM|PM)$/.exec(value);
+  if (!m) return <>{value}</>;
+  return (
+    <>
+      {m[1]}
+      <span className="ml-px text-[0.6rem] font-medium sm:ml-1 sm:text-[length:inherit]">{m[2]}</span>
+    </>
   );
 }
 

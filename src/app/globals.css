@@ -988,8 +988,41 @@
   [data-theme="dark"] .event-block {
     border-color: color-mix(in oklab, var(--c) 32%, transparent);
   }
+  /*
+   * Planned work on the calendar: a white card with a tick box, the same "to-do"
+   * look as a task on Plan, against the solid colour of fixed events. Filled =
+   * fixed; white with a tick box = work you planned, which can move.
+   */
   .plan-block {
-    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid color-mix(in oklab, var(--c) 38%, var(--line));
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgb(28 27 24 / 0.08);
+  }
+  .plan-block:hover {
+    background: color-mix(in oklab, var(--c) 6%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 60%, var(--line));
+  }
+  [data-theme="dark"] .plan-block {
+    background: var(--surface-2);
+    border-color: color-mix(in oklab, var(--c) 45%, var(--line));
+    box-shadow: none;
+  }
+  [data-theme="dark"] .plan-block:hover {
+    background: color-mix(in oklab, var(--c) 10%, var(--surface-2));
+  }
+  /* The small tick box at the start of a planned block's title. */
+  .plan-tick {
+    width: 0.625rem;
+    height: 0.625rem;
+    flex: none;
+    border-radius: 3px;
+    border: 1.5px solid color-mix(in oklab, var(--c) 75%, var(--fg));
+    background: var(--surface);
+  }
+  .plan-tick[data-done="true"] {
+    background: var(--ok);
+    border-color: var(--ok);
   }
   .course-chip {
     border-radius: 7px;

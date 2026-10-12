@@ -228,6 +228,24 @@ continuity and common fate: everything beside the line belongs to that
 stretch of time). The new library part is `TimelineRow`, used on Plan, in the
 home page drawings and on `/design`.
 
+### 17. Planned work on the calendar, without dashed outlines
+
+Planned work on the week and day calendar had a dashed outline in its class
+colour. It was clearly different from events, but a column of dashed boxes
+looked busy. Now the difference is carried by **fill and a familiar signifier**:
+
+| Kind | Look | Means |
+| --- | --- | --- |
+| Event or class | Solid tint of its class colour | Fixed. It happens whether you like it or not. |
+| Planned work | White card with a thin outline in its class colour, a small shadow and a **tick box** before the title (ticked and green when done) | A task you planned, which can move. The tick box is the same "to-do" mark as on Plan. |
+| Free time | A dashed green line down the left of the gap, with a green "Free · 6h 20m" label | Open time, the same line as on Plan. |
+
+The legend under the calendar shows all three.
+
+On phones, the Plan timeline's time column is narrower: "AM" and "PM" are set
+small ("9:30AM"), and the gaps around the line are tighter, so the cards gain
+about 16px of width.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.
