@@ -1,6 +1,6 @@
 "use client";
 
-import { Undo2 } from "lucide-react";
+import { CalendarCheck, Clock, Undo2 } from "lucide-react";
 import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
@@ -125,14 +125,18 @@ export function FreeGapBlock({
   onOpen?: () => void;
 }) {
   return (
-    <div className="border-2 border-dashed border-line-strong bg-surface-2 p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
+    <div className="rounded-xl border border-dashed border-ok/50 bg-ok-soft p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
       {onOpen ? (
-        <button type="button" className="px-1 pt-0.5 text-sm font-bold text-left w-full hover:underline underline-offset-2" onClick={onOpen}>
-          {label}
-          <span className="ml-2 text-xs font-normal text-muted">Open gap</span>
+        <button type="button" className="group px-1 pt-0.5 text-sm font-semibold text-ok text-left w-full inline-flex items-center gap-1.5" onClick={onOpen}>
+          <Clock size={14} aria-hidden />
+          <span className="group-hover:underline underline-offset-2">{label}</span>
+          <span className="ml-auto text-xs font-normal text-muted">Open gap</span>
         </button>
       ) : (
-        <div className="px-1 pt-0.5 text-sm font-bold">{label}</div>
+        <div className="px-1 pt-0.5 text-sm font-semibold text-ok inline-flex items-center gap-1.5">
+          <Clock size={14} aria-hidden />
+          {label}
+        </div>
       )}
       {children ? <ul className="mt-2 space-y-1.5">{children}</ul> : null}
       {note ? <p className="mt-1.5 px-1 text-xs text-muted">{note}</p> : null}
@@ -140,11 +144,15 @@ export function FreeGapBlock({
   );
 }
 
-/** The app's name, drawn the same way in every header. */
-export function Wordmark({ size = "md" }: { size?: "md" | "lg" }) {
+/** The app's name and mark, drawn the same way in every header. */
+export function Wordmark({ size = "md", collapse = false }: { size?: "md" | "lg"; /** On phones, show only the mark so the header tools fit. */ collapse?: boolean }) {
+  const lg = size === "lg";
   return (
-    <span className={`wordmark select-none ${size === "lg" ? "text-2xl" : "text-lg sm:text-xl"}`}>
-      SmartScheduler<span className="text-accent">.</span>
+    <span className="inline-flex items-center gap-2 select-none">
+      <span className={`grid place-items-center shrink-0 rounded-lg bg-accent text-white ${lg ? "h-9 w-9" : "h-7 w-7 sm:h-8 sm:w-8"}`} aria-hidden>
+        <CalendarCheck size={lg ? 20 : 17} strokeWidth={2.4} />
+      </span>
+      <span className={`wordmark font-bold tracking-tight ${lg ? "text-2xl" : "text-lg sm:text-xl"} ${collapse ? "hidden sm:inline" : ""}`}>SmartScheduler</span>
     </span>
   );
 }

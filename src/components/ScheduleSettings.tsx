@@ -131,7 +131,7 @@ export function WeeklyEditor() {
         </ul>
       ) : null}
 
-      <form onSubmit={add} className="border border-dashed border-line-strong p-3 space-y-2.5">
+      <form onSubmit={add} className="rounded-xl border border-dashed border-line-strong p-3 space-y-2.5">
         <input className="input" placeholder="What is it? (Work, practice, commute…)" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} />
         <div className="flex items-center gap-2 flex-wrap">
           <DayToggles value={days} onChange={setDays} />

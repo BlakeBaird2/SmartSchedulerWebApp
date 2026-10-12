@@ -50,7 +50,7 @@ export function Tour({ steps, onClose, finishLabel = "Got it" }: { steps: TourSt
       </p>
       {/* Fixed height, so the dialog doesn't jump between steps. */}
       <div key={index} className="fade-in">
-        <div className="h-56 border border-line-strong overflow-hidden">{step.picture}</div>
+        <div className="h-56 rounded-xl border border-line overflow-hidden">{step.picture}</div>
         <p className="mt-4 min-h-[5.25rem] text-[1.0625rem] leading-relaxed">{step.body}</p>
       </div>
 
@@ -61,7 +61,7 @@ export function Tour({ steps, onClose, finishLabel = "Got it" }: { steps: TourSt
             type="button"
             tabIndex={-1}
             onClick={() => setIndex(i)}
-            className={`h-2.5 w-2.5 border border-fg ${i === index ? "bg-fg" : "bg-surface"}`}
+            className={`h-2 rounded-full transition-all ${i === index ? "w-6 bg-accent" : "w-2 bg-line-strong"}`}
           />
         ))}
       </div>

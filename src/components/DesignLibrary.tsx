@@ -122,8 +122,8 @@ export function DesignLibrary() {
           <h1 className="capability text-4xl sm:text-5xl">Design library</h1>
           <p className="mt-3 max-w-3xl text-lg text-muted leading-relaxed">
             Every SmartScheduler screen is built from the parts on this page. They are React components in <code className="text-fg">src/components/ui</code>,
-            styled with Tailwind CSS and Lucide icons, and drawn as a low-fidelity wireframe: greys, square outlines, a sketch font and one blue for the main
-            action.
+            styled with Tailwind CSS and Lucide icons. The look is medium fidelity: a clean type scale, white cards raised above an off-white page, class
+            colours for recognition, and one blue for the main action.
           </p>
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             <Card padding="sm" className="!border-2 !border-fg">
@@ -257,11 +257,13 @@ function Entry({
 // ---------------------------------------------------------------------------
 
 const SWATCHES = [
-  { name: "Ink", token: "--fg", use: "Text, outlines of the focal card, ticked boxes" },
+  { name: "Ink", token: "--fg", use: "Headings and body text" },
   { name: "Muted", token: "--muted", use: "Secondary text: details lines, hints" },
-  { name: "Line", token: "--line-strong", use: "Outlines of every box and control" },
-  { name: "Paper", token: "--surface-2", use: "Fills that group things: free gaps, examples, callouts" },
-  { name: "Blue pen", token: "--accent", use: "Only the one main action on a screen, and today on the calendar" },
+  { name: "Page", token: "--bg", use: "The off-white page every card sits on (ground)" },
+  { name: "Card", token: "--surface", use: "Cards, dialogs and the header (figure)" },
+  { name: "Blue", token: "--accent", use: "Only the one main action on a screen, the current tab, and today" },
+  { name: "Green", token: "--ok", use: "Free time and finished work" },
+  { name: "Red", token: "--danger", use: "Late or won't fit, always with an icon or words" },
 ];
 
 function Foundations() {
@@ -270,7 +272,7 @@ function Foundations() {
       <GroupHeading id="foundations" title="Foundations" lead="The few decisions every component shares, so all screens look like one product." />
       <section id="colour" className="scroll-mt-16 mt-6">
         <h3 className="text-xl font-bold">Colour</h3>
-        <p className="text-muted">Greys and one accent. Class colours are turned into shades of grey, so the prototype reads as a sketch.</p>
+        <p className="text-muted">Neutral greys, one blue for action, and colour with a fixed meaning: green is free time, red is late. Each class keeps its own colour everywhere it appears.</p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {SWATCHES.map((s) => (
             <li key={s.token} className="flex items-center gap-3 border border-line-strong p-2">
@@ -287,7 +289,7 @@ function Foundations() {
 
       <section id="type" className="scroll-mt-16 mt-8">
         <h3 className="text-xl font-bold">Type</h3>
-        <p className="text-muted">One sketch font. Size and weight, not colour, set what is read first.</p>
+        <p className="text-muted">One clean font (Inter). A clear scale (page title, card title, task title, details) sets what is read first.</p>
         <div className="mt-3 border border-line-strong divide-y divide-line">
           <div className="p-3 flex items-baseline gap-4 flex-wrap">
             <span className="w-28 text-sm text-muted shrink-0">Capability</span>
@@ -786,7 +788,7 @@ function Feedback() {
       <Entry
         id="tour"
         name="Tour"
-        summary="A short walkthrough in a pop-up: a wireframe picture and a sentence or two per step."
+        summary="A short walkthrough in a pop-up: a small picture of the app and a sentence or two per step."
         use="Once, the first time someone opens the app (after the prototype notice). Again from Settings → Show the walkthrough."
         rules={[
           "Four steps at most, in the order the Plan screen is read: what to do now, the rest of today, what's due, everything else.",

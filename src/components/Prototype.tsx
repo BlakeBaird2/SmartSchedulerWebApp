@@ -17,7 +17,7 @@ import { KEYS, readStored, useHydrated, useStored, writeStored } from "./store";
 import { Button, Dialog } from "./ui";
 
 export const CAPABILITY = "See exactly what to work on in every free gap of your day.";
-export const PROTOTYPE_MESSAGE = "This is an early prototype. It looks simple on purpose and some things are placeholders.";
+export const PROTOTYPE_MESSAGE = "This is an early prototype. Some things are placeholders, and nothing is saved to an account.";
 export const GOAL_TITLE = "Your goal in this prototype";
 export const GOAL_EXAMPLE = "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
 export const GOAL_BODY =
@@ -81,10 +81,10 @@ export function EntryNotices() {
       </span>
       <h2 className="mt-3 text-2xl font-bold leading-snug">This is an early prototype.</h2>
       <p className="mt-1 text-base text-muted leading-relaxed">
-        It looks simple on purpose and some things are placeholders, but it really works: it plans your free time from your calendars or from sample data.
+        Some things are placeholders and nothing is saved to an account, but it really works: it plans your free time from your calendars or from sample data.
       </p>
 
-      <div className="mt-5 border-2 border-fg bg-surface-2 p-4">
+      <div className="mt-5 rounded-xl border border-accent/30 bg-accent-soft p-4">
         <span className="section-title inline-flex items-center gap-1.5">
           <Target size={14} aria-hidden />
           Your goal

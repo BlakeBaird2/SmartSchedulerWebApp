@@ -11,7 +11,7 @@
  * screen has one primary (accent) button, with every other action drawn quieter.
  */
 import Link from "next/link";
-import { ArrowRight, Bell, Check, CircleAlert, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
+import { ArrowRight, Bell, Check, CircleAlert, CircleHelp, Link as LinkIcon, Workflow, GraduationCap, Lock, Plus, RefreshCw, SlidersHorizontal, Sparkles, Target } from "lucide-react";
 import { LinkGuide } from "./LinkGuide";
 import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
 import { DaySketch, LinkSketch, PlanSketch } from "./LandingSketches";
@@ -74,23 +74,24 @@ function SectionIntro({ id, eyebrow, title, lead }: { id: string; eyebrow: strin
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-30 border-b border-line-strong bg-bg">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[var(--shadow-sm)]">
       <div className={`${WRAP} flex h-14 items-center gap-3 sm:gap-6`}>
         <a href="#top" className="shrink-0" aria-label="SmartScheduler, back to top">
-          <Wordmark />
+          <Wordmark collapse />
         </a>
         <PrototypeBadge />
         <GoalBadge />
-        <nav aria-label="On this page" className="hidden items-center gap-6 text-base text-muted md:flex">
-          <a href="#how-it-works" className="transition-colors hover:text-fg">
-            How it works
-          </a>
-          <a href="#links" className="transition-colors hover:text-fg">
-            Get your links
-          </a>
-          <a href="#faq" className="transition-colors hover:text-fg">
-            FAQ
-          </a>
+        <nav aria-label="On this page" className="hidden items-center gap-1 text-[0.95rem] text-muted lg:flex">
+          {[
+            { href: "#how-it-works", label: "How it works", icon: Workflow },
+            { href: "#links", label: "Get your links", icon: LinkIcon },
+            { href: "#faq", label: "FAQ", icon: CircleHelp },
+          ].map((l) => (
+            <a key={l.href} href={l.href} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-surface-2 hover:text-fg">
+              <l.icon size={16} aria-hidden />
+              {l.label}
+            </a>
+          ))}
         </nav>
         {/* Quiet on purpose: the hero holds this screen's one primary button. */}
         <ButtonLink href="/app" className="ml-auto shrink-0">
@@ -137,11 +138,11 @@ const APPS = ["Canvas", "Learning Suite", "Google Calendar", "Outlook", "Apple C
 
 function WorksWith() {
   return (
-    <section aria-label="Works with" className="border-y border-line-strong">
+    <section aria-label="Works with" className="border-y border-line bg-surface">
       <div className={`${WRAP} flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6`}>
         <span className="text-sm text-muted">Works with</span>
         {APPS.map((name) => (
-          <span key={name} className="border border-line px-2 text-base text-fg">
+          <span key={name} className="rounded-full border border-line bg-surface-2 px-3 py-0.5 text-sm font-medium text-fg">
             {name}
           </span>
         ))}
@@ -184,10 +185,10 @@ function HowItWorks() {
 function Step({ n, title, art, children }: { n: number; title: string; art: React.ReactNode; children: React.ReactNode }) {
   return (
     <li className="card flex flex-col overflow-hidden">
-      <div className="border-b border-line-strong">{art}</div>
+      <div className="border-b border-line">{art}</div>
       <div className="p-5 sm:p-6">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-6 w-6 shrink-0 place-items-center border border-line-strong text-sm font-semibold tabular-nums">{n}</span>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent text-white text-sm font-semibold tabular-nums">{n}</span>
           <h3 className="font-semibold">{title}</h3>
         </div>
         <p className="mt-2.5 text-sm leading-relaxed text-muted">{children}</p>
@@ -233,7 +234,7 @@ const FEATURES = [
 
 function Features() {
   return (
-    <section aria-labelledby="features-title" className="border-y border-line-strong py-20 sm:py-28">
+    <section aria-labelledby="features-title" className="border-y border-line bg-surface py-20 sm:py-28">
       <div className={WRAP}>
         <SectionIntro
           id="features-title"
@@ -244,7 +245,7 @@ function Features() {
         <div className="mt-12 grid gap-x-10 gap-y-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div key={f.title}>
-              <span className="grid h-10 w-10 place-items-center border border-line-strong">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent">
                 <f.icon size={19} />
               </span>
               <h3 className="mt-4 font-semibold">{f.title}</h3>
@@ -357,7 +358,7 @@ function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="pb-20 sm:pb-28">
       <div className={WRAP}>
-        <div className="border border-line-strong bg-surface px-6 py-14 text-center sm:px-12 sm:py-20">
+        <div className="rounded-3xl border border-line bg-surface shadow-[var(--shadow-md)] px-6 py-14 text-center sm:px-12 sm:py-20">
           <h2 id="closing-title" className="mx-auto max-w-2xl text-3xl leading-[1.1] font-semibold tracking-[-0.03em] text-balance sm:text-5xl">
             Stop juggling calendars. Start knowing what&apos;s next.
           </h2>
@@ -376,7 +377,7 @@ function ClosingCta() {
 
 function Footer() {
   return (
-    <footer className="border-t border-line-strong">
+    <footer className="border-t border-line bg-surface">
       <div className={`${WRAP} flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between`}>
         <div>
           <Wordmark />

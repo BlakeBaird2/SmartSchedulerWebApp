@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Compass, Copy, Info, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target } from "lucide-react";
+import { ArrowRight, CalendarDays, CircleHelp, Clock, Compass, MonitorSmartphone, Timer, type LucideIcon, Copy, Info, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
 import { duration, typeIconClass, typeMeta } from "@/lib/ui";
@@ -25,12 +25,13 @@ function Section({ title, hint, children }: { title: string; hint?: React.ReactN
 
 const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 480];
 
-const NAV: { id: SettingsPanel; label: string; hint: string }[] = [
-  { id: "calendars", label: "Calendars & class times", hint: "Links SmartScheduler reads, and when classes meet" },
-  { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times" },
-  { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work" },
-  { id: "browser", label: "This browser", hint: "Theme, another device, start over" },
-  { id: "about", label: "About, Help & walkthrough", hint: "Goal instructions, tour, design library" },
+/** Each section has its own icon, so the menu can be scanned by shape as well as by name. */
+export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
+  { id: "calendars", label: "Calendars & class times", hint: "Links SmartScheduler reads, and when classes meet", icon: CalendarDays },
+  { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
+  { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
+  { id: "browser", label: "This browser", hint: "Theme, another device, start over", icon: MonitorSmartphone },
+  { id: "about", label: "About, Help & walkthrough", hint: "Goal instructions, tour, design library", icon: CircleHelp },
 ];
 
 export function SettingsView() {
@@ -39,9 +40,6 @@ export function SettingsView() {
   if (settingsPanel !== "main") {
     return (
       <div className="max-w-3xl space-y-4">
-        <Button icon={ArrowLeft} onClick={() => setSettingsPanel("main")}>
-          All settings
-        </Button>
         {settingsPanel === "calendars" ? <CalendarsPanel /> : null}
         {settingsPanel === "schedule" ? <SchedulePanel /> : null}
         {settingsPanel === "estimates" ? <EstimatesPanel /> : null}
@@ -53,27 +51,26 @@ export function SettingsView() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <h1 className="sr-only">Settings</h1>
-      <Card>
-        <CardHeader level={2} title="Settings" hint="Open a section below. Help and the prototype goal are also available from the header." />
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button trailingIcon={ArrowRight} onClick={() => setView("help")}>
-            Open Help
-          </Button>
-          <Button icon={Target} onClick={openGoalNotice}>
-            Reopen goal
-          </Button>
-        </div>
-      </Card>
+      <div className="flex flex-wrap gap-2">
+        <Button icon={CircleHelp} onClick={() => setView("help")}>
+          Open Help
+        </Button>
+        <Button icon={Target} onClick={openGoalNotice}>
+          Reopen goal
+        </Button>
+      </div>
 
       <nav className="space-y-2" aria-label="Settings sections">
-        {NAV.map((item) => (
+        {SETTINGS_SECTIONS.map((item) => (
           <button
             key={item.id}
             type="button"
-            className="card p-4 w-full text-left flex items-center gap-3 hover:bg-surface-2 transition"
+            className="card p-4 w-full text-left flex items-center gap-4 hover:shadow-[var(--shadow-md)] hover:border-line-strong transition"
             onClick={() => setSettingsPanel(item.id)}
           >
+            <span className="grid place-items-center h-10 w-10 shrink-0 rounded-xl bg-accent-soft text-accent" aria-hidden>
+              <item.icon size={20} />
+            </span>
             <div className="min-w-0 flex-1">
               <div className="font-semibold">{item.label}</div>
               <p className="text-sm text-muted mt-0.5">{item.hint}</p>

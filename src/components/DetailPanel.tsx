@@ -156,7 +156,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                     <button
                       type="button"
                       onClick={() => openDay(b.start)}
-                      className="w-full text-left flex items-center gap-2 border border-line-strong px-2.5 py-2 text-sm hover:bg-surface-2 transition"
+                      className="w-full text-left flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:bg-surface-2 hover:border-line-strong transition"
                     >
                       <Clock3 size={14} className="shrink-0" aria-hidden />
                       <span className="flex-1 min-w-0">
@@ -421,7 +421,7 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
             {gap.work.map((w) => {
               const course = w.task.courseId ? model.courseById.get(w.task.courseId) : undefined;
               return (
-                <li key={`${w.task.id}:${w.block.part}`} className="border border-line-strong p-3 space-y-2" style={courseStyle(course?.color)}>
+                <li key={`${w.task.id}:${w.block.part}`} className="rounded-xl border border-line p-3 space-y-2" style={courseStyle(course?.color)}>
                   <button type="button" className="text-left w-full" onClick={() => select({ kind: "task", id: w.task.id })}>
                     <div className="font-semibold leading-snug">{w.task.title}</div>
                     <div className="mt-1 text-xs text-muted flex flex-wrap gap-x-2">
@@ -595,7 +595,7 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
           That counts for the prototype goal. Your plan updates everywhere — Plan, Calendar, Upcoming, and Classes stay in sync.
         </p>
         {next ? (
-          <div className="border border-line-strong p-3 space-y-2">
+          <div className="rounded-xl border border-line p-3 space-y-2">
             <SectionLabel>Next up</SectionLabel>
             <p className="font-medium">{next.title}</p>
             <Button variant="primary" trailingIcon={ArrowRight} onClick={() => select({ kind: "task", id: next.id })}>

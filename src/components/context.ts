@@ -84,18 +84,13 @@ export function useApp(): AppContextValue {
 }
 
 /**
- * The prototype is drawn as a grayscale wireframe, so every class and calendar
- * colour is shown as a grey of the same lightness. Classes keep distinct shades,
- * and the colour each one is saved with is untouched, so a full-colour design can
- * come back by returning `color` unchanged here.
+ * The colour a class or calendar is drawn in. The low-fidelity version turned
+ * every colour into a grey; with more fidelity, classes get their real colours
+ * back so each one is easy to follow across screens (Gestalt: similarity).
+ * (Named for its old job so existing callers keep working.)
  */
 export function wireGray(color: string | undefined | null): string {
-  const m = /^#?([0-9a-f]{6})$/i.exec((color ?? "").trim());
-  if (!m) return color && color.startsWith("var(") ? color : "#6b6b6b";
-  const n = parseInt(m[1], 16);
-  const y = Math.round(0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255));
-  const h = Math.min(255, Math.max(0, y)).toString(16).padStart(2, "0");
-  return `#${h}${h}${h}`;
+  return color && color.trim() ? color : "#64748b";
 }
 
 export function courseStyle(color: string | undefined | null): React.CSSProperties {

@@ -119,8 +119,8 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
         <div className="mt-1.5 min-h-[2.125rem]">
           <MeetsLine course={course} />
         </div>
-        <div className="mt-2.5 h-1.5 border border-line-strong bg-surface overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${course.code}: ${pct}% done`}>
-          <div className="h-full bg-fg transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        <div className="mt-2.5 h-2 rounded-full bg-surface-2 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${course.code}: ${pct}% done`}>
+          <div className="h-full course-bar rounded-full transition-[width] duration-500" style={{ width: `${pct}%` }} />
         </div>
         <div className="mt-1 flex items-center text-[11px] text-muted tabular-nums">
           <span>
@@ -244,7 +244,7 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
               aria-checked={color === c}
               aria-label={`Shade ${i + 1}`}
               onClick={() => setColor(c)}
-              className="w-7 h-7 border border-line-strong"
+              className="w-7 h-7 rounded-full border border-line-strong"
               style={{ background: wireGray(c) }}
             />
           ))}

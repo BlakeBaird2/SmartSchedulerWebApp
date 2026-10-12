@@ -1,47 +1,54 @@
-/* Sketch-style font for the low-fidelity prototype. Loaded from Google Fonts with no
-   npm dependency; if it can't load, the handwritten system fonts below take over. */
-@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   /*
-   * Low-fidelity wireframe palette: greys only, plus ONE accent (a "blue pen")
-   * for the primary action on each screen and the few things that must stand out.
-   * Warnings and errors are near-black and always carry an icon or words, so
-   * nothing depends on colour alone.
+   * Medium-fidelity palette. The page is an off-white "desk"; content sits on white
+   * cards above it (figure and ground). Blue is still reserved for the one main
+   * action on each screen; green, amber and red only ever mean done, soon and
+   * late, and always come with an icon or words.
    */
-  --bg: #ffffff;
+  --bg: #f4f5f8;
   --surface: #ffffff;
-  --surface-2: #efefef;
-  --line: #9a9a9a;
-  --line-strong: #4a4a4a;
-  --fg: #1a1a1a;
-  --muted: #5c5c5c;
-  --faint: #8f8f8f;
-  --accent: #2459d6;
-  --danger: #111111;
-  --warn: #3d3d3d;
-  --ok: #3d3d3d;
-  --shadow: none;
+  --surface-2: #f1f3f7;
+  --line: #e2e5eb;
+  --line-strong: #c4cad3;
+  --fg: #111827;
+  --muted: #4b5563;
+  --faint: #8a93a3;
+  --accent: #2563eb;
+  --accent-soft: #eef3fe;
+  --danger: #dc2626;
+  --warn: #b45309;
+  --ok: #15803d;
+  --ok-soft: #eefaf2;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 4px 10px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.05);
+  --shadow-lg: 0 18px 40px -12px rgb(16 24 40 / 0.25);
+  --shadow: var(--shadow-sm);
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg: #161616;
-  --surface: #161616;
-  --surface-2: #262626;
-  --line: #6a6a6a;
-  --line-strong: #b5b5b5;
-  --fg: #ededed;
-  --muted: #b0b0b0;
-  --faint: #7d7d7d;
-  --accent: #7aa2ff;
-  --danger: #ffffff;
-  --warn: #d0d0d0;
-  --ok: #d0d0d0;
-  --shadow: none;
+  --bg: #0e1116;
+  --surface: #171b22;
+  --surface-2: #1f242d;
+  --line: #2b313c;
+  --line-strong: #444c59;
+  --fg: #eef0f4;
+  --muted: #b2b9c5;
+  --faint: #7b8494;
+  --accent: #6b9bff;
+  --accent-soft: #1b2740;
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --ok: #4ade80;
+  --ok-soft: #142a1e;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 18px 40px -12px rgb(0 0 0 / 0.7);
+  --shadow: var(--shadow-sm);
   color-scheme: dark;
 }
 
@@ -55,12 +62,14 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-ok: var(--ok);
-  --font-sans: "Patrick Hand", "Comic Neue", "Segoe Print", "Chalkboard SE", "Comic Sans MS", cursive, ui-sans-serif, system-ui, sans-serif;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
+  --color-ok-soft: var(--ok-soft);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
 }
 
 @layer base {
@@ -513,26 +522,9 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Low-fidelity wireframe layer
- *
- * The prototype is meant to look like an early sketch: thin outlined boxes,
- * square controls, greys and one accent, no shadows, gradients, blur or glossy
- * effects. The reset just below sits outside every layer and uses !important
- * so it wins over the Tailwind utilities scattered through the components
- * (rounded-*, shadow-*, backdrop-blur). The component overrides after it live in
- * the components layer, so utilities on a single element still apply.
- * Remove this block to go back to a polished look.
+ * Component overrides (originally the low-fidelity layer; the medium-fidelity
+ * layer at the end of this file refines them).
  * ------------------------------------------------------------------------- */
-*,
-*::before,
-*::after {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  background-image: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
 
 @layer components {
   /* Boxes read as outlines. */
@@ -658,10 +650,10 @@
   }
 }
 
-/* Shadows are off, so Tailwind's ring-* indicators are gone too. Outlines replace them. */
+/* A clear focus ring for keyboard users. */
 :focus-visible {
   outline: 2px solid var(--accent) !important;
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 [role="radio"][aria-checked="true"] {
   outline: 2px solid var(--fg);
@@ -796,10 +788,7 @@
   }
 }
 
-/*
- * A soft blur behind the walkthrough, so attention stays on it. The wireframe
- * reset above turns backdrop filters off everywhere; this one class opts back in.
- */
+/* A soft blur behind the walkthrough, so attention stays on it. */
 .backdrop-soft-blur {
   -webkit-backdrop-filter: blur(3px) !important;
   backdrop-filter: blur(3px) !important;
@@ -808,5 +797,250 @@
   .backdrop-soft-blur {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Medium-fidelity layer
+ *
+ * Feedback: low fidelity directed people down a path, but new users needed more
+ * visual hierarchy to make sense of a screen with a lot on it. This layer gives
+ * the shared components depth and weight so importance reads at a glance:
+ *
+ *   page (off-white)  <  cards (white, soft shadow)  <  focal card (stronger shadow,
+ *   blue edge)  <  dialogs (largest shadow)
+ *
+ * and real type weights instead of one sketch font. Everything still comes from
+ * the same components, so every screen changes together.
+ * ------------------------------------------------------------------------- */
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  /* The one card per screen that matters most. */
+  .card-focal {
+    border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-focal::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--accent);
+  }
+
+  .btn {
+    border-radius: 10px;
+    border-color: var(--line-strong);
+    background: var(--surface);
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 1px 1px rgb(16 24 40 / 0.04);
+  }
+  .btn:hover {
+    background: var(--surface-2);
+    border-color: var(--line-strong);
+  }
+  .btn-primary {
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    box-shadow: 0 1px 2px rgb(37 99 235 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  }
+  .btn-primary:hover {
+    background: color-mix(in oklab, var(--accent) 88%, black);
+  }
+  [data-theme="dark"] .btn-primary {
+    color: #0b1020;
+  }
+  .btn-lg {
+    border-radius: 12px;
+    font-size: 1.05rem;
+  }
+  .btn-quiet {
+    border-color: transparent;
+    box-shadow: none;
+    background: transparent;
+  }
+  .btn-quiet:hover {
+    background: var(--surface-2);
+    border-color: transparent;
+  }
+  .btn-danger {
+    border-width: 1px;
+    border-color: color-mix(in oklab, var(--danger) 45%, var(--line));
+    color: var(--danger);
+    font-weight: 600;
+  }
+
+  .input {
+    border-radius: 10px;
+    border-color: var(--line-strong);
+    background: var(--surface);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+
+  /* Pick-one controls (main views, Month/Week/Day, days): a raised white "tab" on a grey track. */
+  .seg {
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    padding: 3px;
+  }
+  .seg > button {
+    border-radius: 9px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .seg > button:hover {
+    color: var(--fg);
+    background: color-mix(in oklab, var(--surface) 60%, transparent);
+  }
+  .seg > button[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--accent);
+    outline: none;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pill {
+    border-radius: 9999px;
+    border-style: solid;
+  }
+  .pill[aria-pressed="false"],
+  .pill[aria-pressed="false"].pill-course {
+    border-style: solid;
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .pill[aria-pressed="true"] {
+    background: var(--accent-soft);
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .pill[aria-pressed="true"].pill-course {
+    background: color-mix(in oklab, var(--c) 12%, var(--surface));
+    border-color: color-mix(in oklab, var(--c) 45%, var(--line));
+  }
+
+  /* A piece of work: white card with its class colour down the left edge. */
+  .task-card,
+  [data-theme="dark"] .task-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--c);
+    border-radius: 10px;
+    box-shadow: 0 1px 1px rgb(16 24 40 / 0.04);
+  }
+  .task-card:hover,
+  [data-theme="dark"] .task-card:hover {
+    background: var(--surface);
+    border-color: var(--line-strong);
+    border-left-color: var(--c);
+    box-shadow: var(--shadow-md);
+  }
+
+  .event-block {
+    border-radius: 8px;
+    border-left: 3px solid var(--c);
+  }
+  .plan-block {
+    border-radius: 8px;
+  }
+  .course-chip {
+    border-radius: 6px;
+  }
+  .type-chip {
+    border-radius: 6px;
+  }
+
+  .check {
+    border-radius: 6px;
+    border-color: var(--line-strong);
+  }
+  .check:hover {
+    border-color: var(--ok);
+    color: color-mix(in oklab, var(--ok) 60%, transparent);
+  }
+  .check[aria-checked="true"],
+  .check[aria-checked="true"]:hover {
+    background: var(--ok);
+    border-color: var(--ok);
+    color: #fff;
+  }
+
+  .switch {
+    border-radius: 9999px;
+  }
+  .switch::after {
+    border-radius: 9999px;
+    border: none;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  }
+  .switch[aria-checked="true"] {
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .capability {
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+
+  /* The Prototype / Goal tags: small rounded labels, not sketchy dashed boxes. */
+  .proto-badge {
+    border: 1px solid color-mix(in oklab, var(--warn) 45%, var(--line));
+    background: color-mix(in oklab, var(--warn) 10%, var(--surface));
+    color: var(--warn);
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.1rem 0.55rem;
+  }
+  .proto-badge:hover {
+    background: color-mix(in oklab, var(--warn) 18%, var(--surface));
+  }
+
+  .wire-placeholder {
+    border-radius: 12px;
+  }
+
+  .text-link {
+    color: var(--accent);
+    text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+  .text-link:hover {
+    color: color-mix(in oklab, var(--accent) 80%, black);
+  }
+}
+
+/* Coarse pointers keep the round tick boxes big enough to hit. */
+@media (pointer: coarse) {
+  .check {
+    border-radius: 7px;
   }
 }

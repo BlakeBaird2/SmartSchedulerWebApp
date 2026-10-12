@@ -22,7 +22,7 @@ let pending = false;
 function NowPicture() {
   return (
     <Sketch label="The card at the top of the Plan screen: the task to work on now, and its Done button." className="h-full p-4 flex items-center">
-      <div className="w-full border-2 border-fg bg-surface p-4">
+      <div className="w-full rounded-xl border border-accent/35 bg-surface p-4 shadow-[var(--shadow-md)]">
         <div className="text-sm">Free until 3:15 PM · 45m</div>
         <SectionLabel className="mt-2">Work on</SectionLabel>
         <div className="mt-1 flex items-center gap-3">
@@ -33,7 +33,7 @@ function NowPicture() {
               45m · due tomorrow
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 bg-accent text-white px-4 py-2 font-bold">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-accent text-white px-4 py-2 font-semibold">
             <Check size={16} strokeWidth={3} aria-hidden />
             Done
           </span>
@@ -46,8 +46,8 @@ function NowPicture() {
 /** Step 3: what's due, with one task that won't fit. */
 function DuePicture() {
   const row = (title: string, code: string, color: string, note: React.ReactNode) => (
-    <div className="flex items-center gap-2 border border-line-strong bg-surface px-2 py-1.5 text-sm">
-      <span className="w-4 h-4 border border-line-strong shrink-0" aria-hidden />
+    <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
+      <span className="w-4 h-4 rounded border border-line-strong shrink-0" aria-hidden />
       <span className="font-semibold truncate">{title}</span>
       <ClassChip code={code} color={color} />
       <span className="ml-auto text-xs shrink-0">{note}</span>
@@ -77,7 +77,7 @@ function DuePicture() {
 /** Step 4: where the other screens are. */
 function NavPicture() {
   const tab = (Icon: typeof Target, label: string, on = false) => (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 text-sm ${on ? "border border-fg bg-surface-2 underline underline-offset-2" : "text-muted"}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-1 text-sm ${on ? "rounded-md bg-surface text-accent font-semibold shadow-[var(--shadow-sm)]" : "text-muted"}`}>
       <Icon size={14} aria-hidden />
       {label}
     </span>
@@ -87,18 +87,18 @@ function NavPicture() {
       label="The bar at the top of the app: Plan, Calendar, Upcoming and Classes, with Add task and Settings on the right."
       className="h-full p-4 flex flex-col justify-center gap-4"
     >
-      <div className="flex items-center gap-1 border border-line-strong bg-surface p-1 flex-wrap">
+      <div className="flex items-center gap-1 rounded-xl border border-line bg-surface-2 p-1 flex-wrap">
         {tab(Target, "Plan", true)}
         {tab(CalendarRange, "Calendar")}
         {tab(ListChecks, "Upcoming")}
         {tab(LayoutGrid, "Classes")}
       </div>
       <div className="flex items-center gap-2 justify-end">
-        <span className="inline-flex items-center gap-1 border border-line-strong bg-surface px-2 py-1 text-sm">
+        <span className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-2 py-1 text-sm">
           <Plus size={14} aria-hidden />
           Add task
         </span>
-        <span className="inline-flex items-center gap-1 border border-line-strong bg-surface px-2 py-1 text-sm">
+        <span className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-2 py-1 text-sm">
           <Settings size={14} aria-hidden />
           Settings
         </span>

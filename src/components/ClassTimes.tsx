@@ -25,7 +25,7 @@ export function DayToggles({ value, onChange }: { value: number[]; onChange: (da
             aria-pressed={on}
             aria-label={names[d]}
             onClick={() => onChange(on ? value.filter((x) => x !== d) : [...value, d])}
-            className={`w-9 h-9 text-sm font-semibold border transition ${on ? "bg-fg text-bg border-fg" : "border-line-strong text-muted hover:text-fg"}`}
+            className={`w-9 h-9 rounded-full text-sm font-semibold border transition ${on ? "bg-accent text-white border-accent" : "border-line-strong text-muted hover:text-fg hover:border-fg"}`}
           >
             {letters[d]}
           </button>
@@ -143,7 +143,7 @@ export function ClassTimeForm({
   };
 
   return (
-    <form onSubmit={save} className="mt-2 border border-dashed border-line-strong p-3 space-y-2.5">
+    <form onSubmit={save} className="mt-2 rounded-xl border border-dashed border-line-strong p-3 space-y-2.5">
       <DayToggles value={days} onChange={setDays} />
       <div className="flex items-center gap-1.5 flex-wrap">
         <input type="time" step={300} className="input input-sm" aria-label="Starts" value={start} onChange={(e) => setStart(e.target.value)} />

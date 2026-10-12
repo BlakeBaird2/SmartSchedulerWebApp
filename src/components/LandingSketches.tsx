@@ -36,14 +36,14 @@ export function PlanSketch() {
   return (
     <Sketch
       label="A sketch of the Plan screen: the task to work on now with a Done button, and this afternoon's free gap already filled with two tasks."
-      className="border-2 border-fg text-left"
+      className="rounded-2xl border border-line shadow-[var(--shadow-lg)] text-left"
     >
       <div className="flex items-center gap-3 border-b border-line-strong bg-surface px-4 py-2.5">
         <span className="scale-90 origin-left">
           <Wordmark />
         </span>
         <span className="ml-2 hidden sm:flex gap-1 text-sm">
-          <span className="border border-fg bg-surface-2 px-2 underline underline-offset-2">Plan</span>
+          <span className="rounded-md bg-accent-soft text-accent font-semibold px-2">Plan</span>
           <span className="px-2 text-muted">Calendar</span>
           <span className="px-2 text-muted">Upcoming</span>
           <span className="px-2 text-muted">Classes</span>
@@ -51,7 +51,7 @@ export function PlanSketch() {
       </div>
       <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-4 min-w-0">
-          <div className="border-2 border-fg bg-surface p-4">
+          <div className="rounded-xl border border-accent/35 bg-surface p-4 shadow-[var(--shadow-md)]">
             <div className="text-sm">Free until 3:15 PM · 45m</div>
             <SectionLabel className="mt-3">Work on</SectionLabel>
             <div className="mt-1 flex items-center gap-3">
@@ -63,13 +63,13 @@ export function PlanSketch() {
                 </div>
               </div>
               {/* Ink, not blue: the page's one blue button is the real "Start planning" above. */}
-              <span className="inline-flex items-center gap-1.5 border-2 border-fg px-4 py-2 font-bold">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-accent text-white px-4 py-2 font-semibold">
                 <Check size={16} strokeWidth={3} aria-hidden />
                 Done
               </span>
             </div>
           </div>
-          <div className="border border-line-strong bg-surface p-4">
+          <div className="rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
             <div className="font-bold">The rest of today</div>
             <div className="mt-3 grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 items-start">
               <div className="pt-1 text-right text-xs">3:15 PM</div>
@@ -100,7 +100,7 @@ export function PlanSketch() {
             </div>
           </div>
         </div>
-        <div className="hidden md:block border border-line-strong bg-surface p-4">
+        <div className="hidden md:block rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
           <div className="font-bold">Due this week</div>
           <SectionLabel className="mt-3 mb-1.5">Tomorrow</SectionLabel>
           <div className="space-y-1.5">
@@ -167,16 +167,16 @@ export function LinkSketch() {
   return (
     <Sketch label="A sketch of pasting a Canvas calendar link and pressing Add calendar." className="h-56 p-4 flex flex-col justify-center gap-3">
       <div className="flex items-center gap-2">
-        <div className="flex-1 min-w-0 flex items-center gap-2 border border-fg bg-surface px-2.5 py-1.5 text-sm">
+        <div className="flex-1 min-w-0 flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm">
           <LinkIcon size={14} className="shrink-0 text-muted" aria-hidden />
           <span className="truncate">https://byu.instructure.com/feeds/…ics</span>
         </div>
-        <span className="shrink-0 inline-flex items-center gap-1 border border-fg bg-surface px-2.5 py-1.5 text-sm font-semibold">
+        <span className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm font-semibold">
           <Plus size={14} aria-hidden />
           Add calendar
         </span>
       </div>
-      <div className="border border-line-strong bg-surface px-2.5 py-2 text-sm">
+      <div className="rounded-lg border border-line bg-surface px-2.5 py-2 text-sm">
         <div className="font-semibold">Canvas</div>
         <div className="text-xs text-muted">4 classes · 28 tasks due · added</div>
       </div>
@@ -211,10 +211,10 @@ export function DaySketch({ filled, className = "h-56" }: { filled: boolean; cla
 
 function Gap({ minutes, task }: { minutes: string; task: { title: string; code: string; color: string; time: string } | null }) {
   return (
-    <div className="border-2 border-dashed border-line-strong bg-surface-2 px-2 py-1">
+    <div className="rounded-lg border border-dashed border-ok/50 bg-ok-soft px-2 py-1">
       <div className="font-bold text-[12px] leading-tight">Free · {minutes}</div>
       {task ? (
-        <div className="mt-1 flex items-center gap-2 border border-line-strong bg-surface px-1.5 py-0.5">
+        <div className="mt-1 flex items-center gap-2 rounded-md border border-line bg-surface px-1.5 py-0.5">
           <span className="w-3 h-3 border border-line-strong bg-surface shrink-0" aria-hidden />
           <span className="font-semibold truncate">{task.title}</span>
           <ClassChip code={task.code} color={task.color} />

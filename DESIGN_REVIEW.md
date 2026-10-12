@@ -169,6 +169,27 @@ labels, so an empty Saturday looked like the busiest thing on the screen. Free
 time is now a faint dashed outline with a quiet label that darkens on hover. Events
 and planned work stay what the eye reads first, and the gaps can still be clicked.
 
+### 14. More fidelity, clearer hierarchy (professor feedback)
+
+After reviewing the live prototype, our professor said low fidelity was good at
+directing people down a path, but new users needed more fidelity and a clearer
+hierarchy, because the screens carry a lot of information and everything read
+at the same level. He also suggested icons in the menus. Changes:
+
+| Problem | Fix |
+| --- | --- |
+| Everything was the same flat outline, so nothing stood out from anything else. | Layers of depth: an off-white page, white cards with a soft shadow above it, the focal "work on now" card with a stronger shadow and a blue edge, and dialogs above everything. |
+| One sketch font at a few sizes. | Inter, with a real scale: page title → card title → task title → details. |
+| Screens other than Plan had no title, so it wasn't clear where you were. | Every main screen opens with a page header: an icon tile, the screen's name (same icon as its tab) and one line on what it's for. Settings sub-pages show a "‹ Settings" breadcrumb. |
+| Classes were shades of grey, so they were hard to tell apart. | Each class has its real colour again, as a stripe down the left of its tasks and on its tags, the same on every screen. |
+| Colour carried no meaning. | Blue = the main action, the current tab and today. Green = free time and finished work. Red = late or won't fit, always with an icon or words. |
+| Menus were words only. | Icons on the main tabs (larger, blue when selected), on every Settings section, on the Help routes, on card headings, and on the home page links. |
+| The logo was just text. | A small calendar-check mark next to the name. On phones only the mark shows, so the header tools still fit. |
+
+The early-stage notice is unchanged in purpose. It now says "Some things are
+placeholders, and nothing is saved to an account" instead of "It looks simple on
+purpose."
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

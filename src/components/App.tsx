@@ -26,6 +26,7 @@ import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
 import { AppTour } from "./AppTour";
+import { ViewHeading } from "./ViewHeading";
 import { openGoalNotice } from "./Prototype";
 
 // ---------------------------------------------------------------------------
@@ -536,7 +537,7 @@ export function App() {
         <div className="min-h-dvh flex flex-col">
           <Header />
           <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-24">
-            {ui.view === "plan" ? <PlanHeading /> : null}
+            {ui.view === "plan" ? <PlanHeading /> : <ViewHeading />}
             <Banners />
             <div className="mt-4 fade-in" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
               {ui.view === "plan" && <PlanView />}

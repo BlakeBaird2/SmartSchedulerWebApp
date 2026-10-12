@@ -31,12 +31,15 @@ export function CardHeader({
   title,
   hint,
   action,
+  icon: Icon,
   level = 2,
   className = "",
 }: {
   title: React.ReactNode;
   hint?: React.ReactNode;
   action?: React.ReactNode;
+  /** A small icon before the title, matching the card's subject. */
+  icon?: LucideIcon;
   level?: 2 | 3;
   className?: string;
 }) {
@@ -44,7 +47,10 @@ export function CardHeader({
   return (
     <div className={`flex items-start gap-3 flex-wrap ${className}`}>
       <div className="min-w-0 flex-1 basis-48">
-        <H className="text-lg font-bold leading-snug">{title}</H>
+        <H className="text-lg font-semibold leading-snug tracking-tight inline-flex items-center gap-2">
+          {Icon ? <Icon size={18} className="text-muted shrink-0" aria-hidden /> : null}
+          {title}
+        </H>
         {hint ? <div className="mt-0.5 text-sm text-muted leading-relaxed">{hint}</div> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
@@ -68,9 +74,9 @@ export function SectionLabel({
 }
 
 const CALLOUT: Record<"info" | "warning" | "sample", { icon: LucideIcon; frame: string }> = {
-  info: { icon: Info, frame: "border border-line-strong bg-surface-2" },
-  sample: { icon: Sparkles, frame: "border border-dashed border-line-strong bg-surface-2" },
-  warning: { icon: CircleAlert, frame: "border-2 border-fg bg-surface" },
+  info: { icon: Info, frame: "rounded-xl border border-line bg-surface shadow-[var(--shadow-sm)]" },
+  sample: { icon: Sparkles, frame: "rounded-xl border border-accent/25 bg-accent-soft" },
+  warning: { icon: CircleAlert, frame: "rounded-xl border border-danger/40 bg-danger/5 text-fg" },
 };
 
 /**
@@ -132,6 +138,43 @@ export function EmptyState({
       <p className={`${Icon ? "mt-2" : ""} font-semibold`}>{title}</p>
       {children ? <div className="mt-1 text-sm text-muted leading-relaxed max-w-md mx-auto">{children}</div> : null}
       {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
+    </div>
+  );
+}
+
+/**
+ * The top of a screen: an icon in a tinted tile, the screen's name, and one line on
+ * what it is for. Every main screen opens with one, so people always know where
+ * they are (recognition rather than recall) and the page has a clear top level
+ * above its cards.
+ */
+export function PageHeader({
+  icon: Icon,
+  title,
+  description,
+  actions,
+  eyebrow,
+  className = "",
+}: {
+  icon: LucideIcon;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  /** A small line above the title, such as a breadcrumb back to a parent page. */
+  eyebrow?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`pt-6 pb-1 flex items-start gap-4 flex-wrap ${className}`}>
+      <span className="grid place-items-center h-11 w-11 shrink-0 rounded-xl bg-accent-soft text-accent" aria-hidden>
+        <Icon size={22} />
+      </span>
+      <div className="min-w-0 flex-1 basis-60">
+        {eyebrow ? <div className="mb-0.5 text-sm text-muted">{eyebrow}</div> : null}
+        <h1 className="text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight">{title}</h1>
+        {description ? <p className="mt-1 text-[0.95rem] text-muted leading-relaxed max-w-2xl">{description}</p> : null}
+      </div>
+      {actions ? <div className="flex items-center gap-2 flex-wrap">{actions}</div> : null}
     </div>
   );
 }

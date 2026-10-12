@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Any address that doesn't exist. Same wireframe look as the rest of the prototype,
+ * Any address that doesn't exist. Same look as the rest of the prototype,
  * says plainly what happened, restates what SmartScheduler does, and offers the
  * two ways back, so it is never a dead end.
  */

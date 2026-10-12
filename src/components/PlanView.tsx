@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
 import type { PlannedWork, ScheduleItem } from "@/lib/timeline";
 import { buildDaySchedule, nowStatus } from "@/lib/timeline";
 import type { Task } from "@/lib/types";
@@ -139,7 +139,7 @@ function NowCard() {
 
   return (
     // The focal point of the whole app: a heavier outline than any other card, so the eye lands here first.
-    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now">
+    <Card padding="lg" className="card-focal" aria-label="What to work on now">
       <div className="flex items-center gap-2 text-sm font-medium">
         <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
         <span className="truncate">{headline}</span>
@@ -243,7 +243,10 @@ function DaySchedule() {
 
   return (
     <Card>
-      <h2 className="text-lg font-bold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
+      <h2 className="text-lg font-semibold tracking-tight inline-flex items-center gap-2">
+        <CalendarClock size={18} className="text-muted" aria-hidden />
+        {isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}
+      </h2>
       <div className="mt-3">
         <DayPicker />
       </div>
@@ -439,7 +442,7 @@ function DueSoon() {
 
   return (
     <Card>
-      <CardHeader title="Due this week" />
+      <CardHeader icon={CalendarCheck2} title="Due this week" />
       {risky > 0 ? (
         <p className="mt-1 text-sm text-danger font-semibold flex items-start gap-1.5">
           <CircleAlert size={15} className="shrink-0 mt-0.5" />

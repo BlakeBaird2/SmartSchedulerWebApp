@@ -32,13 +32,13 @@ export function Header() {
   const current = TABS.some((t) => t.id === view) ? view : "plan";
 
   return (
-    <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
+    <header className="sticky top-0 z-30 bg-surface border-b border-line shadow-[var(--shadow-sm)]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2">
         <button type="button" onClick={() => setView("plan")} className="shrink-0" aria-label="SmartScheduler, go to your plan" title="Go to your plan">
-          <Wordmark />
+          <Wordmark collapse />
         </button>
         <PrototypeBadge />
-        <GoalBadge className="!hidden xl:!inline-flex" />
+        <GoalBadge className="!hidden 2xl:!inline-flex" />
 
         <nav className="ml-3 hidden lg:block" aria-label="Main">
           <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} />
@@ -71,7 +71,7 @@ export function Header() {
             aria-pressed={view === "help"}
             className={`!hidden sm:!inline-flex ${view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
           >
-            <span className="hidden xl:inline">Help</span>
+            <span className="hidden 2xl:inline">Help</span>
           </Button>
           <Button
             icon={Settings}
@@ -81,7 +81,7 @@ export function Header() {
             aria-pressed={view === "settings"}
             className={view === "settings" ? "!bg-surface-2 underline underline-offset-4" : ""}
           >
-            <span className="hidden xl:inline">Settings</span>
+            <span className="hidden 2xl:inline">Settings</span>
           </Button>
         </div>
       </div>

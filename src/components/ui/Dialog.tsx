@@ -100,15 +100,15 @@ export function Dialog({
   const width = size === "sm" ? "max-w-sm" : size === "lg" ? "max-w-lg" : "max-w-md";
   const frame =
     placement === "side"
-      ? "panel-enter fixed bg-surface flex flex-col inset-x-0 bottom-0 max-h-[85dvh] border-t-2 border-fg md:inset-y-0 md:right-0 md:left-auto md:w-[26rem] md:max-h-none md:border-t-0 md:border-l-2"
-      : `fixed inset-x-4 top-[8vh] mx-auto ${width} bg-surface border-2 border-fg p-5 fade-in max-h-[84dvh] overflow-y-auto scrollbar-thin`;
+      ? "panel-enter fixed bg-surface flex flex-col inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl border-t border-line shadow-[var(--shadow-lg)] md:inset-y-0 md:right-0 md:left-auto md:w-[26rem] md:max-h-none md:rounded-none md:border-t-0 md:border-l"
+      : `fixed inset-x-4 top-[8vh] mx-auto ${width} bg-surface rounded-2xl border border-line shadow-[var(--shadow-lg)] p-5 sm:p-6 fade-in max-h-[84dvh] overflow-y-auto scrollbar-thin`;
 
   const content = (
     <>
       {title ? (
         <div className="flex items-start gap-3 mb-4">
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="text-lg font-bold leading-snug">
+            <h2 id={titleId} className="text-xl font-bold leading-snug tracking-tight">
               {title}
             </h2>
             {description ? (
