@@ -275,7 +275,6 @@ and blocks touched each other. Changes:
 | Problem | Fix |
 | --- | --- |
 | Half-hour blocks only fit a cut-off title | Each hour is 64px, so a 30-minute block shows its title and time. |
-| Seven narrow columns on big monitors | On wide screens (1536px+), the Calendar screen, and only that screen, grows to 88rem; the header widens with it so the edges line up. |
 | Blocks touched their neighbours | 2px of space above and below each block and 3px at the sides, with a little more padding inside. |
 | Long titles cut off with "…" | Tall blocks let the title wrap to two lines. Text is a step larger (12px titles, 11px details). |
 | "Free · 1h 30m" peeked out from under planned work | The label sits in the first open stretch of the gap, or is left out if there isn't room. |
@@ -310,6 +309,20 @@ FIN 201) and **Full name**, is offered wherever a class is listed:
 A rename is confirmed with a message, sticks when the calendar refreshes, and
 "Use the calendar's name" undoes it. Saving a name or colour no longer wipes a
 class's corrected meeting times.
+
+### 22. The header never moves
+
+The header now sits in exactly the same place on every screen:
+
+- It is always the same width (72rem). The calendar's extra width on big monitors
+  was dropped, because it widened the header too and the logo and tools jumped
+  when switching to Calendar.
+- The page always keeps room for the scrollbar (`scrollbar-gutter: stable`).
+  Before, a short page (Settings, Help) had no scrollbar and a long one (Plan)
+  did, which nudged the centred header sideways by the scrollbar's width.
+
+Checked at 1024, 1280 and 1536px: the logo and the Settings button are at the
+same position on Plan, Calendar, Upcoming, Classes, Settings and Help.
 
 ## Before and after
 

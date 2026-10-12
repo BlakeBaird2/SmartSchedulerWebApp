@@ -89,15 +89,6 @@ export function useApp(): AppContextValue {
  * back so each one is easy to follow across screens (Gestalt: similarity).
  * (Named for its old job so existing callers keep working.)
  */
-/**
- * How wide a screen's content may grow. The calendar is a wide grid, so on big
- * monitors it uses more of the screen (the header widens with it, so edges line
- * up); every other screen keeps a comfortable reading width.
- */
-export function pageWidth(view: View): string {
-  return view === "calendar" ? "max-w-6xl 2xl:max-w-[88rem]" : "max-w-6xl";
-}
-
 export function wireGray(color: string | undefined | null): string {
   return color && color.trim() ? color : "#64748b";
 }

@@ -75,6 +75,8 @@
 
 @layer base {
   html {
+    /* Always keep room for the scrollbar, so short and long pages centre the same way and the header never shifts. */
+    scrollbar-gutter: stable;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;

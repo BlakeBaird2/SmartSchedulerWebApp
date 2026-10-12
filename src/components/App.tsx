@@ -9,7 +9,7 @@ import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, sanitizeWorkspace } from "@/lib/workspace";
 import { type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
-import { AppContext, pageWidth, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
+import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
 import { Banners } from "./Banners";
@@ -536,7 +536,7 @@ export function App() {
       ) : (
         <div className="min-h-dvh flex flex-col">
           <Header />
-          <main className={`flex-1 w-full ${pageWidth(ui.view)} mx-auto px-4 sm:px-6 pb-24`}>
+          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-24">
             {ui.view === "plan" ? <PlanHeading /> : <ViewHeading />}
             <Banners />
             <div className="mt-4 fade-in" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
