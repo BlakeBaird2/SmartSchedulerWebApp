@@ -16,21 +16,21 @@ export const TYPE_META: Record<AssignmentType, TypeMeta> = {
     label: "Exam",
     plural: "Exams",
     icon: GraduationCap,
-    chip: "bg-fg text-bg border-fg",
+    chip: "bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500",
     loud: true,
   },
   quiz: {
     label: "Quiz",
     plural: "Quizzes",
     icon: CircleQuestionMark,
-    chip: "bg-surface text-fg border-fg",
+    chip: "bg-amber-100 text-amber-900 border-amber-300/70 dark:bg-amber-400/15 dark:text-amber-200 dark:border-amber-400/30",
     loud: true,
   },
   project: {
     label: "Project",
     plural: "Projects",
     icon: FolderKanban,
-    chip: "bg-surface-2 text-fg border-line-strong",
+    chip: "bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-400/15 dark:text-teal-200 dark:border-teal-400/30",
     loud: false,
   },
   assignment: {
@@ -44,7 +44,7 @@ export const TYPE_META: Record<AssignmentType, TypeMeta> = {
     label: "Reading",
     plural: "Readings",
     icon: BookOpen,
-    chip: "bg-surface-2 text-muted border-line-strong",
+    chip: "bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-400/15 dark:text-sky-200 dark:border-sky-400/30",
     loud: false,
   },
 };

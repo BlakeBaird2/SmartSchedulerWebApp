@@ -5,10 +5,11 @@ import { ExternalLink, Eye, GraduationCap, Pencil, Plus, RotateCcw } from "lucid
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit, Task } from "@/lib/types";
 import { duration, relativeDue, typeIconClass, typeMeta, whenLabel } from "@/lib/ui";
-import { courseStyle, useApp, wireGray } from "./context";
+import { courseStyle, useApp, useIsPhone, wireGray } from "./context";
 import { AppTaskCard } from "./TaskRow";
 import { Button, buttonClass, Dialog, DialogActions, EmptyState, Field, Switch, TextButton } from "./ui";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
+import { useOriginalCourseName, withCourseNames } from "./ClassName";
 
 /**
  * Every class side by side, one column each, like the days of the week view:
@@ -16,6 +17,7 @@ import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
  */
 export function ClassesView() {
   const { model, update, setSettingsPanel } = useApp();
+  const phone = useIsPhone();
   const [editing, setEditing] = useState<Course | null>(null);
   const visible = model.visibleCourses;
   const hidden = model.courses.filter((c) => c.hidden);
@@ -38,7 +40,16 @@ export function ClassesView() {
 
   return (
     <div className="space-y-3">
-      {visible.length > 0 ? (
+      {visible.length > 0 && phone ? (
+        // Phones: one card per class, stacked, each showing its next few tasks.
+        <div className="space-y-3">
+          {visible.map((c) => (
+            <div key={c.id} className="card overflow-hidden">
+              <ClassColumn course={c} onEdit={() => setEditing(c)} page={3} />
+            </div>
+          ))}
+        </div>
+      ) : visible.length > 0 ? (
         <div className="card overflow-x-auto scrollbar-thin snap-x snap-mandatory">
           <div className="grid divide-x divide-line" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(13.5rem, 1fr))` }}>
             {visible.map((c) => (
@@ -76,7 +87,7 @@ export function ClassesView() {
 
 const PAGE = 8;
 
-function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void }) {
+function ClassColumn({ course, onEdit, page = PAGE }: { course: Course; onEdit: () => void; page?: number }) {
   const { model, now } = useApp();
   const [expanded, setExpanded] = useState(false);
   const feed = model.feedById.get(course.feedId);
@@ -93,7 +104,7 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
   }, [model.tasks, course.id, now]);
 
   const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
-  const shown = expanded ? stats.left : stats.left.slice(0, PAGE);
+  const shown = expanded ? stats.left : stats.left.slice(0, page);
 
   return (
     <section className="min-w-0 flex flex-col snap-start" style={courseStyle(course.color)}>
@@ -109,18 +120,20 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
                 <ExternalLink size={14} />
               </a>
             ) : null}
-            <Button variant="quiet" iconOnly icon={Pencil} label={`Edit ${course.code}: rename, recolour or hide`} onClick={onEdit} />
+            <Button variant="quiet" size="sm" icon={Pencil} onClick={onEdit} title={`Rename, recolour or hide ${course.code}`} aria-label={`Edit ${course.code}: rename, recolour or hide`}>
+              Edit
+            </Button>
           </div>
         </div>
         <p className="text-xs text-muted truncate" title={course.title}>
           {course.title !== course.code ? course.title : `from ${feed?.name ?? "a calendar"}`}
         </p>
         {/* Room for two lines, so every column's work starts at the same height. */}
-        <div className="mt-1.5 min-h-[2.125rem]">
+        <div className={`mt-1.5 ${page === PAGE ? "min-h-[2.125rem]" : ""}`}>
           <MeetsLine course={course} />
         </div>
-        <div className="mt-2.5 h-1.5 border border-line-strong bg-surface overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${course.code}: ${pct}% done`}>
-          <div className="h-full bg-fg transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        <div className="mt-2.5 h-2 rounded-full bg-surface-2 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${course.code}: ${pct}% done`}>
+          <div className="h-full course-bar rounded-full transition-[width] duration-500" style={{ width: `${pct}%` }} />
         </div>
         <div className="mt-1 flex items-center text-[11px] text-muted tabular-nums">
           <span>
@@ -138,9 +151,9 @@ function ClassColumn({ course, onEdit }: { course: Course; onEdit: () => void })
         ))}
         {stats.left.length === 0 ? <li className="px-1 py-3 text-xs text-muted text-center">All caught up</li> : null}
       </ul>
-      {stats.left.length > PAGE ? (
+      {stats.left.length > page ? (
         <Button variant="quiet" size="sm" className="mx-2 mb-2 justify-center" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? "Show less" : `Show ${stats.left.length - PAGE} more`}
+          {expanded ? "Show less" : `Show ${stats.left.length - page} more`}
         </Button>
       ) : null}
     </section>
@@ -187,10 +200,9 @@ function MeetsLine({ course }: { course: Course }) {
 }
 
 function ClassEditDialog({ course, onClose }: { course: Course; onClose: () => void }) {
-  const { snapshot } = useApp();
-  const original = snapshot.feeds[course.feedId]?.result?.courses.find((c) => `${course.feedId}:${c.key}` === course.id);
+  const original = useOriginalCourseName(course);
   return (
-    <Dialog title={`Edit ${course.code}`} description="Rename it, change its shade, or hide it from your plan." onClose={onClose} style={courseStyle(course.color)}>
+    <Dialog title={`Edit ${course.code}`} description="Fix its name if the calendar got it wrong, change its colour, or hide it from your plan." onClose={onClose} style={courseStyle(course.color)}>
       <CourseEditor course={course} original={original} onDone={onClose} />
     </Dialog>
   );
@@ -205,20 +217,26 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    const edit: CourseEdit = {};
-    if (code.trim() && code.trim() !== original?.code) edit.code = code.trim().slice(0, 24);
-    if (title.trim() && title.trim() !== original?.title) edit.title = title.trim().slice(0, 80);
-    edit.color = color;
-    if (hidden) edit.hidden = true;
-    update((w) => ({ ...w, courseEdits: { ...w.courseEdits, [course.id]: edit } }));
+    update((w) => {
+      // Keep anything else set for this class (such as corrected class times).
+      const named = withCourseNames(w, course.id, { code, title }, original);
+      const edit: CourseEdit = { ...named.courseEdits[course.id], color };
+      if (hidden) edit.hidden = true;
+      else delete edit.hidden;
+      return { ...named, courseEdits: { ...named.courseEdits, [course.id]: edit } };
+    });
     onDone();
   };
 
   const reset = () => {
     update((w) => {
-      const courseEdits = { ...w.courseEdits };
-      delete courseEdits[course.id];
-      return { ...w, courseEdits };
+      // Back to the calendar's name and colour, shown again; corrected class times stay.
+      const rest: CourseEdit = { ...w.courseEdits[course.id] };
+      delete rest.code;
+      delete rest.title;
+      delete rest.color;
+      delete rest.hidden;
+      return { ...w, courseEdits: { ...w.courseEdits, [course.id]: rest } };
     });
     onDone();
   };
@@ -244,7 +262,7 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
               aria-checked={color === c}
               aria-label={`Shade ${i + 1}`}
               onClick={() => setColor(c)}
-              className="w-7 h-7 border border-line-strong"
+              className="w-7 h-7 rounded-full border border-line-strong"
               style={{ background: wireGray(c) }}
             />
           ))}

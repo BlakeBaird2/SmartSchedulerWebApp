@@ -41,7 +41,7 @@ export function SegmentedControl<T extends string | number>({
           title={o.hideLabelOnSmall ? o.label : undefined}
           aria-label={o.ariaLabel}
         >
-          {o.icon ? <o.icon size={15} aria-hidden /> : null}
+          {o.icon ? <o.icon size={17} strokeWidth={2.1} aria-hidden /> : null}
           <span className={o.hideLabelOnSmall ? "hidden sm:inline" : ""}>{o.label}</span>
           {o.sub ? <span className="text-xs tabular-nums">{o.sub}</span> : null}
         </button>

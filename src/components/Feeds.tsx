@@ -9,6 +9,7 @@ import { plural, timeAgo } from "@/lib/ui";
 import { courseStyle, useApp, wireGray } from "./context";
 import { LINK_HELP } from "./calendarGuide";
 import { Button } from "./ui";
+import { ClassNameForm } from "./ClassName";
 
 /** What a calendar contributed, in a few words. */
 export function feedSummary(result: FeedResult | null | undefined, role: FeedRole): string {
@@ -72,7 +73,8 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
   return (
     <form onSubmit={submit} className="space-y-2">
       {/* The field and its button share one height, so they read as one control. */}
-      <div className="flex items-stretch gap-2">
+      {/* Phones: the link box gets the full width and the button sits under it. */}
+      <div className="flex flex-col sm:flex-row items-stretch gap-2">
         <label className="relative flex flex-1 min-w-0">
           <span className="sr-only">Calendar link</span>
           <LinkIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" />
@@ -88,7 +90,7 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
               setError(null);
             }}
             placeholder="Paste a calendar link (https://… or webcal://…)"
-            className="input pl-9 h-full"
+            className="input pl-9 h-11 sm:h-full"
             disabled={busy}
           />
         </label>
@@ -139,10 +141,11 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
       {ws.feeds.map((feed) => {
         const state = snapshot.feeds[feed.id];
         return (
-          <li key={feed.id} className={`border border-line-strong bg-surface px-3 py-2.5 ${feed.enabled ? "" : "opacity-60"}`}>
+          <li key={feed.id} className={`rounded-xl border border-line bg-surface px-3 py-2.5 ${feed.enabled ? "" : "opacity-60"}`}>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="w-2.5 h-2.5 shrink-0 border border-line-strong" style={{ background: feed.role === "personal" ? wireGray(feed.color) : "var(--fg)" }} aria-hidden />
-              <div className="min-w-0 flex-1">
+              <span className="w-2.5 h-2.5 shrink-0 rounded-full" style={{ background: feed.role === "personal" ? wireGray(feed.color) : "var(--fg)" }} aria-hidden />
+              {/* Phones: the name gets the whole first line; the switches move under it. */}
+              <div className="min-w-0 flex-1 basis-[calc(100%-1.5rem)] sm:basis-0">
                 <div className="text-sm font-medium truncate" title={feed.name}>
                   {feed.name}
                   {feed.provider !== "other" && PROVIDER_LABEL[feed.provider] !== feed.name ? (
@@ -154,24 +157,26 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
                   {manage && state?.syncedAt ? <span className="text-faint"> · read {timeAgo(state.syncedAt, now)}</span> : null}
                 </div>
               </div>
-              <RoleSwitch feed={feed} />
-              {manage ? (
+              <div className="flex items-center gap-2 pl-5 sm:pl-0 ml-auto">
+                <RoleSwitch feed={feed} />
+                {manage ? (
+                  <Button
+                    iconOnly
+                    icon={feed.enabled ? Eye : EyeOff}
+                    label={feed.enabled ? `Turn off ${feed.name} for now` : `Turn ${feed.name} back on`}
+                    aria-pressed={!feed.enabled}
+                    onClick={() => update((w) => ({ ...w, feeds: w.feeds.map((f) => (f.id === feed.id ? { ...f, enabled: !f.enabled } : f)) }))}
+                  />
+                ) : null}
                 <Button
                   iconOnly
-                  icon={feed.enabled ? Eye : EyeOff}
-                  label={feed.enabled ? `Turn off ${feed.name} for now` : `Turn ${feed.name} back on`}
-                  aria-pressed={!feed.enabled}
-                  onClick={() => update((w) => ({ ...w, feeds: w.feeds.map((f) => (f.id === feed.id ? { ...f, enabled: !f.enabled } : f)) }))}
+                  icon={Trash}
+                  label={`Remove ${feed.name}`}
+                  onClick={() => {
+                    if (!manage || window.confirm(`Remove ${feed.name}? Its classes and work leave your plan.`)) removeFeed(feed.id);
+                  }}
                 />
-              ) : null}
-              <Button
-                iconOnly
-                icon={Trash}
-                label={`Remove ${feed.name}`}
-                onClick={() => {
-                  if (!manage || window.confirm(`Remove ${feed.name}? Its classes and work leave your plan.`)) removeFeed(feed.id);
-                }}
-              />
+              </div>
             </div>
             {feed.role === "school" ? <ClassChips feedId={feed.id} /> : null}
             {state?.error ? (
@@ -190,64 +195,36 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
   );
 }
 
-/** The classes a school calendar brought in. Click one to give it a better short name. */
+/** The classes a school calendar brought in. Click one to fix its name. */
 function ClassChips({ feedId }: { feedId: string }) {
-  const { model, update } = useApp();
+  const { model } = useApp();
   const [editing, setEditing] = useState<string | null>(null);
-  const [value, setValue] = useState("");
   const courses = model.courses.filter((c) => c.feedId === feedId);
   if (courses.length === 0) return null;
-
-  const save = (id: string) => {
-    const code = value.trim().slice(0, 24);
-    if (code) update((w) => ({ ...w, courseEdits: { ...w.courseEdits, [id]: { ...w.courseEdits[id], code } } }));
-    setEditing(null);
-  };
+  const editingCourse = courses.find((c) => c.id === editing);
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-5">
-      {courses.map((c) =>
-        editing === c.id ? (
-          <form
-            key={c.id}
-            onSubmit={(e) => {
-              e.preventDefault();
-              save(c.id);
-            }}
-          >
-            <input
-              autoFocus
-              aria-label={`New short name for ${c.title}`}
-              className="input input-sm !w-32 !py-0.5"
-              value={value}
-              maxLength={24}
-              onChange={(e) => setValue(e.target.value)}
-              onBlur={() => save(c.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") setEditing(null);
-              }}
-            />
-          </form>
-        ) : (
+    <div className="mt-2 pl-5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {courses.map((c) => (
           <button
             key={c.id}
             type="button"
             className="pill pill-course"
             aria-pressed={true}
+            aria-expanded={editing === c.id}
             style={courseStyle(c.color)}
-            title={c.title === c.code ? "Click to rename" : `${c.title} · click to rename`}
-            onClick={() => {
-              setEditing(c.id);
-              setValue(c.code);
-            }}
+            title={c.title === c.code ? `Rename ${c.code}` : `${c.title} · click to rename`}
+            onClick={() => setEditing((e) => (e === c.id ? null : c.id))}
           >
             <span className="course-dot" />
             <span className="course-text">{c.code}</span>
-            <Pencil size={11} className="text-faint" />
+            <Pencil size={11} className="text-faint" aria-hidden />
           </button>
-        ),
-      )}
-      <span className="text-[11px] text-faint">Tap a class to rename it.</span>
+        ))}
+        {editing ? null : <span className="text-[11px] text-faint">Name not right? Click a class to rename it.</span>}
+      </div>
+      {editingCourse ? <ClassNameForm key={editingCourse.id} course={editingCourse} onDone={() => setEditing(null)} /> : null}
     </div>
   );
 }
@@ -260,7 +237,7 @@ export function ProviderHelp() {
   const [tab, setTab] = useState<Provider>("canvas");
   const current = LINK_HELP.find((h) => h.id === tab)!;
   return (
-    <div className="border border-line-strong bg-surface-2 p-3">
+    <div className="rounded-xl border border-line bg-surface-2 p-3">
       <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Where do I find my link?</div>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {LINK_HELP.map((h) => (

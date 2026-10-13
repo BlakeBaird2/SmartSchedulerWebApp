@@ -156,7 +156,7 @@ supports them.
 | Phones | Name, Prototype tag, Add task, Alerts, Settings. Help is reached from Settings and from the welcome pop-up. The main views sit on a second full-width row. |
 | Tablets and small laptops | Refresh and Help join the first row as icons. The views stay on the second row. |
 | Laptops (lg+) | The views move up beside the name, all on one row. |
-| Wide screens (xl+) | Tools get their text labels, and the Goal tag appears. |
+| Wide screens (xl+) | Tools get their text labels. (The separate Goal tag was later removed: the Prototype tag opens the same pop-up, which holds the goal.) |
 
 Icon-only tools always have their name as a tooltip and for screen readers. The
 "Synced just now" status moved into the refresh button's name, so it no longer
@@ -168,6 +168,228 @@ Free time on the week and day calendar was drawn as solid grey blocks with bold
 labels, so an empty Saturday looked like the busiest thing on the screen. Free
 time is now a faint dashed outline with a quiet label that darkens on hover. Events
 and planned work stay what the eye reads first, and the gaps can still be clicked.
+
+### 14. More fidelity, clearer hierarchy (professor feedback)
+
+After reviewing the live prototype, our professor said low fidelity was good at
+directing people down a path, but new users needed more fidelity and a clearer
+hierarchy, because the screens carry a lot of information and everything read
+at the same level. He also suggested icons in the menus. Changes:
+
+| Problem | Fix |
+| --- | --- |
+| Everything was the same flat outline, so nothing stood out from anything else. | Layers of depth: an off-white page, white cards with a soft shadow above it, the focal "work on now" card with a stronger shadow and a heavier outline, and dialogs above everything. |
+| One sketch font at a few sizes. | Inter, with a real scale: page title → card title → task title → details. |
+| Screens other than Plan had no title, so it wasn't clear where you were. | Every main screen opens with a page header: an icon tile, the screen's name (same icon as its tab) and one line on what it's for. Settings sub-pages show a "‹ Settings" breadcrumb. |
+| Classes were shades of grey, so they were hard to tell apart. | Each class has its real colour again, as a soft wash on its tasks and on its tags, the same on every screen. |
+| Colour carried no meaning. | Blue = the main action, the current tab and today. Green = free time and finished work. Red = late or won't fit, always with an icon or words. |
+| Menus were words only. | Icons on the main tabs (larger, blue when selected), on every Settings section, on the Help routes, on card headings, and on the home page links. |
+| The logo was just text. | A small calendar-check mark next to the name. On phones only the mark shows, so the header tools still fit. |
+
+The early-stage notice is unchanged in purpose. It now says "Some things are
+placeholders, and nothing is saved to an account" instead of "It looks simple on
+purpose."
+
+### 15. Full-colour look from the design handoff
+
+The design handoff left one open question: restore the full-colour Prio look or
+evolve the wireframe. We restored it, with the same screens, words and behaviour,
+and applied the handoff's rules:
+
+| Handoff rule | What changed |
+| --- | --- |
+| Full-colour Prio tokens | Warm off-white page (#f6f5f1), white cards, warm greys, indigo accent (#4f46e5; #8b85ff in dark mode), and green, amber and red only for free/done, soon and late. |
+| Inter with its stylistic sets | Inter Variable with `cv11`, `ss01` and tabular figures. |
+| Rounded shapes and one soft shadow | Cards 14px, task cards 12px, buttons, inputs and events 10px, pills fully round. A single soft shadow lifts cards off the page; the focal card and dialogs go one step deeper. |
+| Class colour always visible, **no coloured stripe down the left edge** (the owner's request) | Task cards are washed in their class colour with a hairline in the same hue. Events are soft tinted blocks. Class tags, dots and filter pills use the class colour. |
+| One heavy-outlined card per screen | The "work on now" card has a 2px indigo outline instead of a coloured left bar. |
+| Kind-of-work chips | Exam red, Quiz amber, Project teal, Reading sky, Assignment grey. Each still has its icon and word. |
+| Wordmark "SmartScheduler." with an accent full stop | Used in every header. On phones the header shows the small calendar mark so the tools still fit. |
+| Off pills never look disabled | Off is a dashed round outline with muted text. On is filled and bold. |
+| Dashed means "not fixed" | Free gaps, planned work on the calendar, off pills and the Prototype tag are dashed. |
+
+Blue stays the one main action per screen. The chosen tab is now a raised white
+option with dark text, so only its icon is indigo.
+
+### 16. Free time on the timeline, not in a box
+
+Free gaps on Plan were green dashed boxes with the planned tasks nested inside.
+It was clear, but each gap shrank its tasks into a box, which was cramped on
+phones. Now "The rest of today" reads like a phone calendar's agenda:
+
+| Before | After |
+| --- | --- |
+| A box around each free gap, with tasks inside it | No box. The time column marks the gap: its start time at the top and its end time at the bottom, joined by a dashed green line. "Free · 1h 50m" sits beside the start. |
+| Tasks narrowed by the box's border and padding | Tasks use the full width of the card. |
+| Events had no marker on the timeline | Every row has a marker: a dot in the class colour for events, a small grey dot for deadlines, and an open green circle at each end of a free gap. |
+
+The dashed line keeps the meaning of "dashed = open time, not fixed" (Gestalt
+continuity and common fate: everything beside the line belongs to that
+stretch of time). The new library part is `TimelineRow`, used on Plan, in the
+home page drawings and on `/design`.
+
+### 17. Planned work on the calendar, without dashed outlines
+
+Planned work on the week and day calendar had a dashed outline in its class
+colour. It was clearly different from events, but a column of dashed boxes
+looked busy. Now the difference is carried by **fill and a familiar signifier**:
+
+| Kind | Look | Means |
+| --- | --- | --- |
+| Event or class | Solid tint of its class colour | Fixed. It happens whether you like it or not. |
+| Planned work | White card with a thin outline in its class colour, a small shadow and a **tick box** before the title (ticked and green when done) | A task you planned, which can move. The tick box is the same "to-do" mark as on Plan. |
+| Free time | Plain open space with a quiet "Free · 6h 20m" label, tinted green on hover | Open time. Nothing drawn around it, so it stays background. |
+
+The legend under the calendar shows all three.
+
+**One task tile everywhere.** The same white tile with a class-coloured outline
+is used for every task: Plan (the free-gap timeline and Due this week),
+Upcoming, Classes and the calendar. Solid colour is only ever a fixed event, so
+"white tile = a task of yours, solid = fixed" holds on every screen.
+
+On phones, the Plan timeline's time column is narrower: "AM" and "PM" are set
+small ("9:30AM"), and the gaps around the line are tighter, so the cards gain
+about 16px of width.
+
+### 18. Settings: sections always in view (web)
+
+Settings was a hub of five cards; opening one replaced the page, and getting to
+another section meant going back first. On a computer it now works like most
+web apps' settings:
+
+| Before | After (768px and wider) |
+| --- | --- |
+| A list of five sections; opening one hid the others | The five sections stay in a sidebar on the left the whole time. The open one is highlighted (indigo icon, tinted row, `aria-current`). |
+| A "‹ Settings" back link to switch sections | One click on another section. Its name, what it covers and its settings fill the right side. |
+| Opening Settings showed only the list | The first section, Calendars & class times, opens straight away. |
+| Open Help and Reopen goal above the list | Quiet links under the sidebar. |
+
+Phones keep the list-then-page flow for now; the phone layout is being
+redesigned separately.
+
+### 19. A roomier calendar
+
+The week view felt crammed: an hour was 48px tall, days were about 140px wide,
+and blocks touched each other. Changes:
+
+| Problem | Fix |
+| --- | --- |
+| Half-hour blocks only fit a cut-off title | Each hour is 64px, so a 30-minute block shows its title and time. |
+| Blocks touched their neighbours | 2px of space above and below each block and 3px at the sides, with a little more padding inside. |
+| Long titles cut off with "…" | Tall blocks let the title wrap to two lines. Text is a step larger (12px titles, 11px details). |
+| "Free · 1h 30m" peeked out from under planned work | The label sits in the first open stretch of the gap, or is left out if there isn't room. |
+
+### 20. Less text, less noise
+
+- **No Goal tag in the header.** It opened the same pop-up as the Prototype tag
+  (the pop-up holds both the notice and the goal), so it only took up space.
+  The goal is still one click away from the Prototype tag, Help and Settings.
+- **No "Free · 6h 20m" labels on the calendar.** Open space already reads as
+  free time; the label repeated it in every column. Free time is still clickable
+  and opens the free-gap details, and its length is in the tooltip and spoken
+  name.
+- **No green tint on hover over free time.** It flashed colour across big empty
+  areas whenever the pointer crossed the calendar.
+
+### 21. Rename a class anywhere it's listed
+
+Calendars don't always name classes well (Learning Suite sends "Principles of
+Finance" with no course code). Renaming existed but was hard to find: a small
+pencil on the Classes board, and an inline box in Settings that only changed the
+short name. Now one rename form, with **Short name** (shown everywhere, like
+FIN 201) and **Full name**, is offered wherever a class is listed:
+
+| Where | How |
+| --- | --- |
+| Setup, step 1, right after a calendar is added | Click a class chip ("Name not right? Click a class to rename it.") |
+| Settings → Calendars | The same class chips under each calendar |
+| Class times (setup step 2, Settings, the Class times pop-up) | A "Rename" button beside each class |
+| Classes board | An "Edit" button (was an unlabelled pencil) for name, colour and hiding |
+
+A rename is confirmed with a message, sticks when the calendar refreshes, and
+"Use the calendar's name" undoes it. Saving a name or colour no longer wipes a
+class's corrected meeting times.
+
+### 22. The header never moves
+
+The header now sits in exactly the same place on every screen:
+
+- It is always the same width (72rem). The calendar's extra width on big monitors
+  was dropped, because it widened the header too and the logo and tools jumped
+  when switching to Calendar.
+- The page always keeps room for the scrollbar (`scrollbar-gutter: stable`).
+  Before, a short page (Settings, Help) had no scrollbar and a long one (Plan)
+  did, which nudged the centred header sideways by the scrollbar's width.
+
+Checked at 1024, 1280 and 1536px: the logo and the Settings button are at the
+same position on Plan, Calendar, Upcoming, Classes, Settings and Help.
+
+### 23. A tighter focus card and a big Add task on Plan
+
+The "work on now" card was tall and left a wide empty strip on its right. It
+keeps the same information, rearranged so it reads in three lines:
+
+| Before | After |
+| --- | --- |
+| Status on one line, its detail on the next | One line: "● Class until 3:15 PM · Next free time 3:25 – 10 PM" |
+| "Why this task?" and "See this free gap" on their own line under the task | On the footer line, at the right, beside "Then *next task* · 1h" |
+| Extra-large padding | Normal card padding; the focus still comes from the indigo outline and Done |
+
+**Add a task** is now a large tile at the top of the right column, level with
+the focus card (right under the focus card on phones and tablets). It's white
+with an indigo icon, not a blue button, so Done stays the one primary action on
+the screen (attention); its size makes it an easy target (Fitts's law).
+
+### 24. Phones: navigation moves to the bottom
+
+On phones the main views were a second row under the header, at the top of the
+screen and out of thumb reach. Phones (under 768px) now follow the mobile
+convention:
+
+| Before | After (phones) |
+| --- | --- |
+| Views in a row under the header | A floating, rounded bar at the bottom: Plan, Calendar, Upcoming, Classes. The open view is a raised, tinted pill with an indigo icon. Each tab keeps a short label (icons are always named). |
+| Add task as a small + in the header | Its own round button beside the bar, always in reach of a thumb (Fitts's law). |
+| Header: name, Prototype tag, +, Alerts, Settings, plus the views row | One slim row: the mark, the Prototype tag, Alerts and Settings. More of the screen is content. |
+
+The bar respects the iPhone home indicator (safe area), the "Done" message and
+the dev menu sit above it, and pop-ups and side sheets cover it. While Settings
+or Help is open no tab is highlighted, since neither is one of the four views.
+Tablets and computers keep the top navigation.
+
+### 25. A real phone layout
+
+Every screen was checked at 390px and reworked for a phone (under 768px).
+Computers and tablets are unchanged.
+
+**Calendar, modelled on Google Calendar's app**
+
+| Before | After (phones) |
+| --- | --- |
+| A seven-day grid squeezed to the screen, scrolling sideways | Four phone views: **Schedule** (the default), Day, 3 days and Month |
+| Toolbar wrapped over three lines | The month on the left, Today and ‹ › on the right, the views in one row underneath |
+| — | **Schedule**: two weeks as one list, the date in a narrow column (today in an indigo circle) and that day's events, planned work and deadlines stacked in time order. Empty days are skipped. |
+| Month cells with cut-off titles ("Rea…") | A small coloured bar per thing due (its class colour). Tapping a day lists its events and work under the month. |
+| Legend and time zone under every view | Hidden on phones |
+| Class filters wrapped onto three rows | One row that scrolls sideways, edge to edge; "Show finished work" becomes "Finished" |
+
+**Every screen**
+
+- Page headers are smaller and drop the explainer line; the tab bar already says where you are.
+- The sample-data notice is one slim line ("Sample data. Nothing here is real." · Use mine).
+- Plan's capability sentence is smaller (still the biggest text on the screen) and shows only the date under it.
+- Upcoming: rows keep to two lines (the kind of work and "in 3 days" move into the details), and the day headings stick under the slimmer header. Add task is the round + button.
+- Classes: a stack of cards, one per class, each showing its next three tasks, instead of a board that scrolled sideways.
+- Settings: each calendar's name gets the full first line, with School / Personal and Remove under it; class codes no longer wrap.
+- Setup: the link box takes the full width with Add calendar under it.
+
+**Slide between views.** The whole bottom bar is one control: touch it anywhere
+and the highlighted pill glides to your finger, slide and it follows, and letting
+go opens the tab it's on. A quick tap is the same gesture, so tapping a tab works
+as before; keyboards still use Tab and Enter.
+
+**Square header tools.** On touch screens the header's icon buttons (Alerts,
+Settings) are 44 × 44 squares, not 36-wide rectangles.
 
 ## Before and after
 

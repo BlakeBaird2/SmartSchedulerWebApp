@@ -4,10 +4,10 @@ import { CalendarRange, CircleHelp, LayoutGrid, ListChecks, Plus, RefreshCw, Set
 import { timeAgo } from "@/lib/ui";
 import { useApp, type View } from "./context";
 import { ChangesPopover } from "./ChangesPopover";
-import { GoalBadge, PrototypeBadge } from "./Prototype";
+import { PrototypeBadge } from "./Prototype";
 import { Button, SegmentedControl, Wordmark } from "./ui";
 
-const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
+export const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
   { id: "plan", label: "Plan", icon: Target },
   { id: "calendar", label: "Calendar", icon: CalendarRange },
   { id: "upcoming", label: "Upcoming", icon: ListChecks },
@@ -20,11 +20,13 @@ const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
  *
  * It has to fit every width without anything falling off the edge:
  * - wide screens (lg+): one row; the views sit beside the name
- * - tablets and phones: the views move to a second, full-width row
+ * - tablets: the views move to a second, full-width row
+ * - phones: the views and Add task move to a floating bar at the bottom (BottomNav)
  * - tool labels show only where there is room (xl+); below that each tool is an
  *   icon with its name on hover and for screen readers
- * - phones: Help moves into Settings, and the Goal tag into the Prototype tag's
- *   pop-up, so the first row is just the name, the Prototype tag and three tools
+ * - phones: Help moves into Settings, so the first row is just the name, the
+ *   Prototype tag and three tools
+ * - the goal lives in the Prototype tag's pop-up, not a tag of its own
  */
 export function Header() {
   const { view, setView, snapshot, now, syncing, sync, openAddTask } = useApp();
@@ -32,13 +34,12 @@ export function Header() {
   const current = TABS.some((t) => t.id === view) ? view : "plan";
 
   return (
-    <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
+    <header className="sticky top-0 z-30 bg-bg/85 backdrop-blur border-b border-line">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2">
         <button type="button" onClick={() => setView("plan")} className="shrink-0" aria-label="SmartScheduler, go to your plan" title="Go to your plan">
-          <Wordmark />
+          <Wordmark collapse />
         </button>
         <PrototypeBadge />
-        <GoalBadge className="!hidden xl:!inline-flex" />
 
         <nav className="ml-3 hidden lg:block" aria-label="Main">
           <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} />
@@ -59,7 +60,7 @@ export function Header() {
             </span>
             <span className="mx-1 h-6 w-px bg-line-strong" aria-hidden />
           </div>
-          <Button icon={Plus} onClick={openAddTask} title="Add a task that isn't on any calendar" aria-label="Add task">
+          <Button icon={Plus} onClick={openAddTask} className="tool-square hidden md:inline-flex min-w-9 px-2 xl:px-3" title="Add a task that isn't on any calendar" aria-label="Add task">
             <span className="hidden xl:inline">Add task</span>
           </Button>
           <ChangesPopover />
@@ -69,9 +70,9 @@ export function Header() {
             aria-label="Help and goal"
             title="Help and goal"
             aria-pressed={view === "help"}
-            className={`!hidden sm:!inline-flex ${view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
+            className={`tool-square min-w-9 px-2 2xl:px-3 !hidden sm:!inline-flex ${view === "help" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
           >
-            <span className="hidden xl:inline">Help</span>
+            <span className="hidden 2xl:inline">Help</span>
           </Button>
           <Button
             icon={Settings}
@@ -79,13 +80,13 @@ export function Header() {
             aria-label="Settings"
             title="Settings"
             aria-pressed={view === "settings"}
-            className={view === "settings" ? "!bg-surface-2 underline underline-offset-4" : ""}
+            className={`tool-square min-w-9 px-2 2xl:px-3 ${view === "settings" ? "!bg-surface-2 underline underline-offset-4" : ""}`}
           >
-            <span className="hidden xl:inline">Settings</span>
+            <span className="hidden 2xl:inline">Settings</span>
           </Button>
         </div>
       </div>
-      <nav className="lg:hidden px-4 sm:px-6 pb-2 max-w-6xl mx-auto" aria-label="Main">
+      <nav className="hidden md:block lg:hidden px-4 sm:px-6 pb-2 max-w-6xl mx-auto" aria-label="Main">
         <SegmentedControl label="Main views" options={TABS} value={current} onChange={setView} stretch />
       </nav>
     </header>

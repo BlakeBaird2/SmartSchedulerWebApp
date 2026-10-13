@@ -1,6 +1,6 @@
 "use client";
 
-import { Undo2 } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, Undo2 } from "lucide-react";
 import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
@@ -61,7 +61,7 @@ export function TaskCard({
   done?: boolean;
   onToggleDone: () => void;
   onOpen: () => void;
-  /** Class colour, drawn as a grey shade. */
+  /** Class colour, drawn as the tile's outline. */
   color?: string | null;
   density?: "regular" | "compact";
   /** A chip next to the title, such as "Exam". */
@@ -106,9 +106,76 @@ export function TaskCard({
 }
 
 /**
+ * One row of a day, read top to bottom like a phone calendar's agenda: the time on
+ * the left, a marker on the timeline, and what happens then on the right.
+ *
+ * Free time is shown by the timeline itself, not a box: its start and end times
+ * are joined by a dashed green line, so the work beside it plainly sits inside
+ * that stretch of time, and the work keeps the full width of the screen.
+ */
+export function TimelineRow({
+  start,
+  end,
+  marker = "event",
+  color,
+  children,
+}: {
+  start: string;
+  /** End time. For free time it sits at the bottom of the line; for events, under the start. */
+  end?: string;
+  marker?: "event" | "free" | "due";
+  /** Class colour for an event's dot. */
+  color?: string | null;
+  children: React.ReactNode;
+}) {
+  const free = marker === "free";
+  return (
+    <li className="grid grid-cols-[2.6rem_0.5rem_minmax(0,1fr)] sm:grid-cols-[4rem_0.75rem_minmax(0,1fr)] gap-x-1 sm:gap-x-2">
+      <div className={`pt-2 text-right tabular-nums whitespace-nowrap flex flex-col items-end ${free ? "pb-0.5" : ""}`}>
+        <span className={`text-xs font-medium ${free ? "text-ok" : ""}`}>
+          <Time value={start} />
+        </span>
+        {end ? (
+          <span className={`text-[11px] text-faint ${free ? "mt-auto" : ""}`}>
+            <Time value={end} />
+          </span>
+        ) : null}
+      </div>
+      <div className="relative" aria-hidden>
+        {free ? (
+          <>
+            <span className="absolute left-1/2 -translate-x-1/2 top-[0.8rem] h-2 w-2 rounded-full border-2 border-ok bg-surface" />
+            <span className="absolute left-1/2 -translate-x-1/2 top-[1.45rem] bottom-[0.55rem] border-l-2 border-dashed border-ok/55" />
+            {end ? <span className="absolute left-1/2 -translate-x-1/2 bottom-[0.2rem] h-2 w-2 rounded-full border-2 border-ok bg-surface" /> : null}
+          </>
+        ) : marker === "due" ? (
+          <span className="absolute left-1/2 -translate-x-1/2 top-[0.8rem] h-1.5 w-1.5 rounded-full bg-line-strong" />
+        ) : (
+          <span className="absolute left-1/2 -translate-x-1/2 top-[0.75rem] h-2 w-2 rounded-full" style={{ background: wireGray(color) }} />
+        )}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </li>
+  );
+}
+
+/** A clock time. On phones "AM"/"PM" is set small so the time column stays narrow. */
+function Time({ value }: { value: string }) {
+  const m = /^(.*?)\s?(AM|PM)$/.exec(value);
+  if (!m) return <>{value}</>;
+  return (
+    <>
+      {m[1]}
+      <span className="ml-px text-[0.6rem] font-medium sm:ml-1 sm:text-[length:inherit]">{m[2]}</span>
+    </>
+  );
+}
+
+/**
  * A stretch of free time and the work planned into it. This is the product's
  * core idea made visible: the gap's length is the headline, the work that fits
- * sits inside it, and any time left over is said out loud.
+ * follows it at full width, and any time left over is said out loud. Put it in
+ * a `TimelineRow` with `marker="free"`, whose dashed line marks the time as free.
  */
 export function FreeGapBlock({
   minutes,
@@ -125,26 +192,42 @@ export function FreeGapBlock({
   onOpen?: () => void;
 }) {
   return (
-    <div className="border-2 border-dashed border-line-strong bg-surface-2 p-2 sm:p-2.5" aria-label={`${label}, ${minutes} minutes`}>
+    <div className="pb-1" aria-label={`${label}, ${minutes} minutes`}>
       {onOpen ? (
-        <button type="button" className="px-1 pt-0.5 text-sm font-bold text-left w-full hover:underline underline-offset-2" onClick={onOpen}>
-          {label}
-          <span className="ml-2 text-xs font-normal text-muted">Open gap</span>
+        <button type="button" className="group py-1.5 text-sm font-semibold text-ok text-left w-full inline-flex items-center gap-1.5" onClick={onOpen}>
+          <Clock size={14} aria-hidden />
+          <span className="group-hover:underline underline-offset-2">{label}</span>
+          <span className="ml-auto inline-flex items-center gap-0.5 text-xs font-normal text-muted group-hover:text-fg">
+            Open gap
+            <ChevronRight size={13} aria-hidden />
+          </span>
         </button>
       ) : (
-        <div className="px-1 pt-0.5 text-sm font-bold">{label}</div>
+        <div className="py-1.5 text-sm font-semibold text-ok inline-flex items-center gap-1.5">
+          <Clock size={14} aria-hidden />
+          {label}
+        </div>
       )}
-      {children ? <ul className="mt-2 space-y-1.5">{children}</ul> : null}
-      {note ? <p className="mt-1.5 px-1 text-xs text-muted">{note}</p> : null}
+      {children ? <ul className="mt-1 space-y-1.5">{children}</ul> : null}
+      {note ? <p className="mt-1.5 text-xs text-muted">{note}</p> : null}
     </div>
   );
 }
 
-/** The app's name, drawn the same way in every header. */
-export function Wordmark({ size = "md" }: { size?: "md" | "lg" }) {
+/** The app's name and mark, drawn the same way in every header. */
+export function Wordmark({ size = "md", collapse = false }: { size?: "md" | "lg"; /** On phones, show only the mark so the header tools fit. */ collapse?: boolean }) {
+  const lg = size === "lg";
   return (
-    <span className={`wordmark select-none ${size === "lg" ? "text-2xl" : "text-lg sm:text-xl"}`}>
-      SmartScheduler<span className="text-accent">.</span>
+    <span className="inline-flex items-center gap-2 select-none">
+      {/* On phones the header only has room for the mark; everywhere else the name is the logo. */}
+      {collapse ? (
+        <span className="grid place-items-center shrink-0 rounded-lg bg-accent text-white h-8 w-8 sm:hidden" aria-hidden>
+          <CalendarCheck size={17} strokeWidth={2.4} />
+        </span>
+      ) : null}
+      <span className={`wordmark ${lg ? "text-2xl" : "text-xl"} ${collapse ? "hidden sm:inline" : ""}`}>
+        SmartScheduler<span className="wordmark-dot">.</span>
+      </span>
     </span>
   );
 }
@@ -158,7 +241,7 @@ export function Toast({ message, action, onAction }: { message: string; action?:
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] bg-fg text-bg text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
+      className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-xl bg-fg text-bg shadow-[var(--shadow-lg)] text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
     >
       <span className="min-w-0">{message}</span>
       {action && onAction ? (

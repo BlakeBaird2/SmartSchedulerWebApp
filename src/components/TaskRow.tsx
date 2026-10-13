@@ -93,8 +93,9 @@ export function TaskRow({ task, showDate = false, hideCourse = false }: { task: 
       meta={
         <>
           {!hideCourse && course ? <ClassChip code={course.code} color={course.color} /> : null}
+          {/* Phones drop the kind of work here (it's in the details) to keep each row to two lines. */}
           {!meta.loud ? (
-            <span className="inline-flex items-center gap-1">
+            <span className="hidden md:inline-flex items-center gap-1">
               <meta.icon size={12} aria-hidden />
               {meta.label}
             </span>
@@ -110,7 +111,7 @@ export function TaskRow({ task, showDate = false, hideCourse = false }: { task: 
           <div className={`text-[0.875rem] font-semibold tabular-nums ${overdue ? "text-danger" : ""}`}>
             {d ? (showDate ? whenLabel(d, now, !task.allDay) : task.allDay ? "All day" : clock(d)) : "No date"}
           </div>
-          {d ? <div className={`text-xs ${overdue ? "text-danger font-semibold" : "text-muted"}`}>{relativeDue(d, now)}</div> : null}
+          {d ? <div className={`text-xs ${overdue ? "text-danger font-semibold" : "hidden md:block text-muted"}`}>{relativeDue(d, now)}</div> : null}
         </>
       }
     />

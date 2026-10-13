@@ -4,8 +4,8 @@
  */
 export { Button, ButtonLink, TextButton, buttonClass, type ButtonProps, type ButtonVariant } from "./Button";
 export { Dialog, DialogActions } from "./Dialog";
-export { Card, CardHeader, SectionLabel, Callout, EmptyState } from "./Surfaces";
+export { Card, CardHeader, SectionLabel, Callout, EmptyState, PageHeader } from "./Surfaces";
 export { SegmentedControl, Switch, Checkbox, Field, ChoicePill } from "./Controls";
-export { ClassChip, TaskCard, FreeGapBlock, Wordmark, Toast } from "./Planning";
+export { ClassChip, TaskCard, FreeGapBlock, TimelineRow, Wordmark, Toast } from "./Planning";
 export { TypeChip } from "./TypeChip";
 export { Tour, type TourStep } from "./Tour";

@@ -43,16 +43,16 @@ export function ChangesPopover() {
     <div className="relative" ref={ref}>
       <Button
         icon={Bell}
-        className="relative"
+        className="tool-square relative min-w-9 px-2 2xl:px-3"
         onClick={toggle}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={unseen > 0 ? `Alerts: ${unseen} new changes in your classes` : "Alerts: changes in your classes"}
         title="Changes in your classes"
       >
-        <span className="hidden xl:inline">Alerts</span>
+        <span className="hidden 2xl:inline">Alerts</span>
         {unseen > 0 ? (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 bg-fg text-bg text-[10px] font-bold flex items-center justify-center tabular-nums" aria-hidden>
+          <span className="absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center tabular-nums" aria-hidden>
             {unseen > 9 ? "9+" : unseen}
           </span>
         ) : null}

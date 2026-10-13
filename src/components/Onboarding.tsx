@@ -11,7 +11,7 @@ import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
-import { CapabilityHero, GoalBadge, PrototypeBadge } from "./Prototype";
+import { CapabilityHero, PrototypeBadge } from "./Prototype";
 import { Button, Card, Wordmark } from "./ui";
 
 function demoWorkspace(): Workspace {
@@ -74,7 +74,6 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <Wordmark size="lg" />
           </Link>
           <PrototypeBadge />
-          <GoalBadge />
           {/* The one way out of setup, in the same place on every step (where onboarding usually puts Skip). */}
           <Button className="ml-auto" icon={ws.feeds.length === 0 ? Sparkles : undefined} onClick={skip}>
             {ws.feeds.length === 0 ? "Skip: try sample data" : "Skip setup"}
@@ -88,7 +87,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
 
         <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${step} of 3`}>
           {[1, 2, 3].map((n) => (
-            <span key={n} className={`h-1.5 w-10 border border-line-strong ${step >= n ? "bg-fg" : "bg-surface"}`} />
+            <span key={n} className={`h-1.5 w-10 rounded-full ${step >= n ? "bg-accent" : "bg-line-strong/50"}`} />
           ))}
           <span className="ml-1">Step {step} of 3</span>
         </div>

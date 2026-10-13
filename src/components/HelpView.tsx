@@ -45,7 +45,7 @@ export function HelpView() {
       </Card>
 
       <Card>
-        <CardHeader level={2} title="Three ways to finish the goal" hint="Each path ends the same way: open a task, review it, mark it Done. Shared task state stays in sync everywhere." />
+        <CardHeader level={2} title="Four ways to finish the goal" hint="Each path ends the same way: open a task, review it, mark it Done. Shared task state stays in sync everywhere." />
         <ol className="mt-4 space-y-3">
           <RouteRow icon={Target} title="Plan" steps="Find a free gap → open a planned task → review details → Done" onOpen={() => go("plan")} />
           <RouteRow
@@ -87,8 +87,10 @@ function RouteRow({
   onOpen: () => void;
 }) {
   return (
-    <li className="border border-line-strong p-3 flex items-start gap-3">
-      <Icon size={18} className="shrink-0 mt-0.5" aria-hidden />
+    <li className="rounded-xl border border-line bg-surface p-3 flex items-start gap-3 hover:border-line-strong transition">
+      <span className="grid place-items-center h-9 w-9 shrink-0 rounded-lg bg-accent-soft text-accent" aria-hidden>
+        <Icon size={18} />
+      </span>
       <div className="min-w-0 flex-1">
         <div className="font-semibold">{title}</div>
         <p className="text-sm text-muted mt-0.5">{steps}</p>

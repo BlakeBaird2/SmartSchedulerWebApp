@@ -42,7 +42,7 @@ Change alerts, sync error banner, and sample-data banner are additional operatio
 
 | New screen | Entry 1 | Entry 2 | Return |
 | --- | --- | --- | --- |
-| Welcome (goal) | First visit, any page | Prototype or Goal tag / Help / Settings → About | Start / Got it |
+| Welcome (goal) | First visit, any page | Prototype tag / Help / Settings → About | Start / Got it |
 | Free-gap detail | Plan Open gap | Calendar free band (also Focus → See this free gap) | Close / Back to Plan |
 | Why this task? | Task detail button | Gap detail / Focus card | Back to task / Close |
 | Completed success | Plan Focus **Done**; free-gap panel **Done** | Task detail **Mark as done** (also Calendar→task→Done) | Back to Plan / Upcoming / Open this task / Close |

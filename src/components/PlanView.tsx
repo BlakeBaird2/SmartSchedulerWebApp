@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
 import type { PlannedWork, ScheduleItem } from "@/lib/timeline";
 import { buildDaySchedule, nowStatus } from "@/lib/timeline";
 import type { Task } from "@/lib/types";
@@ -11,7 +11,7 @@ import { courseStyle, useApp } from "./context";
 import { AppTaskCard, PlanNote } from "./TaskRow";
 import { useClassesWithoutTimes } from "./ClassTimes";
 import { CapabilityHero } from "./Prototype";
-import { Button, Callout, Card, CardHeader, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TypeChip } from "./ui";
+import { Button, Callout, Card, CardHeader, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TimelineRow, TypeChip } from "./ui";
 
 /**
  * The home screen. Three questions, in order:
@@ -27,9 +27,18 @@ export function PlanView() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <div className="space-y-5 min-w-0">
           <NowCard />
+          {/* Tablets: right under the focus card. (Phones have the round + button in the bottom bar.) */}
+          <div className="hidden md:block lg:hidden">
+            <AddTaskTile />
+          </div>
           <DaySchedule />
         </div>
-        <DueSoon />
+        <div className="space-y-5 min-w-0">
+          <div className="hidden lg:block">
+            <AddTaskTile />
+          </div>
+          <DueSoon />
+        </div>
       </div>
     </div>
   );
@@ -42,10 +51,10 @@ export function PlanView() {
 export function PlanHeading() {
   const { now } = useApp();
   return (
-    <CapabilityHero className="pt-6">
-      <p className="mt-2 text-lg text-muted">
-        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span> · SmartScheduler fills each free gap with whatever is due soonest. Tick things off as you
-        finish them.
+    <CapabilityHero className="pt-4 md:pt-6">
+      <p className="mt-1.5 md:mt-2 text-base md:text-lg text-muted">
+        <span className="text-fg">{format(now, "EEEE, MMMM d")}</span>
+        <span className="hidden md:inline"> · SmartScheduler fills each free gap with whatever is due soonest. Tick things off as you finish them.</span>
       </p>
     </CapabilityHero>
   );
@@ -139,22 +148,21 @@ function NowCard() {
 
   return (
     // The focal point of the whole app: a heavier outline than any other card, so the eye lands here first.
-    <Card padding="lg" className="!border-2 !border-fg" aria-label="What to work on now">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
-        <span className="truncate">{headline}</span>
-      </div>
-      {detail ? <p className="mt-0.5 pl-4 text-sm text-muted">{detail}</p> : null}
+    <Card className="card-focal" aria-label="What to work on now">
+      {/* Where you are in the day, on one line: the state, then what's next in a quieter tone. */}
+      <p className="flex items-baseline gap-x-2 flex-wrap text-sm">
+        <span className={`w-2 h-2 rounded-full shrink-0 self-center ${dot}`} aria-hidden />
+        <span className="font-medium">{headline}</span>
+        {detail ? (
+          <span className="text-muted basis-full pl-4 sm:basis-auto sm:pl-0">
+            <span className="hidden sm:inline">· </span>
+            {detail}
+          </span>
+        ) : null}
+      </p>
 
       {first ? (
-        <>
-          <FocusTask lead={lead} item={first} />
-          {second ? (
-            <p className="mt-3 pt-3 border-t border-line text-sm text-muted">
-              Then <span className="text-fg font-medium">{second.task.title}</span> · {duration(second.block.minutes)}
-            </p>
-          ) : null}
-        </>
+        <FocusTask lead={lead} item={first} next={second} />
       ) : status.state === "done" ? (
         <Button variant="primary" className="mt-4" trailingIcon={ArrowRight} onClick={() => setPlanDay(1)}>
           See tomorrow&apos;s plan
@@ -166,7 +174,7 @@ function NowCard() {
   );
 }
 
-function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
+function FocusTask({ lead, item, next }: { lead: string; item: PlannedWork; next?: PlannedWork }) {
   const { completeTask, select, now } = useApp();
   const { task, block } = item;
   const course = useCourse(task);
@@ -176,7 +184,7 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
   return (
     <div className="mt-4">
       <SectionLabel>{lead}</SectionLabel>
-      <div className="mt-2 flex items-start gap-3">
+      <div className="mt-1.5 flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <button type="button" onClick={() => select({ kind: "task", id: task.id })} className="text-left text-xl font-semibold leading-snug hover:underline underline-offset-4 decoration-line-strong">
             {task.title}
@@ -190,18 +198,49 @@ function FocusTask({ lead, item }: { lead: string; item: PlannedWork }) {
             </span>
             {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
           </div>
-          {/* Follow-ups, not actions: quiet underlined links, so Done stays the one thing that stands out. */}
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-            <TextButton onClick={() => select({ kind: "why", id: task.id })}>Why this task?</TextButton>
-            <TextButton onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>See this free gap</TextButton>
-          </div>
         </div>
         {/* The one primary action on the Plan screen. */}
         <Button variant="primary" size="lg" icon={Check} className="shrink-0" onClick={() => completeTask(task)}>
           Done
         </Button>
       </div>
+      {/* One footer line: what comes next on the left, quiet follow-up links on the right. */}
+      <div className="mt-4 pt-3 border-t border-line flex items-center gap-x-4 gap-y-1.5 flex-wrap text-sm text-muted">
+        {next ? (
+          <span className="min-w-0 truncate">
+            Then <span className="text-fg font-medium">{next.task.title}</span> · {duration(next.block.minutes)}
+          </span>
+        ) : null}
+        <span className="sm:ml-auto flex flex-wrap gap-x-4 gap-y-1">
+          <TextButton onClick={() => select({ kind: "why", id: task.id })}>Why this task?</TextButton>
+          <TextButton onClick={() => select({ kind: "gap", startMs: block.start.getTime() })}>See this free gap</TextButton>
+        </span>
+      </div>
     </div>
+  );
+}
+
+/**
+ * A big, easy target for adding something to the plan straight from the
+ * dashboard. White, not blue, so Done stays the one primary button on the screen;
+ * its size and the accent icon make it easy to find.
+ */
+function AddTaskTile() {
+  const { openAddTask } = useApp();
+  return (
+    <button
+      type="button"
+      onClick={openAddTask}
+      className="card w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition hover:border-accent/50 hover:shadow-[var(--shadow-md)] group"
+    >
+      <span className="grid place-items-center h-11 w-11 shrink-0 rounded-xl bg-accent-soft text-accent transition group-hover:bg-accent group-hover:text-white" aria-hidden>
+        <Plus size={22} strokeWidth={2.4} />
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold">Add a task</span>
+        <span className="block text-sm text-muted">Homework, study time, anything else</span>
+      </span>
+    </button>
   );
 }
 
@@ -243,7 +282,10 @@ function DaySchedule() {
 
   return (
     <Card>
-      <h2 className="text-lg font-bold">{isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}</h2>
+      <h2 className="text-lg font-semibold tracking-tight inline-flex items-center gap-2">
+        <CalendarClock size={18} className="text-muted" aria-hidden />
+        {isToday ? "The rest of today" : format(day.date, "EEEE, MMMM d")}
+      </h2>
       <div className="mt-3">
         <DayPicker />
       </div>
@@ -274,7 +316,7 @@ function DaySchedule() {
       {items.length === 0 ? (
         <p className="mt-4 text-sm text-muted">{isToday ? "Nothing else today." : "Nothing on this day."}</p>
       ) : (
-        <ol className="mt-4 space-y-2">
+        <ol className="mt-4 space-y-2.5">
           {items.map((item) => (
             <Row key={item.key} item={item} capReached={capReached} />
           ))}
@@ -285,18 +327,24 @@ function DaySchedule() {
 }
 
 function Row({ item, capReached }: { item: ScheduleItem; capReached: boolean }) {
+  if (item.kind === "free") {
+    return (
+      <TimelineRow marker="free" start={clock(item.start)} end={clock(item.end)}>
+        <FreeBlock item={item} capReached={capReached} />
+      </TimelineRow>
+    );
+  }
+  if (item.kind === "due") {
+    return (
+      <TimelineRow marker="due" start={clock(item.start)}>
+        <DueRow task={item.task} />
+      </TimelineRow>
+    );
+  }
   return (
-    <li className="flex gap-2 sm:gap-3">
-      <div className="w-14 sm:w-[4.5rem] shrink-0 text-right pt-2">
-        <div className="text-xs font-medium tabular-nums">{clock(item.start)}</div>
-        {item.kind !== "due" ? <div className="text-[11px] text-faint tabular-nums">{clock(item.end)}</div> : null}
-      </div>
-      <div className="min-w-0 flex-1">
-        {item.kind === "event" ? <EventRow item={item} /> : null}
-        {item.kind === "free" ? <FreeBlock item={item} capReached={capReached} /> : null}
-        {item.kind === "due" ? <DueRow task={item.task} /> : null}
-      </div>
-    </li>
+    <TimelineRow start={clock(item.start)} end={clock(item.end)} color={item.event.color}>
+      <EventRow item={item} />
+    </TimelineRow>
   );
 }
 
@@ -439,7 +487,7 @@ function DueSoon() {
 
   return (
     <Card>
-      <CardHeader title="Due this week" />
+      <CardHeader icon={CalendarCheck2} title="Due this week" />
       {risky > 0 ? (
         <p className="mt-1 text-sm text-danger font-semibold flex items-start gap-1.5">
           <CircleAlert size={15} className="shrink-0 mt-0.5" />

@@ -8,6 +8,7 @@ import type { Course, WeeklyBlock } from "@/lib/types";
 import { hhmmToMinutes, minutesLabel, minutesToHHMM } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
 import { Button, Dialog, DialogActions, TextButton } from "./ui";
+import { ClassNameForm, RenameClassButton } from "./ClassName";
 
 /** Monday-first day buttons. */
 export function DayToggles({ value, onChange }: { value: number[]; onChange: (days: number[]) => void }) {
@@ -25,7 +26,7 @@ export function DayToggles({ value, onChange }: { value: number[]; onChange: (da
             aria-pressed={on}
             aria-label={names[d]}
             onClick={() => onChange(on ? value.filter((x) => x !== d) : [...value, d])}
-            className={`w-9 h-9 text-sm font-semibold border transition ${on ? "bg-fg text-bg border-fg" : "border-line-strong text-muted hover:text-fg"}`}
+            className={`w-9 h-9 rounded-full text-sm font-semibold border transition ${on ? "bg-accent text-white border-accent" : "border-line-strong text-muted hover:text-fg hover:border-fg"}`}
           >
             {letters[d]}
           </button>
@@ -143,7 +144,7 @@ export function ClassTimeForm({
   };
 
   return (
-    <form onSubmit={save} className="mt-2 border border-dashed border-line-strong p-3 space-y-2.5">
+    <form onSubmit={save} className="mt-2 rounded-xl border border-dashed border-line-strong p-3 space-y-2.5">
       <DayToggles value={days} onChange={setDays} />
       <div className="flex items-center gap-1.5 flex-wrap">
         <input type="time" step={300} className="input input-sm" aria-label="Starts" value={start} onChange={(e) => setStart(e.target.value)} />
@@ -172,6 +173,7 @@ function ClassTimesRow({ course }: { course: Course }) {
   const { entered, fromFeed, replaced } = useClassTimes(course);
   const actions = useClassTimeActions();
   const [editing, setEditing] = useState<Editing>(null);
+  const [renaming, setRenaming] = useState(false);
   const feedName = model.feedById.get(course.feedId)?.name ?? "its calendar";
   const done = () => setEditing(null);
 
@@ -183,9 +185,15 @@ function ClassTimesRow({ course }: { course: Course }) {
     <li className="py-3" style={courseStyle(course.color)}>
       <div className="flex items-center gap-2 min-w-0">
         <span className="course-dot" />
-        <span className="course-text font-semibold text-sm">{course.code}</span>
-        {course.title !== course.code ? <span className="text-sm text-muted truncate">{course.title}</span> : null}
+        <span className="course-text font-semibold text-sm whitespace-nowrap">{course.code}</span>
+        {course.title !== course.code ? <span className="hidden sm:inline text-sm text-muted truncate">{course.title}</span> : null}
+        {renaming ? null : (
+          <span className="ml-auto shrink-0">
+            <RenameClassButton course={course} onClick={() => setRenaming(true)} />
+          </span>
+        )}
       </div>
+      {renaming ? <ClassNameForm course={course} onDone={() => setRenaming(false)} /> : null}
       <div className="pl-4 mt-1.5 space-y-1">
         {fromFeed.map((p) =>
           editing?.kind === "feed" && editing.pattern.key === p.key ? (

@@ -25,7 +25,9 @@ import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
+import { BottomNav } from "./BottomNav";
 import { AppTour } from "./AppTour";
+import { ViewHeading } from "./ViewHeading";
 import { openGoalNotice } from "./Prototype";
 
 // ---------------------------------------------------------------------------
@@ -43,7 +45,7 @@ interface UiPrefs {
 }
 
 const VIEWS: View[] = ["plan", "calendar", "upcoming", "classes", "settings", "help"];
-const CAL_MODES: CalMode[] = ["month", "week", "day"];
+const CAL_MODES: CalMode[] = ["month", "week", "day", "3day", "schedule"];
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
   view: "plan",
@@ -535,8 +537,8 @@ export function App() {
       ) : (
         <div className="min-h-dvh flex flex-col">
           <Header />
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-24">
-            {ui.view === "plan" ? <PlanHeading /> : null}
+          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-32 md:pb-24">
+            {ui.view === "plan" ? <PlanHeading /> : <ViewHeading />}
             <Banners />
             <div className="mt-4 fade-in" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
               {ui.view === "plan" && <PlanView />}
@@ -547,6 +549,7 @@ export function App() {
               {ui.view === "help" && <HelpView />}
             </div>
           </main>
+          <BottomNav />
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}

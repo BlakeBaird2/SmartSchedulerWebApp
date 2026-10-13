@@ -5,7 +5,7 @@
  *
  * - EntryNotices: prototype notice first, then the goal-setting pop-up. Each dismissal
  *   is remembered in this browser (localStorage) so returning users are not interrupted.
- * - PrototypeBadge / GoalBadge: reopen each notice from headers and Help/Settings.
+ * - PrototypeBadge: reopens the welcome pop-up (prototype notice and goal) from every header.
  * - CapabilityHero / WirePlaceholder: shared entry-screen pieces.
  * - DevStateSwitcher: development-only shortcuts to each entry state.
  */
@@ -17,7 +17,7 @@ import { KEYS, readStored, useHydrated, useStored, writeStored } from "./store";
 import { Button, Dialog } from "./ui";
 
 export const CAPABILITY = "See exactly what to work on in every free gap of your day.";
-export const PROTOTYPE_MESSAGE = "This is an early prototype. It looks simple on purpose and some things are placeholders.";
+export const PROTOTYPE_MESSAGE = "This is an early prototype. Some things are placeholders, and nothing is saved to an account.";
 export const GOAL_TITLE = "Your goal in this prototype";
 export const GOAL_EXAMPLE = "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
 export const GOAL_BODY =
@@ -42,7 +42,7 @@ export function openGoalNotice() {
  * of pop-ups: say plainly that this is an early prototype, and give the goal to try.
  *
  * Inside the app it also offers an optional walkthrough ("Show me around"); the
- * main button just starts. The Prototype and Goal tags, Help and Settings all
+ * main button just starts. The Prototype tag, Help and Settings all
  * reopen it. Returning visitors see nothing.
  */
 export function EntryNotices() {
@@ -81,10 +81,10 @@ export function EntryNotices() {
       </span>
       <h2 className="mt-3 text-2xl font-bold leading-snug">This is an early prototype.</h2>
       <p className="mt-1 text-base text-muted leading-relaxed">
-        It looks simple on purpose and some things are placeholders, but it really works: it plans your free time from your calendars or from sample data.
+        Some things are placeholders and nothing is saved to an account, but it really works: it plans your free time from your calendars or from sample data.
       </p>
 
-      <div className="mt-5 border-2 border-fg bg-surface-2 p-4">
+      <div className="mt-5 rounded-xl border border-accent/30 bg-accent-soft p-4">
         <span className="section-title inline-flex items-center gap-1.5">
           <Target size={14} aria-hidden />
           Your goal
@@ -128,24 +128,9 @@ export function PrototypeBadge({ className = "" }: { className?: string }) {
   );
 }
 
-export function GoalBadge({ className = "" }: { className?: string }) {
-  return (
-    <button
-      type="button"
-      className={`proto-badge hidden sm:inline-flex ${className}`}
-      onClick={openGoalNotice}
-      title="Your goal in this prototype"
-      aria-haspopup="dialog"
-    >
-      <Target size={14} className="hidden sm:block" aria-hidden />
-      Goal
-    </button>
-  );
-}
-
 const HERO_SIZE = {
   page: "text-[2.5rem] sm:text-6xl lg:text-7xl",
-  app: "text-3xl sm:text-[2.6rem]",
+  app: "text-[1.75rem] leading-[1.1] sm:text-[2.6rem]",
 } as const;
 
 export function CapabilityHero({
@@ -255,7 +240,7 @@ export function DevStateSwitcher() {
   ];
 
   return (
-    <details className="fixed bottom-3 left-3 z-[70] max-w-[calc(100vw-1.5rem)] border border-dashed border-fg bg-surface text-sm">
+    <details className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-3 left-3 z-[70] max-w-[calc(100vw-1.5rem)] rounded-xl border border-line bg-surface shadow-[var(--shadow-md)] text-sm">
       <summary className="cursor-pointer select-none px-2 py-1">Dev: entry states</summary>
       <div className="flex flex-col gap-1 p-2 pt-0">
         <p className="text-xs text-muted">Development only. Not shown in production.</p>
