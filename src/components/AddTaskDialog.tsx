@@ -7,6 +7,7 @@ import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
 import { duration, typeMeta } from "@/lib/ui";
 import { useApp } from "./context";
 import { Button, ChoicePill, Dialog, DialogActions, Field } from "./ui";
+import { trackEvent } from "./smartEvents";
 
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240];
 
@@ -42,6 +43,7 @@ export function AddTaskDialog({ onClose }: { onClose: () => void }) {
       manualTasks: [...w.manualTasks, { id, title: title.trim().slice(0, 140), courseId: courseId || null, type, dueAt }],
       estimates: estimate !== null ? { ...w.estimates, [`manual:${id}`]: estimate } : w.estimates,
     }));
+    trackEvent("task_added", { title: title.trim(), courseId: courseId || null, type, hasDueDate: Boolean(dueAt), minutes });
     toast(`Added to your plan: ${title.trim()}`, {
       undo: () => update((w) => ({ ...w, manualTasks: w.manualTasks.filter((t) => t.id !== id) })),
     });
@@ -104,7 +106,7 @@ export function AddTaskDialog({ onClose }: { onClose: () => void }) {
       </div>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="primary" disabled={!title.trim()} title={title.trim() ? undefined : "Name the task first"}>
+        <Button type="submit" variant="primary" data-smart-event="task_added" disabled={!title.trim()} title={title.trim() ? undefined : "Name the task first"}>
           Add task
         </Button>
       </DialogActions>

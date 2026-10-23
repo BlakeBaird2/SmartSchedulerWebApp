@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Link as LinkIcon, Plus } from "lucide-react";
-import { ClassChip, FreeGapBlock, SectionLabel, TaskCard, TimelineRow, Wordmark } from "./ui";
+import { ClassChip, DueBadge, FreeGapBlock, SectionLabel, TaskCard, TimelineRow, Wordmark } from "./ui";
 
 /**
  * Wireframe drawings of the app for the home page, built from the real design
@@ -31,136 +31,145 @@ export function SketchEvent({ title, time, color = "#78716c", className = "" }: 
   );
 }
 
-/** The hero: a small Plan screen, the thing the sentence above it promises. */
+/**
+ * The hero picture: the Plan screen inside a browser window, turned three-quarters
+ * in 3D like a product shot. The tilt, the window frame, the "Preview" tag and the
+ * caption all say "this is a picture of the app", so nobody tries to click it.
+ */
 export function PlanSketch() {
   return (
-    <Sketch
-      label="A sketch of the Plan screen: the task to work on now with a Done button, and this afternoon's free gap already filled with two tasks."
-      className="rounded-2xl border border-line shadow-[var(--shadow-lg)] text-left"
-    >
-      <div className="flex items-center gap-3 border-b border-line-strong bg-surface px-4 py-2.5">
-        <span className="scale-90 origin-left">
-          <Wordmark />
-        </span>
-        <span className="ml-2 hidden sm:flex gap-1 text-sm">
-          <span className="rounded-md bg-surface-2 border border-line text-fg font-semibold px-2">Plan</span>
-          <span className="px-2 text-muted">Calendar</span>
-          <span className="px-2 text-muted">Upcoming</span>
-          <span className="px-2 text-muted">Classes</span>
-        </span>
-      </div>
-      <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <div className="space-y-4 min-w-0">
-          <div className="rounded-xl border-2 border-accent/50 bg-surface p-4 shadow-[var(--shadow-md)]">
-            <div className="text-sm">Free until 3:15 PM · 45m</div>
-            <SectionLabel className="mt-3">Work on</SectionLabel>
-            <div className="mt-1 flex items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="text-xl font-semibold leading-snug">Lab 6</div>
-                <div className="mt-1 flex items-center gap-2 text-sm text-muted">
-                  <ClassChip variant="tag" code="CS 142" color="#d97706" />
-                  45m · due tomorrow
+    <figure className="picture-stage">
+      <div className="picture-tilt">
+        <Sketch
+          label="A picture of the Plan screen: the task to work on now with a Done button, today's goal ring, and this evening's free gap already filled with two tasks."
+          className="rounded-2xl border border-line text-left"
+        >
+          {/* Browser window frame: the clearest signal that this is a screenshot. */}
+          <div className="flex items-center gap-2 border-b border-line bg-surface-2 px-3 py-2">
+            <span className="flex gap-1.5" aria-hidden>
+              <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+            </span>
+            <span className="mx-auto max-w-[60%] truncate rounded-md bg-surface px-3 py-0.5 text-[11px] text-muted">smartschedulerwebapp.vercel.app/app</span>
+            <span className="w-10" aria-hidden />
+          </div>
+          <div className="flex items-center gap-3 border-b border-line bg-surface px-4 py-2.5">
+            <span className="scale-90 origin-left">
+              <Wordmark />
+            </span>
+            <span className="ml-2 hidden sm:flex gap-1 text-sm">
+              <span className="rounded-md bg-surface-2 border border-line text-fg font-semibold px-2">Plan</span>
+              <span className="px-2 text-muted">Calendar</span>
+              <span className="px-2 text-muted">Upcoming</span>
+            </span>
+          </div>
+          <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="space-y-4 min-w-0">
+              <div className="rounded-xl border-2 border-accent/50 bg-surface p-4 shadow-[var(--shadow-md)]">
+                <div className="text-sm">Free until 3:15 PM · 45m</div>
+                <SectionLabel className="mt-3">Work on</SectionLabel>
+                <div className="mt-1 flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xl font-semibold leading-snug">Lab 6</div>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-muted flex-wrap">
+                      <ClassChip variant="tag" code="CS 142" color="#d97706" />
+                      45m
+                      <DueBadge>Due tomorrow 11:59 PM</DueBadge>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-accent text-white px-4 py-2 font-semibold">
+                    <Check size={16} strokeWidth={3} aria-hidden />
+                    Done
+                  </span>
                 </div>
               </div>
-              {/* Ink, not blue: the page's one blue button is the real "Start planning" above. */}
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-accent text-white px-4 py-2 font-semibold">
-                <Check size={16} strokeWidth={3} aria-hidden />
-                Done
-              </span>
+              <div className="rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
+                <div className="font-bold">The rest of today</div>
+                <ol className="mt-3 space-y-2.5">
+                  <TimelineRow start="3:15 PM" end="6 PM" color="#78716c">
+                    <SketchEvent title="Work" time="3:15 – 6 PM" />
+                  </TimelineRow>
+                  <TimelineRow marker="free" start="6:10 PM" end="8 PM">
+                    <FreeGapBlock minutes={110} label="Free · 1h 50m">
+                      <li>
+                        <TaskCard
+                          title="Reading: Chapter 5"
+                          onToggleDone={noop}
+                          onOpen={noop}
+                          color="#2563eb"
+                          meta={
+                            <>
+                              <ClassChip code="BUS 301" color="#2563eb" />
+                              <DueBadge>Due Wed</DueBadge>
+                            </>
+                          }
+                          trailing={<span className="text-sm font-semibold">30m</span>}
+                        />
+                      </li>
+                      <li>
+                        <TaskCard
+                          title="Problem Set 5"
+                          onToggleDone={noop}
+                          onOpen={noop}
+                          color="#16a34a"
+                          meta={
+                            <>
+                              <ClassChip code="ACC 200" color="#16a34a" />
+                              <DueBadge>Due Thu</DueBadge>
+                            </>
+                          }
+                          trailing={<span className="text-sm font-semibold">1h</span>}
+                        />
+                      </li>
+                    </FreeGapBlock>
+                  </TimelineRow>
+                </ol>
+              </div>
+            </div>
+            <div className="hidden md:block space-y-4">
+              <div className="rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)] text-center">
+                <SectionLabel className="text-left">Today&apos;s goal</SectionLabel>
+                <SketchRing />
+                <div className="mt-2 font-semibold">Finish today&apos;s plan</div>
+                <div className="text-sm text-muted">2 of 4 done · 1h 30m left</div>
+              </div>
+              <div className="rounded-xl border border-line bg-surface p-3 shadow-[var(--shadow-sm)] flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent" aria-hidden>
+                  <Plus size={20} strokeWidth={2.4} />
+                </span>
+                <span>
+                  <span className="block font-semibold">Add a task</span>
+                  <span className="block text-xs text-muted">Homework, study time, anything else</span>
+                </span>
+              </div>
             </div>
           </div>
-          <div className="rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
-            <div className="font-bold">The rest of today</div>
-            <ol className="mt-3 space-y-2.5">
-              <TimelineRow start="3:15 PM" end="6 PM" color="#78716c">
-                <SketchEvent title="Work" time="3:15 – 6 PM" />
-              </TimelineRow>
-              <TimelineRow marker="free" start="6:10 PM" end="8 PM">
-                <FreeGapBlock minutes={110} label="Free · 1h 50m">
-                  <li>
-                    <TaskCard
-                      title="Reading: Chapter 5"
-                      onToggleDone={noop}
-                      onOpen={noop}
-                      color="#2563eb"
-                      meta={<ClassChip code="BUS 301" color="#2563eb" />}
-                      trailing={<span className="text-sm font-semibold">30m</span>}
-                    />
-                  </li>
-                  <li>
-                    <TaskCard
-                      title="Problem Set 5"
-                      onToggleDone={noop}
-                      onOpen={noop}
-                      color="#16a34a"
-                      meta={<ClassChip code="ACC 200" color="#16a34a" />}
-                      trailing={<span className="text-sm font-semibold">1h</span>}
-                    />
-                  </li>
-                </FreeGapBlock>
-              </TimelineRow>
-            </ol>
-          </div>
-        </div>
-        <div className="hidden md:block rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-sm)]">
-          <div className="font-bold">Due this week</div>
-          <SectionLabel className="mt-3 mb-1.5">Tomorrow</SectionLabel>
-          <div className="space-y-1.5">
-            <TaskCard
-              title="Lab 6"
-              density="compact"
-              onToggleDone={noop}
-              onOpen={noop}
-              meta={
-                <>
-                  <ClassChip code="CS 142" color="#d97706" />
-                  11:59 PM
-                </>
-              }
-            />
-            <TaskCard
-              title="Case Write-Up 4"
-              density="compact"
-              onToggleDone={noop}
-              onOpen={noop}
-              meta={
-                <>
-                  <ClassChip code="BUS 301" color="#2563eb" />
-                  9:30 AM
-                </>
-              }
-            />
-          </div>
-          <SectionLabel className="mt-3 mb-1.5">Thursday</SectionLabel>
-          <div className="space-y-1.5">
-            <TaskCard
-              title="Problem Set 5"
-              density="compact"
-              onToggleDone={noop}
-              onOpen={noop}
-              meta={
-                <>
-                  <ClassChip code="ACC 200" color="#16a34a" />
-                  end of day
-                </>
-              }
-            />
-            <TaskCard
-              title="Reading Response 5"
-              density="compact"
-              onToggleDone={noop}
-              onOpen={noop}
-              meta={
-                <>
-                  <ClassChip code="WRTG 150" color="#9333ea" />
-                  11 AM
-                </>
-              }
-            />
-          </div>
-        </div>
+        </Sketch>
+        <span className="picture-tag" aria-hidden>
+          Preview
+        </span>
       </div>
-    </Sketch>
+      <figcaption className="mt-6 text-center text-sm text-muted">A picture of the Plan screen. Open the app to try it with your own calendars or sample data.</figcaption>
+    </figure>
+  );
+}
+
+/** The goal ring from the Plan screen, drawn at 2 of 4. */
+function SketchRing() {
+  const size = 92;
+  const r = (size - 10) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative mx-auto mt-2 grid place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth={10} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--ok)" strokeWidth={10} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c / 2} />
+      </svg>
+      <span className="absolute text-xl font-bold tabular-nums">
+        2<span className="text-muted">/4</span>
+      </span>
+    </div>
   );
 }
 

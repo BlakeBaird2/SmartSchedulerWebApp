@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CalendarDays, CircleHelp, Clock, Compass, MonitorSmartphone, Timer, type LucideIcon, Copy, Info, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target } from "lucide-react";
+import { ArrowRight, CalendarDays, CircleHelp, Clock, Compass, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
 import { duration, typeIconClass, typeMeta } from "@/lib/ui";
@@ -12,6 +12,7 @@ import { ClassTimesEditor } from "./ClassTimes";
 import { openGoalNotice } from "./Prototype";
 import { resetEverything, useTheme } from "./store";
 import { startTour } from "./AppTour";
+import { EventLog } from "./EventLog";
 import { Button, ButtonLink, Card, CardHeader, SegmentedControl, TextButton } from "./ui";
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
@@ -346,13 +347,21 @@ function AboutPanel() {
         <Button icon={Compass} onClick={startTour}>
           Show the walkthrough
         </Button>
-        <ButtonLink href="/about" icon={Info}>
-          How it works
+        <ButtonLink href="/about" icon={House}>
+          Home page
         </ButtonLink>
         <ButtonLink href="/design" icon={LayoutTemplate}>
           Design library
         </ButtonLink>
       </div>
+      {/* For user tests: the smart events this tab has fired, so a facilitator can check what a tester did. */}
+      <details className="mt-4 rounded-xl border border-line px-3 py-2">
+        <summary className="cursor-pointer text-sm font-semibold">Smart events in this session (for user testing)</summary>
+        <p className="mt-1 mb-2 text-xs text-muted leading-relaxed">
+          Key actions add <code>?event=…</code> to the address and push to <code>window.dataLayer</code>, so testing tools can count a task as done.
+        </p>
+        <EventLog />
+      </details>
     </Section>
   );
 }

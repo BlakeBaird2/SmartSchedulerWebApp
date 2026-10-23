@@ -42,7 +42,7 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
 /** A full page load rather than next/link, so the app sees #demo as it starts. */
 function SampleLink({ className, children = "Try it with sample data" }: { className: string; children?: React.ReactNode }) {
   return (
-    <a href="/app#demo" className={className}>
+    <a href="/app#demo" className={className} data-smart-event="sample_data_started">
       <Sparkles size={16} />
       {children}
     </a>

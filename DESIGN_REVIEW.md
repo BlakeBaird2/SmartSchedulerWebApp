@@ -391,6 +391,65 @@ as before; keyboards still use Tab and Enter.
 **Square header tools.** On touch screens the header's icon buttons (Alerts,
 Settings) are 44 × 44 squares, not 36-wide rectangles.
 
+### 26. Professor feedback round 2: focus, one fewer screen, planned vs due
+
+Feedback from our professor's review, plus our own, and what changed. Everything
+below is on the `focused-plan-redesign` branch.
+
+**A more focused Plan page.** "Due this week" repeated most of "The rest of
+today", so it is gone. Plan now answers three questions in order:
+
+| Question | Where |
+| --- | --- |
+| What do I work on right now? | The "Work on now" card (unchanged, still the one blue Done button) |
+| Am I on track today? | **Today's goal**: a green ring that fills as today's planned tasks are ticked off ("2 of 6 done · 4h left"), turns into a check when the day's plan is done, and warns if anything won't fit before it's due |
+| How does the rest of my day look? | The timeline, ending with "See everything that's due →" (Upcoming) |
+
+On computers today's goal and a big Add a task sit in a slim column that stays in
+view; on phones the goal sits right under the focus card. Work that was already
+past due when a calendar was added is marked done automatically, but never counts
+toward today's goal.
+
+**A visual for goals.** Besides today's ring, the welcome pop-up's goal now shows
+as three steps with icons (find your free time → open the task → mark it done).
+
+**Classes folded into Upcoming.** Upcoming filtered to one class showed the same
+work as the Classes board, so the Classes tab is gone (three tabs: Plan, Calendar,
+Upcoming). The class filter is now **class tabs**: "All classes" or one class,
+like tabs, each with a count of what's left. Picking a class shows its summary
+(when it meets, progress, Open in Canvas, Edit class). Hidden classes are listed
+under the work with a one-tap "show again". A saved "Classes" view opens Upcoming.
+
+**Planned vs due, strongly different.** One language everywhere:
+
+| | Look | Where |
+| --- | --- | --- |
+| Planned (when you'll work on it) | Green chip with a clock: "Planned today 3:25 PM". On the calendar: white tile with a tick box | Upcoming, task details, calendar |
+| Due (the deadline) | Amber chip with a flag: "Due tomorrow 9:30 AM"; red when late ("6h late"). On timelines and calendars: amber flag chips and an amber diamond marker | Plan, Upcoming, calendar (all views), task details |
+
+Task details label them "Due (the deadline)" and "Planned (when you'll work on
+it)", and the calendar legend explains both.
+
+**The home page picture reads as a picture.** It looked clickable. It is now a
+browser window turned three-quarters in 3D, with a "Preview" tag and the caption
+"A picture of the Plan screen", and it shows the new Plan page.
+
+**A way back from sample data.** Opening `/` with sample data no longer jumps
+into the app, and the sample-data banner has **Back to home page** (a home icon on
+phones). Settings → About has **Home page** too.
+
+**Smart events for user testing.** The important actions (task completed, task
+added, Add task opened, calendar added, setup finished, sample data started,
+task / free gap / "why" opened, class picked, goal reached, screen changed) are
+announced three ways: `?event=task-completed` in the address (a success URL for
+UXtweak or Maze), a push to `window.dataLayer` (Google Tag Manager, Hotjar), and
+a `smartscheduler:event` DOM event. Their buttons carry `data-smart-event`. Each
+screen also has its own address (`/app?view=calendar`), so the browser Back button
+works. Settings → About shows the session's events for facilitators.
+
+Not done: tying in an audience beyond college students (our professor called it
+optional).
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

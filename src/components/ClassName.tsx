@@ -37,7 +37,7 @@ export function withCourseNames(
  * Rename a class in place: its short name (shown everywhere, like "FIN 201") and
  * its full name. Calendars don't always name classes well, so this is offered
  * wherever a class is listed: right after a calendar is added, in Settings, in
- * class times and on the Classes board.
+ * class times and on a class's summary in Upcoming.
  */
 export function ClassNameForm({ course, onDone }: { course: Course; onDone: () => void }) {
   const { update, toast } = useApp();

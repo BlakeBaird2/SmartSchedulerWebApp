@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, CircleHelp, LayoutGrid, ListChecks, Plus, RefreshCw, Settings, Target } from "lucide-react";
+import { CalendarRange, CircleHelp, ListChecks, Plus, RefreshCw, Settings, Target } from "lucide-react";
 import { timeAgo } from "@/lib/ui";
 import { useApp, type View } from "./context";
 import { ChangesPopover } from "./ChangesPopover";
@@ -11,7 +11,6 @@ export const TABS: { id: View; label: string; icon: typeof ListChecks }[] = [
   { id: "plan", label: "Plan", icon: Target },
   { id: "calendar", label: "Calendar", icon: CalendarRange },
   { id: "upcoming", label: "Upcoming", icon: ListChecks },
-  { id: "classes", label: "Classes", icon: LayoutGrid },
 ];
 
 /**

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock3, ExternalLink, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
@@ -103,6 +103,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             variant={task.done ? "secondary" : "primary"}
             block
             icon={task.done ? Undo2 : Check}
+            data-smart-event={task.done ? "task_uncompleted" : "task_completed"}
             onClick={() => (task.done ? toggleDone(task) : completeTask(task))}
           >
             {task.done ? "Mark as not done" : "Mark as done"}
@@ -115,7 +116,10 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         </div>
 
         <div>
-          <Label>Due</Label>
+          <SectionLabel className="mb-1 inline-flex items-center gap-1.5">
+            <Flag size={12} className={overdue ? "text-danger" : "text-warn"} aria-hidden />
+            Due (the deadline)
+          </SectionLabel>
           <div className={`text-[0.9375rem] font-medium ${overdue ? "text-danger" : ""}`}>
             {d ? `${format(d, "EEEE, MMMM d")}${task.allDay ? "" : ` at ${format(d, "h:mm a")}`}` : "No due date"}
           </div>
@@ -148,7 +152,10 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
         {!task.done ? (
           <div>
-            <Label>In your plan</Label>
+            <SectionLabel className="mb-1 inline-flex items-center gap-1.5">
+              <Clock3 size={12} className="text-ok" aria-hidden />
+              Planned (when you&apos;ll work on it)
+            </SectionLabel>
             {blocks.length > 0 ? (
               <ul className="space-y-1">
                 {blocks.map((b) => (
@@ -156,9 +163,9 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                     <button
                       type="button"
                       onClick={() => openDay(b.start)}
-                      className="w-full text-left flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:bg-surface-2 hover:border-line-strong transition"
+                      className="w-full text-left flex items-center gap-2 rounded-lg border border-ok/30 bg-ok-soft px-3 py-2 text-sm hover:border-ok/60 transition"
                     >
-                      <Clock3 size={14} className="shrink-0" aria-hidden />
+                      <Clock3 size={14} className="shrink-0 text-ok" aria-hidden />
                       <span className="flex-1 min-w-0">
                         {format(b.start, "EEE, MMM d")} · {clockRange(b.start, b.end)}
                       </span>
@@ -185,7 +192,11 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             ) : null}
           </div>
         ) : (
-          <p className="text-sm font-semibold">Done{ws.done[task.id] ? ` · ${format(new Date(ws.done[task.id]), "MMM d, h:mm a")}` : ""}</p>
+          <p className="text-sm font-semibold">
+            {ws.done[task.id]?.startsWith("auto:")
+              ? "Done · assumed, since it was already past due when the calendar was added"
+              : `Done${ws.done[task.id] ? ` · ${format(new Date(ws.done[task.id]), "MMM d, h:mm a")}` : ""}`}
+          </p>
         )}
 
         {task.description ? (
@@ -415,7 +426,7 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
           SmartScheduler fills this gap with unfinished work that is due soonest and that fits. Open a task, review it, then mark it done.
         </p>
         {gap.work.length === 0 ? (
-          <p className="text-sm text-muted">Nothing due soon fits here. Enjoy the break, or pick work from Upcoming or Classes.</p>
+          <p className="text-sm text-muted">Nothing due soon fits here. Enjoy the break, or pick work from Upcoming.</p>
         ) : (
           <ul className="space-y-2">
             {gap.work.map((w) => {
@@ -592,7 +603,7 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
       </header>
       <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
         <p className="text-sm text-muted leading-relaxed">
-          That counts for the prototype goal. Your plan updates everywhere — Plan, Calendar, Upcoming, and Classes stay in sync.
+          That counts for the prototype goal. Your plan updates everywhere: Plan, Calendar and Upcoming stay in sync.
         </p>
         {next ? (
           <div className="rounded-xl border border-line p-3 space-y-2">

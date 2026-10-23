@@ -28,6 +28,8 @@ import {
   Tour,
   TypeChip,
   Wordmark,
+  PlannedBadge,
+  DueBadge,
 } from "./ui";
 
 /**
@@ -57,6 +59,8 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "checkbox", name: "Checkbox" },
       { id: "class-chip", name: "ClassChip" },
       { id: "type-chip", name: "TypeChip" },
+      { id: "planned-due", name: "PlannedBadge / DueBadge" },
+      { id: "class-tabs", name: "Class tabs" },
     ],
   },
   {
@@ -302,7 +306,7 @@ function Foundations() {
           </div>
           <div className="p-3 flex items-baseline gap-4 flex-wrap">
             <span className="w-28 text-sm text-muted shrink-0">Card title</span>
-            <span className="text-lg font-bold">Due this week</span>
+            <span className="text-lg font-bold">The rest of today</span>
           </div>
           <div className="p-3 flex items-baseline gap-4 flex-wrap">
             <span className="w-28 text-sm text-muted shrink-0">Group label</span>
@@ -399,7 +403,7 @@ function CoreParts() {
         id="task-card"
         name="TaskCard"
         summary="One task, the same everywhere it appears."
-        use="Every list of tasks: Plan, Due this week, Upcoming, Classes. Compact in narrow columns."
+        use="Every list of tasks: Plan and Upcoming. Compact in narrow columns."
         rules={[
           "Tick box on the left finishes it; clicking anywhere else opens its details. The two never overlap.",
           "Title first, in the heaviest weight. Details (class, time, plan) on one quieter line.",
@@ -408,7 +412,7 @@ function CoreParts() {
           "Finished tasks are struck through and faded, not removed, until you hide them.",
         ]}
         why="The same task appears on several screens. One card means it is recognised at a glance everywhere, instead of being re-read on each screen."
-        usedIn="Plan, Upcoming, Classes"
+        usedIn="Plan, Upcoming"
       >
         <div className="space-y-2">
           <TaskCard
@@ -479,7 +483,7 @@ function CoreParts() {
           "Always shows the code as text, never only a colour.",
         ]}
         why="Students pull several classes from different calendars (Canvas, Learning Suite). A steady code and shade answers “which class is this for?” without reading the title."
-        usedIn="Plan, Upcoming, Classes, Calendar, task details"
+        usedIn="Plan, Upcoming, Calendar, task details"
       >
         <div className="flex items-center gap-4 flex-wrap">
           <ClassChip variant="tag" code="BUS 301" color="#2563eb" />
@@ -504,6 +508,56 @@ function CoreParts() {
           <TypeChip type="project" />
           <TypeChip type="assignment" />
           <TypeChip type="reading" />
+        </div>
+      </Entry>
+
+      <Entry
+        id="planned-due"
+        name="PlannedBadge / DueBadge"
+        summary="When you'll work on it, and when it's due. Never confused."
+        use="Every task that shows a plan or a deadline: Plan, Upcoming, the calendar, task details."
+        rules={[
+          "Planned is green with a clock: your time. Due is amber with a flag: the deadline. Late turns the Due chip red.",
+          "Both always carry a word (“Planned today 3:25 PM”, “Due Tue”), never colour alone.",
+          "Deadlines on a timeline or calendar use the same amber flag chip, so planned work and due dates never look alike.",
+        ]}
+        why="A design review found planned times and due dates hard to tell apart. Giving each its own colour, icon and word makes the difference obvious at a glance."
+        usedIn="Plan, Upcoming, Calendar, task details"
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          <PlannedBadge>Planned today 3:25 PM</PlannedBadge>
+          <DueBadge>Due tomorrow 9:30 AM</DueBadge>
+          <DueBadge late>2 days late</DueBadge>
+        </div>
+      </Entry>
+
+      <Entry
+        id="class-tabs"
+        name="Class tabs"
+        summary="Show all your work, or one class at a time."
+        use="The top of Upcoming and Calendar."
+        rules={[
+          "One choice at a time, like tabs: All classes or one class. Tap the chosen class again to go back to all.",
+          "Each tab shows how much is left, so you know before you tap.",
+          "The chosen tab takes its class colour, a heavier outline and bold text. Picking a class on Upcoming shows its summary: when it meets, how much is done, and Edit.",
+        ]}
+        why="Upcoming filtered to one class already showed everything the old Classes board did, so the two screens became one. Single-choice tabs are easier to read than toggling classes on and off."
+        usedIn="Upcoming, Calendar"
+      >
+        <div className="flex items-center gap-1.5 flex-wrap" role="radiogroup" aria-label="Example class tabs">
+          <span className="class-tab" role="radio" aria-checked="false">
+            All classes <span className="class-tab-count">38</span>
+          </span>
+          <span className="class-tab" role="radio" aria-checked="true" style={{ "--c": "#2563eb" } as React.CSSProperties}>
+            <span className="course-dot" />
+            <span className="course-text">BUS 301</span>
+            <span className="class-tab-count">10</span>
+          </span>
+          <span className="class-tab" role="radio" aria-checked="false" style={{ "--c": "#d97706" } as React.CSSProperties}>
+            <span className="course-dot" />
+            <span className="course-text">CS 142</span>
+            <span className="class-tab-count">11</span>
+          </span>
         </div>
       </Entry>
     </>
@@ -586,7 +640,7 @@ function Containers() {
         id="card"
         name="Card"
         summary="One box, one group, one title."
-        use="Each separate part of a screen: what to do now, the rest of today, due this week, each settings section."
+        use="Each separate part of a screen: what to do now, today's goal, the rest of today, each settings section."
         rules={[
           "Everything in a card belongs together (Gestalt: common region).",
           'One card per screen gets the heavy outline: the focal point. On Plan, that\'s "what to work on now".',
@@ -601,7 +655,7 @@ function Containers() {
             <p className="mt-1 text-xl font-semibold">Reading: Chapter 5</p>
           </Card>
           <Card>
-            <CardHeader title="Due this week" hint="Everything here fits in your free time." />
+            <CardHeader title="The rest of today" hint="Your classes, work and free time, in order." />
           </Card>
         </div>
       </Entry>
@@ -664,10 +718,10 @@ function Containers() {
         id="empty"
         name="EmptyState"
         summary="What an empty list says instead of nothing."
-        use="Any list that can be empty: Upcoming, Classes, Alerts."
+        use="Any list that can be empty: Upcoming, Alerts."
         rules={["Say what's missing and why, in plain words.", "Offer the one action that fills it."]}
         why="A blank screen looks broken. New users especially need to know the next step."
-        usedIn="Upcoming, Classes, Alerts"
+        usedIn="Upcoming, Alerts"
       >
         <EmptyState icon={Inbox} title="Nothing due right now" action={<Button icon={Plus}>Add a task</Button>}>
           Add a school calendar in Settings, or add work by hand.
@@ -692,7 +746,7 @@ function Inputs() {
         id="segmented"
         name="SegmentedControl"
         summary="Pick exactly one of a few options."
-        use="The main views (Plan, Calendar, Upcoming, Classes), Month / Week / Day, the plan's day picker, light or dark."
+        use="The main views (Plan, Calendar, Upcoming), Month / Week / Day, the plan's day picker, light or dark."
         rules={["The chosen option is boxed, shaded and underlined: clear without colour.", "Labels are words, with an icon only as a helper."]}
         why="The same control for every “pick one” choice means switching views works the same way everywhere."
         usedIn="Header, Calendar, Plan, Settings"
@@ -823,10 +877,10 @@ function Feedback() {
               },
               {
                 title: "See what's due",
-                body: "Everything due this week, and when it's planned.",
+                body: "Upcoming lists everything that's due, by class, and when it's planned.",
                 picture: (
                   <div className="h-full bg-surface-2 p-4 flex items-center">
-                    <div className="w-full border border-line-strong bg-surface p-3">Due this week · 8 tasks</div>
+                    <div className="w-full border border-line-strong bg-surface p-3">Upcoming · 8 tasks</div>
                   </div>
                 ),
               },

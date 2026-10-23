@@ -732,7 +732,8 @@
   .btn,
   .btn-primary,
   .seg > button,
-  .pill {
+  .pill,
+  .class-tab {
     min-height: 44px;
   }
   .btn-icon,
@@ -1139,6 +1140,122 @@
     min-width: 2.25rem;
   }
 
+  /*
+   * Planned vs due, the same everywhere:
+   *   Planned (when you'll work on it) = green, clock icon. Green is your time.
+   *   Due (the deadline)               = amber, flag icon; red once it's late.
+   * Always with a word ("Planned", "Due"), never colour alone.
+   */
+  .plan-badge,
+  .due-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0 0.45rem 0 0.35rem;
+    font-size: 11px;
+    line-height: 1.25rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .plan-badge {
+    background: color-mix(in oklab, var(--ok) 10%, var(--surface));
+    border-color: color-mix(in oklab, var(--ok) 28%, transparent);
+    color: color-mix(in oklab, var(--ok) 72%, var(--fg));
+  }
+  .due-badge {
+    background: color-mix(in oklab, var(--warn) 12%, var(--surface));
+    border-color: color-mix(in oklab, var(--warn) 34%, transparent);
+    color: color-mix(in oklab, var(--warn) 68%, var(--fg));
+  }
+  .due-badge[data-late="true"] {
+    background: color-mix(in oklab, var(--danger) 10%, var(--surface));
+    border-color: color-mix(in oklab, var(--danger) 35%, transparent);
+    color: var(--danger);
+  }
+  [data-theme="dark"] .plan-badge {
+    color: color-mix(in oklab, var(--ok) 80%, white);
+  }
+  [data-theme="dark"] .due-badge {
+    color: color-mix(in oklab, var(--warn) 85%, white);
+  }
+
+  /* A deadline on a timeline or calendar: an amber flag chip. */
+  .due-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 6px;
+    background: color-mix(in oklab, var(--warn) 11%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--warn) 30%, transparent);
+    color: var(--fg);
+  }
+  .due-chip > svg:first-child {
+    color: var(--warn);
+    flex: none;
+  }
+  .due-chip[data-late="true"] {
+    background: color-mix(in oklab, var(--danger) 9%, var(--surface));
+    border-color: color-mix(in oklab, var(--danger) 32%, transparent);
+  }
+  .due-chip[data-late="true"] > svg:first-child {
+    color: var(--danger);
+  }
+
+  /*
+   * Class tabs (Upcoming and Calendar): pick "All classes" or one class. The chosen
+   * tab takes its class colour, a heavier outline and bold text; the rest are quiet.
+   */
+  .class-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: none;
+    border-radius: 9999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 0.3rem 0.7rem 0.3rem 0.65rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+  .class-tab:hover {
+    border-color: var(--line-strong);
+    color: var(--fg);
+  }
+  .class-tab[aria-checked="true"] {
+    border: 2px solid var(--fg);
+    padding: calc(0.3rem - 1px) calc(0.7rem - 1px) calc(0.3rem - 1px) calc(0.65rem - 1px);
+    background: var(--surface-2);
+    color: var(--fg);
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+  }
+  .class-tab[aria-checked="true"][style] {
+    border-color: color-mix(in oklab, var(--c) 75%, var(--fg));
+    background: color-mix(in oklab, var(--c) 12%, var(--surface));
+  }
+  .class-tab-count {
+    min-width: 1.25rem;
+    border-radius: 9999px;
+    background: var(--surface-2);
+    padding: 0 0.35rem;
+    font-size: 11px;
+    line-height: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .class-tab[aria-checked="true"] .class-tab-count {
+    background: var(--surface);
+    color: var(--fg);
+  }
+
   /* The wordmark's full stop, in the accent: "SmartScheduler." */
   .wordmark-dot {
     color: var(--accent);
@@ -1168,4 +1285,55 @@
   textarea {
     font-size: 16px;
   }
+}
+
+/*
+ * Pictures of the app on the home page: a three-quarter 3D tilt, like a product shot,
+ * so they read as pictures and not as something to click.
+ */
+.picture-stage {
+  perspective: 2400px;
+  perspective-origin: 50% 30%;
+}
+.picture-tilt {
+  position: relative;
+  transform: rotateX(9deg) rotateY(-14deg) rotateZ(1.5deg) scale(0.94);
+  transform-origin: 50% 40%;
+  transform-style: preserve-3d;
+  border-radius: 1rem;
+  box-shadow:
+    0 2px 4px rgb(28 27 24 / 0.06),
+    28px 40px 60px -24px rgb(28 27 24 / 0.35),
+    60px 80px 120px -60px rgb(79 70 229 / 0.25);
+  pointer-events: none;
+  user-select: none;
+}
+[data-theme="dark"] .picture-tilt {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.4),
+    28px 40px 60px -24px rgb(0 0 0 / 0.8);
+}
+.picture-tag {
+  position: absolute;
+  top: -0.75rem;
+  right: 1.25rem;
+  border-radius: 9999px;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.2rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-md);
+}
+@media (max-width: 767px) {
+  .picture-tilt {
+    transform: rotateX(6deg) rotateY(-9deg) rotateZ(1deg) scale(0.96);
+  }
+}
+
+/* Class tabs carry their own "chosen" look; the colour-swatch radio outline doesn't apply. */
+.class-tab[role="radio"][aria-checked="true"]:not(:focus-visible) {
+  outline: none;
 }

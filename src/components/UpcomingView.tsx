@@ -7,6 +7,7 @@ import type { Task } from "@/lib/types";
 import { applyFilters, dayHeading, dayKey, duration, plural, typeMeta } from "@/lib/ui";
 import { useApp } from "./context";
 import { FilterBar } from "./FilterBar";
+import { ClassSummary, HiddenClasses } from "./ClassSummary";
 import { TaskRow } from "./TaskRow";
 import { Button, EmptyState } from "./ui";
 
@@ -39,6 +40,7 @@ function group(tasks: Task[], now: Date) {
 
 export function UpcomingView() {
   const { model, filters, now, openAddTask } = useApp();
+  const picked = filters.courses?.length === 1 ? model.courseById.get(filters.courses[0]) : undefined;
   const filtered = useMemo(() => applyFilters(model.tasks, filters), [model.tasks, filters]);
   const groups = useMemo(() => group(filtered, now), [filtered, now]);
   const empty = groups.overdue.length + groups.days.length + groups.undated.length === 0;
@@ -50,10 +52,13 @@ export function UpcomingView() {
           <FilterBar />
         </div>
         {/* Phones add from the round + in the bottom bar. */}
-        <Button icon={Plus} className="hidden md:inline-flex shrink-0" onClick={openAddTask}>
+        <Button icon={Plus} className="hidden md:inline-flex shrink-0" onClick={openAddTask} data-smart-event="add_task_opened">
           Add task
         </Button>
       </div>
+
+      {/* One class picked: its summary (when it meets, how much is left, Edit) above its work. */}
+      {picked ? <ClassSummary key={picked.id} course={picked} /> : null}
 
       {groups.overdue.length > 0 ? (
         <section>
@@ -64,7 +69,7 @@ export function UpcomingView() {
           </h2>
           <div className="space-y-1.5">
             {groups.overdue.map((t) => (
-              <TaskRow key={t.id} task={t} showDate />
+              <TaskRow key={t.id} task={t} showDate hideCourse={Boolean(picked)} />
             ))}
           </div>
         </section>
@@ -86,7 +91,7 @@ export function UpcomingView() {
             </div>
             <div className="space-y-1.5">
               {g.items.map((t) => (
-                <TaskRow key={t.id} task={t} />
+                <TaskRow key={t.id} task={t} hideCourse={Boolean(picked)} />
               ))}
             </div>
           </section>
@@ -101,7 +106,7 @@ export function UpcomingView() {
           </h2>
           <div className="space-y-1.5">
             {groups.undated.map((t) => (
-              <TaskRow key={t.id} task={t} />
+              <TaskRow key={t.id} task={t} hideCourse={Boolean(picked)} />
             ))}
           </div>
         </section>
@@ -116,7 +121,7 @@ export function UpcomingView() {
           </h2>
           <div className="space-y-1.5">
             {groups.done.map((t) => (
-              <TaskRow key={t.id} task={t} showDate />
+              <TaskRow key={t.id} task={t} showDate hideCourse={Boolean(picked)} />
             ))}
           </div>
         </section>
@@ -134,9 +139,10 @@ export function UpcomingView() {
             ) : null
           }
         >
-          {model.tasks.length === 0 ? "Add a school calendar in Settings, or add work by hand." : "Everything in view is done. Change the class filters above to see more."}
+          {model.tasks.length === 0 ? "Add a school calendar in Settings, or add work by hand." : "Everything in view is done. Pick \"All classes\" above to see the rest."}
         </EmptyState>
       ) : null}
+      <HiddenClasses />
     </div>
   );
 }

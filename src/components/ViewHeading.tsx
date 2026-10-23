@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, ChevronLeft, CircleHelp, LayoutGrid, ListChecks, Settings } from "lucide-react";
+import { CalendarRange, ChevronLeft, CircleHelp, ListChecks, Settings } from "lucide-react";
 import { useApp } from "./context";
 import { SETTINGS_SECTIONS } from "./SettingsView";
 import { PageHeader } from "./ui";
@@ -17,10 +17,7 @@ export function ViewHeading() {
     return <PageHeader icon={CalendarRange} title="Calendar" description="Your classes, events and planned work, by month, week or day. Click any free time to see what fits in it." />;
   }
   if (view === "upcoming") {
-    return <PageHeader icon={ListChecks} title="Upcoming" description="Everything that's due, day by day, and when SmartScheduler has planned it." />;
-  }
-  if (view === "classes") {
-    return <PageHeader icon={LayoutGrid} title="Classes" description="Each class side by side: when it meets, how much is left, and its work in due order." />;
+    return <PageHeader icon={ListChecks} title="Upcoming" description="Everything that's due, for all your classes or one at a time, and when SmartScheduler has planned it." />;
   }
   if (view === "help") {
     return <PageHeader icon={CircleHelp} title="Help" description="Your goal in this prototype, and the different ways to reach it." />;

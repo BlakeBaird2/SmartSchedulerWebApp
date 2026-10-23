@@ -1,11 +1,11 @@
 "use client";
 
-import { CircleAlert, Clock3 } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import type { Task } from "@/lib/types";
 import { differenceInCalendarDays, format } from "date-fns";
 import { clock, dueDate, duration, relativeDue, typeMeta, whenLabel } from "@/lib/ui";
 import { useApp } from "./context";
-import { Checkbox, ClassChip, TaskCard, TypeChip } from "./ui";
+import { Checkbox, ClassChip, DueBadge, PlannedBadge, TaskCard, TypeChip } from "./ui";
 
 /** The tick box for a task, wired to the app. */
 export function DoneToggle({ task, size = "md" }: { task: Task; size?: "sm" | "md" }) {
@@ -20,7 +20,7 @@ export function DoneToggle({ task, size = "md" }: { task: Task; size?: "sm" | "m
   );
 }
 
-/** Where the plan put this task, or that it won't fit, in plain words. */
+/** Where the plan put this task (a green "Planned" chip), or that it won't fit, in plain words. */
 export function PlanNote({ task }: { task: Task }) {
   const { index, now } = useApp();
   if (task.done) return null;
@@ -37,11 +37,24 @@ export function PlanNote({ task }: { task: Task }) {
   const days = differenceInCalendarDays(first.start, now);
   const day = days === 0 ? "today" : days === 1 ? "tomorrow" : format(first.start, "EEE");
   return (
-    <span className="inline-flex items-center gap-1">
-      <Clock3 size={12} aria-hidden />
+    <PlannedBadge>
       Planned {day} {clock(first.start)}
-    </span>
+    </PlannedBadge>
   );
+}
+
+/**
+ * When a task is due, as an amber "Due" chip: "Due tomorrow 9:30 AM", "Due Thu",
+ * or "2 days late" in red. `timeOnly` drops the day where a heading already says it.
+ */
+export function DueTag({ task, timeOnly = false }: { task: Task; timeOnly?: boolean }) {
+  const { now } = useApp();
+  const d = dueDate(task);
+  if (!d) return <span className="text-xs text-muted">No due date</span>;
+  const late = !task.done && d.getTime() < now.getTime();
+  if (late) return <DueBadge late>{relativeDue(d, now)}</DueBadge>;
+  const when = timeOnly ? (task.allDay ? "end of day" : clock(d)) : whenLabel(d, now, !task.allDay).replace(/^Today/, "today").replace(/^Tomorrow/, "tomorrow");
+  return <DueBadge>Due {when}</DueBadge>;
 }
 
 /**
@@ -80,10 +93,8 @@ export function AppTaskCard({
 
 /** A task in a full-width list (Upcoming): class, kind, time needed, plan, and when it's due on the right. */
 export function TaskRow({ task, showDate = false, hideCourse = false }: { task: Task; showDate?: boolean; hideCourse?: boolean }) {
-  const { model, now } = useApp();
+  const { model } = useApp();
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
-  const d = dueDate(task);
-  const overdue = Boolean(d && d.getTime() < now.getTime() && !task.done);
   const meta = typeMeta(task.type);
 
   return (
@@ -106,14 +117,7 @@ export function TaskRow({ task, showDate = false, hideCourse = false }: { task: 
           <PlanNote task={task} />
         </>
       }
-      trailing={
-        <>
-          <div className={`text-[0.875rem] font-semibold tabular-nums ${overdue ? "text-danger" : ""}`}>
-            {d ? (showDate ? whenLabel(d, now, !task.allDay) : task.allDay ? "All day" : clock(d)) : "No date"}
-          </div>
-          {d ? <div className={`text-xs ${overdue ? "text-danger font-semibold" : "hidden md:block text-muted"}`}>{relativeDue(d, now)}</div> : null}
-        </>
-      }
+      trailing={<DueTag task={task} timeOnly={!showDate} />}
     />
   );
 }
