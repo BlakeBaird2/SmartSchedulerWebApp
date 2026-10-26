@@ -450,6 +450,36 @@ works. Settings → About shows the session's events for facilitators.
 Not done: tying in an audience beyond college students (our professor called it
 optional).
 
+### 27. Calendar and to-do redesign, after the best-regarded planners
+
+We studied the calendar and to-do apps people hold up as the cleanest: **Sunsama**
+and **Akiflow** (a task list beside the calendar, dragged into the day),
+**Notion Calendar** (a quiet grid, a mini month, the time right now in a red
+pill), **Things 3** (big date numbers, "when" kept apart from "deadline") and
+**Todoist** (a week strip at the top of Upcoming). Everything below is on the
+`calendar-planner-redesign` branch.
+
+| Idea | Borrowed from | What we built |
+| --- | --- | --- |
+| Plan by dragging | Sunsama, Akiflow | Drag a task from the To do list onto a time and it's planned there. SmartScheduler replans everything else around it. Drag a planned block to move it, or back onto the list to hand it back. Each move can be undone. |
+| A to-do list beside the calendar | Sunsama, Akiflow, Amie | A To do column on the calendar, grouped by due day ("Due today", "Due Thu"), each task showing when it's planned or "Won't fit". |
+| Mini month | Notion Calendar, Google Calendar | A small month above the list. The open week is shaded, today is circled, and an amber dot marks days with something due. |
+| Quiet grid, big dates | Notion Calendar | Lighter hour lines, the weekday over a large date, today in an accent circle with a faint wash down its column, weekends slightly shaded, past events faded. |
+| The time right now | Notion Calendar | The red now-line gains a red pill with the time in the hour column. |
+| Deadlines in their own row | Akiflow, Google Calendar | A labelled **Due** row (amber flag) under the day headers, apart from **All day** events, so a deadline never looks like time on the grid. |
+| Your choice vs ours | Things 3 ("when" vs "deadline") | A time you picked carries a pin, on the calendar block, in the To do list and on the green Planned chip. Task details say "You picked this time" and offer **Let SmartScheduler choose**. |
+| Pick a time without dragging | Things 3's When picker | **Pick a time** in task details (a day and a start time) does the same as dragging, for phones and keyboards. |
+| Week at a glance | Todoist Upcoming | A seven-day strip at the top of Upcoming with amber dots for what's due; tap a day to jump to it. Day headings lead with the date as a big number. |
+| More room | Notion Calendar | The sidebar can be hidden (and stays hidden) to give the week the full width. |
+
+Planned stays green and Due stays amber everywhere, and planned blocks keep their
+white tile with a class-coloured outline. Phones keep the Google Calendar-style
+views; they plan with **Pick a time**.
+
+Also fixed: starting sample data from `/app#demo` changed the address bar while the
+page was still drawing, which React flagged as an error. The smart-event address
+update now waits until drawing is done.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

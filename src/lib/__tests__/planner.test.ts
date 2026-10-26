@@ -285,3 +285,52 @@ test("a busy week is planned sensibly end to end", () => {
   // No day goes over the limit except to finish something due within a day.
   assert.ok(plan.days.every((d) => d.plannedMinutes <= 150 + 60));
 });
+
+// ---------------------------------------------------------------------------
+// Pinned times (dragged onto the calendar)
+// ---------------------------------------------------------------------------
+
+test("pinned work stays where the student put it, and the rest is planned around it", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0, dayStart: 9 * 60, dayEnd: 12 * 60 }),
+    days: 1,
+    busy: [],
+    tasks: [task("essay", 60, at(3, 9)), task("quiz", 30, at(2, 9), "quiz")],
+    pins: { essay: at(1, 10) },
+  });
+  const blocks = plan.days[0].blocks;
+  assert.deepEqual(blocks.map((b) => `${b.taskId} ${span(b)}${b.pinned ? " pinned" : ""}`), [
+    "quiz 09:00-09:30",
+    "essay 10:00-11:00 pinned",
+  ]);
+  assert.deepEqual(plan.days[0].gaps.map(span), ["09:00-10:00", "11:00-12:00"], "the pinned hour is no longer free");
+  assert.equal(plan.atRisk.length, 0);
+});
+
+test("a pinned time that has passed is let go, so the task is planned again", () => {
+  const plan = buildPlan({
+    now: at(1, 12),
+    prefs: prefs({ buffer: 0 }),
+    days: 1,
+    busy: [],
+    tasks: [task("essay", 60, at(3, 9))],
+    pins: { essay: at(1, 9) },
+  });
+  const [block] = plan.days[0].blocks;
+  assert.equal(block.pinned, undefined);
+  assert.equal(span(block), "12:00-13:00");
+});
+
+test("pinned work counts toward the day's limit", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0, dailyMax: 60 }),
+    days: 2,
+    busy: [],
+    tasks: [task("a", 60, at(5, 9)), task("b", 60, at(5, 9))],
+    pins: { b: at(1, 15) },
+  });
+  assert.deepEqual(plan.days[0].blocks.map((b) => b.taskId), ["b"]);
+  assert.deepEqual(plan.days[1].blocks.map((b) => b.taskId), ["a"]);
+});

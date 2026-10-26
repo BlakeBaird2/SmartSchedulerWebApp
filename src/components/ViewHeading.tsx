@@ -14,7 +14,7 @@ export function ViewHeading() {
   const { view, settingsPanel, setSettingsPanel } = useApp();
 
   if (view === "calendar") {
-    return <PageHeader icon={CalendarRange} title="Calendar" description="Your classes, events and planned work, by month, week or day. Click any free time to see what fits in it." />;
+    return <PageHeader icon={CalendarRange} title="Calendar" description="Your classes, events and planned work, by month, week or day. Drag a task from your to-do list onto a time to plan it yourself." />;
   }
   if (view === "upcoming") {
     return <PageHeader icon={ListChecks} title="Upcoming" description="Everything that's due, for all your classes or one at a time, and when SmartScheduler has planned it." />;

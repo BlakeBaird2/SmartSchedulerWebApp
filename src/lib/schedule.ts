@@ -9,11 +9,12 @@ import type { PlanPrefs } from "./types";
 /** How far ahead the plan looks. Two weeks covers every deadline worth acting on now. */
 export const PLAN_DAYS = 14;
 
-export function makePlan(model: Model, prefs: PlanPrefs, now: Date, days = PLAN_DAYS): Plan {
+export function makePlan(model: Model, prefs: PlanPrefs, now: Date, pins: Record<string, string> = {}, days = PLAN_DAYS): Plan {
   return buildPlan({
     now,
     prefs,
     days,
+    pins: Object.fromEntries(Object.entries(pins).map(([id, at]) => [id, new Date(at)])),
     busy: busyIntervals(model.events),
     tasks: model.tasks
       .filter((t) => !t.done)

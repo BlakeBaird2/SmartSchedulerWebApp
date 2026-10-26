@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   addDays,
   addMonths,
@@ -16,13 +16,15 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, PanelLeftClose, PanelLeftOpen, Pin } from "lucide-react";
 import { layoutColumns } from "@/lib/layout";
 import type { PlannedBlock } from "@/lib/planner";
 import type { CalEvent, Task } from "@/lib/types";
 import { applyFilters, clock, clockRange, dayKey, duration, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
+import { CalendarSidebar } from "./CalendarSidebar";
+import { endPlanDrag, PLAN_DRAG_TYPE, startPlanDrag, usePlanDrag } from "./planDrag";
 import { Button, SegmentedControl } from "./ui";
 
 const MODES: { id: CalMode; label: string }[] = [
@@ -76,10 +78,11 @@ function useCalendarData() {
 }
 
 export function CalendarView() {
-  const { calMode: saved, setCalMode, calCursor, setCalCursor, timezone } = useApp();
+  const { calMode: saved, setCalMode, calCursor, setCalCursor, timezone, calSidebar, setCalSidebar } = useApp();
   const phone = useIsPhone();
   const calMode = modeFor(saved, phone);
   const data = useCalendarData();
+  const dueDays = useMemo(() => new Set(data.dueByDay.keys()), [data.dueByDay]);
 
   const step = (dir: number) => {
     if (calMode === "month") setCalCursor(addMonths(calCursor, dir));
@@ -101,11 +104,25 @@ export function CalendarView() {
   const weekDays = useMemo(() => eachDayOfInterval({ start: startOfWeek(calCursor, WEEK), end: endOfWeek(calCursor, WEEK) }), [calCursor]);
   const threeDays = useMemo(() => [0, 1, 2].map((i) => addDays(startOfDay(calCursor), i)), [calCursor]);
 
-  return (
-    <div className="space-y-3">
-      <FilterBar />
-      {phone ? (
-        // Phones: Google Calendar's app header. The month on the left, Today and the arrows on the right, the views underneath.
+  const views = (
+    <>
+      {calMode === "month" ? <MonthGrid data={data} phone={phone} /> : null}
+      {calMode === "month" && phone ? (
+        // Phones: tap a day in the month and its events and work are listed underneath.
+        <Agenda data={data} count={1} />
+      ) : null}
+      {calMode === "week" ? <TimeGrid days={weekDays} data={data} /> : null}
+      {calMode === "3day" ? <TimeGrid days={threeDays} data={data} /> : null}
+      {calMode === "day" ? <TimeGrid days={[startOfDay(calCursor)]} data={data} /> : null}
+      {calMode === "schedule" ? <Agenda data={data} /> : null}
+    </>
+  );
+
+  if (phone) {
+    return (
+      <div className="space-y-3">
+        <FilterBar />
+        {/* Phones: Google Calendar's app header. The month on the left, Today and the arrows on the right, the views underneath. */}
         <div className="space-y-2.5">
           <div className="flex items-center gap-1">
             <h2 className="text-xl font-bold tracking-tight flex-1 min-w-0 truncate" aria-live="polite">
@@ -119,60 +136,79 @@ export function CalendarView() {
           </div>
           <SegmentedControl label="Calendar view" stretch options={PHONE_MODES} value={calMode} onChange={setCalMode} />
         </div>
-      ) : (
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Same order as Google and Outlook calendars: Today, back, forward, then the range. */}
-          <div className="flex items-center gap-1">
-            <Button onClick={() => setCalCursor(new Date())} className="mr-1">
-              Today
-            </Button>
-            <Button iconOnly icon={ChevronLeft} label={`Previous ${calMode}`} onClick={() => step(-1)} />
-            <Button iconOnly icon={ChevronRight} label={`Next ${calMode}`} onClick={() => step(1)} />
-          </div>
-          <h2 className="text-lg font-bold ml-1" aria-live="polite">
-            {title}
-          </h2>
-          <SegmentedControl label="Calendar range" className="ml-auto" options={MODES} value={calMode} onChange={setCalMode} />
-        </div>
-      )}
-
-      {calMode === "month" ? <MonthGrid data={data} phone={phone} /> : null}
-      {calMode === "month" && phone ? (
-        // Phones: tap a day in the month and its events and work are listed underneath.
-        <Agenda data={data} count={1} />
-      ) : null}
-      {calMode === "week" ? <TimeGrid days={weekDays} data={data} /> : null}
-      {calMode === "3day" ? <TimeGrid days={threeDays} data={data} /> : null}
-      {calMode === "day" ? <TimeGrid days={[startOfDay(calCursor)]} data={data} /> : null}
-      {calMode === "schedule" ? <Agenda data={data} /> : null}
-
-      <div className="hidden md:flex items-center gap-4 flex-wrap text-xs text-muted">
-        {calMode !== "month" ? (
-          <>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 event-block" style={courseStyle("#64748b")} /> Events and classes (busy)
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-4 h-3.5 plan-block !rounded-[4px] grid place-items-center" style={courseStyle("#64748b")}>
-                <span className="plan-tick !w-2 !h-2 !rounded-[2px]" />
-              </span>{" "}
-              Planned: when you&apos;ll work on it (white with a tick box, it can move)
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="due-chip !inline-flex px-1 py-px">
-                <Flag size={10} aria-hidden />
-              </span>{" "}
-              Due: a deadline (amber flag, red when late)
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[3px] bg-surface border border-line-strong" /> Open space is free time (click it to see what fits)
-            </span>
-          </>
-        ) : (
-          <span>Click a day to open it.</span>
-        )}
-        <span className="ml-auto">Times in {timezone.replace(/_/g, " ")}</span>
+        {views}
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <FilterBar />
+      {/* Computers: Notion Calendar and Sunsama's layout. A month to jump around and the work to plan on the left, the calendar on the right. */}
+      <div className={calSidebar ? "lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-5 lg:items-start" : ""}>
+        {calSidebar ? <CalendarSidebar mode={calMode} dueDays={dueDays} /> : null}
+        <div className="min-w-0 space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              iconOnly
+              icon={calSidebar ? PanelLeftClose : PanelLeftOpen}
+              label={calSidebar ? "Hide the to-do list" : "Show the to-do list"}
+              aria-pressed={calSidebar}
+              className="hidden lg:inline-flex"
+              onClick={() => setCalSidebar(!calSidebar)}
+            />
+            {/* Same order as Google and Outlook calendars: Today, back, forward, then the range. */}
+            <div className="flex items-center gap-1">
+              <Button onClick={() => setCalCursor(new Date())} className="mr-1">
+                Today
+              </Button>
+              <Button iconOnly icon={ChevronLeft} label={`Previous ${calMode}`} onClick={() => step(-1)} />
+              <Button iconOnly icon={ChevronRight} label={`Next ${calMode}`} onClick={() => step(1)} />
+            </div>
+            <h2 className="text-xl font-bold tracking-tight ml-1" aria-live="polite">
+              {title}
+            </h2>
+            <SegmentedControl label="Calendar range" className="ml-auto" options={MODES} value={calMode} onChange={setCalMode} />
+          </div>
+          {views}
+          <Legend month={calMode === "month"} timezone={timezone} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** What each kind of block means, in a word and a picture. */
+function Legend({ month, timezone }: { month: boolean; timezone: string }) {
+  return (
+    <div className="hidden md:flex items-center gap-x-5 gap-y-2 flex-wrap text-xs text-muted">
+      {!month ? (
+        <>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-4 h-3.5 event-block !rounded-[4px]" style={courseStyle("#64748b")} aria-hidden />
+            Class or event
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-4 h-3.5 plan-block !rounded-[4px] grid place-items-center" style={courseStyle("#64748b")} aria-hidden>
+              <span className="plan-tick !w-2 !h-2 !rounded-[2px]" />
+            </span>
+            Planned work <span className="text-faint">(drag to move)</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Pin size={12} className="text-ok" aria-hidden />
+            A time you picked
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="due-chip !inline-flex px-1 py-px" aria-hidden>
+              <Flag size={10} />
+            </span>
+            Due
+          </span>
+        </>
+      ) : (
+        <span>Click a day to open it.</span>
+      )}
+      <span className="ml-auto">Times in {timezone.replace(/_/g, " ")}</span>
     </div>
   );
 }
@@ -437,12 +473,17 @@ type GridItem =
   | { kind: "work"; id: string; start: number; end: number; block: PlannedBlock; task: Task };
 
 const MIN = 60_000;
+/** Dropped work snaps to quarter hours. */
+const SNAP = 15;
 
 type GapItem = { id: string; start: number; end: number; startMs: number; minutes: number };
 
 function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
-  const { ws, now, select, setCalCursor, setCalMode, model, plan } = useApp();
+  const { ws, now, select, setCalCursor, setCalMode, model, plan, planAt } = useApp();
   const single = days.length === 1;
+  const drag = usePlanDrag();
+  // Where dragged work would land: which day, and minutes after that day's midnight.
+  const [drop, setDrop] = useState<{ from: number; minute: number } | null>(null);
 
   const columns = useMemo(
     () =>
@@ -476,6 +517,8 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
       }),
     [days, data, plan.days],
   );
+  const anyAllDay = columns.some((c) => c.allDay.length > 0);
+  const anyDue = columns.some((c) => c.due.length > 0);
 
   // Show the working day, stretched to fit anything outside it.
   let startHour = Math.floor(ws.prefs.dayStart / 60);
@@ -490,6 +533,15 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
   endHour = Math.min(24, Math.max(endHour, startHour + 1));
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
   const top = (ms: number, from: number) => TOP_PAD + ((ms - from) / MIN - startHour * 60) * (HOUR_PX / 60);
+  const gridHeight = TOP_PAD + hours.length * HOUR_PX;
+  const nowInView = columns.some((c) => isSameDay(c.day, now)) && now.getHours() >= startHour && now.getHours() < endHour;
+
+  /** The minute of the day that dragged work would start at, from the pointer's height. */
+  const minuteAt = (e: React.DragEvent<HTMLElement>, minutes: number, grab: number) => {
+    const y = e.clientY - e.currentTarget.getBoundingClientRect().top - TOP_PAD;
+    const m = Math.round((startHour * 60 + (y / HOUR_PX) * 60 - grab) / SNAP) * SNAP;
+    return Math.max(startHour * 60, Math.min(endHour * 60 - Math.min(minutes, 60), m));
+  };
 
   // On a narrow screen the week scrolls sideways; start it at today.
   const scroller = useRef<HTMLDivElement>(null);
@@ -502,88 +554,141 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
     }
   }, [firstDay]);
 
+  const gutter = "w-12 md:w-14 shrink-0 sticky left-0 z-20 bg-surface";
+
   return (
-    <div ref={scroller} className="card overflow-x-auto scrollbar-thin">
-      <div className={days.length === 7 ? "min-w-[840px]" : ""}>
-        {/* Day headers, all-day events and deadlines */}
-        <div className="flex border-b border-line bg-surface-2/40">
-          <div className="w-11 md:w-14 shrink-0 sticky left-0 z-20 bg-surface" />
-          {columns.map((c) => (
-            <div key={c.from} data-today={isToday(c.day) || undefined} className="flex-1 min-w-0 border-l border-line px-2 py-2">
-              {!single ? (
-                <button
-                  type="button"
-                  className="w-full text-left"
-                  onClick={() => {
-                    setCalCursor(c.day);
-                    setCalMode("day");
-                  }}
-                >
-                  <span className="text-[11px] uppercase tracking-wide text-muted font-semibold">{format(c.day, "EEE")} </span>
-                  <span
-                    className={`text-sm tabular-nums inline-flex items-center justify-center ${isToday(c.day) ? "bg-accent text-white font-bold w-6 h-6 rounded-full" : "font-semibold"}`}
+    <div ref={scroller} className="card cal-grid overflow-x-auto scrollbar-thin">
+      <div className={days.length === 7 ? "min-w-[760px]" : ""}>
+        {/* Day headers: the weekday over a big date, today in a filled circle */}
+        {!single ? (
+          <div className="flex border-b border-line">
+            <div className={gutter} />
+            {columns.map((c) => {
+              const today = isToday(c.day);
+              return (
+                <div key={c.from} data-today={today || undefined} className="flex-1 min-w-0 border-l border-line/70 first-of-type:border-l-0">
+                  <button
+                    type="button"
+                    className="cal-day-head w-full py-2 flex flex-col items-center gap-0.5"
+                    onClick={() => {
+                      setCalCursor(c.day);
+                      setCalMode("day");
+                    }}
+                    aria-label={`Open ${format(c.day, "EEEE, MMMM d")}`}
                   >
-                    {format(c.day, "d")}
-                  </span>
-                </button>
-              ) : null}
-              <div className="space-y-1 mt-1">
+                    <span className={`text-[11px] uppercase tracking-wider font-semibold ${today ? "text-accent" : "text-muted"}`}>{format(c.day, "EEE")}</span>
+                    <span className={`cal-date ${today ? "cal-date-today" : ""}`}>{format(c.day, "d")}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* All-day events, then deadlines, each in its own labelled row */}
+        {anyAllDay ? (
+          <Lane label="All day" gutter={gutter}>
+            {columns.map((c) => (
+              <LaneCell key={c.from}>
                 {c.allDay.map((e) => (
                   <button
                     key={e.id}
                     type="button"
                     onClick={() => select({ kind: "event", id: e.id })}
-                    className="course-chip w-full truncate text-left px-1.5 py-0.5 text-[11px] font-medium"
+                    className="event-block w-full truncate text-left px-1.5 py-0.5 text-[11px] font-medium"
                     style={courseStyle(e.color)}
                     title={e.title}
                   >
-                    {e.title}
+                    <span className="event-title">{e.title}</span>
                   </button>
                 ))}
+              </LaneCell>
+            ))}
+          </Lane>
+        ) : null}
+        {anyDue ? (
+          <Lane label="Due" icon gutter={gutter}>
+            {columns.map((c) => (
+              <LaneCell key={c.from}>
                 {c.due.map((t) => {
                   const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+                  const late = !t.done && t.dueAt ? Date.parse(t.dueAt) < now.getTime() : false;
                   return (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: t.id })}
+                      data-late={late || undefined}
                       className={`due-chip w-full text-left px-1.5 py-0.5 text-[11px] ${t.done ? "opacity-45 line-through" : ""}`}
                       style={courseStyle(course?.color)}
                       title={`Due ${t.allDay ? "today" : clock(new Date(t.dueAt!))}: ${t.title}`}
                     >
                       <Flag size={10} aria-hidden />
                       <span className="truncate">
-                        <span className="font-semibold">Due{t.allDay ? "" : ` ${clock(new Date(t.dueAt!))}`}</span> {t.title}
+                        {!t.allDay ? <span className="font-semibold tabular-nums">{clock(new Date(t.dueAt!))} </span> : null}
+                        {t.title}
                       </span>
                     </button>
                   );
                 })}
-              </div>
-            </div>
-          ))}
-        </div>
+              </LaneCell>
+            ))}
+          </Lane>
+        ) : null}
 
         {/* Hours, with a little room under the day headers */}
         <div className="flex relative">
-          <div className="w-11 md:w-14 shrink-0 sticky left-0 z-20 bg-surface" style={{ paddingTop: TOP_PAD }}>
-            {hours.map((h) => (
-              <div key={h} className="text-[11px] text-faint text-right pr-2 tabular-nums -translate-y-1.5" style={{ height: HOUR_PX }}>
+          <div className={`${gutter} relative`} style={{ height: gridHeight }}>
+            {hours.map((h, i) => (
+              <div key={h} className="absolute right-2 text-[11px] text-faint tabular-nums -translate-y-1/2" style={{ top: TOP_PAD + i * HOUR_PX }}>
                 {h === 0 ? "" : clock(new Date(2000, 0, 1, h))}
               </div>
             ))}
+            {nowInView ? (
+              // Notion Calendar's touch: the time right now, in red, where the line meets the hours.
+              <div className="cal-now-pill absolute right-1 z-10 -translate-y-1/2" style={{ top: top(now.getTime(), startOfDay(now).getTime()) }}>
+                {format(now, "h:mm")}
+              </div>
+            ) : null}
           </div>
           {columns.map((c) => {
             const placed = layoutColumns(c.items, (i) => i.start, (i) => i.end);
-            const showNow = isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour;
+            const today = isSameDay(c.day, now);
+            const showNow = today && nowInView;
+            const weekend = c.day.getDay() === 0 || c.day.getDay() === 6;
+            const preview = drag && drop?.from === c.from ? drop.minute : null;
             return (
-              <div key={c.from} className="flex-1 min-w-0 relative border-l border-line" style={{ height: TOP_PAD + hours.length * HOUR_PX }}>
+              <div
+                key={c.from}
+                className={`flex-1 min-w-0 relative border-l border-line/70 ${today ? "cal-col-today" : weekend ? "cal-col-weekend" : ""}`}
+                style={{ height: gridHeight }}
+                onDragOver={(e) => {
+                  if (!drag || !e.dataTransfer.types.includes(PLAN_DRAG_TYPE)) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  const minute = minuteAt(e, drag.minutes, drag.grab);
+                  if (drop?.from !== c.from || drop.minute !== minute) setDrop({ from: c.from, minute });
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDrop((d) => (d?.from === c.from ? null : d));
+                }}
+                onDrop={(e) => {
+                  setDrop(null);
+                  if (!drag) return;
+                  e.preventDefault();
+                  const task = model.tasks.find((t) => t.id === drag.taskId);
+                  const minute = minuteAt(e, drag.minutes, drag.grab);
+                  if (task) planAt(task, new Date(c.from + minute * MIN));
+                  endPlanDrag();
+                }}
+              >
                 {hours.map((h, i) => (
-                  <div key={h} className="absolute inset-x-0 border-t border-line/70" style={{ top: TOP_PAD + i * HOUR_PX }} />
+                  <div key={h} className="absolute inset-x-0 border-t border-line/60" style={{ top: TOP_PAD + i * HOUR_PX }} />
                 ))}
                 {c.gaps.map((g) => {
                   const y = top(g.start, c.from);
                   const gh = Math.max(14, top(g.end, c.from) - y - 2);
-                  if (y + gh < 0 || y > TOP_PAD + hours.length * HOUR_PX) return null;
+                  if (y + gh < 0 || y > gridHeight) return null;
                   return (
                     <button
                       key={g.id}
@@ -606,6 +711,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                     left: `calc(${(col / cols) * 100}% + 3px)`,
                     width: `calc(${100 / cols}% - 6px)`,
                   };
+                  const past = item.end <= now.getTime();
                   // Tall blocks let the title wrap to two lines instead of cutting it off.
                   const titleFit = h >= 56 ? "line-clamp-2" : "truncate";
                   if (item.kind === "event") {
@@ -615,7 +721,7 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                         key={item.id}
                         type="button"
                         onClick={() => select({ kind: "event", id: e.id })}
-                        className={`event-block absolute z-[1] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 ${e.busy ? "" : "opacity-60"}`}
+                        className={`event-block absolute z-[1] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 ${e.busy ? "" : "opacity-60"} ${past ? "cal-past" : ""} ${drag ? "pointer-events-none" : ""}`}
                         style={{ ...style, ...courseStyle(e.color) }}
                         title={`${e.title} · ${clockRange(new Date(e.start), new Date(e.end))}`}
                       >
@@ -624,33 +730,33 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       </button>
                     );
                   }
-                  const course = item.task.courseId ? model.courseById.get(item.task.courseId) : undefined;
                   return (
-                    <button
+                    <PlannedTile
                       key={item.id}
-                      type="button"
-                      onClick={() => select({ kind: "task", id: item.task.id })}
-                      className={`plan-block absolute z-[1] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 ${item.task.done ? "opacity-50" : ""}`}
-                      style={{ ...style, ...courseStyle(course?.color) }}
-                      title={`Work on ${item.task.title} · ${duration(item.block.minutes)}`}
-                    >
-                      <div className="flex items-start gap-1.5 min-w-0">
-                        <span className="plan-tick mt-[3px]" data-done={item.task.done || undefined} aria-hidden />
-                        <span className={`text-xs font-semibold leading-tight ${titleFit}`}>{item.task.title}</span>
-                      </div>
-                      {h >= 40 ? (
-                        <div className="text-[11px] text-muted leading-tight truncate">
-                          {course ? <span className="course-text">{course.code} · </span> : null}
-                          {duration(item.block.minutes)}
-                        </div>
-                      ) : null}
-                    </button>
+                      item={item}
+                      style={style}
+                      h={h}
+                      titleFit={titleFit}
+                      dragging={drag?.taskId === item.task.id}
+                      passThrough={Boolean(drag) && drag?.taskId !== item.task.id}
+                    />
                   );
                 })}
+                {preview !== null && drag ? (
+                  <div
+                    className="plan-drop absolute inset-x-1 z-[5] pointer-events-none px-2 py-1"
+                    style={{ top: top(c.from + preview * MIN, c.from) + 2, height: Math.max(22, (drag.minutes * HOUR_PX) / 60 - 4), ...courseStyle(drag.color) }}
+                    aria-hidden
+                  >
+                    {/* Short blocks put the time first on one line, so where it lands is always readable. */}
+                    {drag.minutes >= 45 ? <div className="text-xs font-semibold truncate">{drag.title}</div> : null}
+                    <div className="text-[11px] font-semibold tabular-nums truncate">{clockRange(new Date(c.from + preview * MIN), new Date(c.from + (preview + drag.minutes) * MIN))}</div>
+                  </div>
+                ) : null}
                 {showNow ? (
                   <div className="absolute inset-x-0 z-10 pointer-events-none" style={{ top: top(now.getTime(), c.from) }}>
-                    <div className="h-px bg-danger" />
-                    <div className="absolute -left-1 -top-1 w-2 h-2 rounded-full bg-danger" />
+                    <div className="h-[2px] bg-danger" />
+                    <div className="absolute -left-[5px] -top-[4px] w-2.5 h-2.5 rounded-full bg-danger" />
                   </div>
                 ) : null}
               </div>
@@ -658,6 +764,83 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** A labelled row above the hours: "All day" or "Due". */
+function Lane({ label, icon = false, gutter, children }: { label: string; icon?: boolean; gutter: string; children: React.ReactNode }) {
+  return (
+    <div className="flex border-b border-line">
+      <div className={`${gutter} flex items-start justify-end gap-1 pr-2 pt-1.5 text-[10.5px] font-semibold uppercase tracking-wide ${icon ? "text-warn" : "text-faint"}`}>
+        {icon ? <Flag size={10} className="mt-px" aria-hidden /> : null}
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function LaneCell({ children }: { children: React.ReactNode }) {
+  return <div className="flex-1 min-w-0 border-l border-line/70 p-1 space-y-1">{children}</div>;
+}
+
+/**
+ * Planned work on the grid: a white tile in its class colour with a tick box. It can
+ * be dragged to another time, which pins it there. A pin marks a time you picked.
+ */
+function PlannedTile({
+  item,
+  style,
+  h,
+  titleFit,
+  dragging,
+  passThrough,
+}: {
+  item: Extract<GridItem, { kind: "work" }>;
+  style: React.CSSProperties;
+  h: number;
+  titleFit: string;
+  dragging: boolean;
+  passThrough: boolean;
+}) {
+  const { model, select } = useApp();
+  const { task, block } = item;
+  const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
+  const open = () => select({ kind: "task", id: task.id });
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      draggable={!task.done}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      }}
+      onDragStart={(e) => {
+        const grab = Math.round(((e.clientY - e.currentTarget.getBoundingClientRect().top) / HOUR_PX) * 60);
+        startPlanDrag(e, { taskId: task.id, title: task.title, minutes: block.minutes, grab, pinned: Boolean(block.pinned), color: course?.color ?? null });
+      }}
+      onDragEnd={endPlanDrag}
+      className={`plan-block absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 cursor-grab active:cursor-grabbing ${task.done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
+      style={{ ...style, ...courseStyle(course?.color) }}
+      title={`${block.pinned ? "You picked this time. " : ""}Work on ${task.title} · ${duration(block.minutes)}. Drag to move.`}
+      aria-label={`Planned: ${task.title}, ${clockRange(block.start, block.end)}${block.pinned ? ", a time you picked" : ""}. Open details`}
+    >
+      <div className="flex items-start gap-1.5 min-w-0">
+        <span className="plan-tick mt-[3px]" data-done={task.done || undefined} aria-hidden />
+        <span className={`text-xs font-semibold leading-tight flex-1 min-w-0 ${titleFit}`}>{task.title}</span>
+        {block.pinned ? <Pin size={11} className="shrink-0 mt-px text-ok" aria-hidden /> : null}
+      </div>
+      {h >= 40 ? (
+        <div className="text-[11px] text-muted leading-tight truncate">
+          {course ? <span className="course-text">{course.code} · </span> : null}
+          {h >= 60 ? clockRange(block.start, block.end) : duration(block.minutes)}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1256,6 +1256,178 @@
     color: var(--fg);
   }
 
+  /*
+   * The calendar, after Notion Calendar: quiet hour lines, a big date under each
+   * weekday, today in a filled circle and a faint wash down its column, and the
+   * time right now as a red line with the time in a pill.
+   */
+  .cal-day-head {
+    border-radius: 0;
+    transition: background 120ms ease;
+  }
+  .cal-day-head:hover {
+    background: var(--surface-2);
+  }
+  .cal-date {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-date-today {
+    background: var(--accent);
+    color: #fff;
+  }
+  [data-theme="dark"] .cal-date-today {
+    color: #14123a;
+  }
+  .cal-col-today {
+    background: color-mix(in oklab, var(--accent) 3.5%, transparent);
+  }
+  .cal-col-weekend {
+    background: color-mix(in oklab, var(--surface-2) 45%, transparent);
+  }
+  .cal-now-pill {
+    border-radius: 9999px;
+    background: var(--danger);
+    color: #fff;
+    padding: 0 0.35rem;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Things that have already happened step back, like Google and Notion calendars. */
+  .cal-past {
+    opacity: 0.6;
+  }
+  .cal-past:hover {
+    opacity: 1;
+  }
+
+  /*
+   * Where dragged work will land: a solid accent outline around a soft wash, with the
+   * time it would take. Solid, not dashed, so it never reads as free time.
+   */
+  .plan-drop {
+    border-radius: 8px;
+    border: 2px solid var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+    color: color-mix(in oklab, var(--accent) 70%, var(--fg));
+    box-shadow: var(--shadow-md);
+  }
+
+  /* The small month in the calendar's sidebar. */
+  .mini-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1px 0 0;
+    border-radius: 8px;
+    color: var(--fg);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mini-day[data-out] {
+    color: var(--faint);
+  }
+  .mini-day:hover .mini-day-num {
+    background: var(--surface-2);
+  }
+  .mini-day-range {
+    background: var(--accent-soft);
+    border-radius: 0;
+  }
+  .mini-day-range:nth-child(7n + 1),
+  .mini-day-range:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+  .mini-day-range:nth-child(7n) {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  .mini-day-num {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  .mini-day-today,
+  .mini-day:hover .mini-day-today {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+  [data-theme="dark"] .mini-day-today {
+    color: #14123a;
+  }
+  /* An amber dot under a day when something is due, the same amber as every deadline. */
+  .mini-day-dot {
+    width: 4px;
+    height: 4px;
+    margin: 1px 0 2px;
+    border-radius: 9999px;
+    background: var(--warn);
+  }
+
+  /* The sidebar's to-do list, and the drop zone it becomes while a planned block is dragged. */
+  .todo-panel {
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 120ms ease, background 120ms ease;
+  }
+  [data-theme="dark"] .todo-panel {
+    box-shadow: none;
+  }
+  .todo-panel-target {
+    border: 2px solid color-mix(in oklab, var(--accent) 45%, var(--line));
+  }
+  .todo-panel-over {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .todo-item {
+    border-radius: 10px;
+  }
+
+  /* Upcoming's week strip: one tile per day, amber dots for what's due. */
+  .week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 0.45rem 0 0.5rem;
+    color: var(--fg);
+    transition: border-color 120ms ease, background 120ms ease;
+  }
+  .week-day:not(:disabled):hover {
+    border-color: var(--line-strong);
+    background: var(--surface-2);
+  }
+  .week-day:disabled {
+    color: var(--muted);
+    background: transparent;
+    cursor: default;
+  }
+  .week-day[data-today] {
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+    color: var(--accent);
+  }
+
   /* The wordmark's full stop, in the accent: "SmartScheduler." */
   .wordmark-dot {
     color: var(--accent);

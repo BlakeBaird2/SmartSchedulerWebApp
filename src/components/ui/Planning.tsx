@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, ChevronRight, Clock, Flag, Undo2 } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, Flag, Pin, Undo2 } from "lucide-react";
 import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
@@ -219,10 +219,11 @@ export function FreeGapBlock({
  * When the work is planned: a green chip with a clock ("Planned today 3:25 PM").
  * Paired with DueBadge, so "when you'll do it" and "when it's due" never look alike.
  */
-export function PlannedBadge({ children, title }: { children: React.ReactNode; title?: string }) {
+export function PlannedBadge({ children, title, pinned = false }: { children: React.ReactNode; title?: string; pinned?: boolean }) {
+  const Icon = pinned ? Pin : Clock;
   return (
-    <span className="plan-badge" title={title ?? "When SmartScheduler planned this"}>
-      <Clock size={11} strokeWidth={2.5} aria-hidden />
+    <span className="plan-badge" title={title ?? (pinned ? "A time you picked" : "When SmartScheduler planned this")}>
+      <Icon size={11} strokeWidth={2.5} aria-hidden />
       {children}
     </span>
   );

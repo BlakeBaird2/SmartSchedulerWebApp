@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { startOfDay } from "date-fns";
+import { addDays, differenceInCalendarDays, format, isToday, startOfDay } from "date-fns";
 import { CalendarCheck, CircleCheckBig, Flame, Inbox, Plus } from "lucide-react";
 import type { Task } from "@/lib/types";
-import { applyFilters, dayHeading, dayKey, duration, plural, typeMeta } from "@/lib/ui";
+import { applyFilters, dayKey, duration, plural, typeMeta } from "@/lib/ui";
 import { useApp } from "./context";
 import { FilterBar } from "./FilterBar";
 import { ClassSummary, HiddenClasses } from "./ClassSummary";
@@ -38,6 +38,43 @@ function group(tasks: Task[], now: Date) {
   return { overdue, days: [...days.entries()].map(([key, g]) => ({ key, ...g })), undated, done };
 }
 
+/**
+ * The next seven days at a glance, like Todoist's Upcoming: each day shows its date
+ * and an amber dot for each thing due. Tap a day to jump to it.
+ */
+function WeekStrip({ days }: { days: { key: string; items: Task[] }[] }) {
+  const { now } = useApp();
+  const counts = new Map(days.map((d) => [d.key, d.items.length]));
+  const week = Array.from({ length: 7 }, (_, i) => addDays(startOfDay(now), i));
+  return (
+    <nav aria-label="Jump to a day" className="grid grid-cols-7 gap-1 sm:gap-1.5">
+      {week.map((d, i) => {
+        const k = dayKey(d);
+        const n = counts.get(k) ?? 0;
+        return (
+          <button
+            key={k}
+            type="button"
+            disabled={n === 0}
+            onClick={() => document.getElementById(`due-${k}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="week-day"
+            data-today={i === 0 || undefined}
+            aria-label={`${format(d, "EEEE, MMMM d")}: ${n === 0 ? "nothing due" : plural(n, "thing") + " due"}`}
+          >
+            <span className="text-[10.5px] font-semibold uppercase tracking-wide">{i === 0 ? "Today" : format(d, "EEE")}</span>
+            <span className="text-lg font-bold tabular-nums leading-tight">{format(d, "d")}</span>
+            <span className="flex gap-[3px] h-1.5 items-center" aria-hidden>
+              {Array.from({ length: Math.min(n, 4) }, (_, j) => (
+                <span key={j} className="w-1.5 h-1.5 rounded-full bg-warn" />
+              ))}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function UpcomingView() {
   const { model, filters, now, openAddTask } = useApp();
   const picked = filters.courses?.length === 1 ? model.courseById.get(filters.courses[0]) : undefined;
@@ -60,6 +97,8 @@ export function UpcomingView() {
       {/* One class picked: its summary (when it meets, how much is left, Edit) above its work. */}
       {picked ? <ClassSummary key={picked.id} course={picked} /> : null}
 
+      <WeekStrip days={groups.days} />
+
       {groups.overdue.length > 0 ? (
         <section>
           <h2 className="flex items-center gap-2 text-sm font-semibold text-danger mb-2">
@@ -76,15 +115,29 @@ export function UpcomingView() {
       ) : null}
 
       {groups.days.map((g) => {
-        const h = dayHeading(g.date, now);
+        const n = differenceInCalendarDays(g.date, now);
+        const h = {
+          title: n === 0 ? "Today" : n === 1 ? "Tomorrow" : format(g.date, "EEEE"),
+          sub: n <= 1 ? format(g.date, "EEEE, MMMM") : format(g.date, "MMMM"),
+        };
         const minutes = g.items.reduce((s, t) => s + t.estimate, 0);
         const loud = g.items.filter((t) => typeMeta(t.type).loud).length;
+        const today = isToday(g.date);
         return (
-          <section key={g.key}>
-            <div className="flex items-baseline gap-2 mb-2 sticky top-14 md:top-[6.5rem] lg:top-14 bg-bg/95 backdrop-blur py-1.5 z-10 border-b border-line">
-              <h2 className="text-sm font-semibold">{h.title}</h2>
-              <span className="hidden sm:inline text-xs text-muted">{h.sub}</span>
-              <span className="ml-auto text-xs text-muted tabular-nums whitespace-nowrap">
+          <section key={g.key} id={`due-${g.key}`} className="scroll-mt-28 md:scroll-mt-40 lg:scroll-mt-28">
+            {/* Things 3's day heading: the date as a big number, then what the day is called. */}
+            <div className="flex items-end gap-3 mb-2 sticky top-14 md:top-[6.5rem] lg:top-14 bg-bg/95 backdrop-blur pt-2 pb-1.5 z-10 border-b border-line">
+              <span className={`text-[1.75rem] leading-none font-bold tabular-nums tracking-tight ${today ? "text-accent" : ""}`} aria-hidden>
+                {format(g.date, "d")}
+              </span>
+              <div className="min-w-0 flex-1 pb-px">
+                <h2 className="text-sm font-semibold leading-tight">
+                  <span className="sr-only">Due </span>
+                  {h.title}
+                </h2>
+                <div className="text-xs text-muted leading-tight">{h.sub}</div>
+              </div>
+              <span className="text-xs text-muted tabular-nums whitespace-nowrap pb-px">
                 {plural(g.items.length, "task")} · {duration(minutes)}
                 {loud > 0 ? <span className="text-warn font-medium"> · {loud} quiz/exam</span> : null}
               </span>

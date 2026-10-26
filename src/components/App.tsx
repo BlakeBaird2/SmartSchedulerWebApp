@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildModel } from "@/lib/model";
-import { indexPlan, makePlan } from "@/lib/schedule";
+import { indexPlan, makePlan, PLAN_DAYS } from "@/lib/schedule";
 import { mergeChanges } from "@/lib/changes";
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, sanitizeWorkspace } from "@/lib/workspace";
 import { type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
-import { DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
+import { addDays, format, startOfDay } from "date-fns";
+import { clock, DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
@@ -42,6 +43,8 @@ interface UiPrefs {
   setupDone: boolean;
   hideClassTimesTip: boolean;
   settingsPanel: SettingsPanel;
+  /** Whether the calendar's sidebar (small month and to-do list) is open on a computer. */
+  calSidebar: boolean;
 }
 
 const VIEWS: View[] = ["plan", "calendar", "upcoming", "settings", "help"];
@@ -54,6 +57,7 @@ const DEFAULT_UI: UiPrefs = {
   setupDone: false,
   hideClassTimesTip: false,
   settingsPanel: "main",
+  calSidebar: true,
 };
 
 function parseUi(raw: string | null): UiPrefs {
@@ -74,6 +78,7 @@ function parseUi(raw: string | null): UiPrefs {
     setupDone: p.setupDone === true,
     hideClassTimesTip: p.hideClassTimesTip === true,
     settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
+    calSidebar: p.calSidebar !== false,
   };
 }
 
@@ -249,7 +254,7 @@ export function App() {
   // The plan only needs to move when the minute changes.
   const minute = Math.floor(now.getTime() / MINUTE);
   const model = useMemo(() => buildModel(ws, snapshot, new Date(minute * MINUTE)), [ws, snapshot, minute]);
-  const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE)), [model, ws.prefs, minute]);
+  const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE), ws.pins), [model, ws.prefs, ws.pins, minute]);
   const index = useMemo(() => indexPlan(plan), [plan]);
 
   const [calCursor, setCalCursor] = useState(() => new Date());
@@ -495,6 +500,38 @@ export function App() {
     [update],
   );
 
+  const planAt = useCallback(
+    (task: Task, start: Date | null) => {
+      if (start) {
+        // The planner only looks two weeks ahead and never plans in the past, so say so instead of failing quietly.
+        const limit = addDays(startOfDay(new Date()), PLAN_DAYS);
+        if (start.getTime() + task.estimate * MINUTE <= Date.now()) {
+          toast("That time has already passed. Pick a time from now on.");
+          return;
+        }
+        if (start >= limit) {
+          toast(`SmartScheduler plans two weeks ahead. Pick a time before ${format(limit, "EEE, MMM d")}.`);
+          return;
+        }
+      }
+      const prev = readWorkspace().pins[task.id] ?? null;
+      const write = (at: string | null) =>
+        update((w) => {
+          const pins = { ...w.pins };
+          if (at) pins[task.id] = at;
+          else delete pins[task.id];
+          return { ...w, pins };
+        });
+      write(start ? start.toISOString() : null);
+      trackEvent(start ? "task_planned" : "task_unplanned", { taskId: task.id, title: task.title, at: start ? start.toISOString() : null });
+      toast(
+        start ? `Planned ${format(start, "EEE")} ${clock(start)}: ${task.title}` : `SmartScheduler will pick a time for ${task.title}`,
+        { undo: () => write(prev) },
+      );
+    },
+    [update, toast],
+  );
+
   const setView = useCallback((v: View) => {
     if (v !== parseUi(readStored(KEYS.ui)).view) trackEvent("view_changed", { view: v });
     writeUi(v === "settings" ? { view: v, settingsPanel: "main" } : { view: v });
@@ -544,6 +581,7 @@ export function App() {
     update,
     toggleDone,
     setEstimate,
+    planAt,
     addFeed,
     removeFeed,
     setFeedRole,
@@ -555,6 +593,8 @@ export function App() {
     setSettingsPanel,
     calMode: ui.calMode,
     setCalMode,
+    calSidebar: ui.calSidebar,
+    setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
     calCursor,
     setCalCursor,
     planDay: safePlanDay,

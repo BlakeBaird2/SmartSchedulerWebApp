@@ -1,17 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { differenceInCalendarDays, format } from "date-fns";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
+import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
+import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Pin, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
 import { buildDaySchedule } from "@/lib/timeline";
 import type { CalEvent, Task } from "@/lib/types";
-import { clockRange, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
+import { clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
+import type { PlannedBlock } from "@/lib/planner";
+import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
-import { Button, buttonClass, ChoicePill, ClassChip, Dialog, SectionLabel, TextButton, TypeChip } from "./ui";
+import { Button, buttonClass, ChoicePill, ClassChip, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
@@ -52,6 +54,62 @@ export function DetailPanel({ selection, onClose }: { selection: NonNullable<Sel
   );
 }
 
+function blocksPinned(blocks: PlannedBlock[] | undefined): boolean {
+  return Boolean(blocks?.some((b) => b.pinned));
+}
+
+/**
+ * Choose when to work on a task: a day and a start time. The same as dragging it
+ * onto the calendar, for phones, keyboards and anyone who'd rather type.
+ */
+function PickTime({ task, start, onDone }: { task: Task; start?: Date; onDone: () => void }) {
+  const { planAt, now } = useApp();
+  const today = startOfDay(now);
+  const days = Array.from({ length: PLAN_DAYS }, (_, i) => addDays(today, i));
+  // Start from the planned time, or the next whole hour.
+  const initial = start ?? new Date(Math.ceil((now.getTime() + 1) / 3_600_000) * 3_600_000);
+  const [day, setDay] = useState(dayKey(initial < addDays(today, PLAN_DAYS) ? initial : today));
+  const [time, setTime] = useState(format(initial, "HH:mm"));
+
+  const save = (e: React.FormEvent) => {
+    e.preventDefault();
+    const [h, m] = time.split(":").map(Number);
+    const at = days.find((d) => dayKey(d) === day) ?? today;
+    const when = new Date(at);
+    when.setHours(h, m, 0, 0);
+    planAt(task, when);
+    onDone();
+  };
+
+  return (
+    <form onSubmit={save} className="mt-2 rounded-xl border border-line bg-surface-2/60 p-3 space-y-3" aria-label={`Pick a time for ${task.title}`}>
+      <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
+        <Field label="Day">
+          <select className="input" value={day} onChange={(e) => setDay(e.target.value)}>
+            {days.map((d, i) => (
+              <option key={dayKey(d)} value={dayKey(d)}>
+                {i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(d, "EEE, MMM d")}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Start">
+          <input className="input" type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} required />
+        </Field>
+      </div>
+      <p className="text-xs text-muted">Takes {duration(task.estimate)}. SmartScheduler plans everything else around it.</p>
+      <div className="flex justify-end gap-2">
+        <Button size="sm" onClick={onDone}>
+          Cancel
+        </Button>
+        <Button size="sm" variant="primary" type="submit" data-smart-event="task_planned">
+          Plan it
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function Label({ children }: { children: React.ReactNode }) {
   return <SectionLabel className="mb-1">{children}</SectionLabel>;
 }
@@ -59,7 +117,9 @@ function Label({ children }: { children: React.ReactNode }) {
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay, toggleDone, select, completeTask, toast } = useApp();
+  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay, toggleDone, select, completeTask, toast, planAt } = useApp();
+  const [picking, setPicking] = useState(false);
+  const pinned = Boolean(blocksPinned(index.blocks.get(task.id)));
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
   const d = dueDate(task);
@@ -165,7 +225,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                       onClick={() => openDay(b.start)}
                       className="w-full text-left flex items-center gap-2 rounded-lg border border-ok/30 bg-ok-soft px-3 py-2 text-sm hover:border-ok/60 transition"
                     >
-                      <Clock3 size={14} className="shrink-0 text-ok" aria-hidden />
+                      {b.pinned ? <Pin size={14} className="shrink-0 text-ok" aria-label="A time you picked" /> : <Clock3 size={14} className="shrink-0 text-ok" aria-hidden />}
                       <span className="flex-1 min-w-0">
                         {format(b.start, "EEE, MMM d")} · {clockRange(b.start, b.end)}
                       </span>
@@ -175,6 +235,19 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   </li>
                 ))}
               </ul>
+            ) : null}
+            {pinned ? (
+              <p className="mt-1.5 text-xs text-muted flex items-center gap-1.5 flex-wrap">
+                <Pin size={12} className="text-ok" aria-hidden />
+                You picked this time.
+                <TextButton onClick={() => planAt(task, null)}>Let SmartScheduler choose</TextButton>
+              </p>
+            ) : null}
+            {pinned && d && blocks[blocks.length - 1].end.getTime() > d.getTime() ? (
+              <p className="mt-1.5 text-sm text-danger font-semibold flex gap-1.5">
+                <CircleAlert size={15} className="shrink-0 mt-0.5" />
+                That&apos;s after it&apos;s due.
+              </p>
             ) : null}
             {risk ? (
               <p className="mt-2 text-sm text-danger font-semibold flex gap-1.5">
@@ -190,6 +263,13 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   : "Due more than two weeks out. It'll be planned as it gets closer."}
               </p>
             ) : null}
+            {picking ? (
+              <PickTime task={task} start={blocks[0]?.start} onDone={() => setPicking(false)} />
+            ) : (
+              <Button size="sm" icon={CalendarClock} className="mt-2" onClick={() => setPicking(true)}>
+                {blocks.length ? "Pick a different time" : "Pick a time"}
+              </Button>
+            )}
           </div>
         ) : (
           <p className="text-sm font-semibold">

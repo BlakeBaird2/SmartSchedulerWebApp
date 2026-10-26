@@ -37,7 +37,7 @@ export function PlanNote({ task }: { task: Task }) {
   const days = differenceInCalendarDays(first.start, now);
   const day = days === 0 ? "today" : days === 1 ? "tomorrow" : format(first.start, "EEE");
   return (
-    <PlannedBadge>
+    <PlannedBadge pinned={first.pinned}>
       Planned {day} {clock(first.start)}
     </PlannedBadge>
   );

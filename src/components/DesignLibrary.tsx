@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Bell, CalendarClock, Check, Inbox, Plus, Settings, Trash } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, CalendarClock, Check, Inbox, Pin, Plus, Settings, Trash } from "lucide-react";
 import { PrototypeBadge } from "./Prototype";
+import { courseStyle } from "./context";
 import {
   Button,
   ButtonLink,
@@ -61,6 +62,7 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "type-chip", name: "TypeChip" },
       { id: "planned-due", name: "PlannedBadge / DueBadge" },
       { id: "class-tabs", name: "Class tabs" },
+      { id: "drag-to-plan", name: "Drag to plan" },
     ],
   },
   {
@@ -526,8 +528,32 @@ function CoreParts() {
       >
         <div className="flex items-center gap-2 flex-wrap">
           <PlannedBadge>Planned today 3:25 PM</PlannedBadge>
+          <PlannedBadge pinned>Planned Thu 4 PM</PlannedBadge>
           <DueBadge>Due tomorrow 9:30 AM</DueBadge>
           <DueBadge late>2 days late</DueBadge>
+        </div>
+      </Entry>
+
+      <Entry
+        id="drag-to-plan"
+        name="Drag to plan"
+        summary="Pick when you'll do something by dragging it onto the calendar."
+        use="The calendar on a computer: from the To do list onto a time, or a planned block to a new time. Phones and keyboards use Pick a time in the task's details."
+        rules={[
+          "While dragging, a solid accent block shows exactly where it will land and from when to when. Solid, never dashed, so it can't be mistaken for free time.",
+          "A time you picked keeps a pin icon (on the calendar, in the To do list and on the Planned chip), so you can tell your choices from SmartScheduler's.",
+          "Every change can be undone from the message that confirms it. Drag a picked block back onto the To do list, or press Let SmartScheduler choose, to hand it back.",
+        ]}
+        why="Sunsama, Akiflow and Notion Calendar all plan work this way: a list of tasks beside the calendar, dragged into the day. It turns 'what's due' into 'when I'll do it' in one move."
+        usedIn="Calendar (week, 3-day and day), task details"
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="plan-block relative inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold" style={courseStyle("#2563eb")}>
+            <span className="plan-tick" aria-hidden />
+            Lab 5
+            <Pin size={11} className="text-ok" aria-hidden />
+          </span>
+          <span className="plan-drop inline-block px-2 py-1 text-[11px] font-semibold tabular-nums">2:15 – 3:15 PM</span>
         </div>
       </Entry>
 

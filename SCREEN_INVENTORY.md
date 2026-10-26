@@ -18,7 +18,7 @@ For each **new** destination added for this rubric, two entry points and a retur
 | 10 | Plan — empty / no-fit free time | Plan when nothing fits | Stay on Plan / Upcoming |
 | 11 | **Free-gap detail panel** *(new)* | Plan “Open gap”; Calendar free-gap band; Focus “See this free gap” | Close / Back to Plan / Upcoming |
 | 12 | Calendar month | Header → Calendar → Month | Day click / tabs |
-| 13 | Calendar week | Header → Calendar → Week | Tabs |
+| 13 | Calendar week *(now with a To do list and mini month on computers; drag a task onto a time to plan it)* | Header → Calendar → Week | Tabs |
 | 14 | Calendar day | Month day click; Week day header | Tabs |
 | 15 | Upcoming, all classes | Header tab; Plan “See everything that's due”; Help; `/app?view=upcoming` | Tabs |
 | 16 | Upcoming empty / caught-up | Upcoming with no open work | Add task / tabs |

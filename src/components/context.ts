@@ -36,6 +36,11 @@ export interface AppContextValue {
   update: (fn: (ws: Workspace) => Workspace) => void;
   toggleDone: (task: Task) => void;
   setEstimate: (taskId: string, minutes: number | null) => void;
+  /**
+   * Put a task at a time of the student's choosing (dragged onto the calendar or
+   * picked in its details), or pass null to let SmartScheduler choose again.
+   */
+  planAt: (task: Task, start: Date | null) => void;
 
   /** Returns how many already-past items were marked done. */
   addFeed: (result: FeedResult) => number;
@@ -50,6 +55,8 @@ export interface AppContextValue {
   setSettingsPanel: (p: SettingsPanel) => void;
   calMode: CalMode;
   setCalMode: (m: CalMode) => void;
+  calSidebar: boolean;
+  setCalSidebar: (open: boolean) => void;
   /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
   openGoal: () => void;
   /** Mark done and optionally show the completion success panel. */

@@ -165,6 +165,12 @@ export interface Workspace {
   done: Record<string, string>;
   /** taskId -> minutes the user says it needs */
   estimates: Record<string, number>;
+  /**
+   * taskId -> when the user chose to work on it (an ISO instant), by dragging it
+   * onto the calendar or picking a time. The planner keeps it there and plans
+   * everything else around it.
+   */
+  pins: Record<string, string>;
   /** courseId -> the user's renames, colours and hiding */
   courseEdits: Record<string, CourseEdit>;
   prefs: PlanPrefs;
