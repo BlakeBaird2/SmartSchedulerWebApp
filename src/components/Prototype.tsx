@@ -10,7 +10,7 @@
  * - DevStateSwitcher: development-only shortcuts to each entry state.
  */
 import { useEffect, useState } from "react";
-import { ArrowRight, Compass, FlaskConical, Target } from "lucide-react";
+import { ArrowRight, CircleCheckBig, Clock, Compass, FlaskConical, MousePointerClick, Target } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { startTour } from "./AppTour";
 import { KEYS, readStored, useHydrated, useStored, writeStored } from "./store";
@@ -19,9 +19,16 @@ import { Button, Dialog } from "./ui";
 export const CAPABILITY = "See exactly what to work on in every free gap of your day.";
 export const PROTOTYPE_MESSAGE = "This is an early prototype. Some things are placeholders, and nothing is saved to an account.";
 export const GOAL_TITLE = "Your goal in this prototype";
+/** The goal, step by step, for the welcome pop-up's picture. */
+const GOAL_STEPS = [
+  { label: "Find your free time", icon: Clock },
+  { label: "Open the task", icon: MousePointerClick },
+  { label: "Mark it done", icon: CircleCheckBig },
+];
+
 export const GOAL_EXAMPLE = "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
 export const GOAL_BODY =
-  "SmartScheduler finds free gaps on your day and fills them with the work that is due soonest. Use Plan, Calendar, Upcoming, or Classes — any path that gets you to a task and a Done mark counts.";
+  "SmartScheduler finds free gaps on your day and fills them with the work that is due soonest. Use Plan, Calendar or Upcoming. Any path that gets you to a task and a Done mark counts.";
 
 const OPEN_PROTO = "prio:open-prototype-notice";
 const OPEN_GOAL = "prio:open-goal-notice";
@@ -90,7 +97,23 @@ export function EntryNotices() {
           Your goal
         </span>
         <p className="mt-1.5 text-lg font-semibold leading-snug">{GOAL_EXAMPLE}</p>
-        <p className="mt-1.5 text-sm text-muted leading-relaxed">Any route works: Plan, Calendar, Upcoming or Classes.</p>
+        {/* The goal as three steps, so it can be taken in at a glance. */}
+        <ol className="mt-3 grid grid-cols-3 gap-2" aria-label="The goal in three steps">
+          {GOAL_STEPS.map((step, i) => (
+            <li key={step.label} className="relative rounded-lg bg-surface border border-line px-2 py-2.5 text-center">
+              <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-accent-soft text-accent">
+                <step.icon size={16} strokeWidth={2.4} aria-hidden />
+              </span>
+              <span className="mt-1.5 block text-xs font-semibold leading-tight">
+                {i + 1}. {step.label}
+              </span>
+              {i < GOAL_STEPS.length - 1 ? (
+                <ArrowRight size={14} className="absolute top-1/2 -right-[13px] -translate-y-1/2 text-muted z-[1] hidden sm:block" aria-hidden />
+              ) : null}
+            </li>
+          ))}
+        </ol>
+        <p className="mt-2.5 text-sm text-muted leading-relaxed">Any route works: Plan, Calendar or Upcoming.</p>
       </div>
 
       <div className="mt-5 flex items-center gap-2 flex-wrap">

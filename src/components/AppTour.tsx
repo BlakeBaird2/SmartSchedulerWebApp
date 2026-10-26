@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarRange, Check, CircleAlert, LayoutGrid, ListChecks, Plus, Settings, Target } from "lucide-react";
+import { Check } from "lucide-react";
 import { useApp } from "./context";
 import { KEYS, writeStored } from "./store";
 import { DaySketch, Sketch } from "./LandingSketches";
-import { ClassChip, SectionLabel, Tour, type TourStep } from "./ui";
+import { ClassChip, DueBadge, PlannedBadge, SectionLabel, Tour, type TourStep } from "./ui";
 
 const START_EVENT = "prio:start-tour";
 
@@ -43,73 +43,66 @@ function NowPicture() {
   );
 }
 
-/** Step 3: what's due, with one task that won't fit. */
-function DuePicture() {
-  const row = (title: string, code: string, color: string, note: React.ReactNode) => (
-    <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
-      <span className="w-4 h-4 rounded border border-line-strong shrink-0" aria-hidden />
-      <span className="font-semibold truncate">{title}</span>
-      <ClassChip code={code} color={color} />
-      <span className="ml-auto text-xs shrink-0">{note}</span>
-    </div>
-  );
+/** Step 3: today's goal, a ring that fills as tasks are ticked off. */
+function GoalPicture() {
+  const size = 96;
+  const r = (size - 10) / 2;
+  const c = 2 * Math.PI * r;
   return (
-    <Sketch label="The Due this week list: each task says when it's planned, and one says it won't fit in time." className="h-full p-4">
-      <div className="font-bold">Due this week</div>
-      <SectionLabel className="mt-2 mb-1">Tomorrow</SectionLabel>
-      <div className="space-y-1.5">
-        {row("Lab 6", "CS 142", "#d97706", "Planned today 2:30")}
-        {row("Case Write-Up 4", "BUS 301", "#2563eb", "Planned today 4 PM")}
-        {row(
-          "Project 2",
-          "CS 142",
-          "#d97706",
-          <span className="inline-flex items-center gap-1 font-bold">
-            <CircleAlert size={12} aria-hidden />
-            Won&apos;t fit in time
-          </span>,
-        )}
+    <Sketch label="Today's goal: a ring showing 2 of 4 planned tasks done, with 1 hour 30 minutes of work left." className="h-full p-4 flex items-center justify-center">
+      <div className="flex items-center gap-4">
+        <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="-rotate-90" aria-hidden>
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface)" strokeWidth={10} />
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--ok)" strokeWidth={10} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c / 2} />
+          </svg>
+          <span className="absolute text-xl font-bold tabular-nums">
+            2<span className="text-muted">/4</span>
+          </span>
+        </div>
+        <div>
+          <SectionLabel>Today&apos;s goal</SectionLabel>
+          <div className="font-semibold">Finish today&apos;s plan</div>
+          <div className="text-sm text-muted">2 of 4 done · 1h 30m left</div>
+        </div>
       </div>
     </Sketch>
   );
 }
 
-/** Step 4: where the other screens are. */
-function NavPicture() {
-  const tab = (Icon: typeof Target, label: string, on = false) => (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 text-sm ${on ? "rounded-md bg-surface text-accent font-semibold shadow-[var(--shadow-sm)]" : "text-muted"}`}>
-      <Icon size={14} aria-hidden />
-      {label}
-    </span>
+/** Step 4: Upcoming, filtered to one class, with planned (green) and due (amber) side by side. */
+function UpcomingPicture() {
+  const row = (title: string, code: string, color: string, planned: string, due: string) => (
+    <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm">
+      <span className="w-4 h-4 rounded border border-line-strong shrink-0" aria-hidden />
+      <span className="min-w-0">
+        <span className="block font-semibold truncate">{title}</span>
+        <span className="flex items-center gap-1.5 mt-0.5">
+          <ClassChip code={code} color={color} />
+          <PlannedBadge>{planned}</PlannedBadge>
+        </span>
+      </span>
+      <span className="ml-auto shrink-0">
+        <DueBadge>{due}</DueBadge>
+      </span>
+    </div>
   );
   return (
-    <Sketch
-      label="The bar at the top of the app: Plan, Calendar, Upcoming and Classes, with Add task and Settings on the right."
-      className="h-full p-4 flex flex-col justify-center gap-4"
-    >
-      <div className="flex items-center gap-1 rounded-xl border border-line bg-surface-2 p-1 flex-wrap">
-        {tab(Target, "Plan", true)}
-        {tab(CalendarRange, "Calendar")}
-        {tab(ListChecks, "Upcoming")}
-        {tab(LayoutGrid, "Classes")}
+    <Sketch label="Upcoming with class tabs at the top. Each task shows when it's planned in green and when it's due in amber." className="h-full p-4 space-y-2.5">
+      <div className="flex gap-1.5 text-xs">
+        <span className="rounded-full border border-line bg-surface px-2 py-1 text-muted">All classes</span>
+        <span className="rounded-full border-2 border-[#2563eb] bg-surface px-2 py-1 font-bold">BUS 301</span>
+        <span className="rounded-full border border-line bg-surface px-2 py-1 text-muted">CS 142</span>
       </div>
-      <div className="flex items-center gap-2 justify-end">
-        <span className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-2 py-1 text-sm">
-          <Plus size={14} aria-hidden />
-          Add task
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-2 py-1 text-sm">
-          <Settings size={14} aria-hidden />
-          Settings
-        </span>
-      </div>
+      {row("Case Write-Up 4", "BUS 301", "#2563eb", "Planned today 4 PM", "Due Tue")}
+      {row("Reading: Ch. 6", "BUS 301", "#2563eb", "Planned Mon 6 PM", "Due Wed")}
     </Sketch>
   );
 }
 
 /**
- * Four steps, in the order the Plan screen answers its questions: what to do now,
- * the rest of today, what's due, and where everything else lives.
+ * Four steps: what to do now, the rest of today, today's goal, and everything
+ * that's due (by class) on Upcoming.
  */
 const STEPS: TourStep[] = [
   {
@@ -123,14 +116,14 @@ const STEPS: TourStep[] = [
     picture: <DaySketch filled className="h-full" />,
   },
   {
-    title: "See what's due, and what won't fit",
-    body: "Due this week lists everything coming up and when it's planned. If something can't fit before it's due, it tells you early.",
-    picture: <DuePicture />,
+    title: "Watch today's goal fill up",
+    body: "The ring shows how much of today's plan is done. If something can't fit before it's due, it warns you early.",
+    picture: <GoalPicture />,
   },
   {
-    title: "Everything else is one click away",
-    body: "Calendar shows your week, Upcoming lists everything due, and Classes shows each class. You can replay this walkthrough in Settings.",
-    picture: <NavPicture />,
+    title: "Everything that's due, by class",
+    body: "Upcoming lists all your work. Pick a class at the top to see just that class. Green says when it's planned; amber says when it's due.",
+    picture: <UpcomingPicture />,
   },
 ];
 

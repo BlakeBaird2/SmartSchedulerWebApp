@@ -94,7 +94,7 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
             disabled={busy}
           />
         </label>
-        <Button type="submit" variant={primary ? "primary" : "secondary"} icon={Plus} className="shrink-0" disabled={busy || !value.trim()}>
+        <Button type="submit" variant={primary ? "primary" : "secondary"} icon={Plus} className="shrink-0" data-smart-event="calendar_added" disabled={busy || !value.trim()}>
           {busy ? "Reading…" : "Add calendar"}
         </Button>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarRange, LayoutGrid, ListChecks, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarRange, ListChecks, Target } from "lucide-react";
 import { GOAL_BODY, GOAL_EXAMPLE, GOAL_TITLE, openGoalNotice, openPrototypeNotice } from "./Prototype";
 import { useApp } from "./context";
 import { Button, Card, CardHeader } from "./ui";
@@ -12,7 +12,7 @@ import { Button, Card, CardHeader } from "./ui";
 export function HelpView() {
   const { setView, setSettingsPanel, setCalMode } = useApp();
 
-  const go = (view: "plan" | "calendar" | "upcoming" | "classes") => {
+  const go = (view: "plan" | "calendar" | "upcoming") => {
     if (view === "calendar") setCalMode("week");
     setView(view);
   };
@@ -45,7 +45,7 @@ export function HelpView() {
       </Card>
 
       <Card>
-        <CardHeader level={2} title="Four ways to finish the goal" hint="Each path ends the same way: open a task, review it, mark it Done. Shared task state stays in sync everywhere." />
+        <CardHeader level={2} title="Three ways to finish the goal" hint="Each path ends the same way: open a task, review it, mark it Done. Shared task state stays in sync everywhere." />
         <ol className="mt-4 space-y-3">
           <RouteRow icon={Target} title="Plan" steps="Find a free gap → open a planned task → review details → Done" onOpen={() => go("plan")} />
           <RouteRow
@@ -54,13 +54,12 @@ export function HelpView() {
             steps="Open week or day → pick a free gap or planned work → review → Done"
             onOpen={() => go("calendar")}
           />
-          <RouteRow icon={ListChecks} title="Upcoming" steps="Open due work → review the task → Done" onOpen={() => go("upcoming")} />
-          <RouteRow icon={LayoutGrid} title="Classes" steps="Open a class column → pick its work → review → Done" onOpen={() => go("classes")} />
+          <RouteRow icon={ListChecks} title="Upcoming" steps="Pick a class (or All classes) → open due work → review the task → Done" onOpen={() => go("upcoming")} />
         </ol>
       </Card>
 
       <Card>
-        <CardHeader level={2} title="If something looks empty" hint="Sample data and real calendars both work. If a day has no free gaps, try tomorrow on Plan, or open Upcoming / Classes for work that is still due." />
+        <CardHeader level={2} title="If something looks empty" hint="Sample data and real calendars both work. If a day has no free gaps, try tomorrow on Plan, or open Upcoming for work that is still due." />
         <Button
           className="mt-3"
           trailingIcon={ArrowRight}

@@ -1,9 +1,9 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { House, Sparkles } from "lucide-react";
 import { useApp } from "./context";
 import { resetEverything } from "./store";
-import { Button, Callout, TextButton } from "./ui";
+import { Button, ButtonLink, Callout, TextButton } from "./ui";
 
 /** Messages about the whole app, shown above every screen while they apply. */
 export function Banners() {
@@ -20,12 +20,28 @@ export function Banners() {
             <span className="flex-1 min-w-0 leading-snug">
               <b className="font-semibold">Sample data.</b> <span className="text-muted">Nothing here is real.</span>
             </span>
+            <ButtonLink href="/" size="sm" variant="quiet" icon={House} className="btn-icon" title="Back to the home page">
+              <span className="sr-only">Back to the home page</span>
+            </ButtonLink>
             <Button size="sm" onClick={resetEverything}>
               Use mine
             </Button>
           </div>
           <div className="hidden md:block">
-            <Callout tone="sample" className="mt-4" title="You're looking at sample data." actions={<Button onClick={resetEverything}>Use my own calendars</Button>}>
+            <Callout
+              tone="sample"
+              className="mt-4"
+              title="You're looking at sample data."
+              actions={
+                <>
+                  {/* An easy way back out of the sample, to where it started. */}
+                  <ButtonLink href="/" variant="quiet" icon={House}>
+                    Back to home page
+                  </ButtonLink>
+                  <Button onClick={resetEverything}>Use my own calendars</Button>
+                </>
+              }
+            >
               Everything here is made up. Press Done on the top task to see the plan move.
             </Callout>
           </div>

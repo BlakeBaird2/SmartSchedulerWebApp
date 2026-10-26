@@ -20,7 +20,7 @@ import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { layoutColumns } from "@/lib/layout";
 import type { PlannedBlock } from "@/lib/planner";
 import type { CalEvent, Task } from "@/lib/types";
-import { applyFilters, clock, clockRange, dayKey, duration, typeIconClass, typeMeta } from "@/lib/ui";
+import { applyFilters, clock, clockRange, dayKey, duration, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
 import { Button, SegmentedControl } from "./ui";
@@ -156,7 +156,13 @@ export function CalendarView() {
               <span className="w-4 h-3.5 plan-block !rounded-[4px] grid place-items-center" style={courseStyle("#64748b")}>
                 <span className="plan-tick !w-2 !h-2 !rounded-[2px]" />
               </span>{" "}
-              Planned work (white with a tick box: it can move)
+              Planned: when you&apos;ll work on it (white with a tick box, it can move)
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="due-chip !inline-flex px-1 py-px">
+                <Flag size={10} aria-hidden />
+              </span>{" "}
+              Due: a deadline (amber flag, red when late)
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-[3px] bg-surface border border-line-strong" /> Open space is free time (click it to see what fits)
@@ -289,13 +295,15 @@ function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }
                     key={r.key}
                     type="button"
                     onClick={() => select({ kind: "task", id: t.id })}
-                    className={`w-full text-left flex items-center gap-1.5 px-1 py-1 text-xs ${t.done ? "text-faint line-through" : late || t.type === "exam" ? "text-danger" : "text-muted"}`}
+                    data-late={late || undefined}
+                    className={`due-chip w-full text-left px-2.5 py-1.5 text-xs ${t.done ? "opacity-50 line-through" : ""}`}
                     style={courseStyle(course?.color)}
                   >
-                    <Flag size={12} className="shrink-0" aria-hidden />
+                    <Flag size={12} aria-hidden />
                     <span className="truncate">
-                      Due {t.allDay ? "today" : clock(new Date(t.dueAt!))}: <span className="font-medium text-fg">{t.title}</span>
+                      <span className="font-semibold">Due {t.allDay ? "today" : clock(new Date(t.dueAt!))}:</span> {t.title}
                     </span>
+                    {course ? <span className="course-text ml-auto shrink-0 font-medium">{course.code}</span> : null}
                   </button>
                 );
               })}
@@ -400,11 +408,12 @@ function MonthGrid({ data, phone }: { data: CalData; phone: boolean }) {
                           e.stopPropagation();
                           select({ kind: "task", id: t.id });
                         }}
-                        title={t.title}
-                        className={`w-full text-left flex items-center gap-1 px-1 sm:px-1.5 py-[3px] text-[11px] leading-tight course-tint hover:brightness-95 dark:hover:brightness-110 transition ${t.done ? "opacity-45 line-through" : ""}`}
+                        title={`Due: ${t.title}`}
+                        className={`due-chip w-full text-left px-1 sm:px-1.5 py-[3px] text-[11px] leading-tight hover:brightness-95 dark:hover:brightness-110 transition ${t.done ? "opacity-45 line-through" : ""}`}
                       >
-                        <meta.icon size={11} className={`shrink-0 hidden sm:block ${t.type === "exam" || t.type === "quiz" ? typeIconClass(t.type) : "course-text"}`} strokeWidth={2.5} />
-                        <span className={`truncate ${t.type === "exam" ? "font-semibold" : ""}`}>{t.title}</span>
+                        <Flag size={10} className="hidden sm:block" strokeWidth={2.5} aria-hidden />
+                        <span className="course-dot !w-1.5 !h-1.5" aria-hidden />
+                        <span className={`truncate ${meta.loud ? "font-semibold" : ""}`}>{t.title}</span>
                       </button>
                     );
                   })}
@@ -538,14 +547,13 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       key={t.id}
                       type="button"
                       onClick={() => select({ kind: "task", id: t.id })}
-                      className={`w-full flex items-center gap-1 rounded-md text-left px-1.5 py-0.5 text-[11px] course-tint ${t.done ? "opacity-45 line-through" : ""}`}
+                      className={`due-chip w-full text-left px-1.5 py-0.5 text-[11px] ${t.done ? "opacity-45 line-through" : ""}`}
                       style={courseStyle(course?.color)}
                       title={`Due ${t.allDay ? "today" : clock(new Date(t.dueAt!))}: ${t.title}`}
                     >
-                      <Flag size={9} className={`shrink-0 ${t.type === "exam" ? "text-danger" : "course-text"}`} />
+                      <Flag size={10} aria-hidden />
                       <span className="truncate">
-                        {t.allDay ? "" : `${clock(new Date(t.dueAt!))} `}
-                        {t.title}
+                        <span className="font-semibold">Due{t.allDay ? "" : ` ${clock(new Date(t.dueAt!))}`}</span> {t.title}
                       </span>
                     </button>
                   );

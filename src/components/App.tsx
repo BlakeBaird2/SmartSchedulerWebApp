@@ -17,7 +17,6 @@ import { Onboarding, startDemo } from "./Onboarding";
 import { PlanHeading, PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
 import { UpcomingView } from "./UpcomingView";
-import { ClassesView } from "./ClassesView";
 import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
@@ -29,6 +28,7 @@ import { BottomNav } from "./BottomNav";
 import { AppTour } from "./AppTour";
 import { ViewHeading } from "./ViewHeading";
 import { openGoalNotice } from "./Prototype";
+import { trackEvent } from "./smartEvents";
 
 // ---------------------------------------------------------------------------
 // Reading what the browser has stored
@@ -44,7 +44,7 @@ interface UiPrefs {
   settingsPanel: SettingsPanel;
 }
 
-const VIEWS: View[] = ["plan", "calendar", "upcoming", "classes", "settings", "help"];
+const VIEWS: View[] = ["plan", "calendar", "upcoming", "settings", "help"];
 const CAL_MODES: CalMode[] = ["month", "week", "day", "3day", "schedule"];
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
@@ -61,10 +61,12 @@ function parseUi(raw: string | null): UiPrefs {
   if (!p || typeof p !== "object") return DEFAULT_UI;
   const f = p.filters;
   return {
-    view: p.view && VIEWS.includes(p.view) ? p.view : DEFAULT_UI.view,
+    // Classes was folded into Upcoming; a saved "classes" view opens Upcoming.
+    view: (p.view as string) === "classes" ? "upcoming" : p.view && VIEWS.includes(p.view) ? p.view : DEFAULT_UI.view,
     calMode: p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
     filters: {
-      courses: Array.isArray(f?.courses) ? f.courses.filter((c): c is string => typeof c === "string") : null,
+      // One class or all of them (class tabs). An older multi-class choice falls back to all.
+      courses: Array.isArray(f?.courses) && f.courses.length === 1 && typeof f.courses[0] === "string" ? [f.courses[0]] : null,
       // Type filters were retired; one saved by an older version must not hide work.
       types: null,
       showCompleted: Boolean(f?.showCompleted),
@@ -165,13 +167,24 @@ let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
   if (!opened) {
-    // Every visit opens on the Plan screen, which leads with what SmartScheduler does. The
-    // calendar mode and filters are still remembered.
+    // Every visit opens on the Plan screen, which leads with what SmartScheduler does,
+    // unless the address names a screen (?view=calendar). The calendar mode and filters
+    // are still remembered.
+    const asked = viewFromUrl();
     const raw = readStored(KEYS.ui);
-    if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
+    if (asked) writeUi({ view: asked });
+    else if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
     opened = takeDemoFromUrl() ?? takeSetupFromUrl();
   }
   return opened;
+}
+
+/** The screen named in the address (?view=upcoming), if it is one. */
+function viewFromUrl(): View | null {
+  if (typeof window === "undefined") return null;
+  const v = new URLSearchParams(window.location.search).get("view");
+  if (v === "classes") return "upcoming";
+  return v && VIEWS.includes(v as View) ? (v as View) : null;
 }
 
 function clearUrlFragment() {
@@ -210,6 +223,26 @@ export function App() {
   const snapshot = useMemo(() => parseSnapshot(snapRaw), [snapRaw]);
   const changes = useMemo(() => parseChanges(changesRaw), [changesRaw]);
   const ui = useMemo(() => parseUi(uiRaw), [uiRaw]);
+
+  // Each screen has its own address (/app?view=calendar), so the browser's Back
+  // button works, a link can open a screen, and testing tools can tell screens apart.
+  const firstView = useRef(true);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("view") === ui.view) return;
+    url.searchParams.set("view", ui.view);
+    if (firstView.current) history.replaceState(null, "", url);
+    else history.pushState(null, "", url);
+    firstView.current = false;
+  }, [ui.view]);
+  useEffect(() => {
+    const onPop = () => {
+      const v = viewFromUrl();
+      if (v && v !== parseUi(readStored(KEYS.ui)).view) writeUi({ view: v });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const [timezone] = useState(browserTimezone);
 
   const now = useNow();
@@ -252,7 +285,8 @@ export function App() {
   const markDone = useCallback(
     (ids: string[]) => {
       if (ids.length === 0) return;
-      const at = new Date().toISOString();
+      // "auto:" marks work assumed done (it was already past due), so it never counts toward today's goal.
+      const at = `auto:${new Date().toISOString()}`;
       update((w) => ({ ...w, done: { ...Object.fromEntries(ids.map((id) => [id, at])), ...w.done } }));
     },
     [update],
@@ -368,6 +402,7 @@ export function App() {
       });
       const snap = readSnapshot();
       saveSnapshot({ ...snap, feeds: { ...snap.feeds, [id]: { result, error: null, syncedAt: result.fetchedAt } } });
+      if (!known) trackEvent("calendar_added", { provider: result.provider, role: result.role, classes: result.courses.length });
       if (known || result.role !== "school") return 0;
       const past = pastDueIds(id, result, new Date());
       markDone(past);
@@ -421,6 +456,7 @@ export function App() {
           return { ...w, done };
         });
       flip();
+      trackEvent(task.done ? "task_uncompleted" : "task_completed", { taskId: task.id, title: task.title, from: parseUi(readStored(KEYS.ui)).view });
       // Ticking something off moves the whole plan, so say so and offer a way back.
       toast(task.done ? `Moved back to your plan: ${task.title}` : `Done: ${task.title}`, { undo: flip });
     },
@@ -440,6 +476,7 @@ export function App() {
           return { ...w, done };
         });
       update((w) => ({ ...w, done: { ...w.done, [task.id]: new Date().toISOString() } }));
+      trackEvent("task_completed", { taskId: task.id, title: task.title, from: parseUi(readStored(KEYS.ui)).view });
       if (opts?.celebrate === false) toast(`Done: ${task.title}`, { undo: flip });
       else setSelected({ kind: "completed", id: task.id });
     },
@@ -459,7 +496,16 @@ export function App() {
   );
 
   const setView = useCallback((v: View) => {
+    if (v !== parseUi(readStored(KEYS.ui)).view) trackEvent("view_changed", { view: v });
     writeUi(v === "settings" ? { view: v, settingsPanel: "main" } : { view: v });
+  }, []);
+
+  /** Opening something is a smart event too: which task, free gap or explanation. */
+  const select = useCallback((s: Selection) => {
+    if (s?.kind === "task") trackEvent("task_opened", { taskId: s.id });
+    else if (s?.kind === "gap") trackEvent("free_gap_opened", { at: new Date(s.startMs).toISOString() });
+    else if (s?.kind === "why") trackEvent("why_opened", { taskId: s.id });
+    setSelected(s);
   }, []);
   const setSettingsPanel = useCallback((p: SettingsPanel) => writeUi({ view: "settings", settingsPanel: p }), []);
   const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m }), []);
@@ -516,9 +562,12 @@ export function App() {
     filters: ui.filters,
     setFilters,
     selected,
-    select: setSelected,
+    select,
     reveal,
-    openAddTask: () => setAddOpen(true),
+    openAddTask: () => {
+      trackEvent("add_task_opened");
+      setAddOpen(true);
+    },
     openClassTimes: () => setClassTimesOpen(true),
     classTimesTipHidden: ui.hideClassTimesTip,
     hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
@@ -528,7 +577,10 @@ export function App() {
     completeTask,
   };
 
-  const finishSetup = useCallback(() => writeUi({ setupDone: true, view: "plan" }), []);
+  const finishSetup = useCallback(() => {
+    trackEvent("setup_finished");
+    writeUi({ setupDone: true, view: "plan" });
+  }, []);
 
   return (
     <AppContext.Provider value={ctx}>
@@ -544,7 +596,6 @@ export function App() {
               {ui.view === "plan" && <PlanView />}
               {ui.view === "calendar" && <CalendarView />}
               {ui.view === "upcoming" && <UpcomingView />}
-              {ui.view === "classes" && <ClassesView />}
               {ui.view === "settings" && <SettingsView />}
               {ui.view === "help" && <HelpView />}
             </div>

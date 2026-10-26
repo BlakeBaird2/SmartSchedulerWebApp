@@ -1,21 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
-import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowRight, CalendarCheck2, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { format, isSameDay } from "date-fns";
+import { ArrowRight, CalendarClock, Check, CircleAlert, Flag, MapPin, Plus } from "lucide-react";
 import type { PlannedWork, ScheduleItem } from "@/lib/timeline";
 import { buildDaySchedule, nowStatus } from "@/lib/timeline";
 import type { Task } from "@/lib/types";
-import { clock, clockRange, dueIn, duration, minutesLabel, plural, typeMeta } from "@/lib/ui";
+import { clock, clockRange, duration, minutesLabel, plural, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
-import { AppTaskCard, PlanNote } from "./TaskRow";
+import { AppTaskCard, DueTag } from "./TaskRow";
 import { useClassesWithoutTimes } from "./ClassTimes";
 import { CapabilityHero } from "./Prototype";
-import { Button, Callout, Card, CardHeader, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TimelineRow, TypeChip } from "./ui";
+import { trackEvent } from "./smartEvents";
+import { Button, Callout, Card, ClassChip, FreeGapBlock, SectionLabel, SegmentedControl, TextButton, TimelineRow, TypeChip } from "./ui";
 
 /**
- * The home screen. Three questions, in order:
- * what should I do right now, how does the rest of my day look, and what's due soon.
+ * The home screen, focused on one question at a time:
+ * what should I work on right now, am I on track today, and how does the rest of my day look.
+ * Everything that's due later lives on Upcoming, one tap away.
  */
 export function PlanView() {
   const { snapshot, syncing } = useApp();
@@ -24,21 +26,24 @@ export function PlanView() {
   return (
     <div className="space-y-5">
       <ClassTimesPrompt />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] items-start">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] items-start">
         <div className="space-y-5 min-w-0">
           <NowCard />
-          {/* Tablets: right under the focus card. (Phones have the round + button in the bottom bar.) */}
+          {/* Phones and tablets: today's goal right under the focus card. */}
+          <div className="lg:hidden">
+            <TodayGoal compact />
+          </div>
+          {/* Tablets add from here; phones use the round + button in the bottom bar. */}
           <div className="hidden md:block lg:hidden">
             <AddTaskTile />
           </div>
           <DaySchedule />
         </div>
-        <div className="space-y-5 min-w-0">
-          <div className="hidden lg:block">
-            <AddTaskTile />
-          </div>
-          <DueSoon />
-        </div>
+        {/* Computers: a slim column beside the plan that stays in view while you scroll. */}
+        <aside className="hidden lg:block space-y-5 sticky top-20" aria-label="Today's goal and adding work">
+          <TodayGoal />
+          <AddTaskTile />
+        </aside>
       </div>
     </div>
   );
@@ -175,11 +180,9 @@ function NowCard() {
 }
 
 function FocusTask({ lead, item, next }: { lead: string; item: PlannedWork; next?: PlannedWork }) {
-  const { completeTask, select, now } = useApp();
+  const { completeTask, select } = useApp();
   const { task, block } = item;
   const course = useCourse(task);
-  const due = task.dueAt ? new Date(task.dueAt) : null;
-  const late = due ? due.getTime() < now.getTime() : false;
 
   return (
     <div className="mt-4">
@@ -196,11 +199,11 @@ function FocusTask({ lead, item, next }: { lead: string; item: PlannedWork; next
               {duration(block.minutes)}
               {block.parts > 1 ? ` (part ${block.part} of ${block.parts})` : ""}
             </span>
-            {due ? <span className={late ? "text-danger font-medium" : ""}>· {dueIn(due, now)}</span> : null}
+            <DueTag task={task} />
           </div>
         </div>
         {/* The one primary action on the Plan screen. */}
-        <Button variant="primary" size="lg" icon={Check} className="shrink-0" onClick={() => completeTask(task)}>
+        <Button variant="primary" size="lg" icon={Check} className="shrink-0" data-smart-event="task_completed" onClick={() => completeTask(task)}>
           Done
         </Button>
       </div>
@@ -231,6 +234,7 @@ function AddTaskTile() {
     <button
       type="button"
       onClick={openAddTask}
+      data-smart-event="add_task_opened"
       className="card w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition hover:border-accent/50 hover:shadow-[var(--shadow-md)] group"
     >
       <span className="grid place-items-center h-11 w-11 shrink-0 rounded-xl bg-accent-soft text-accent transition group-hover:bg-accent group-hover:text-white" aria-hidden>
@@ -273,6 +277,7 @@ function DayPicker() {
 function DaySchedule() {
   const { plan, planDay, model, now, ws, select, setView } = useApp();
   const day = plan.days[planDay];
+  const dueLater = model.tasks.filter((t) => !t.done && t.dueAt && Date.parse(t.dueAt) > now.getTime()).length;
   const schedule = useMemo(() => buildDaySchedule(day.date, day, model.events, model.tasks), [day, model.events, model.tasks]);
   const isToday = planDay === 0;
   // On today, what has already happened is behind you.
@@ -298,9 +303,9 @@ function DaySchedule() {
             </button>
           ))}
           {dueAllDay.map((t) => (
-            <button key={t.id} type="button" onClick={() => select({ kind: "task", id: t.id })} className="inline-flex items-center gap-1 border border-line-strong px-2 py-0.5 text-xs">
-              <Flag size={11} className={t.type === "exam" ? "text-danger" : "text-muted"} />
-              Due {isToday ? "today" : "this day"}: {t.title}
+            <button key={t.id} type="button" onClick={() => select({ kind: "task", id: t.id })} className="due-chip px-2 py-0.5 text-xs">
+              <Flag size={11} aria-hidden />
+              <span className="font-semibold">Due {isToday ? "today" : "this day"}:</span> {t.title}
             </button>
           ))}
         </div>
@@ -322,6 +327,17 @@ function DaySchedule() {
           ))}
         </ol>
       )}
+
+      {/* Everything due later lives on Upcoming. */}
+      <div className="mt-5 pt-3 border-t border-line flex items-center gap-3 flex-wrap text-sm">
+        <span className="text-muted">{dueLater ? `${plural(dueLater, "task")} due in the coming weeks.` : "Nothing else is due."}</span>
+        {dueLater ? (
+          <TextButton className="ml-auto inline-flex items-center gap-1" onClick={() => setView("upcoming")}>
+            See everything that&apos;s due
+            <ArrowRight size={14} aria-hidden />
+          </TextButton>
+        ) : null}
+      </div>
     </Card>
   );
 }
@@ -402,11 +418,8 @@ function FreeBlock({ item, capReached }: { item: Extract<ScheduleItem, { kind: "
 
 /** Work planned into a free gap: the class, when it's due, and the time it takes from this gap. */
 function WorkRow({ work }: { work: PlannedWork }) {
-  const { now } = useApp();
   const { task, block } = work;
   const course = useCourse(task);
-  const due = task.dueAt ? new Date(task.dueAt) : null;
-  const late = due ? due.getTime() < now.getTime() : false;
   return (
     <li>
       <AppTaskCard
@@ -414,7 +427,7 @@ function WorkRow({ work }: { work: PlannedWork }) {
         meta={
           <>
             {course ? <ClassChip code={course.code} color={course.color} /> : null}
-            {due ? <span className={late ? "text-danger font-semibold" : ""}>{dueIn(due, now)}</span> : null}
+            <DueTag task={task} />
             {block.parts > 1 ? <span>part {block.part} of {block.parts}</span> : null}
           </>
         }
@@ -424,22 +437,23 @@ function WorkRow({ work }: { work: PlannedWork }) {
   );
 }
 
+/** A deadline on the timeline: an amber flag chip, so it never looks like planned work. */
 function DueRow({ task }: { task: Task }) {
-  const { select } = useApp();
+  const { select, now } = useApp();
   const course = useCourse(task);
-  const loud = typeMeta(task.type).loud && !task.done;
+  const late = !task.done && Boolean(task.dueAt && Date.parse(task.dueAt) < now.getTime());
   return (
     <button
       type="button"
       onClick={() => select({ kind: "task", id: task.id })}
-      className={`w-full text-left flex items-center gap-2 px-1 py-2 text-xs ${task.done ? "text-faint line-through" : loud ? "text-danger" : "text-muted"}`}
+      data-late={late || undefined}
+      className={`due-chip w-full text-left px-2.5 py-1.5 text-xs ${task.done ? "opacity-50 line-through" : ""}`}
     >
-      <Flag size={12} className="shrink-0" />
-      <span className="truncate">
-        <span className="font-medium">Due:</span> {task.title}
-      </span>
+      <Flag size={13} aria-hidden />
+      <span className="font-semibold shrink-0">Due</span>
+      <span className="truncate">{task.title}</span>
       {course ? (
-        <span className="course-text shrink-0" style={courseStyle(course.color)}>
+        <span className="course-text shrink-0 ml-auto font-medium" style={courseStyle(course.color)}>
           {course.code}
         </span>
       ) : null}
@@ -448,104 +462,125 @@ function DueRow({ task }: { task: Task }) {
 }
 
 // ---------------------------------------------------------------------------
-// What's due soon, and whether it fits
+// Today's goal
 // ---------------------------------------------------------------------------
 
-const DUE_SOON_DAYS = 7;
-const DUE_SOON_LIMIT = 14;
+/**
+ * A visual for the day's goal: finish what SmartScheduler planned for today. A
+ * ring fills as tasks are ticked off, and anything that won't fit before it's due
+ * is flagged here, so the student always knows whether they're on track.
+ */
+let goalReachedOn: string | null = null;
 
-function DueSoon() {
-  const { model, plan, now, setView } = useApp();
+function TodayGoal({ compact = false }: { compact?: boolean }) {
+  const { model, plan, ws, now, setView } = useApp();
+  const goal = useMemo(() => {
+    const isToday = (iso: string) => !iso.startsWith("auto:") && isSameDay(new Date(iso), now);
+    const done = model.tasks.filter((t) => t.done && ws.done[t.id] && isToday(ws.done[t.id])).length;
+    const today = plan.days[0];
+    const left = new Set((today?.blocks ?? []).map((b) => b.taskId)).size;
+    const minutesLeft = (today?.blocks ?? []).reduce((sum, b) => sum + b.minutes, 0);
+    return { done, left, total: done + left, minutesLeft };
+  }, [model.tasks, ws.done, plan.days, now]);
+  const risky = plan.atRisk.length;
+  const reached = goal.total > 0 && goal.left === 0;
 
-  const groups = useMemo(() => {
-    const until = addDays(startOfDay(now), DUE_SOON_DAYS).getTime();
-    const late: Task[] = [];
-    const byDay = new Map<number, Task[]>();
-    for (const t of model.tasks) {
-      if (t.done || !t.dueAt) continue;
-      const due = Date.parse(t.dueAt);
-      if (due >= until) continue;
-      if (due < now.getTime()) {
-        if (due >= now.getTime() - 7 * 86_400_000) late.push(t);
-        continue;
-      }
-      const offset = differenceInCalendarDays(new Date(due), now);
-      byDay.set(offset, [...(byDay.get(offset) ?? []), t]);
-    }
-    const out: { label: string; tasks: Task[]; late?: boolean }[] = [];
-    if (late.length) out.push({ label: "Overdue", tasks: late, late: true });
-    for (const [offset, tasks] of [...byDay.entries()].sort((a, b) => a[0] - b[0])) {
-      const date = addDays(startOfDay(now), offset);
-      out.push({ label: offset === 0 ? "Today" : offset === 1 ? "Tomorrow" : format(date, "EEEE, MMM d"), tasks });
-    }
-    return out;
-  }, [model.tasks, now]);
+  // A smart event the first time today's goal is reached (once a day, however many cards show it).
+  const day = format(now, "yyyy-MM-dd");
+  useEffect(() => {
+    if (!reached || goalReachedOn === day) return;
+    goalReachedOn = day;
+    trackEvent("goal_reached", { tasks: goal.total });
+  }, [reached, day, goal.total]);
 
-  let shown = 0;
-  const total = groups.reduce((s, g) => s + g.tasks.length, 0);
-  const risky = plan.atRisk.filter((r) => r.dueAt && r.dueAt.getTime() < addDays(startOfDay(now), DUE_SOON_DAYS).getTime()).length;
+  const title = goal.total === 0 ? "Nothing planned today" : reached ? "Goal reached" : "Finish today's plan";
+  const detail =
+    goal.total === 0
+      ? model.tasks.some((t) => !t.done)
+        ? "No free time today fits the work that's due. Check tomorrow's plan."
+        : "You're all caught up."
+      : reached
+        ? `You finished all ${plural(goal.total, "task")} planned for today.`
+        : `${goal.done} of ${plural(goal.total, "task")} done · ${duration(goal.minutesLeft)} of work left today`;
+
+  const warning =
+    risky > 0 ? (
+      <p className="flex items-start gap-1.5 text-sm text-danger font-semibold">
+        <CircleAlert size={15} className="shrink-0 mt-0.5" aria-hidden />
+        <span>
+          {risky === 1 ? "1 task won't fit before it's due." : `${risky} tasks won't fit before they're due.`}{" "}
+          <TextButton className="font-semibold" onClick={() => setView("upcoming")}>
+            See {risky === 1 ? "it" : "them"}
+          </TextButton>
+        </span>
+      </p>
+    ) : null;
+
+  if (compact) {
+    return (
+      <Card padding="sm" aria-label="Today's goal">
+        <div className="flex items-center gap-3">
+          <GoalRing done={goal.done} total={goal.total} size={48} />
+          <div className="min-w-0">
+            <SectionLabel>Today&apos;s goal</SectionLabel>
+            <p className="font-semibold leading-snug">{title}</p>
+            <p className="text-sm text-muted leading-snug">{detail}</p>
+          </div>
+        </div>
+        {warning ? <div className="mt-2">{warning}</div> : null}
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader icon={CalendarCheck2} title="Due this week" />
-      {risky > 0 ? (
-        <p className="mt-1 text-sm text-danger font-semibold flex items-start gap-1.5">
-          <CircleAlert size={15} className="shrink-0 mt-0.5" />
-          {risky === 1 ? "1 thing won't fit before it's due." : `${risky} things won't fit before they're due.`} Open it to see why.
-        </p>
-      ) : total > 0 ? (
-        <p className="mt-1 text-sm text-muted">Everything here fits in your free time.</p>
-      ) : null}
-
-      {total === 0 ? (
-        <p className="mt-3 text-sm text-muted">Nothing due in the next week.</p>
-      ) : (
-        <div className="mt-3 space-y-4">
-          {groups.map((g) => {
-            if (shown >= DUE_SOON_LIMIT) return null;
-            const tasks = g.tasks.slice(0, DUE_SOON_LIMIT - shown);
-            shown += tasks.length;
-            return (
-              <div key={g.label}>
-                <SectionLabel tone={g.late ? "alert" : "default"} className="mb-1.5">
-                  {g.label}
-                </SectionLabel>
-                <ul className="space-y-1.5">
-                  {tasks.map((t) => (
-                    <DueItem key={t.id} task={t} />
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <Button block className="mt-4" trailingIcon={ArrowRight} onClick={() => setView("upcoming")}>
-        {total > shown ? `See all ${plural(total, "task")}` : "See everything coming up"}
-      </Button>
+    <Card aria-label="Today's goal">
+      <SectionLabel>Today&apos;s goal</SectionLabel>
+      <div className="mt-3 flex flex-col items-center text-center">
+        <GoalRing done={goal.done} total={goal.total} size={104} />
+        <p className="mt-3 font-semibold text-lg leading-snug">{title}</p>
+        <p className="mt-0.5 text-sm text-muted leading-relaxed">{detail}</p>
+      </div>
+      {warning ? <div className="mt-4 pt-3 border-t border-line">{warning}</div> : null}
     </Card>
   );
 }
 
-function DueItem({ task }: { task: Task }) {
-  const { now } = useApp();
-  const course = useCourse(task);
-  const due = new Date(task.dueAt!);
-  const late = due.getTime() < now.getTime();
+/** A progress ring: tasks done out of today's goal. Green, the same as a ticked box. */
+function GoalRing({ done, total, size }: { done: number; total: number; size: number }) {
+  const stroke = size >= 80 ? 9 : 6;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = total ? done / total : 0;
+  const reached = total > 0 && done === total;
   return (
-    <li>
-      <AppTaskCard
-        task={task}
-        density="compact"
-        meta={
-          <>
-            {course ? <ClassChip code={course.code} color={course.color} /> : null}
-            <span className={late ? "text-danger font-semibold" : ""}>{late ? dueIn(due, now) : task.allDay ? "end of day" : clock(due)}</span>
-            <PlanNote task={task} />
-          </>
-        }
-      />
-    </li>
+    <div className="relative shrink-0 grid place-items-center" style={{ width: size, height: size }} role="img" aria-label={total ? `${done} of ${total} tasks done today` : "No tasks planned today"}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--ok)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - pct)}
+          style={{ transition: "stroke-dashoffset 600ms cubic-bezier(0.2, 0.8, 0.2, 1)" }}
+        />
+      </svg>
+      <span className="absolute inset-0 grid place-items-center">
+        {reached ? (
+          <Check size={size >= 80 ? 34 : 20} strokeWidth={3} className="text-ok" aria-hidden />
+        ) : total === 0 ? (
+          <span className={`font-bold text-muted ${size >= 80 ? "text-2xl" : "text-sm"}`}>–</span>
+        ) : (
+          <span className={`font-bold tabular-nums ${size >= 80 ? "text-2xl" : "text-sm"}`}>
+            {done}
+            <span className="text-muted font-semibold">/{total}</span>
+          </span>
+        )}
+      </span>
+    </div>
   );
 }

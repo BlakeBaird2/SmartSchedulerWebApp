@@ -13,6 +13,7 @@ import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
 import { CapabilityHero, PrototypeBadge } from "./Prototype";
 import { Button, Card, Wordmark } from "./ui";
+import { trackEvent } from "./smartEvents";
 
 function demoWorkspace(): Workspace {
   const feed = (url: string, name: string, role: FeedConfig["role"], provider: FeedConfig["provider"], color: string): FeedConfig => ({
@@ -46,6 +47,7 @@ export function startDemo() {
   writeStored(KEYS.snapshot, null);
   writeStored(KEYS.changes, null);
   writeStored(KEYS.ui, JSON.stringify({ view: "plan", setupDone: true }));
+  trackEvent("sample_data_started");
 }
 
 export function Onboarding({ onFinish }: { onFinish: () => void }) {
@@ -75,7 +77,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           </Link>
           <PrototypeBadge />
           {/* The one way out of setup, in the same place on every step (where onboarding usually puts Skip). */}
-          <Button className="ml-auto" icon={ws.feeds.length === 0 ? Sparkles : undefined} onClick={skip}>
+          <Button className="ml-auto" icon={ws.feeds.length === 0 ? Sparkles : undefined} onClick={skip} data-smart-event={ws.feeds.length === 0 ? "sample_data_started" : "setup_finished"}>
             {ws.feeds.length === 0 ? "Skip: try sample data" : "Skip setup"}
           </Button>
         </div>
@@ -160,7 +162,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <Button icon={ArrowLeft} onClick={() => setStep(hasClasses ? 2 : 1)}>
                 Back
               </Button>
-              <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish}>
+              <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish} data-smart-event="setup_finished">
                 Build my plan
               </Button>
             </div>

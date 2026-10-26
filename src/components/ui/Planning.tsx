@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, ChevronRight, Clock, Undo2 } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, Flag, Undo2 } from "lucide-react";
 import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
@@ -16,7 +16,7 @@ function swatch(color: string | null | undefined): React.CSSProperties {
 /**
  * Which class something belongs to. Every class keeps one shade everywhere it
  * appears (Gestalt: similarity), so a student can follow one class across the
- * Plan, Calendar and Classes screens.
+ * Plan, Calendar and Upcoming screens.
  *
  * - `tag`: a boxed code, for the main task on a screen.
  * - `dot`: a small square and the code, for dense lists.
@@ -39,7 +39,7 @@ export function ClassChip({ code, color, variant = "dot", title }: { code: strin
 
 /**
  * One piece of work. The same card is used on every screen (Plan, Upcoming,
- * Classes), so it is recognised everywhere:
+ * Calendar), so it is recognised everywhere:
  *
  * tick box (finish it) · title (open it) · details line · optional right-hand column.
  *
@@ -132,7 +132,7 @@ export function TimelineRow({
   return (
     <li className="grid grid-cols-[2.6rem_0.5rem_minmax(0,1fr)] sm:grid-cols-[4rem_0.75rem_minmax(0,1fr)] gap-x-1 sm:gap-x-2">
       <div className={`pt-2 text-right tabular-nums whitespace-nowrap flex flex-col items-end ${free ? "pb-0.5" : ""}`}>
-        <span className={`text-xs font-medium ${free ? "text-ok" : ""}`}>
+        <span className={`text-xs font-medium ${free ? "text-ok" : marker === "due" ? "text-warn" : ""}`}>
           <Time value={start} />
         </span>
         {end ? (
@@ -149,7 +149,8 @@ export function TimelineRow({
             {end ? <span className="absolute left-1/2 -translate-x-1/2 bottom-[0.2rem] h-2 w-2 rounded-full border-2 border-ok bg-surface" /> : null}
           </>
         ) : marker === "due" ? (
-          <span className="absolute left-1/2 -translate-x-1/2 top-[0.8rem] h-1.5 w-1.5 rounded-full bg-line-strong" />
+          // A deadline: a small amber diamond, like a milestone on a timeline.
+          <span className="absolute left-1/2 top-[0.8rem] h-2 w-2 -translate-x-1/2 rotate-45 rounded-[2px] bg-warn" />
         ) : (
           <span className="absolute left-1/2 -translate-x-1/2 top-[0.75rem] h-2 w-2 rounded-full" style={{ background: wireGray(color) }} />
         )}
@@ -211,6 +212,29 @@ export function FreeGapBlock({
       {children ? <ul className="mt-1 space-y-1.5">{children}</ul> : null}
       {note ? <p className="mt-1.5 text-xs text-muted">{note}</p> : null}
     </div>
+  );
+}
+
+/**
+ * When the work is planned: a green chip with a clock ("Planned today 3:25 PM").
+ * Paired with DueBadge, so "when you'll do it" and "when it's due" never look alike.
+ */
+export function PlannedBadge({ children, title }: { children: React.ReactNode; title?: string }) {
+  return (
+    <span className="plan-badge" title={title ?? "When SmartScheduler planned this"}>
+      <Clock size={11} strokeWidth={2.5} aria-hidden />
+      {children}
+    </span>
+  );
+}
+
+/** When the work is due: an amber chip with a flag ("Due Tue 11:59 PM"), red once it's late. */
+export function DueBadge({ children, late = false, title }: { children: React.ReactNode; late?: boolean; title?: string }) {
+  return (
+    <span className="due-badge" data-late={late || undefined} title={title ?? "Deadline"}>
+      <Flag size={11} strokeWidth={2.5} aria-hidden />
+      {children}
+    </span>
   );
 }
 

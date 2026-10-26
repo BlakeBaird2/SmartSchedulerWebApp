@@ -7,7 +7,7 @@ import type { PlanIndex } from "@/lib/schedule";
 import type { Change, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
 
-export type View = "plan" | "calendar" | "upcoming" | "classes" | "settings" | "help";
+export type View = "plan" | "calendar" | "upcoming" | "settings" | "help";
 /** "schedule" (an agenda list) and "3day" are the phone views, as in Google Calendar's app. */
 export type CalMode = "month" | "week" | "day" | "3day" | "schedule";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
