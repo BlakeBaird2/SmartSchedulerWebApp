@@ -7,7 +7,7 @@ import { mergeChanges } from "@/lib/changes";
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
-import { type Change, type FeedResult, type FeedRole, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
+import { type Change, type EstimateSource, type FeedResult, type FeedRole, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
@@ -503,11 +503,11 @@ export function App() {
   );
 
   const setEstimate = useCallback(
-    (taskId: string, minutes: number | null) => {
+    (taskId: string, minutes: number | null, source: EstimateSource = "user") => {
       update((w) => {
         const estimates = { ...w.estimates };
         if (minutes === null) delete estimates[taskId];
-        else estimates[taskId] = Math.max(5, Math.min(24 * 60, Math.round(minutes)));
+        else estimates[taskId] = { minutes: Math.max(5, Math.min(24 * 60, Math.round(minutes))), source, at: new Date().toISOString() };
         return { ...w, estimates };
       });
     },

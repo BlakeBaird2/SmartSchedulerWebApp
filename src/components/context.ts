@@ -4,7 +4,7 @@ import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Model } from "@/lib/model";
 import type { Plan } from "@/lib/planner";
 import type { PlanIndex } from "@/lib/schedule";
-import type { Change, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/lib/types";
+import type { Change, EstimateSource, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
 
 export type View = "plan" | "calendar" | "upcoming" | "settings" | "help";
@@ -35,7 +35,8 @@ export interface AppContextValue {
 
   update: (fn: (ws: Workspace) => Workspace) => void;
   toggleDone: (task: Task) => void;
-  setEstimate: (taskId: string, minutes: number | null) => void;
+  /** Set how long a task needs (null goes back to the default for its kind). */
+  setEstimate: (taskId: string, minutes: number | null, source?: EstimateSource) => void;
   /**
    * Put a task at a time of the student's choosing (dragged onto the calendar or
    * picked in its details), or pass null to let SmartScheduler choose again.

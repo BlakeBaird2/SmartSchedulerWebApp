@@ -156,6 +156,21 @@ export interface PlanPrefs {
   estimates: Record<AssignmentType, number>;
 }
 
+/** Who set an estimate: the student, or (later) a suggestion they accepted. */
+export type EstimateSource = "user" | "ai";
+
+/**
+ * How long a piece of work needs, and where the number came from. Kept as a
+ * record rather than a bare number so suggested estimates can sit alongside the
+ * student's own later.
+ */
+export interface Estimate {
+  minutes: number;
+  source: EstimateSource;
+  /** When it was set. */
+  at?: string;
+}
+
 /**
  * Time the student set aside on the calendar for a piece of work.
  *
@@ -187,8 +202,8 @@ export interface Workspace {
   manualTasks: ManualTask[];
   /** taskId -> when it was marked done */
   done: Record<string, string>;
-  /** taskId -> minutes the user says it needs */
-  estimates: Record<string, number>;
+  /** taskId -> how long the user says it needs */
+  estimates: Record<string, Estimate>;
   /** Time set aside on the calendar, by dragging work onto it or picking a time. */
   blocks: ScheduledBlock[];
   /** courseId -> the user's renames, colours and hiding */
@@ -253,6 +268,8 @@ export interface Task {
   estimate: number;
   /** Whether the user set the estimate, rather than it coming from the default for its type. */
   customEstimate: boolean;
+  /** Where the estimate came from: the default for its type, the student, or a suggestion. */
+  estimateSource: "default" | EstimateSource;
   done: boolean;
   manual: boolean;
   generated: "study" | null;

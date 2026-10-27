@@ -130,12 +130,13 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
   const courseById = new Map(courses.map((c) => [c.id, c]));
   const hidden = new Set(courses.filter((c) => c.hidden).map((c) => c.id));
 
-  const makeTask = (partial: Omit<Task, "estimate" | "customEstimate" | "done">): Task => {
+  const makeTask = (partial: Omit<Task, "estimate" | "customEstimate" | "estimateSource" | "done">): Task => {
     const custom = ws.estimates[partial.id];
     return {
       ...partial,
-      estimate: custom ?? ws.prefs.estimates[partial.type],
+      estimate: custom?.minutes ?? ws.prefs.estimates[partial.type],
       customEstimate: custom !== undefined,
+      estimateSource: custom?.source ?? "default",
       done: Boolean(ws.done[partial.id]),
     };
   };

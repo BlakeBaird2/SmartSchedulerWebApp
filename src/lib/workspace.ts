@@ -6,7 +6,7 @@
  * anything unusable falls back to a default instead of breaking the page.
  */
 import { DEFAULT_PREFS } from "./planner";
-import { ASSIGNMENT_TYPES, normalizeType, type CourseEdit, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
+import { ASSIGNMENT_TYPES, normalizeType, type CourseEdit, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
 import { detectProvider, feedIdFor } from "./feeds/url";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
@@ -131,7 +131,8 @@ function sanitizeBlocks(raw: Record<string, unknown>): ScheduledBlock[] {
     const estimates = isObj(raw.estimates) ? raw.estimates : {};
     for (const [taskId, at] of Object.entries(raw.pins)) {
       if (!ISO_OK(at)) continue;
-      const minutes = num(estimates[taskId], 60, 5, 24 * 60);
+      const e = estimates[taskId];
+      const minutes = num(isObj(e) ? e.minutes : e, 60, 5, 24 * 60);
       const start = new Date(at);
       const block = sanitizeBlock({ id: randomId(), taskId, start: at, end: new Date(start.getTime() + minutes * 60_000).toISOString() });
       if (block) blocks.push(block);
@@ -139,6 +140,23 @@ function sanitizeBlocks(raw: Record<string, unknown>): ScheduledBlock[] {
   }
   const unique = [...new Map(blocks.map((b) => [b.id, b])).values()];
   return unique.sort((a, b) => b.start.localeCompare(a.start)).slice(0, MAX_BLOCKS).reverse();
+}
+
+const MINUTES_OK = (v: unknown): v is number => typeof v === "number" && v >= 5 && v <= 24 * 60;
+
+/** Estimates were once bare minutes; those were always the student's own. */
+function sanitizeEstimates(raw: unknown): Record<string, Estimate> {
+  const out: Record<string, Estimate> = {};
+  if (!isObj(raw)) return out;
+  for (const [taskId, v] of Object.entries(raw)) {
+    if (MINUTES_OK(v)) out[taskId] = { minutes: Math.round(v), source: "user" };
+    else if (isObj(v) && MINUTES_OK(v.minutes)) {
+      const e: Estimate = { minutes: Math.round(v.minutes), source: v.source === "ai" ? "ai" : "user" };
+      if (ISO_OK(v.at)) e.at = new Date(v.at).toISOString();
+      out[taskId] = e;
+    }
+  }
+  return out;
 }
 
 function sanitizeRecord<T>(raw: unknown, check: (v: unknown) => v is T): Record<string, T> {
@@ -181,7 +199,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     weekly: (Array.isArray(raw.weekly) ? raw.weekly : []).map(sanitizeWeekly).filter((w): w is WeeklyBlock => w !== null),
     manualTasks: (Array.isArray(raw.manualTasks) ? raw.manualTasks : []).map(sanitizeManual).filter((m): m is ManualTask => m !== null),
     done: sanitizeRecord(raw.done, (v): v is string => typeof v === "string"),
-    estimates: sanitizeRecord(raw.estimates, (v): v is number => typeof v === "number" && v >= 5 && v <= 24 * 60),
+    estimates: sanitizeEstimates(raw.estimates),
     blocks: sanitizeBlocks(raw),
     courseEdits,
     prefs: sanitizePrefs(raw.prefs),

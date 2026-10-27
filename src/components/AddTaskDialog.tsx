@@ -41,7 +41,7 @@ export function AddTaskDialog({ onClose }: { onClose: () => void }) {
     update((w) => ({
       ...w,
       manualTasks: [...w.manualTasks, { id, title: title.trim().slice(0, 140), courseId: courseId || null, type, dueAt }],
-      estimates: estimate !== null ? { ...w.estimates, [`manual:${id}`]: estimate } : w.estimates,
+      estimates: estimate !== null ? { ...w.estimates, [`manual:${id}`]: { minutes: estimate, source: "user", at: new Date().toISOString() } } : w.estimates,
     }));
     trackEvent("task_added", { title: title.trim(), courseId: courseId || null, type, hasDueDate: Boolean(dueAt), minutes });
     toast(`Added to your plan: ${title.trim()}`, {
