@@ -16,10 +16,9 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Flag, PanelLeftClose, PanelLeftOpen, Pin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { layoutColumns } from "@/lib/layout";
-import type { PlannedBlock } from "@/lib/planner";
-import type { CalEvent, Task } from "@/lib/types";
+import type { CalEvent, ScheduledBlock, Task } from "@/lib/types";
 import { applyFilters, clock, clockRange, dayKey, duration, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
@@ -52,12 +51,26 @@ const HOUR_PX = 64;
 /** Room between the day headers and the first hour, so the grid doesn't start right against them. */
 const TOP_PAD = 12;
 
-/** Tasks and events that pass the filters, plus planned work, grouped for quick lookup by day. */
+/**
+ * Time the student set aside, ready to draw. Free time is left empty on the
+ * calendar: the to-do list beside it suggests what to put there next.
+ */
+export interface CalBlock {
+  id: string;
+  block: ScheduledBlock;
+  /** The work it is for. Null for set-aside time that isn't for a task. */
+  task: Task | null;
+  title: string;
+  start: Date;
+  end: Date;
+  minutes: number;
+}
+
+/** Tasks and events that pass the filters, plus set-aside time, grouped for quick lookup by day. */
 function useCalendarData() {
-  const { model, filters, plan } = useApp();
+  const { model, filters, ws } = useApp();
   return useMemo(() => {
     const tasks = applyFilters(model.tasks, filters);
-    const taskIds = new Set(tasks.map((t) => t.id));
     const courseSet = filters.courses ? new Set(filters.courses) : null;
     const events = model.events.filter((e) => !courseSet || !e.courseId || courseSet.has(e.courseId));
 
@@ -67,14 +80,29 @@ function useCalendarData() {
       const k = dayKey(new Date(t.dueAt));
       dueByDay.set(k, [...(dueByDay.get(k) ?? []), t]);
     }
-    const workByDay = new Map<string, { block: PlannedBlock; task: Task }[]>();
+    // Set-aside time stays on the calendar after its work is done, so done work isn't filtered out here.
+    const blocksByDay = new Map<string, CalBlock[]>();
     const byId = new Map(model.tasks.map((t) => [t.id, t]));
-    for (const d of plan.days) {
-      const list = d.blocks.filter((b) => taskIds.has(b.taskId)).map((block) => ({ block, task: byId.get(block.taskId)! }));
-      if (list.length) workByDay.set(dayKey(d.date), list);
+    for (const block of ws.blocks) {
+      const task = block.taskId ? (byId.get(block.taskId) ?? null) : null;
+      // Time for work that has gone (its calendar removed, its class hidden) or is filtered out isn't shown.
+      if (block.taskId && (!task || (courseSet && (!task.courseId || !courseSet.has(task.courseId))))) continue;
+      const start = new Date(block.start);
+      const end = new Date(block.end);
+      const item: CalBlock = {
+        id: block.id,
+        block,
+        task,
+        title: task?.title ?? block.title,
+        start,
+        end,
+        minutes: Math.round((end.getTime() - start.getTime()) / 60_000),
+      };
+      const k = dayKey(start);
+      blocksByDay.set(k, [...(blocksByDay.get(k) ?? []), item]);
     }
-    return { tasks, events, dueByDay, workByDay };
-  }, [model, filters, plan]);
+    return { tasks, events, dueByDay, blocksByDay };
+  }, [model, filters, ws.blocks]);
 }
 
 export function CalendarView() {
@@ -192,11 +220,7 @@ function Legend({ month, timezone }: { month: boolean; timezone: string }) {
             <span className="w-4 h-3.5 plan-block !rounded-[4px] grid place-items-center" style={courseStyle("#64748b")} aria-hidden>
               <span className="plan-tick !w-2 !h-2 !rounded-[2px]" />
             </span>
-            Planned work <span className="text-faint">(drag to move)</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Pin size={12} className="text-ok" aria-hidden />
-            A time you picked
+            Work you scheduled <span className="text-faint">(drag to move)</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="due-chip !inline-flex px-1 py-px" aria-hidden>
@@ -221,7 +245,7 @@ const AGENDA_DAYS = 14;
 
 type AgendaRow =
   | { kind: "event"; key: string; sort: number; event: CalEvent }
-  | { kind: "work"; key: string; sort: number; block: PlannedBlock; task: Task }
+  | { kind: "work"; key: string; sort: number; item: CalBlock }
   | { kind: "due"; key: string; sort: number; task: Task };
 
 /**
@@ -248,8 +272,8 @@ function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }
         if (en <= from || s >= to) continue;
         rows.push({ kind: "event", key: `e:${e.id}`, sort: e.allDay ? -1 : Math.max(s, from), event: e });
       }
-      for (const w of data.workByDay.get(dayKey(day)) ?? []) {
-        rows.push({ kind: "work", key: `w:${w.task.id}:${w.block.part}`, sort: w.block.start.getTime(), ...w });
+      for (const item of data.blocksByDay.get(dayKey(day)) ?? []) {
+        rows.push({ kind: "work", key: `w:${item.id}`, sort: item.start.getTime(), item });
       }
       for (const t of data.dueByDay.get(dayKey(day)) ?? []) {
         rows.push({ kind: "due", key: `d:${t.id}`, sort: t.allDay ? -0.5 : Date.parse(t.dueAt!), task: t });
@@ -298,20 +322,21 @@ function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }
                   );
                 }
                 if (r.kind === "work") {
-                  const course = r.task.courseId ? model.courseById.get(r.task.courseId) : undefined;
+                  const { task } = r.item;
+                  const course = task?.courseId ? model.courseById.get(task.courseId) : undefined;
                   return (
                     <button
                       key={r.key}
                       type="button"
-                      onClick={() => select({ kind: "task", id: r.task.id })}
-                      className={`plan-block w-full text-left px-3 py-2 flex items-start gap-2 ${r.task.done ? "opacity-50" : ""}`}
+                      onClick={() => (task ? select({ kind: "task", id: task.id }) : undefined)}
+                      className={`plan-block w-full text-left px-3 py-2 flex items-start gap-2 ${task?.done ? "opacity-50" : ""}`}
                       style={courseStyle(course?.color)}
                     >
-                      <span className="plan-tick mt-1" data-done={r.task.done || undefined} aria-hidden />
+                      <span className="plan-tick mt-1" data-done={task?.done || undefined} aria-hidden />
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold truncate">{r.task.title}</span>
+                        <span className="block text-sm font-semibold truncate">{r.item.title}</span>
                         <span className="block text-xs text-muted truncate">
-                          {clockRange(r.block.start, r.block.end)}
+                          {clockRange(r.item.start, r.item.end)}
                           {course ? (
                             <>
                               {" · "}
@@ -470,7 +495,7 @@ function MonthGrid({ data, phone }: { data: CalData; phone: boolean }) {
 
 type GridItem =
   | { kind: "event"; id: string; start: number; end: number; event: CalEvent }
-  | { kind: "work"; id: string; start: number; end: number; block: PlannedBlock; task: Task };
+  | { kind: "work"; id: string; start: number; end: number; item: CalBlock };
 
 const MIN = 60_000;
 /** Dropped work snaps to quarter hours. */
@@ -500,8 +525,8 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
           if (e.allDay) allDay.push(e);
           else items.push({ kind: "event", id: e.id, start: Math.max(s, from), end: Math.min(en, to), event: e });
         }
-        for (const w of data.workByDay.get(dayKey(day)) ?? []) {
-          items.push({ kind: "work", id: `${w.task.id}:${w.block.part}`, start: w.block.start.getTime(), end: w.block.end.getTime(), ...w });
+        for (const item of data.blocksByDay.get(dayKey(day)) ?? []) {
+          items.push({ kind: "work", id: item.id, start: Math.max(item.start.getTime(), from), end: Math.min(item.end.getTime(), to), item });
         }
         const dayPlan = plan.days.find((d) => dayKey(d.date) === dayKey(day));
         for (const g of dayPlan?.gaps ?? []) {
@@ -737,8 +762,8 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       style={style}
                       h={h}
                       titleFit={titleFit}
-                      dragging={drag?.taskId === item.task.id}
-                      passThrough={Boolean(drag) && drag?.taskId !== item.task.id}
+                      dragging={Boolean(item.item.task) && drag?.taskId === item.item.task?.id}
+                      passThrough={Boolean(drag) && drag?.taskId !== item.item.task?.id}
                     />
                   );
                 })}
@@ -786,8 +811,8 @@ function LaneCell({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Planned work on the grid: a white tile in its class colour with a tick box. It can
- * be dragged to another time, which pins it there. A pin marks a time you picked.
+ * Time the student set aside on the grid: a white tile in its class colour with a
+ * tick box. It can be dragged to another time. Done work stays, ticked and faded.
  */
 function PlannedTile({
   item,
@@ -805,14 +830,15 @@ function PlannedTile({
   passThrough: boolean;
 }) {
   const { model, select } = useApp();
-  const { task, block } = item;
-  const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
-  const open = () => select({ kind: "task", id: task.id });
+  const { task, start, end, minutes, title } = item.item;
+  const course = task?.courseId ? model.courseById.get(task.courseId) : undefined;
+  const done = Boolean(task?.done);
+  const open = () => (task ? select({ kind: "task", id: task.id }) : undefined);
   return (
     <div
       role="button"
       tabIndex={0}
-      draggable={!task.done}
+      draggable={Boolean(task) && !done}
       onClick={open}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -821,24 +847,24 @@ function PlannedTile({
         }
       }}
       onDragStart={(e) => {
+        if (!task) return;
         const grab = Math.round(((e.clientY - e.currentTarget.getBoundingClientRect().top) / HOUR_PX) * 60);
-        startPlanDrag(e, { taskId: task.id, title: task.title, minutes: block.minutes, grab, pinned: Boolean(block.pinned), color: course?.color ?? null });
+        startPlanDrag(e, { taskId: task.id, title, minutes, grab, pinned: true, color: course?.color ?? null });
       }}
       onDragEnd={endPlanDrag}
-      className={`plan-block absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 cursor-grab active:cursor-grabbing ${task.done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
-      style={{ ...style, ...courseStyle(course?.color) }}
-      title={`${block.pinned ? "You picked this time. " : ""}Work on ${task.title} · ${duration(block.minutes)}. Drag to move.`}
-      aria-label={`Planned: ${task.title}, ${clockRange(block.start, block.end)}${block.pinned ? ", a time you picked" : ""}. Open details`}
+      className={`plan-block absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 cursor-grab active:cursor-grabbing ${done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
+      style={{ ...style, ...courseStyle(item.item.block.color ?? course?.color) }}
+      title={`${title} · ${duration(minutes)}. Drag to move.`}
+      aria-label={`Scheduled: ${title}, ${clockRange(start, end)}${done ? ", done" : ""}. Open details`}
     >
       <div className="flex items-start gap-1.5 min-w-0">
-        <span className="plan-tick mt-[3px]" data-done={task.done || undefined} aria-hidden />
-        <span className={`text-xs font-semibold leading-tight flex-1 min-w-0 ${titleFit}`}>{task.title}</span>
-        {block.pinned ? <Pin size={11} className="shrink-0 mt-px text-ok" aria-hidden /> : null}
+        <span className="plan-tick mt-[3px]" data-done={done || undefined} aria-hidden />
+        <span className={`text-xs font-semibold leading-tight flex-1 min-w-0 ${titleFit}`}>{title}</span>
       </div>
       {h >= 40 ? (
         <div className="text-[11px] text-muted leading-tight truncate">
           {course ? <span className="course-text">{course.code} · </span> : null}
-          {h >= 60 ? clockRange(block.start, block.end) : duration(block.minutes)}
+          {h >= 60 ? clockRange(start, end) : duration(minutes)}
         </div>
       ) : null}
     </div>
