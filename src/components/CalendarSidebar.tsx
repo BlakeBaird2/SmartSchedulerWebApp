@@ -224,12 +224,12 @@ function TodoPanel() {
 
 /** One task in the list: tick it, open it, or drag it onto a time. */
 function TodoItem({ task }: { task: Task }) {
-  const { model, index, now, ws, select, toggleDone } = useApp();
+  const { model, index, now, select, toggleDone } = useApp();
   const drag = usePlanDrag();
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const first = index.blocks.get(task.id)?.[0];
   const risk = index.atRisk.get(task.id);
-  const pinned = Boolean(ws.pins[task.id] && first?.pinned);
+  const pinned = Boolean(first?.pinned);
   const due = task.dueAt ? new Date(task.dueAt) : null;
 
   let status: React.ReactNode;

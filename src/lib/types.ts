@@ -156,6 +156,30 @@ export interface PlanPrefs {
   estimates: Record<AssignmentType, number>;
 }
 
+/**
+ * Time the student set aside on the calendar for a piece of work.
+ *
+ * Shaped like a Google Calendar event (start, end, title, colour, an external id)
+ * so two-way sync can map one onto the other without reshaping anything. The
+ * planner treats it as fixed: that time is taken, and the work it is for is
+ * scheduled.
+ */
+export interface ScheduledBlock {
+  id: string;
+  /** The work this time is for. Null for time not tied to a task, such as an event brought in from Google Calendar. */
+  taskId: string | null;
+  /** Shown when there is no task to take a title from, and the title Google Calendar would show. */
+  title: string;
+  start: string; // ISO instant
+  end: string; // ISO instant, exclusive
+  /** A colour the student picked, or null to colour it by how soon its work is due. */
+  color: string | null;
+  /** The matching Google Calendar event's id, once synced. */
+  externalId: string | null;
+  /** When the block last changed, to settle edits made on both sides of a sync. */
+  updatedAt: string;
+}
+
 export interface Workspace {
   version: 1;
   feeds: FeedConfig[];
@@ -165,12 +189,8 @@ export interface Workspace {
   done: Record<string, string>;
   /** taskId -> minutes the user says it needs */
   estimates: Record<string, number>;
-  /**
-   * taskId -> when the user chose to work on it (an ISO instant), by dragging it
-   * onto the calendar or picking a time. The planner keeps it there and plans
-   * everything else around it.
-   */
-  pins: Record<string, string>;
+  /** Time set aside on the calendar, by dragging work onto it or picking a time. */
+  blocks: ScheduledBlock[];
   /** courseId -> the user's renames, colours and hiding */
   courseEdits: Record<string, CourseEdit>;
   prefs: PlanPrefs;

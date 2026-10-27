@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildModel } from "@/lib/model";
-import { indexPlan, makePlan, PLAN_DAYS } from "@/lib/schedule";
+import { indexPlan, makePlan } from "@/lib/schedule";
 import { mergeChanges } from "@/lib/changes";
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
-import { decodeSetup, nextPersonalColor, pastDueIds, sanitizeWorkspace } from "@/lib/workspace";
-import { type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
-import { addDays, format, startOfDay } from "date-fns";
+import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
+import { type Change, type FeedResult, type FeedRole, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
+import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
@@ -111,6 +111,20 @@ const readSnapshot = () => parseSnapshot(readStored(KEYS.snapshot));
 
 function writeJson(key: string, value: unknown): boolean {
   return writeStored(key, JSON.stringify(value));
+}
+
+/** Time set aside for a task, shaped like a Google Calendar event. */
+function newBlock(task: Task, start: Date, end: Date): ScheduledBlock {
+  return {
+    id: randomId(),
+    taskId: task.id,
+    title: task.title,
+    start: start.toISOString(),
+    end: end.toISOString(),
+    color: null,
+    externalId: null,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 function browserTimezone(): string {
@@ -254,7 +268,7 @@ export function App() {
   // The plan only needs to move when the minute changes.
   const minute = Math.floor(now.getTime() / MINUTE);
   const model = useMemo(() => buildModel(ws, snapshot, new Date(minute * MINUTE)), [ws, snapshot, minute]);
-  const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE), ws.pins), [model, ws.prefs, ws.pins, minute]);
+  const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE), ws.blocks), [model, ws.prefs, ws.blocks, minute]);
   const index = useMemo(() => indexPlan(plan), [plan]);
 
   const [calCursor, setCalCursor] = useState(() => new Date());
@@ -500,32 +514,19 @@ export function App() {
     [update],
   );
 
+  /** Set aside time for a task on the calendar, as long as its estimate; or, with null, take its time back off. */
   const planAt = useCallback(
     (task: Task, start: Date | null) => {
-      if (start) {
-        // The planner only looks two weeks ahead and never plans in the past, so say so instead of failing quietly.
-        const limit = addDays(startOfDay(new Date()), PLAN_DAYS);
-        if (start.getTime() + task.estimate * MINUTE <= Date.now()) {
-          toast("That time has already passed. Pick a time from now on.");
-          return;
-        }
-        if (start >= limit) {
-          toast(`SmartScheduler plans two weeks ahead. Pick a time before ${format(limit, "EEE, MMM d")}.`);
-          return;
-        }
+      if (start && start.getTime() + task.estimate * MINUTE <= Date.now()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
       }
-      const prev = readWorkspace().pins[task.id] ?? null;
-      const write = (at: string | null) =>
-        update((w) => {
-          const pins = { ...w.pins };
-          if (at) pins[task.id] = at;
-          else delete pins[task.id];
-          return { ...w, pins };
-        });
-      write(start ? start.toISOString() : null);
+      const prev = readWorkspace().blocks.filter((b) => b.taskId === task.id);
+      const write = (mine: ScheduledBlock[]) => update((w) => ({ ...w, blocks: [...w.blocks.filter((b) => b.taskId !== task.id), ...mine] }));
+      write(start ? [newBlock(task, start, new Date(start.getTime() + task.estimate * MINUTE))] : []);
       trackEvent(start ? "task_planned" : "task_unplanned", { taskId: task.id, title: task.title, at: start ? start.toISOString() : null });
       toast(
-        start ? `Planned ${format(start, "EEE")} ${clock(start)}: ${task.title}` : `SmartScheduler will pick a time for ${task.title}`,
+        start ? `Planned ${format(start, "EEE")} ${clock(start)}: ${task.title}` : `Back on your to-do list: ${task.title}`,
         { undo: () => write(prev) },
       );
     },

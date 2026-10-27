@@ -320,3 +320,43 @@ test("a corrected class time hides the calendar's wrong meetings, and only those
   assert.equal(mine?.end, at(5, 10, 45), "the corrected time stands in");
   assert.deepEqual(sanitizeWorkspace(ws).courseEdits[courseId].feedTimesOff, ["570-750"], "the correction survives storage");
 });
+
+test("set-aside time loads checked, and broken blocks are dropped", () => {
+  const ws = sanitizeWorkspace({
+    blocks: [
+      { id: "b1", taskId: "f:a1", title: "Quiz 3", start: "2026-10-02T15:00:00.000Z", end: "2026-10-02T16:00:00.000Z", color: "#d50000", externalId: "gcal-1" },
+      { id: "b2", taskId: null, title: "Gym", start: "2026-10-02T18:00:00Z", end: "2026-10-02T19:00:00Z", color: "red" },
+      { id: "backwards", start: "2026-10-02T18:00:00Z", end: "2026-10-02T17:00:00Z" },
+      { id: "no-start", end: "2026-10-02T17:00:00Z" },
+      "nonsense",
+    ],
+  });
+  assert.deepEqual(
+    ws.blocks.map((b) => [b.id, b.taskId, b.color, b.externalId]),
+    [
+      ["b1", "f:a1", "#d50000", "gcal-1"],
+      ["b2", null, null, null],
+    ],
+  );
+  assert.equal(ws.blocks[0].updatedAt, "2026-10-02T16:00:00.000Z", "a block without a change time takes its end");
+});
+
+test("an older workspace's start times per task become blocks as long as their estimates", () => {
+  const ws = sanitizeWorkspace({ pins: { "f:a1": "2026-10-02T15:00:00.000Z", "f:a2": "2026-10-03T15:00:00.000Z", broken: "never" }, estimates: { "f:a1": 90 } });
+  assert.deepEqual(
+    ws.blocks.map((b) => [b.taskId, b.start, b.end]),
+    [
+      ["f:a1", "2026-10-02T15:00:00.000Z", "2026-10-02T16:30:00.000Z"],
+      ["f:a2", "2026-10-03T15:00:00.000Z", "2026-10-03T16:00:00.000Z"],
+    ],
+  );
+});
+
+test("set-aside time travels in a setup link", () => {
+  const ws: Workspace = {
+    ...defaultWorkspace(),
+    feeds: [feed("https://a.example/cal.ics")],
+    blocks: [{ id: "b1", taskId: "x", title: "Essay", start: "2026-10-02T15:00:00.000Z", end: "2026-10-02T16:00:00.000Z", color: null, externalId: null, updatedAt: "2026-10-01T12:00:00.000Z" }],
+  };
+  assert.deepEqual(decodeSetup(encodeSetup(ws))?.blocks, ws.blocks);
+});
