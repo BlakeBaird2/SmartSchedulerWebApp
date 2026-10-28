@@ -41,6 +41,9 @@ export interface DragPayload {
   /** When the block starts (ms), for resizing. */
   start?: number;
   color: string;
+  /** How wide the dragged thing was, and where across it it was grabbed (px), so its ghost matches it. */
+  width?: number;
+  grabX?: number;
 }
 
 /** Where a drag would land. Minutes count from the day's midnight. */
@@ -65,6 +68,49 @@ const TOUCH_SLOP = 10;
 let current: PlanDrag | null = null;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
+
+// ---------------------------------------------------------------------------
+// The calendar's scale
+// ---------------------------------------------------------------------------
+
+/** Below this width the app uses its phone layout. */
+export const PHONE_QUERY = "(max-width: 820px)";
+/** The shortest an hour is drawn on the calendar; hours stretch when the whole day fits. */
+export const HOUR_PX = 64;
+export const HOUR_PX_PHONE = 56;
+
+/**
+ * Pixels per minute on the calendar, as the time grid last drew it. The planner
+ * draws each task this tall for its length, and the drag ghost keeps that size,
+ * so work is the same size in the list, on its way and on the calendar.
+ */
+let scale: number | null = null;
+const scaleListeners = new Set<() => void>();
+const defaultScale = () => (typeof window !== "undefined" && window.matchMedia(PHONE_QUERY).matches ? HOUR_PX_PHONE : HOUR_PX) / 60;
+
+export function setCalendarScale(ppm: number) {
+  if (scale !== null && Math.abs(scale - ppm) < 0.001) return;
+  scale = ppm;
+  scaleListeners.forEach((l) => l());
+}
+
+export function useCalendarScale(): number {
+  return useSyncExternalStore(
+    (l) => {
+      scaleListeners.add(l);
+      return () => scaleListeners.delete(l);
+    },
+    () => scale ?? defaultScale(),
+    () => HOUR_PX / 60,
+  );
+}
+
+/** How tall a block of this many minutes is on the calendar: a 3px gap above and below. */
+export function blockHeight(minutes: number, ppm: number): number {
+  return Math.max(16, minutes * ppm - 6);
+}
+
+// ---------------------------------------------------------------------------
 
 export function usePlanDrag(): PlanDrag | null {
   return useSyncExternalStore(

@@ -5,7 +5,7 @@ import { todoList, type TodoSort } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { dueLabel } from "@/lib/ui";
 import { useApp } from "./context";
-import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag } from "./planDrag";
+import { beginPlanDrag, blockHeight, dragSourceRef, targetStart, useCalendarScale, usePlanDrag } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
 /** How many tasks the planner shows, and how many with "Show more items" on. */
@@ -164,6 +164,15 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
 
 const ESTIMATE_CHOICES = [5, 15, 30, 45, 60, 90, 120, 180];
 
+/** Cards are never shorter than one line of text, and stop growing at four hours. */
+const CARD_MIN_PX = 26;
+const CARD_MAX_MINUTES = 240;
+
+/** How the card lays itself out at a height: one line, two, or two with room to spare. */
+function cardSize(px: number): "s" | "m" | "l" {
+  return px < 56 ? "s" : px < 90 ? "m" : "l";
+}
+
 /** "45 min", "1 hr", "1.5 hr": short enough for the pill on the card. */
 function minutesLabel(m: number): string {
   return m < 60 ? `${m} min` : `${Math.round((m / 60) * 10) / 10} hr`;
@@ -171,14 +180,18 @@ function minutesLabel(m: number): string {
 
 /**
  * One task to plan: a card to grab and drag onto the calendar (with a mouse
- * straight away; on a touch screen, press and hold first). Tap it to open it, or
+ * straight away; on a touch screen, press and hold first). It is as tall as the
+ * task will be on the calendar, so longer work looks longer and keeps its size
+ * when it lands. Tap it to open it, or
  * tap its time to change how long it needs. Ticking work off happens on Tasks and
  * in its details: the planner is only for putting work on the calendar.
  */
 function PlannerTask({ task }: { task: Task }) {
   const { model, now, ws, select, setEstimate, scheduleTask, scheduleOnDay, newWork } = useApp();
   const drag = usePlanDrag();
+  const ppm = useCalendarScale();
   const [editing, setEditing] = useState(false);
+  const height = Math.max(CARD_MIN_PX, blockHeight(Math.min(task.estimate, CARD_MAX_MINUTES), ppm));
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const due = dueLabel(task.dueAt ? new Date(task.dueAt) : null, now);
   const fresh = newWork.has(task.id);
@@ -192,6 +205,8 @@ function PlannerTask({ task }: { task: Task }) {
       tabIndex={0}
       ref={dragSourceRef}
       data-picked={(drag?.kind === "new" && drag.taskId === task.id) || undefined}
+      data-size={cardSize(height)}
+      style={{ minHeight: height }}
       aria-label={`${task.title}, ${task.estimate} min, ${due.text}${fresh ? ", new" : ""}. Drag onto the calendar, or open details`}
       title="Grab it and drag it onto the calendar to schedule it"
       onClick={open}
@@ -204,10 +219,23 @@ function PlannerTask({ task }: { task: Task }) {
       }}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("button, input")) return;
+        const box = e.currentTarget.getBoundingClientRect();
+        // With a mouse the block stays where it was grabbed. A finger would hide the
+        // top of the block, so on touch the block hangs above it.
+        const grab = e.pointerType === "mouse" ? Math.min(task.estimate, Math.max(0, Math.round((e.clientY - box.top) / ppm))) : Math.min(task.estimate, 60);
         beginPlanDrag(
           e,
-          // A finger would hide the top of the block, so on touch the block hangs above it.
-          { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color: "var(--ss-accent)" },
+          {
+            kind: "new",
+            taskId: task.id,
+            blockId: null,
+            title: task.title,
+            minutes: task.estimate,
+            grab,
+            color: "var(--ss-accent)",
+            width: box.width,
+            grabX: e.clientX - box.left,
+          },
           (target) => {
             if (target.kind === "grid") scheduleTask(task, targetStart(target));
             else if (target.kind === "date") scheduleOnDay(task, new Date(target.dayStart));
