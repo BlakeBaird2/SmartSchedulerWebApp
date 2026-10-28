@@ -22,6 +22,7 @@ export function defaultWorkspace(): Workspace {
     blocks: [],
     courseEdits: {},
     classOrder: [],
+    eventColors: {},
     unfinished: "ask",
     unfinishedAnswers: {},
     prefs: { ...DEFAULT_PREFS, estimates: { ...DEFAULT_PREFS.estimates } },
@@ -171,6 +172,15 @@ function sanitizeClassOrder(raw: unknown): string[] {
   return [...new Set(ids)].slice(0, MAX_CLASSES);
 }
 
+export const MAX_EVENT_COLORS = 500;
+const HEX = /^#[0-9a-f]{6}$/i;
+
+function sanitizeEventColors(raw: unknown): Record<string, string> {
+  if (!isObj(raw)) return {};
+  const kept = Object.entries(raw).filter((e): e is [string, string] => e[0].length > 0 && e[0].length <= 400 && typeof e[1] === "string" && HEX.test(e[1]));
+  return Object.fromEntries(kept.slice(0, MAX_EVENT_COLORS).map(([k, v]) => [k, v.toLowerCase()]));
+}
+
 export const MAX_ANSWERS = 500;
 
 /** The latest answers about unfinished work, newest kept when there are too many. */
@@ -227,6 +237,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     blocks: sanitizeBlocks(raw),
     courseEdits,
     classOrder: sanitizeClassOrder(raw.classOrder),
+    eventColors: sanitizeEventColors(raw.eventColors),
     unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
     unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),
     prefs: sanitizePrefs(raw.prefs),

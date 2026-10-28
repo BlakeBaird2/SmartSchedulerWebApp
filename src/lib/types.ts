@@ -225,6 +225,8 @@ export interface Workspace {
   courseEdits: Record<string, CourseEdit>;
   /** Class ids, most important first. Breaks ties between work due at the same time. */
   classOrder: string[];
+  /** Event series (see eventColors.seriesKey) -> the colour the student picked for it. */
+  eventColors: Record<string, string>;
   /** What happens to work whose scheduled time passes before it is done. */
   unfinished: UnfinishedPolicy;
   /** taskId -> the last answer to "put it back on the to-do list?" */

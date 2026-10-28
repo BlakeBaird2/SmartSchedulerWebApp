@@ -5,6 +5,7 @@
 import type { CalEvent, Course, FeedConfig, Snapshot, Task, WeeklyBlock, Workspace } from "./types";
 import { normalizeType } from "./types";
 import { meetingKey } from "./meetings";
+import { seriesKey } from "./eventColors";
 
 export const COURSE_COLORS = ["#4f46e5", "#059669", "#d97706", "#e11d48", "#0284c7", "#7c3aed", "#0d9488", "#ea580c", "#2563eb", "#c026d3"];
 export const WEEKLY_COLOR = "#78716c";
@@ -188,7 +189,7 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
         kind: e.kind,
         location: e.location,
         url: e.url,
-        color: courseId ? (courseById.get(courseId)?.color ?? feed.color) : feed.color,
+        color: ws.eventColors[seriesKey(`${feed.id}:${e.uid}`)] ?? (courseId ? (courseById.get(courseId)?.color ?? feed.color) : feed.color),
         source: "feed",
       });
     }
@@ -215,13 +216,14 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
 
   // Class times take the class's current name and colour, and go when the class does.
   for (const e of expandWeekly(ws.weekly, now)) {
+    const picked = ws.eventColors[seriesKey(e.id)];
     if (!e.courseId) {
-      events.push(e);
+      events.push(picked ? { ...e, color: picked } : e);
       continue;
     }
     const course = courseById.get(e.courseId);
     if (!course || course.hidden) continue;
-    events.push({ ...e, title: course.code, color: course.color });
+    events.push({ ...e, title: course.code, color: picked ?? course.color });
   }
 
   tasks.sort((a, b) => {

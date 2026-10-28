@@ -5,8 +5,8 @@ import { ExternalLink, Eye, Pencil, Plus, RotateCcw } from "lucide-react";
 import { COURSE_COLORS } from "@/lib/model";
 import type { Course, CourseEdit } from "@/lib/types";
 import { duration } from "@/lib/ui";
-import { courseStyle, useApp, wireGray } from "./context";
-import { Button, buttonClass, Dialog, DialogActions, Field, Switch, TextButton } from "./ui";
+import { courseStyle, useApp } from "./context";
+import { Button, buttonClass, ColorSwatches, Dialog, DialogActions, Field, Switch, TextButton } from "./ui";
 import { ClassTimesSummary, useClassTimes } from "./ClassTimes";
 import { useOriginalCourseName, withCourseNames } from "./ClassName";
 
@@ -118,13 +118,20 @@ function MeetsLine({ course }: { course: Course }) {
 }
 
 export function ClassEditDialog({ course, onClose }: { course: Course; onClose: () => void }) {
-  const original = useOriginalCourseName(course);
   return (
     <Dialog title={`Edit ${course.code}`} description="Fix its name if the calendar got it wrong, change its colour, or hide it from your plan." onClose={onClose} style={courseStyle(course.color)}>
-      <CourseEditor course={course} original={original} onDone={onClose} />
+      <ClassEditForm course={course} onDone={onClose} />
     </Dialog>
   );
 }
+
+/** The class editor on its own, for places that already have a panel to put it in. */
+export function ClassEditForm({ course, onDone }: { course: Course; onDone: () => void }) {
+  const original = useOriginalCourseName(course);
+  return <CourseEditor course={course} original={original} onDone={onDone} />;
+}
+
+const SHADES = COURSE_COLORS.map((hex, i) => ({ hex, name: `Shade ${i + 1}` }));
 
 function CourseEditor({ course, original, onDone }: { course: Course; original?: { code: string; title: string }; onDone: () => void }) {
   const { update } = useApp();
@@ -171,19 +178,8 @@ function CourseEditor({ course, original, onDone }: { course: Course; original?:
       </div>
       <fieldset>
         <legend className="text-sm font-semibold">Shade</legend>
-        <div className="mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label="Shade">
-          {COURSE_COLORS.map((c, i) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={color === c}
-              aria-label={`Shade ${i + 1}`}
-              onClick={() => setColor(c)}
-              className="w-7 h-7 rounded-full border border-line-strong"
-              style={{ background: wireGray(c) }}
-            />
-          ))}
+        <div className="mt-1.5">
+          <ColorSwatches colors={SHADES} value={color} onChange={setColor} label="Shade" />
         </div>
       </fieldset>
       <label className="flex items-center gap-2.5 text-sm">

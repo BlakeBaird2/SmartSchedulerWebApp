@@ -9,11 +9,13 @@ import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
 import type { CalEvent, Task } from "@/lib/types";
 import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { todoState, urgencyColor } from "@/lib/todos";
+import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
 import { useTodos } from "./TodoList";
-import { Button, buttonClass, ChoicePill, ClassChip, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
+import { Button, buttonClass, ChoicePill, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
+import { ClassEditForm } from "./ClassSummary";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
@@ -358,6 +360,17 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
   const weekly = parseWeeklyId(event.id);
   const actions = useClassTimeActions();
   const [editing, setEditing] = useState(false);
+  const [editingClass, setEditingClass] = useState(false);
+  // A colour of the student's own, for every meeting of this event.
+  const series = seriesKey(event.id);
+  const picked = ws.eventColors[series] ?? null;
+  const setColor = (hex: string | null) =>
+    update((w) => {
+      const eventColors = { ...w.eventColors };
+      if (hex) eventColors[series] = hex;
+      else delete eventColors[series];
+      return { ...w, eventColors };
+    });
 
   // A class meeting can be corrected: one entered here directly, one from a class
   // calendar by standing in for every meeting at that time. One-off events can't.
@@ -411,6 +424,24 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         <p className="text-sm text-muted">
           {event.busy ? "You're busy then, so it isn't offered as free time." : "This doesn't block your time, so it still counts as free time."}
         </p>
+        {editingClass && course ? (
+          <div>
+            <Label>Edit {course.code}</Label>
+            <ClassEditForm course={course} onDone={() => setEditingClass(false)} />
+          </div>
+        ) : (
+          <div>
+            <Label>Colour</Label>
+            <ColorSwatches colors={EVENT_COLORS} value={picked} onChange={setColor} label={`Colour for ${event.title}`} />
+            <p className="mt-2 text-xs text-muted flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>{repeats(event.id) ? "Every time it repeats." : "Just this event."}</span>
+              {picked ? (
+                <TextButton onClick={() => setColor(null)}>{course ? `Back to ${course.code}'s colour` : "Back to its calendar's colour"}</TextButton>
+              ) : null}
+              {course ? <TextButton onClick={() => setEditingClass(true)}>Change {course.code}&apos;s colour everywhere</TextButton> : null}
+            </p>
+          </div>
+        )}
         {editable ? (
           editing ? (
             <div>

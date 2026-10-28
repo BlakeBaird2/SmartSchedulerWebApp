@@ -404,3 +404,50 @@ test("what happens to unfinished work loads checked, with the latest answers", (
   assert.equal(sanitizeWorkspace({ unfinished: "forever" }).unfinished, "ask", "unknown choices fall back to asking");
   assert.equal(defaultWorkspace().unfinished, "ask");
 });
+
+test("a picked colour paints every meeting of the event, and only that event", () => {
+  const school = feed("https://school.example/cal.ics");
+  const courseId = `${school.id}:course_1`;
+  const ws: Workspace = {
+    ...defaultWorkspace(),
+    feeds: [school],
+    weekly: [
+      { id: "job", label: "Work", days: [1, 2, 3, 4, 5], start: "13:00", end: "17:00" },
+      { id: "c1", label: "Class", courseId, days: [1, 3], start: "09:30", end: "10:45" },
+    ],
+    eventColors: { "weekly:job": "#0b8043", [`${school.id}:lab@google.com`]: "#d50000" },
+  };
+  const at = NOW.toISOString();
+  const snapshot = {
+    at: null,
+    feeds: {
+      [school.id]: {
+        result: {
+          url: school.url,
+          provider: "canvas" as const,
+          role: "school" as const,
+          calendarName: null,
+          fetchedAt: at,
+          courses: [{ key: "course_1", code: "NET 460", title: "Network Security", url: null }],
+          tasks: [],
+          events: [
+            { uid: "lab@google.com@2026-10-06T15:00:00.000Z", courseKey: "course_1", title: "Lab", start: "2026-10-06T15:00:00.000Z", end: "2026-10-06T16:00:00.000Z", allDay: false, busy: true, kind: "class" as const, location: null, url: null },
+            { uid: "lab@google.com@2026-10-13T15:00:00.000Z", courseKey: "course_1", title: "Lab", start: "2026-10-13T15:00:00.000Z", end: "2026-10-13T16:00:00.000Z", allDay: false, busy: true, kind: "class" as const, location: null, url: null },
+            { uid: "review", courseKey: "course_1", title: "Review", start: "2026-10-08T15:00:00.000Z", end: "2026-10-08T16:00:00.000Z", allDay: false, busy: true, kind: "class" as const, location: null, url: null },
+          ],
+          skipped: 0,
+        },
+        error: null,
+        syncedAt: null,
+      },
+    },
+  };
+  const m = buildModel(ws, snapshot, NOW);
+  const colors = (title: string) => [...new Set(m.events.filter((e) => e.title === title).map((e) => e.color))];
+  assert.deepEqual(colors("Work"), ["#0b8043"], "every day of the weekly busy time");
+  assert.deepEqual(colors("Lab"), ["#d50000"], "every meeting of the repeating event");
+  assert.equal(colors("Review").length, 1);
+  assert.notEqual(colors("Review")[0], "#d50000", "other events keep their class colour");
+  assert.notEqual(colors("NET 460")[0], "#0b8043", "class times keep theirs");
+  assert.deepEqual(sanitizeWorkspace({ eventColors: { a: "#ABCDEF", b: "red", c: 5 } }).eventColors, { a: "#abcdef" });
+});
