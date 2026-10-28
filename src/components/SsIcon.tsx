@@ -15,7 +15,8 @@ export type SsIconName =
   | "refresh"
   | "settings"
   | "help"
-  | "home";
+  | "home"
+  | "grip";
 
 const PATHS: Record<SsIconName, React.ReactNode> = {
   calendar: (
@@ -65,6 +66,17 @@ const PATHS: Record<SsIconName, React.ReactNode> = {
     </>
   ),
   home: <path d="M4 11 12 4l8 7M6 9.5V20h12V9.5" />,
+  // Six dots: something you can pick up and move.
+  grip: (
+    <>
+      <circle cx="9" cy="6" r="1.1" fill="currentColor" />
+      <circle cx="15" cy="6" r="1.1" fill="currentColor" />
+      <circle cx="9" cy="12" r="1.1" fill="currentColor" />
+      <circle cx="15" cy="12" r="1.1" fill="currentColor" />
+      <circle cx="9" cy="18" r="1.1" fill="currentColor" />
+      <circle cx="15" cy="18" r="1.1" fill="currentColor" />
+    </>
+  ),
 };
 
 export function SsIcon({ name, size = 18, className }: { name: SsIconName; size?: number; className?: string }) {

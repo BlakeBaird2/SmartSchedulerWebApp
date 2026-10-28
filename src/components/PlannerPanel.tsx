@@ -121,7 +121,9 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="ss-queue-label">
-        <span>DRAG TO SCHEDULE</span>
+        <span className="inline-flex items-center gap-1.5">
+          <SsIcon name="grip" size={13} /> DRAG TO SCHEDULE
+        </span>
         <span>{shown.length} ITEMS</span>
       </div>
       <div className="ss-task-stack">
@@ -138,18 +140,21 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
 }
 
 const ESTIMATE_CHOICES = [5, 15, 30, 45, 60, 90, 120, 180];
-/** How long ticking a task off plays before it leaves the list. */
-const COMPLETE_MS = 680;
-const COMPLETE_MS_REDUCED = 180;
+
+/** "45 min", "1 hr", "1.5 hr": short enough for the pill on the card. */
+function minutesLabel(m: number): string {
+  return m < 60 ? `${m} min` : `${Math.round((m / 60) * 10) / 10} hr`;
+}
 
 /**
- * One task: tick it off, open it, change how long it needs, or drag it onto the
- * calendar (with a mouse straight away; on a touch screen, press and hold first).
+ * One task to plan: a card to grab and drag onto the calendar (with a mouse
+ * straight away; on a touch screen, press and hold first). Tap it to open it, or
+ * tap its time to change how long it needs. Ticking work off happens on Tasks and
+ * in its details: the planner is only for putting work on the calendar.
  */
 function PlannerTask({ task }: { task: Task }) {
-  const { model, now, ws, select, toggleDone, setEstimate, scheduleTask, scheduleOnDay, newWork } = useApp();
+  const { model, now, ws, select, setEstimate, scheduleTask, scheduleOnDay, newWork } = useApp();
   const drag = usePlanDrag();
-  const [completing, setCompleting] = useState(false);
   const [editing, setEditing] = useState(false);
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const due = dueLabel(task.dueAt ? new Date(task.dueAt) : null, now);
@@ -157,108 +162,79 @@ function PlannerTask({ task }: { task: Task }) {
   const typeDefault = ws.prefs.estimates[task.type];
   const open = () => select({ kind: "task", id: task.id });
 
-  // Done work stays on the calendar; Undo is in the message that follows.
-  const complete = () => {
-    if (completing) return;
-    setCompleting(true);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setTimeout(() => toggleDone(task), reduce ? COMPLETE_MS_REDUCED : COMPLETE_MS);
-  };
-
   return (
-    <div className="ss-fold" data-completing={completing || undefined}>
-      <div>
-        <article
-          className="ss-mini-task ss-draggable"
-          role="button"
-          tabIndex={0}
-          ref={dragSourceRef}
-          data-picked={(drag?.kind === "new" && drag.taskId === task.id) || undefined}
-          aria-label={`${task.title}, ${task.estimate} min, ${due.text}${fresh ? ", new" : ""}. Open details`}
-          title="Drag onto the calendar to schedule it"
-          onClick={open}
-          onKeyDown={(e) => {
-            if (e.target !== e.currentTarget) return;
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              open();
-            }
-          }}
-          onPointerDown={(e) => {
-            if ((e.target as HTMLElement).closest("button, input")) return;
-            beginPlanDrag(
-              e,
-              // A finger would hide the top of the block, so on touch the block hangs above it.
-              { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color: "var(--ss-accent)" },
-              (target) => {
-                if (target.kind === "grid") scheduleTask(task, targetStart(target));
-                else if (target.kind === "date") scheduleOnDay(task, new Date(target.dayStart));
-              },
-            );
-          }}
-        >
-          <button
-            className="ss-check"
-            role="checkbox"
-            aria-checked={completing}
-            onClick={(e) => {
-              e.stopPropagation();
-              complete();
-            }}
-            aria-label={`Complete ${task.title}`}
-          >
-            <SsIcon name="check" size={14} />
-          </button>
-          <div className="min-w-0">
-            <h3>
-              {task.title}
-              {fresh ? <span className="ss-new">NEW</span> : null}
-            </h3>
-            <p>
-              {course ? course.code : "Personal"} · <span className={due.late ? "ss-late" : ""}>{due.text}</span>
-            </p>
-            <span className="ss-mini-meta">
+    <article
+      className="ss-mini-task ss-draggable"
+      role="button"
+      tabIndex={0}
+      ref={dragSourceRef}
+      data-picked={(drag?.kind === "new" && drag.taskId === task.id) || undefined}
+      aria-label={`${task.title}, ${task.estimate} min, ${due.text}${fresh ? ", new" : ""}. Drag onto the calendar, or open details`}
+      title="Grab it and drag it onto the calendar to schedule it"
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      }}
+      onPointerDown={(e) => {
+        if ((e.target as HTMLElement).closest("button, input")) return;
+        beginPlanDrag(
+          e,
+          // A finger would hide the top of the block, so on touch the block hangs above it.
+          { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color: "var(--ss-accent)" },
+          (target) => {
+            if (target.kind === "grid") scheduleTask(task, targetStart(target));
+            else if (target.kind === "date") scheduleOnDay(task, new Date(target.dayStart));
+          },
+        );
+      }}
+    >
+      <span className="ss-grip" aria-hidden>
+        <SsIcon name="grip" size={16} />
+      </span>
+      <div className="min-w-0">
+        <h3>
+          {task.title}
+          {fresh ? <span className="ss-new">NEW</span> : null}
+        </h3>
+        <p>
+          {course ? course.code : "Personal"} · <span className={due.late ? "ss-late" : ""}>{due.text}</span>
+          {task.points !== null ? <> · {task.points} pts</> : null}
+        </p>
+      </div>
+      <button
+        className="ss-minutes"
+        aria-expanded={editing}
+        aria-label={`${task.estimate} minutes. Change how long it needs`}
+        title="How long it needs. Tap to change"
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditing((v) => !v);
+        }}
+      >
+        <SsIcon name="clock" size={13} /> {minutesLabel(task.estimate)}
+      </button>
+      {editing ? (
+        <div className="ss-choices" role="group" aria-label={`How long ${task.title} needs`} onClick={(e) => e.stopPropagation()}>
+          {[...new Set([...ESTIMATE_CHOICES, task.estimate])]
+            .sort((a, b) => a - b)
+            .map((m) => (
               <button
-                className="ss-minutes"
-                aria-expanded={editing}
-                aria-label={`${task.estimate} minutes. Change how long it needs`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditing((v) => !v);
+                key={m}
+                aria-pressed={task.estimate === m}
+                onClick={() => {
+                  setEstimate(task.id, m === typeDefault && task.customEstimate ? null : m);
+                  setEditing(false);
                 }}
               >
-                <SsIcon name="clock" size={13} /> {task.estimate} min
+                {minutesLabel(m)}
               </button>
-              {task.points !== null ? (
-                <>
-                  <i /> {task.points} pts
-                </>
-              ) : null}
-            </span>
-            {editing ? (
-              <div className="ss-choices" role="group" aria-label={`How long ${task.title} needs`} onClick={(e) => e.stopPropagation()}>
-                {[...new Set([...ESTIMATE_CHOICES, task.estimate])]
-                  .sort((a, b) => a - b)
-                  .map((m) => (
-                    <button
-                      key={m}
-                      aria-pressed={task.estimate === m}
-                      onClick={() => {
-                        setEstimate(task.id, m === typeDefault && task.customEstimate ? null : m);
-                        setEditing(false);
-                      }}
-                    >
-                      {m < 60 ? `${m} min` : `${m / 60} hr`}
-                    </button>
-                  ))}
-              </div>
-            ) : null}
-          </div>
-          <strong className="ss-handle" aria-hidden>
-            ⋮⋮
-          </strong>
-        </article>
-      </div>
-    </div>
+            ))}
+        </div>
+      ) : null}
+    </article>
   );
 }

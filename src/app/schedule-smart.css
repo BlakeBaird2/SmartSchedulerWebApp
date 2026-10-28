@@ -534,7 +534,9 @@
   transform: translateX(16px);
 }
 .ss-queue-label {
-  margin: 26px 2px 10px;
+  margin: 26px 2px 12px;
+  white-space: nowrap;
+  gap: 8px;
   display: flex;
   justify-content: space-between;
   color: var(--ss-faint);
@@ -543,7 +545,8 @@
   font-weight: 700;
 }
 .ss-task-stack {
-  border-top: 1px solid var(--ss-line);
+  display: flex;
+  flex-direction: column;
 }
 .ss-empty {
   padding: 24px 4px;
@@ -552,28 +555,37 @@
   text-align: center;
 }
 
-/* One task in the planner: fold the row away when it is ticked off. */
-.ss-fold {
-  display: grid;
-  grid-template-rows: 1fr;
-}
-.ss-fold > div {
-  min-height: 0;
-}
+/*
+ * Each task is a card you can pick up: raised off the panel, with a grip on its
+ * left edge. It lifts a little under the pointer, and leaves a dashed outline
+ * behind while it is being dragged.
+ */
 .ss-mini-task {
   position: relative;
   display: grid;
-  grid-template-columns: 26px 1fr 22px;
-  gap: 12px;
-  padding: 16px 6px 16px 4px;
-  margin: 0 -6px 0 -4px;
-  border-bottom: 1px solid var(--ss-line);
-  border-radius: 8px;
-  outline-offset: -2px;
-  transition: background 0.12s ease;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+  padding: 10px 10px 10px 6px;
+  border: 1px solid var(--ss-line);
+  border-radius: 12px;
+  background: var(--ss-surface);
+  box-shadow:
+    0 1px 2px rgba(30, 30, 27, 0.05),
+    0 4px 12px rgba(30, 30, 27, 0.04);
+  outline-offset: 2px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 .ss-mini-task:hover {
-  background: color-mix(in oklab, var(--ss-chip) 70%, transparent);
+  border-color: var(--ss-accent-ring);
+  box-shadow:
+    0 2px 4px rgba(30, 30, 27, 0.06),
+    0 10px 24px rgba(30, 30, 27, 0.08);
+  transform: translateY(-1px);
 }
 .ss-mini-task.ss-draggable {
   cursor: grab;
@@ -584,8 +596,32 @@
 .ss-mini-task.ss-draggable:active {
   cursor: grabbing;
 }
+/* Being dragged: the card's place stays, outlined, until it lands. */
 .ss-mini-task[data-picked] {
-  opacity: 0.65;
+  border-style: dashed;
+  border-color: var(--ss-accent);
+  background: var(--ss-accent-tint);
+  box-shadow: none;
+  transform: none;
+}
+.ss-mini-task[data-picked] > * {
+  opacity: 0.45;
+}
+.ss-grip {
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  margin: -4px 0;
+  border-radius: 7px;
+  color: var(--ss-muted);
+  background: var(--ss-chip);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.ss-mini-task:hover .ss-grip {
+  color: var(--ss-accent);
+  background: var(--ss-accent-soft);
 }
 .ss-check {
   width: 22px;
@@ -617,56 +653,46 @@
   color: #999994;
 }
 .ss-mini-task h3 {
-  margin: 1px 0 5px;
-  font-size: 15.5px;
+  margin: 0 0 3px;
+  font-size: 14.5px;
   font-weight: 600;
   line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .ss-mini-task p {
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--ss-muted);
-  font-size: 13px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ss-mini-task p .ss-late {
   color: var(--ss-danger);
   font-weight: 700;
 }
-.ss-mini-meta {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-  color: var(--ss-muted);
-  font-size: 13px;
-}
-.ss-mini-meta i {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #b7b7b0;
-}
+/* How long it needs, as a pill on the right; tap to change. */
 .ss-minutes {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 6px 2px 4px;
-  margin-left: -4px;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  color: inherit;
-  font-size: inherit;
+  padding: 5px 10px;
+  border: 1px solid var(--ss-line);
+  border-radius: 999px;
+  background: var(--ss-chip);
+  color: var(--ss-text-3);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.ss-minutes:hover {
+.ss-minutes:hover,
+.ss-minutes[aria-expanded="true"] {
   color: var(--ss-accent);
+  border-color: var(--ss-accent-ring);
   background: var(--ss-accent-soft);
-}
-.ss-handle {
-  color: var(--ss-ghost);
-  font: 600 16px "Manrope Variable", "Manrope", sans-serif;
-  letter-spacing: -0.15em;
-  line-height: 1;
-  padding-top: 3px;
 }
 .ss-new {
   display: inline-block;
@@ -681,7 +707,8 @@
   vertical-align: 2px;
 }
 .ss-choices {
-  margin-top: 10px;
+  grid-column: 2 / -1;
+  margin-top: 6px;
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
@@ -717,36 +744,6 @@
 }
 .ss-view-all:hover {
   background: var(--ss-chip);
-}
-
-/* Ticking work off: the box pops, the row is struck through, then it folds away. */
-.ss-fold[data-completing] .ss-mini-task {
-  pointer-events: none;
-}
-.ss-fold[data-completing] h3 {
-  text-decoration: line-through;
-  color: #999994;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .ss-fold {
-    transition:
-      grid-template-rows 260ms cubic-bezier(0.4, 0, 0.2, 1) 400ms,
-      opacity 220ms ease 400ms;
-  }
-  .ss-fold[data-completing] {
-    grid-template-rows: 0fr;
-    opacity: 0;
-  }
-  .ss-fold[data-completing] > div {
-    overflow: hidden;
-  }
-  .ss-fold[data-completing] .ss-check {
-    animation: check-pop 380ms cubic-bezier(0.3, 1.6, 0.5, 1);
-  }
-  .ss-fold[data-completing] .ss-check svg {
-    stroke-dasharray: 24;
-    animation: tick-draw 240ms ease-out 60ms both;
-  }
 }
 
 .ss-calendar-area {
@@ -1879,22 +1876,39 @@ button.ss-event:hover {
   }
   .ss-queue-label {
     margin-top: 18px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  .ss-aside-head .ss-eyebrow {
+    letter-spacing: 0.06em;
     font-size: 10.5px;
   }
   .ss-mini-task {
-    grid-template-columns: 22px minmax(0, 1fr);
-    gap: 10px;
-    padding: 14px 4px 14px 2px;
+    grid-template-columns: 12px minmax(0, 1fr);
+    gap: 6px 8px;
+    margin-bottom: 7px;
+    padding: 9px 9px 9px 5px;
+    border-radius: 10px;
   }
-  .ss-mini-task > .ss-handle {
-    display: none;
+  /* Phones: the time goes under the title, where there is room for it. */
+  .ss-mini-task .ss-minutes {
+    grid-column: 2;
+    justify-self: start;
+    padding: 3px 8px;
+    font-size: 11.5px;
+  }
+  .ss-mini-task .ss-grip {
+    grid-row: span 2;
+  }
+  .ss-grip svg {
+    width: 13px;
+    height: 13px;
   }
   .ss-mini-task h3 {
-    font-size: 14px;
+    font-size: 13.5px;
   }
-  .ss-mini-task p,
-  .ss-mini-meta {
-    font-size: 12px;
+  .ss-mini-task p {
+    font-size: 11.5px;
   }
   .ss-calendar-area {
     padding: 12px 8px 10px;
