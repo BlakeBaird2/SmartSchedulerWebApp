@@ -80,6 +80,9 @@ export interface AppContextValue {
   /** Whether the planner lists up to 15 tasks rather than 5. */
   plannerMore: boolean;
   setPlannerMore: (more: boolean) => void;
+  /** Whether the planner's filters (order, class, how many) are open or folded to one line. */
+  plannerFilters: boolean;
+  setPlannerFilters: (open: boolean) => void;
   /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
   openGoal: () => void;
   /** Mark done and optionally show the completion success panel. */

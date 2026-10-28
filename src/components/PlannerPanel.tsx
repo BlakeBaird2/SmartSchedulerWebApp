@@ -44,11 +44,15 @@ const SORTS: { id: TodoSort; label: string }[] = [
  * scheduled work back here takes it off the calendar.
  */
 export function PlannerPanel({ onClose }: { onClose: () => void }) {
-  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore } = useApp();
+  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore, plannerFilters, setPlannerFilters } = useApp();
   const todos = useTodos();
   const drag = usePlanDrag();
   const shown = todos.slice(0, plannerMore ? MANY : FEW);
   const stack = filters.courses?.[0] ?? (todoScope === "all" ? "all" : todoScope);
+  // What the filters are set to, in a few words, for when they are folded away.
+  const stackLabel =
+    stack === "all" ? "All classes" : stack === "school" ? "School only" : stack === "personal" ? "Personal" : (model.courseById.get(stack)?.code ?? "One class");
+  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel} · ${plannerMore ? 15 : 5}`;
 
   const setStack = (value: string) => {
     if (value === "all" || value === "school" || value === "personal") {
@@ -81,43 +85,58 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <div className="ss-filters">
-        <span>ORDER BY</span>
-        <div className="ss-sort-tabs" role="group" aria-label="Order by">
-          {SORTS.map((s) => (
-            <button key={s.id} aria-pressed={todoSort === s.id} onClick={() => setTodoSort(s.id)}>
-              {s.label}
-            </button>
-          ))}
-        </div>
-        <label>
-          <span>STACK WITH CLASS</span>
-          <select value={stack} onChange={(e) => setStack(e.target.value)}>
-            <option value="all">All classes</option>
-            <option value="school">School only</option>
-            {model.visibleCourses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code}
-              </option>
-            ))}
-            <option value="personal">Personal</option>
-          </select>
-        </label>
-        <div className="ss-density">
-          <div>
-            <strong>Show more items</strong>
-            <span>{plannerMore ? `Showing all ${shown.length}` : `Showing ${shown.length} of ${todos.length}`}</span>
+      <div className="ss-filters" data-collapsed={!plannerFilters || undefined}>
+        <button
+          className="ss-filters-toggle"
+          aria-expanded={plannerFilters}
+          aria-controls="planner-filters"
+          onClick={() => setPlannerFilters(!plannerFilters)}
+          title={plannerFilters ? "Hide the filters" : "Show the filters"}
+        >
+          <span>FILTERS</span>
+          {!plannerFilters ? <em>{summary}</em> : null}
+          <SsIcon name="chevronRight" size={16} />
+        </button>
+        {plannerFilters ? (
+          <div id="planner-filters" className="ss-filters-body">
+            <span>ORDER BY</span>
+            <div className="ss-sort-tabs" role="group" aria-label="Order by">
+              {SORTS.map((s) => (
+                <button key={s.id} aria-pressed={todoSort === s.id} onClick={() => setTodoSort(s.id)}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <label>
+              <span>STACK WITH CLASS</span>
+              <select value={stack} onChange={(e) => setStack(e.target.value)}>
+                <option value="all">All classes</option>
+                <option value="school">School only</option>
+                {model.visibleCourses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.code}
+                  </option>
+                ))}
+                <option value="personal">Personal</option>
+              </select>
+            </label>
+            <div className="ss-density">
+              <div>
+                <strong>Show more items</strong>
+                <span>{plannerMore ? `Showing all ${shown.length}` : `Showing ${shown.length} of ${todos.length}`}</span>
+              </div>
+              <button
+                className="ss-switch"
+                onClick={() => setPlannerMore(!plannerMore)}
+                role="switch"
+                aria-checked={plannerMore}
+                aria-label={`Show up to ${MANY} planner items`}
+              >
+                <i />
+              </button>
+            </div>
           </div>
-          <button
-            className="ss-switch"
-            onClick={() => setPlannerMore(!plannerMore)}
-            role="switch"
-            aria-checked={plannerMore}
-            aria-label={`Show up to ${MANY} planner items`}
-          >
-            <i />
-          </button>
-        </div>
+        ) : null}
       </div>
 
       <div className="ss-queue-label">

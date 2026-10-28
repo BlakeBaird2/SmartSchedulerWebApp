@@ -431,7 +431,7 @@
   border-radius: 12px;
   background: var(--ss-surface);
 }
-.ss-filters > span,
+.ss-filters-body > span,
 .ss-filters label > span {
   display: block;
   margin-bottom: 8px;
@@ -439,6 +439,58 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   font-weight: 700;
+}
+/* The card folds to one line that says what it is set to. */
+.ss-filters-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 0;
+  padding: 2px 0 6px;
+  border: 0;
+  background: none;
+  color: var(--ss-faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: left;
+}
+.ss-filters-toggle:hover {
+  color: var(--ss-ink);
+}
+.ss-filters-toggle em {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ss-text-3);
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.ss-filters-toggle svg {
+  flex: none;
+  margin-left: auto;
+  transform: rotate(-90deg);
+  transition: transform 0.2s ease;
+}
+.ss-filters[data-collapsed] .ss-filters-toggle {
+  margin: -2px 0;
+  padding: 0;
+}
+.ss-filters[data-collapsed] .ss-filters-toggle svg {
+  transform: rotate(90deg);
+}
+.ss-filters[data-collapsed] {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+.ss-filters-body {
+  padding-top: 8px;
+  border-top: 1px solid var(--ss-line-soft);
 }
 .ss-sort-tabs {
   display: grid;
@@ -770,13 +822,13 @@
 }
 .ss-date-title span {
   color: var(--ss-faint);
-  font-size: 11.5px;
+  font-size: 10.5px;
   letter-spacing: 0.12em;
   font-weight: 700;
 }
 .ss-date-title h1 {
-  margin: 3px 0 0;
-  font: 700 26px "Manrope Variable", "Manrope", sans-serif;
+  margin: 2px 0 0;
+  font: 700 21px "Manrope Variable", "Manrope", sans-serif;
   letter-spacing: -0.03em;
   white-space: nowrap;
 }
@@ -1853,9 +1905,13 @@ button.ss-event:hover {
     margin-top: 16px;
     padding: 11px;
   }
-  .ss-filters > span,
-  .ss-filters label > span {
+  .ss-filters-body > span,
+  .ss-filters label > span,
+  .ss-filters-toggle {
     font-size: 10px;
+  }
+  .ss-filters-toggle em {
+    font-size: 11.5px;
   }
   .ss-sort-tabs {
     grid-template-columns: 1fr;
@@ -1922,7 +1978,7 @@ button.ss-event:hover {
     gap: 8px;
   }
   .ss-date-title h1 {
-    font-size: 18px;
+    font-size: 16px;
   }
   .ss-date-title span {
     font-size: 10px;

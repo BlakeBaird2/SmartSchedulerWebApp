@@ -47,6 +47,7 @@ interface UiPrefs {
   /** Whether the calendar's sidebar (small month and to-do list) is open on a computer. */
   calSidebar: boolean;
   plannerMore: boolean;
+  plannerFilters: boolean;
   /** The to-do list: everything, or school work only. */
   todoScope: TodoScope;
   /** The to-do list's order: most urgent first, or shortest first. */
@@ -72,6 +73,7 @@ const DEFAULT_UI: UiPrefs = {
   settingsPanel: "main",
   calSidebar: true,
   plannerMore: false,
+  plannerFilters: true,
   todoScope: "all",
   todoSort: "due",
 };
@@ -96,6 +98,7 @@ function parseUi(raw: string | null): UiPrefs {
     settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
     calSidebar: p.calSidebar !== false,
     plannerMore: p.plannerMore === true,
+    plannerFilters: p.plannerFilters !== false,
     todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
     todoSort: p.todoSort === "duration" || p.todoSort === "points" ? p.todoSort : "due",
   };
@@ -723,6 +726,8 @@ export function App() {
     setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
     plannerMore: ui.plannerMore,
     setPlannerMore: (more: boolean) => writeUi({ plannerMore: more }),
+    plannerFilters: ui.plannerFilters,
+    setPlannerFilters: (open: boolean) => writeUi({ plannerFilters: open }),
     todoScope: ui.todoScope,
     setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
     todoSort: ui.todoSort,
