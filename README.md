@@ -43,8 +43,8 @@ prefix on every class.
   Scheduled work leaves the list and the next task moves up.
   - It opens on today. The week fits the screen, Monday to Friday (plus a
     weekend day when something is on it), and the month is a click away.
-    What has gone by is grey: earlier days, today up to now, and anything that
-    has ended. Events are coloured Work, School or Personal, and work
+    Events and scheduled work that have ended keep their colour but fade, as in
+    Google Calendar. Events are coloured Work, School or Personal, and work
     you scheduled is striped.
   - Drag scheduled work to move it, drag its bottom edge to change its length,
     or drag it back onto the planner to take it off. Every change has Undo.

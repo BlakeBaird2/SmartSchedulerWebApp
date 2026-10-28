@@ -306,9 +306,8 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
   const deadline = draggedTask?.dueAt ? new Date(draggedTask.dueAt) : null;
   const placing = Boolean(drag && drag.kind !== "resize");
-  // What has gone by is grey: earlier days, today up to now, and anything that has ended.
+  // Anything that has ended is faded.
   const nowMs = now.getTime();
-  const todayStart = startOfDay(now).getTime();
 
   return (
     <div className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
@@ -319,7 +318,6 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
             key={c.from}
             className="ss-day-head"
             data-today={isToday(c.day) || undefined}
-            data-past={c.from < todayStart || undefined}
             onClick={() => {
               setCalCursor(c.day);
               setCalMode("day");
@@ -365,7 +363,6 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
               <div
                 key={c.from}
                 className={`ss-day-column ${placing ? "ss-drop-ready" : ""}`}
-                data-past={c.from < todayStart || undefined}
                 // How the drag works out the time under the pointer (see planDrag.ts).
                 data-drop-day={c.from}
                 data-drop-min={startHour * 60}
@@ -375,9 +372,6 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
               >
                 {height > 0 ? (
                   <>
-                    {c.from === todayStart && nowMs > c.from + startHour * 60 * MIN ? (
-                      <div className="ss-past-shade" style={{ height: Math.min(bodyHeight, y(nowMs, c.from)) }} />
-                    ) : null}
                     {hours.map((h, i) => (
                       <div key={h} className="ss-hour-line" style={{ top: i * 60 * ppm, height: 60 * ppm }} />
                     ))}
@@ -627,7 +621,6 @@ function MonthGrid({ data }: { data: CalData }) {
   const { calCursor, setCalCursor, setCalMode, select, now } = useApp();
   const drag = usePlanDrag();
   const nowMs = now.getTime();
-  const todayStart = startOfDay(now).getTime();
   const placing = Boolean(drag && drag.kind !== "resize");
   // The prototype's month starts on Sunday.
   const days = useMemo(
@@ -667,7 +660,6 @@ function MonthGrid({ data }: { data: CalData }) {
               tabIndex={0}
               className={`ss-month-cell ${inMonth ? "" : "ss-outside"} ${placing ? "ss-drop-ready" : ""} ${deadline !== null && from > deadline ? "ss-past-deadline" : ""}`}
               data-today={isToday(d) || undefined}
-              data-past={from < todayStart || undefined}
               data-drop-date={inMonth ? from : undefined}
               data-drop-over={(drag?.target?.kind === "date" && drag.target.dayStart === from) || undefined}
               onClick={() => {
