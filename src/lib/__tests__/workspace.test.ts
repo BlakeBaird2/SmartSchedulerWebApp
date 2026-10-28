@@ -380,3 +380,11 @@ test("estimates say who set them, and bare minutes from before are the student's
     odd: { minutes: 30, source: "user" },
   });
 });
+
+test("the class ranking loads as unique class ids, and travels in a setup link", () => {
+  const ws = sanitizeWorkspace({ feeds: [feed("https://a.example/cal.ics")], classOrder: ["f:cs", "f:fin", "f:cs", 7, "", null, "f:art"] });
+  assert.deepEqual(ws.classOrder, ["f:cs", "f:fin", "f:art"]);
+  assert.deepEqual(sanitizeWorkspace({ classOrder: "f:cs" }).classOrder, [], "not a list");
+  assert.deepEqual(defaultWorkspace().classOrder, []);
+  assert.deepEqual(decodeSetup(encodeSetup(ws))?.classOrder, ["f:cs", "f:fin", "f:art"]);
+});

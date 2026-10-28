@@ -12,7 +12,7 @@ export type View = "plan" | "calendar" | "upcoming" | "settings" | "help";
 /** "schedule" (an agenda list) and "3day" are the phone views, as in Google Calendar's app. */
 export type CalMode = "month" | "week" | "day" | "3day" | "schedule";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
-export type SettingsPanel = "main" | "calendars" | "schedule" | "estimates" | "browser" | "about";
+export type SettingsPanel = "main" | "calendars" | "classes" | "schedule" | "estimates" | "browser" | "about";
 export type Selection =
   | { kind: "task"; id: string }
   | { kind: "event"; id: string }

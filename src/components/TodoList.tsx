@@ -15,8 +15,8 @@ export function useTodos(): Task[] {
   return useMemo(() => {
     const courseSet = filters.courses ? new Set(filters.courses) : null;
     const tasks = courseSet ? model.tasks.filter((t) => t.courseId && courseSet.has(t.courseId)) : model.tasks;
-    return todoList({ tasks, blocks: ws.blocks, now, scope: todoScope, sort: todoSort, classOrder: [] });
-  }, [model.tasks, ws.blocks, now, filters.courses, todoScope, todoSort]);
+    return todoList({ tasks, blocks: ws.blocks, now, scope: todoScope, sort: todoSort, classOrder: ws.classOrder });
+  }, [model.tasks, ws.blocks, ws.classOrder, now, filters.courses, todoScope, todoSort]);
 }
 
 /**

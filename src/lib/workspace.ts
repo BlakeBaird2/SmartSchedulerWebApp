@@ -21,6 +21,7 @@ export function defaultWorkspace(): Workspace {
     estimates: {},
     blocks: [],
     courseEdits: {},
+    classOrder: [],
     prefs: { ...DEFAULT_PREFS, estimates: { ...DEFAULT_PREFS.estimates } },
     demo: false,
   };
@@ -159,6 +160,15 @@ function sanitizeEstimates(raw: unknown): Record<string, Estimate> {
   return out;
 }
 
+export const MAX_CLASSES = 200;
+
+/** Class ids, in the student's order, each once. */
+function sanitizeClassOrder(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const ids = raw.filter((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 300);
+  return [...new Set(ids)].slice(0, MAX_CLASSES);
+}
+
 function sanitizeRecord<T>(raw: unknown, check: (v: unknown) => v is T): Record<string, T> {
   const out: Record<string, T> = {};
   if (!isObj(raw)) return out;
@@ -202,6 +212,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     estimates: sanitizeEstimates(raw.estimates),
     blocks: sanitizeBlocks(raw),
     courseEdits,
+    classOrder: sanitizeClassOrder(raw.classOrder),
     prefs: sanitizePrefs(raw.prefs),
     demo: raw.demo === true,
   };

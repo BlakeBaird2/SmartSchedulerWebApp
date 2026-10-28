@@ -208,6 +208,8 @@ export interface Workspace {
   blocks: ScheduledBlock[];
   /** courseId -> the user's renames, colours and hiding */
   courseEdits: Record<string, CourseEdit>;
+  /** Class ids, most important first. Breaks ties between work due at the same time. */
+  classOrder: string[];
   prefs: PlanPrefs;
   /** Showing sample data instead of the user's own calendars. */
   demo: boolean;
