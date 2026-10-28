@@ -4,19 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildModel } from "@/lib/model";
 import { indexPlan, makePlan } from "@/lib/schedule";
 import { mergeChanges } from "@/lib/changes";
+import { addNewWork, newIds, parseNewWork, seeWork as seeNewWork } from "@/lib/newWork";
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
-import { decodeSetup, nextPersonalColor, pastDueIds, sanitizeWorkspace } from "@/lib/workspace";
-import { type Change, type FeedResult, type FeedRole, type Snapshot, type Task, type Workspace } from "@/lib/types";
-import { DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
+import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
+import { type Change, type EstimateSource, type FeedResult, type FeedRole, type Priority, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
+import { format } from "date-fns";
+import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
+import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
+import type { TodoScope, TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
-import { Header } from "./Header";
-import { Banners } from "./Banners";
+import { Notices, Topbar } from "./Topbar";
 import { Onboarding, startDemo } from "./Onboarding";
-import { PlanHeading, PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
-import { UpcomingView } from "./UpcomingView";
+import { TasksPage } from "./TasksPage";
 import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
@@ -24,9 +26,9 @@ import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
-import { BottomNav } from "./BottomNav";
 import { AppTour } from "./AppTour";
 import { ViewHeading } from "./ViewHeading";
+import { UnfinishedPrompt } from "./UnfinishedPrompt";
 import { openGoalNotice } from "./Prototype";
 import { trackEvent } from "./smartEvents";
 
@@ -37,23 +39,46 @@ import { trackEvent } from "./smartEvents";
 interface UiPrefs {
   view: View;
   calMode: CalMode;
+  /** Set once the student picks a view themselves; until then the calendar opens on the day. */
+  calModePicked: boolean;
   filters: Filters;
   /** Whether the first-run setup has been finished. */
   setupDone: boolean;
   hideClassTimesTip: boolean;
   settingsPanel: SettingsPanel;
+  /** Whether the calendar's sidebar (small month and to-do list) is open on a computer. */
+  calSidebar: boolean;
+  plannerMore: boolean;
+  plannerFilters: boolean;
+  /** The to-do list: everything, or school work only. */
+  todoScope: TodoScope;
+  /** The to-do list's order: most urgent first, or shortest first. */
+  todoSort: TodoSort;
 }
 
-const VIEWS: View[] = ["plan", "calendar", "upcoming", "settings", "help"];
-const CAL_MODES: CalMode[] = ["month", "week", "day", "3day", "schedule"];
-const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "schedule", "estimates", "browser", "about"];
+const VIEWS: View[] = ["calendar", "tasks", "settings", "help"];
+const CAL_MODES: CalMode[] = ["month", "week", "day"];
+
+/** Screens from before the redesign: Plan became the calendar, Upcoming and Classes the task list. */
+function viewFrom(v: unknown): View | null {
+  if (v === "plan") return "calendar";
+  if (v === "upcoming" || v === "classes") return "tasks";
+  return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
+}
+const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "classes", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
-  view: "plan",
-  calMode: "week",
+  view: "calendar",
+  calMode: "day",
+  calModePicked: false,
   filters: DEFAULT_FILTERS,
   setupDone: false,
   hideClassTimesTip: false,
   settingsPanel: "main",
+  calSidebar: true,
+  plannerMore: false,
+  plannerFilters: true,
+  todoScope: "all",
+  todoSort: "due",
 };
 
 function parseUi(raw: string | null): UiPrefs {
@@ -61,9 +86,10 @@ function parseUi(raw: string | null): UiPrefs {
   if (!p || typeof p !== "object") return DEFAULT_UI;
   const f = p.filters;
   return {
-    // Classes was folded into Upcoming; a saved "classes" view opens Upcoming.
-    view: (p.view as string) === "classes" ? "upcoming" : p.view && VIEWS.includes(p.view) ? p.view : DEFAULT_UI.view,
-    calMode: p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
+    view: viewFrom(p.view) ?? DEFAULT_UI.view,
+    // The day is the default. A view saved before that, which nobody picked, opens as the day too.
+    calMode: p.calModePicked === true && p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
+    calModePicked: p.calModePicked === true,
     filters: {
       // One class or all of them (class tabs). An older multi-class choice falls back to all.
       courses: Array.isArray(f?.courses) && f.courses.length === 1 && typeof f.courses[0] === "string" ? [f.courses[0]] : null,
@@ -74,6 +100,11 @@ function parseUi(raw: string | null): UiPrefs {
     setupDone: p.setupDone === true,
     hideClassTimesTip: p.hideClassTimesTip === true,
     settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
+    calSidebar: p.calSidebar !== false,
+    plannerMore: p.plannerMore === true,
+    plannerFilters: p.plannerFilters !== false,
+    todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
+    todoSort: p.todoSort === "duration" || p.todoSort === "points" ? p.todoSort : "due",
   };
 }
 
@@ -126,7 +157,7 @@ function applyImport(ws: Workspace) {
   writeJson(KEYS.workspace, ws);
   writeStored(KEYS.snapshot, null);
   writeStored(KEYS.changes, null);
-  writeUi({ setupDone: true, view: "plan" });
+  writeUi({ setupDone: true, view: "calendar" });
 }
 
 /**
@@ -167,24 +198,21 @@ let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
   if (!opened) {
-    // Every visit opens on the Plan screen, which leads with what SmartScheduler does,
-    // unless the address names a screen (?view=calendar). The calendar mode and filters
-    // are still remembered.
+    // Every visit opens on the calendar unless the address names a screen
+    // (?view=tasks). The calendar mode and filters are still remembered.
     const asked = viewFromUrl();
     const raw = readStored(KEYS.ui);
     if (asked) writeUi({ view: asked });
-    else if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
+    else if (raw && parseUi(raw).view !== "calendar") writeUi({ view: "calendar" });
     opened = takeDemoFromUrl() ?? takeSetupFromUrl();
   }
   return opened;
 }
 
-/** The screen named in the address (?view=upcoming), if it is one. */
+/** The screen named in the address (?view=tasks), if it is one. */
 function viewFromUrl(): View | null {
   if (typeof window === "undefined") return null;
-  const v = new URLSearchParams(window.location.search).get("view");
-  if (v === "classes") return "upcoming";
-  return v && VIEWS.includes(v as View) ? (v as View) : null;
+  return viewFrom(new URLSearchParams(window.location.search).get("view"));
 }
 
 function clearUrlFragment() {
@@ -217,6 +245,7 @@ export function App() {
   const wsRaw = useStored(KEYS.workspace);
   const snapRaw = useStored(KEYS.snapshot);
   const changesRaw = useStored(KEYS.changes);
+  const newRaw = useStored(KEYS.newWork);
   const uiRaw = useStored(KEYS.ui);
 
   const ws = useMemo(() => sanitizeWorkspace(parseJson(wsRaw)), [wsRaw]);
@@ -249,11 +278,11 @@ export function App() {
   // The plan only needs to move when the minute changes.
   const minute = Math.floor(now.getTime() / MINUTE);
   const model = useMemo(() => buildModel(ws, snapshot, new Date(minute * MINUTE)), [ws, snapshot, minute]);
-  const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE)), [model, ws.prefs, minute]);
+  const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE), ws.blocks), [model, ws.prefs, ws.blocks, minute]);
   const index = useMemo(() => indexPlan(plan), [plan]);
+  const newWork = useMemo(() => newIds(parseNewWork(newRaw), new Date(minute * MINUTE)), [newRaw, minute]);
 
   const [calCursor, setCalCursor] = useState(() => new Date());
-  const [planDay, setPlanDay] = useState(0);
   const [selected, setSelected] = useState<Selection>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [classTimesOpen, setClassTimesOpen] = useState(false);
@@ -281,6 +310,11 @@ export function App() {
     [toast],
   );
 
+  const seeWork = useCallback((taskIds: string[]) => {
+    const work = parseNewWork(readStored(KEYS.newWork));
+    if (taskIds.some((id) => work[id])) writeJson(KEYS.newWork, seeNewWork(work, taskIds));
+  }, []);
+
   /** Mark work as done without touching anything the user already marked. */
   const markDone = useCallback(
     (ids: string[]) => {
@@ -294,7 +328,7 @@ export function App() {
 
   const saveSnapshot = useCallback(
     (s: Snapshot) => {
-      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open SmartScheduler.");
+      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open Schedule Smart.");
     },
     [toast],
   );
@@ -335,7 +369,10 @@ export function App() {
           markDone(after.feeds.flatMap((f) => (feeds[f.id]?.result ? pastDueIds(f.id, feeds[f.id]!.result!, cutoff) : [])));
         }
 
-        if (outcome.changes.length) writeJson(KEYS.changes, mergeChanges(outcome.changes, parseChanges(readStored(KEYS.changes)), at));
+        if (outcome.changes.length) {
+          writeJson(KEYS.changes, mergeChanges(outcome.changes, parseChanges(readStored(KEYS.changes)), at));
+          writeJson(KEYS.newWork, addNewWork(parseNewWork(readStored(KEYS.newWork)), outcome.changes, at));
+        }
 
         if (outcome.failed > 0) toast(outcome.failed === 1 ? "One calendar couldn't be read. Its last copy is still shown." : `${outcome.failed} calendars couldn't be read. Their last copies are still shown.`);
         else if (outcome.changes.length) toast(`${plural(outcome.changes.length, "change")} from your classes · see the bell`);
@@ -456,11 +493,12 @@ export function App() {
           return { ...w, done };
         });
       flip();
+      seeWork([task.id]);
       trackEvent(task.done ? "task_uncompleted" : "task_completed", { taskId: task.id, title: task.title, from: parseUi(readStored(KEYS.ui)).view });
       // Ticking something off moves the whole plan, so say so and offer a way back.
       toast(task.done ? `Moved back to your plan: ${task.title}` : `Done: ${task.title}`, { undo: flip });
     },
-    [update, toast],
+    [update, toast, seeWork],
   );
 
   const completeTask = useCallback(
@@ -476,23 +514,144 @@ export function App() {
           return { ...w, done };
         });
       update((w) => ({ ...w, done: { ...w.done, [task.id]: new Date().toISOString() } }));
+      seeWork([task.id]);
       trackEvent("task_completed", { taskId: task.id, title: task.title, from: parseUi(readStored(KEYS.ui)).view });
       if (opts?.celebrate === false) toast(`Done: ${task.title}`, { undo: flip });
       else setSelected({ kind: "completed", id: task.id });
     },
-    [update, toggleDone, toast],
+    [update, toggleDone, toast, seeWork],
+  );
+
+  const setTaskMeta = useCallback(
+    (taskId: string, patch: { points?: number | null; priority?: Priority | null }) => {
+      update((w) => {
+        const meta = { ...w.taskMeta[taskId] };
+        if (patch.points === null) delete meta.points;
+        else if (patch.points !== undefined) meta.points = Math.max(0, Math.min(10_000, Math.round(patch.points)));
+        if (patch.priority === null) delete meta.priority;
+        else if (patch.priority !== undefined) meta.priority = patch.priority;
+        const taskMeta = { ...w.taskMeta };
+        if (Object.keys(meta).length) taskMeta[taskId] = meta;
+        else delete taskMeta[taskId];
+        return { ...w, taskMeta };
+      });
+      seeWork([taskId]);
+    },
+    [update, seeWork],
   );
 
   const setEstimate = useCallback(
-    (taskId: string, minutes: number | null) => {
+    (taskId: string, minutes: number | null, source: EstimateSource = "user") => {
       update((w) => {
         const estimates = { ...w.estimates };
         if (minutes === null) delete estimates[taskId];
-        else estimates[taskId] = Math.max(5, Math.min(24 * 60, Math.round(minutes)));
+        else estimates[taskId] = { minutes: Math.max(5, Math.min(24 * 60, Math.round(minutes))), source, at: new Date().toISOString() };
         return { ...w, estimates };
       });
+      seeWork([taskId]);
     },
-    [update],
+    [update, seeWork],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Time set aside on the calendar
+  // ---------------------------------------------------------------------------
+
+  /** Change one block, saying what happened and offering a way back. */
+  const changeBlock = useCallback(
+    (before: ScheduledBlock | null, after: ScheduledBlock | null, message: string) => {
+      const swap = (from: ScheduledBlock | null, to: ScheduledBlock | null) =>
+        update((w) => {
+          let blocks = from ? dropBlock(w.blocks, from.id) : w.blocks;
+          if (to) blocks = putBlock(blocks, to);
+          return { ...w, blocks };
+        });
+      swap(before, after);
+      toast(message, { undo: () => swap(after, before) });
+    },
+    [update, toast],
+  );
+
+  const blockTitle = useCallback((b: ScheduledBlock) => model.tasks.find((t) => t.id === b.taskId)?.title ?? b.title, [model.tasks]);
+  const when = (d: Date) => `${format(d, "EEE")} ${clock(d)}`;
+
+  const scheduleTask = useCallback(
+    (task: Task, start: Date) => {
+      const block = makeBlock(randomId(), task, start, task.estimate, new Date());
+      if (Date.parse(block.end) <= Date.now()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      trackEvent("task_planned", { taskId: task.id, title: task.title, at: block.start });
+      changeBlock(null, block, `Scheduled ${when(start)}: ${task.title}`);
+      seeWork([task.id]);
+    },
+    [changeBlock, toast, seeWork],
+  );
+
+  const scheduleOnDay = useCallback(
+    (task: Task, day: Date) => {
+      const dayStart = new Date(day).setHours(0, 0, 0, 0);
+      const free = plan.days.find((d) => new Date(d.date).setHours(0, 0, 0, 0) === dayStart)?.gaps ?? [];
+      const nowMs = Date.now();
+      const quarter = 15 * MINUTE;
+      for (const g of free) {
+        const start = Math.ceil(Math.max(g.start.getTime(), nowMs) / quarter) * quarter;
+        if (start + task.estimate * MINUTE <= g.end.getTime()) return scheduleTask(task, new Date(start));
+      }
+      const noon = new Date(dayStart);
+      noon.setHours(12, 0, 0, 0);
+      scheduleTask(task, noon);
+    },
+    [plan.days, scheduleTask],
+  );
+
+  const moveScheduled = useCallback(
+    (blockId: string, start: Date) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before || Date.parse(before.start) === start.getTime()) return;
+      const after = moveBlockTo(before, start, new Date());
+      if (Date.parse(after.end) <= Date.now()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      trackEvent("task_planned", { taskId: before.taskId, at: after.start });
+      changeBlock(before, after, `Moved to ${when(start)}: ${blockTitle(before)}`);
+    },
+    [changeBlock, toast, blockTitle],
+  );
+
+  const resizeScheduled = useCallback(
+    (blockId: string, end: Date) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before || Date.parse(before.end) === end.getTime()) return;
+      const after = resizeBlockTo(before, end, new Date());
+      changeBlock(before, after, `${blockTitle(before)}: now ${duration(blockMinutes(after))}, until ${clock(new Date(after.end))}`);
+    },
+    [changeBlock, blockTitle],
+  );
+
+  const unschedule = useCallback(
+    (blockId: string) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before) return;
+      trackEvent("task_unplanned", { taskId: before.taskId });
+      changeBlock(before, null, `Back on your to-do list: ${blockTitle(before)}`);
+    },
+    [changeBlock, blockTitle],
+  );
+
+  const answerUnfinished = useCallback(
+    (taskIds: string[], back: boolean) => {
+      const prev = readWorkspace().unfinishedAnswers;
+      const at = new Date().toISOString();
+      const write = (answers: Workspace["unfinishedAnswers"]) => update((w) => ({ ...w, unfinishedAnswers: answers }));
+      write({ ...prev, ...Object.fromEntries(taskIds.map((id) => [id, { at, back }])) });
+      trackEvent(back ? "unfinished_returned" : "unfinished_left_off", { count: taskIds.length });
+      const n = plural(taskIds.length, "task");
+      toast(back ? `Back on your to-do list: ${n}` : `Left off your to-do list: ${n}`, { undo: () => write(prev) });
+    },
+    [update, toast],
   );
 
   const setView = useCallback((v: View) => {
@@ -501,14 +660,20 @@ export function App() {
   }, []);
 
   /** Opening something is a smart event too: which task, free gap or explanation. */
-  const select = useCallback((s: Selection) => {
-    if (s?.kind === "task") trackEvent("task_opened", { taskId: s.id });
-    else if (s?.kind === "gap") trackEvent("free_gap_opened", { at: new Date(s.startMs).toISOString() });
-    else if (s?.kind === "why") trackEvent("why_opened", { taskId: s.id });
-    setSelected(s);
-  }, []);
+  const select = useCallback(
+    (s: Selection) => {
+      if (s?.kind === "task") {
+        trackEvent("task_opened", { taskId: s.id });
+        seeWork([s.id]);
+      }
+      else if (s?.kind === "gap") trackEvent("free_gap_opened", { at: new Date(s.startMs).toISOString() });
+      else if (s?.kind === "why") trackEvent("why_opened", { taskId: s.id });
+      setSelected(s);
+    },
+    [seeWork],
+  );
   const setSettingsPanel = useCallback((p: SettingsPanel) => writeUi({ view: "settings", settingsPanel: p }), []);
-  const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m }), []);
+  const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m, calModePicked: true }), []);
   const setFilters = useCallback((f: Filters | ((prev: Filters) => Filters)) => {
     const prev = parseUi(readStored(KEYS.ui)).filters;
     writeUi({ filters: typeof f === "function" ? f(prev) : f });
@@ -523,14 +688,12 @@ export function App() {
         writeUi({ view: "calendar", calMode: "day" });
       }
       setSelected({ kind: "task", id: taskId });
+      seeWork([taskId]);
     },
-    [model.tasks],
+    [model.tasks, seeWork],
   );
 
   const clearChanges = useCallback(() => writeStored(KEYS.changes, null), []);
-
-  // A plan day past the horizon (after midnight rolls over) falls back to today.
-  const safePlanDay = planDay < plan.days.length ? planDay : 0;
 
   const ctx: AppContextValue = {
     ws,
@@ -539,11 +702,19 @@ export function App() {
     plan,
     index,
     changes,
+    newWork,
     now,
     timezone,
     update,
     toggleDone,
+    setTaskMeta,
     setEstimate,
+    scheduleTask,
+    scheduleOnDay,
+    moveScheduled,
+    resizeScheduled,
+    unschedule,
+    answerUnfinished,
     addFeed,
     removeFeed,
     setFeedRole,
@@ -555,10 +726,18 @@ export function App() {
     setSettingsPanel,
     calMode: ui.calMode,
     setCalMode,
+    calSidebar: ui.calSidebar,
+    setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
+    plannerMore: ui.plannerMore,
+    setPlannerMore: (more: boolean) => writeUi({ plannerMore: more }),
+    plannerFilters: ui.plannerFilters,
+    setPlannerFilters: (open: boolean) => writeUi({ plannerFilters: open }),
+    todoScope: ui.todoScope,
+    setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
+    todoSort: ui.todoSort,
+    setTodoSort: (sort: TodoSort) => writeUi({ todoSort: sort }),
     calCursor,
     setCalCursor,
-    planDay: safePlanDay,
-    setPlanDay,
     filters: ui.filters,
     setFilters,
     selected,
@@ -572,6 +751,7 @@ export function App() {
     classTimesTipHidden: ui.hideClassTimesTip,
     hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
     clearChanges,
+    seeWork,
     toast,
     openGoal: openGoalNotice,
     completeTask,
@@ -579,7 +759,7 @@ export function App() {
 
   const finishSetup = useCallback(() => {
     trackEvent("setup_finished");
-    writeUi({ setupDone: true, view: "plan" });
+    writeUi({ setupDone: true, view: "calendar" });
   }, []);
 
   return (
@@ -587,24 +767,27 @@ export function App() {
       {!ready ? (
         <Onboarding onFinish={finishSetup} />
       ) : (
-        <div className="min-h-dvh flex flex-col">
-          <Header />
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-32 md:pb-24">
-            {ui.view === "plan" ? <PlanHeading /> : <ViewHeading />}
-            <Banners />
-            <div className="mt-4 fade-in" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
-              {ui.view === "plan" && <PlanView />}
-              {ui.view === "calendar" && <CalendarView />}
-              {ui.view === "upcoming" && <UpcomingView />}
-              {ui.view === "settings" && <SettingsView />}
-              {ui.view === "help" && <HelpView />}
-            </div>
-          </main>
-          <BottomNav />
+        <div className="ss-shell">
+          <Topbar />
+          <Notices />
+          {ui.view === "calendar" ? (
+            <CalendarView />
+          ) : (
+            <main className="ss-scroll" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
+              {ui.view === "tasks" ? <TasksPage /> : null}
+              {ui.view === "settings" || ui.view === "help" ? (
+                <div className="ss-page fade-in">
+                  <ViewHeading />
+                  <div className="mt-6">{ui.view === "settings" ? <SettingsView /> : <HelpView />}</div>
+                </div>
+              ) : null}
+            </main>
+          )}
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
           <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
+          <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
         </div>
       )}
       {incoming.pending ? (

@@ -450,6 +450,82 @@ works. Settings → About shows the session's events for facilitators.
 Not done: tying in an audience beyond college students (our professor called it
 optional).
 
+### 27. Calendar and to-do redesign, after the best-regarded planners
+
+We studied the calendar and to-do apps people hold up as the cleanest: **Sunsama**
+and **Akiflow** (a task list beside the calendar, dragged into the day),
+**Notion Calendar** (a quiet grid, a mini month, the time right now in a red
+pill), **Things 3** (big date numbers, "when" kept apart from "deadline") and
+**Todoist** (a week strip at the top of Upcoming). Everything below is on the
+`calendar-planner-redesign` branch.
+
+| Idea | Borrowed from | What we built |
+| --- | --- | --- |
+| Plan by dragging | Sunsama, Akiflow | Drag a task from the To do list onto a time and it's planned there. SmartScheduler replans everything else around it. Drag a planned block to move it, or back onto the list to hand it back. Each move can be undone. |
+| A to-do list beside the calendar | Sunsama, Akiflow, Amie | A To do column on the calendar, grouped by due day ("Due today", "Due Thu"), each task showing when it's planned or "Won't fit". |
+| Mini month | Notion Calendar, Google Calendar | A small month above the list. The open week is shaded, today is circled, and an amber dot marks days with something due. |
+| Quiet grid, big dates | Notion Calendar | Lighter hour lines, the weekday over a large date, today in an accent circle with a faint wash down its column, weekends slightly shaded, past events faded. |
+| The time right now | Notion Calendar | The red now-line gains a red pill with the time in the hour column. |
+| Deadlines in their own row | Akiflow, Google Calendar | A labelled **Due** row (amber flag) under the day headers, apart from **All day** events, so a deadline never looks like time on the grid. |
+| Your choice vs ours | Things 3 ("when" vs "deadline") | A time you picked carries a pin, on the calendar block, in the To do list and on the green Planned chip. Task details say "You picked this time" and offer **Let SmartScheduler choose**. |
+| Pick a time without dragging | Things 3's When picker | **Pick a time** in task details (a day and a start time) does the same as dragging, for phones and keyboards. |
+| Week at a glance | Todoist Upcoming | A seven-day strip at the top of Upcoming with amber dots for what's due; tap a day to jump to it. Day headings lead with the date as a big number. |
+| More room | Notion Calendar | The sidebar can be hidden (and stays hidden) to give the week the full width. |
+
+Planned stays green and Due stays amber everywhere, and planned blocks keep their
+white tile with a class-coloured outline. Phones keep the Google Calendar-style
+views; they plan with **Pick a time**.
+
+Also fixed: starting sample data from `/app#demo` changed the address bar while the
+page was still drawing, which React flagged as an error. The smart-event address
+update now waits until drawing is done.
+
+### 28. One to-do list beside the calendar, from user interviews
+
+Branch `redesign/sidebar-planner`, built on 27, from the team's user interviews.
+The left column is what the interviews asked for; the sync with class calendars
+is unchanged, and this is all about planning.
+
+| Asked for | What we built | Principle |
+| --- | --- | --- |
+| Choosing when work happens | The calendar shows only classes, events and time you scheduled. Free gaps stay empty, and while you place work they light up with how much time they hold. | User control; guide attention |
+| One list of school and personal work | One to-do list of synced and personal work, "All tasks" or "School only", by due date or by length. Scheduled work leaves it, so the next thing to plan moves up and says **Next up**. | Recognition over recall; grouping |
+| An editable time estimate on each task | "~1.5 hrs" on every task, one tap to change. Stored with who set it, so a suggested estimate can sit beside yours later. | Recognition over recall |
+| Colour by due date | Red (due now, or late) through yellow (a week or more out), in the list and on scheduled blocks, always with the words ("due tomorrow"). | Pre-attentive colour, never colour alone |
+| Drag and drop on phones too | Pointer events for mouse, pen and touch. On touch, press and hold to pick something up, so a swipe still scrolls; resizing starts straight away from the bottom edge. Below desktop size the list is a sheet that gets out of the way while you drag, and switches the agenda to a day with times so there's somewhere to drop. | Fitts's law; conventions (iOS and Android long-press) |
+| Easy to fill an empty gap with the next item | A free gap lists what fits next on the list, with **Put it here**. A task's details have **Schedule it**. A focused block moves with the arrow keys, Shift changes its length, and Delete takes it off. | Accessibility; flexibility |
+| A satisfying completion | The box pops, the tick draws itself, the row turns green and folds away. Done work stays on the calendar, faded and ticked. Reduced-motion settings get a plain tick. | Feedback; delight |
+| Class priority as a tiebreaker | **Class priority** in Settings decides which class's work comes first when things are due at the same time. | User control |
+| A New badge on unseen assignments | **New** on work a class calendar added, until it's opened or acted on, with a count and **Mark seen** in the list header. | Visibility of system status |
+| A morning question about unfinished work | The first open each day asks whether to put yesterday's unfinished work back on the list (Yes / No). Settings can switch this to "put it back at midnight" or "keep it on my list". | User control; error recovery |
+| Custom event colours, like Google Calendar | Recolour any event (a class, a shift) from its details, with Google Calendar's eleven colours. The colour covers every time it repeats. | External consistency |
+
+Every change to the calendar can be undone from the message that confirms it.
+Messages let taps through (except Undo) and fade during a drag, so they never
+hide a drop spot.
+
+### 29. The Figma prototype, 1:1
+
+Branch `redesign/figma-prototype` rebuilds the app as the team's Figma Make
+prototype, "Smart Calendar Scheduler Prototype", taken from its source: the same
+fonts (DM Sans, Manrope), palette, icons, type sizes, spacing and phone
+breakpoints (820px and 480px). Calendar and Tasks replace Plan and Upcoming.
+
+Where the prototype was a mock-up, the app keeps what already worked:
+- Scheduled work leaves the planner. The prototype marks it "SET" and keeps it
+  there; the earlier redesign asked for the list to move up.
+- On a touch screen, drag starts after a press and hold, so a swipe still
+  scrolls. The prototype starts dragging on the first touch.
+- Blocks can be resized, and they move in 15-minute steps rather than the
+  prototype's whole slots.
+- The week shows your working hours (stretched to fit), not a fixed 8 to 5.
+- Refresh, change alerts, Settings and Help live in the profile menu, since the
+  prototype's bar has only the two tabs, Add task and the avatar.
+
+Dropped because the prototype doesn't have them: the mini month, the due-date
+row on the calendar (the deadline shading shows it while you drag instead), the
+red-to-yellow due-date colours, and the bottom tab bar on phones.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.

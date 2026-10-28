@@ -28,7 +28,7 @@ const GOAL_STEPS = [
 
 export const GOAL_EXAMPLE = "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
 export const GOAL_BODY =
-  "SmartScheduler finds free gaps on your day and fills them with the work that is due soonest. Use Plan, Calendar or Upcoming. Any path that gets you to a task and a Done mark counts.";
+  "Schedule Smart finds free gaps on your day and fills them with the work that is due soonest. Use Plan, Calendar or Upcoming. Any path that gets you to a task and a Done mark counts.";
 
 const OPEN_PROTO = "prio:open-prototype-notice";
 const OPEN_GOAL = "prio:open-goal-notice";
@@ -81,7 +81,7 @@ export function EntryNotices() {
   };
 
   return (
-    <Dialog elevated label="Welcome to SmartScheduler" onClose={close} size="md" className="!p-6">
+    <Dialog elevated label="Welcome to Schedule Smart" onClose={close} size="md" className="!p-6">
       <span className="proto-badge pointer-events-none" aria-hidden>
         <FlaskConical size={14} />
         Prototype

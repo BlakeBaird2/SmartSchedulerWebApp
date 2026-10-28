@@ -14,6 +14,12 @@
  *    split across gaps; quizzes and short tasks are never split. Nothing is placed
  *    after its own due time.
  *
+ * Time the student set aside themselves (by dragging work onto the calendar) is
+ * "pinned": it stays exactly there, that time stops being free, and the work it
+ * is for counts as scheduled, so the rest is planned around it. Once all of a
+ * task's set-aside time has passed and the task still isn't done, it is planned
+ * again instead of being lost.
+ *
  * Earliest-deadline-first is the classic answer to "what should I do now so that
  * nothing is late", and it is predictable: the plan never reshuffles for reasons
  * a person could not explain.
@@ -58,6 +64,10 @@ export interface PlannedBlock {
   /** 1-based piece number when a task is split across several blocks. */
   part: number;
   parts: number;
+  /** Put at this time by the student, rather than chosen by the planner. */
+  pinned?: boolean;
+  /** The student's scheduled block this came from, when pinned. */
+  blockId?: string;
 }
 
 export interface DayPlan {
@@ -101,6 +111,16 @@ export interface PlanInput {
   prefs: PlanPrefs;
   /** How many days to plan, starting today. */
   days: number;
+  /** Time the student set aside. It is busy, and the work it is for is scheduled. */
+  fixed?: FixedBlock[];
+}
+
+export interface FixedBlock {
+  id: string;
+  /** Null for set-aside time that isn't for a task; it is still busy. */
+  taskId: string | null;
+  start: Date;
+  end: Date;
 }
 
 /** Higher runs first when two things are due at the same moment. */
@@ -194,15 +214,39 @@ export function buildPlan(input: PlanInput): Plan {
   const today = startOfLocalDay(now);
   const horizonEnd = addLocalDays(today, input.days).getTime();
 
+  // Set-aside time still to come schedules its work. Time that has all passed lets
+  // the work go, so it is planned again.
+  const fixed = (input.fixed ?? []).filter((b) => b.end.getTime() > b.start.getTime());
+  const scheduled = new Set(fixed.filter((b) => b.taskId !== null && b.end.getTime() > nowMs).map((b) => b.taskId as string));
+
   // Work worth planning: unfinished, has time left, and not long past due.
   const candidates = priorityOrder(
     input.tasks.filter(
       (task) =>
-        task.estimate > 0 && (!task.dueAt || task.dueAt.getTime() >= nowMs - OVERDUE_GRACE_DAYS * DAY),
+        task.estimate > 0 &&
+        (!task.dueAt || task.dueAt.getTime() >= nowMs - OVERDUE_GRACE_DAYS * DAY || scheduled.has(task.id)),
     ),
     now,
   );
-  const remaining = new Map(candidates.map((task) => [task.id, Math.round(task.estimate)]));
+  const remaining = new Map(candidates.map((task) => [task.id, scheduled.has(task.id) ? 0 : Math.round(task.estimate)]));
+
+  // Set-aside time stays exactly where the student put it, and counts as busy.
+  const candidateIds = new Set(candidates.map((t) => t.id));
+  const pinned: PlannedBlock[] = fixed
+    .filter((b) => b.taskId !== null && candidateIds.has(b.taskId) && b.end.getTime() > nowMs)
+    .filter((b) => b.end.getTime() > today.getTime() && b.start.getTime() < horizonEnd)
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .map((b) => ({
+      taskId: b.taskId as string,
+      start: b.start,
+      end: b.end,
+      minutes: minutesBetween(b.start.getTime(), b.end.getTime()),
+      part: 0,
+      parts: 0,
+      pinned: true,
+      blockId: b.id,
+    }));
+  const busy = [...input.busy, ...fixed.map((b) => ({ start: b.start, end: b.end }))];
 
   const days: DayPlan[] = [];
   for (let i = 0; i < input.days; i++) {
@@ -212,14 +256,16 @@ export function buildPlan(input: PlanInput): Plan {
     let windowStart = atMinutes(date, prefs.dayStart);
     const windowEnd = atMinutes(date, prefs.dayEnd);
     if (i === 0) windowStart = Math.max(windowStart, ceilTo(nowMs));
-    const gaps = working ? findGaps(windowStart, windowEnd, input.busy, prefs.buffer, prefs.minGap) : [];
+    const gaps = working ? findGaps(windowStart, windowEnd, busy, prefs.buffer, prefs.minGap) : [];
+    const dayEnd = addLocalDays(date, 1).getTime();
+    const mine = pinned.filter((b) => b.start.getTime() >= date.getTime() && b.start.getTime() < dayEnd);
     days.push({
       date,
       working,
       gaps,
-      blocks: [],
+      blocks: mine,
       freeMinutes: gaps.reduce((sum, g) => sum + g.minutes, 0),
-      plannedMinutes: 0,
+      plannedMinutes: mine.reduce((sum, b) => sum + b.minutes, 0),
     });
   }
 
@@ -287,6 +333,8 @@ export function buildPlan(input: PlanInput): Plan {
       }
     }
   }
+
+  for (const day of days) day.blocks.sort((a, b) => a.start.getTime() - b.start.getTime());
 
   // Number the pieces of split tasks.
   const pieces = new Map<string, PlannedBlock[]>();

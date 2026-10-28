@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
 /**
- * The one button in SmartScheduler. Four looks, each with one job:
+ * The one button in Schedule Smart. Four looks, each with one job:
  *
  * - primary: the single most important action on a screen (blue). Use it once per screen or dialog.
  * - secondary: every other action (outlined).

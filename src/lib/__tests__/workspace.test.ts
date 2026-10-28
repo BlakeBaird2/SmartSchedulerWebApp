@@ -57,7 +57,7 @@ test("garbage and old data load as a usable workspace", () => {
   assert.equal(ws.feeds[0].id, feedIdFor("https://a.example/cal.ics"), "ids come from the link, not stored data");
   assert.equal(ws.weekly.length, 1);
   assert.deepEqual(ws.weekly[0].days, [1, 3], "an impossible weekday is dropped");
-  assert.deepEqual(ws.estimates, { x: 45 });
+  assert.deepEqual(ws.estimates, { x: { minutes: 45, source: "user" } }, "old bare minutes become the student's own estimate");
   assert.equal(ws.prefs.dayStart, 8 * 60, "an inverted working day falls back to the default");
   assert.equal(ws.prefs.dailyMax, 24 * 60);
   assert.equal(ws.prefs.estimates.quiz, 20);
@@ -65,7 +65,7 @@ test("garbage and old data load as a usable workspace", () => {
 });
 
 test("a setup link carries everything to another device", () => {
-  const ws: Workspace = { ...defaultWorkspace(), feeds: [feed("https://a.example/cal.ics")], done: { "x:1": "2026-10-01T00:00:00Z" }, estimates: { "x:2": 90 } };
+  const ws: Workspace = { ...defaultWorkspace(), feeds: [feed("https://a.example/cal.ics")], done: { "x:1": "2026-10-01T00:00:00Z" }, estimates: { "x:2": { minutes: 90, source: "user" } } };
   const back = decodeSetup(encodeSetup(ws))!;
   assert.deepEqual(back.feeds, ws.feeds);
   assert.deepEqual(back.done, ws.done);
@@ -117,7 +117,7 @@ test("the user's renames, estimates, done marks and hidden classes all apply", (
     ...defaultWorkspace(),
     feeds: [school],
     courseEdits: { [courseId]: { title: "Organizational Effectiveness", color: "#123456" }, [`${school.id}:course_1`]: { hidden: true } },
-    estimates: { [`${school.id}:a2`]: 95 },
+    estimates: { [`${school.id}:a2`]: { minutes: 95, source: "user" } },
     done: { [`${school.id}:a2`]: NOW.toISOString() },
   };
   const m = buildModel(ws, { at: null, feeds: { [school.id]: { result: result(), error: null, syncedAt: null } } }, NOW);
@@ -128,6 +128,7 @@ test("the user's renames, estimates, done marks and hidden classes all apply", (
   assert.deepEqual(m.tasks.map((t) => t.title), ["Case 1"], "work from a hidden class disappears");
   assert.equal(m.tasks[0].estimate, 95);
   assert.equal(m.tasks[0].customEstimate, true);
+  assert.equal(m.tasks[0].estimateSource, "user");
   assert.equal(m.tasks[0].done, true);
   assert.equal(m.events.length, 0, "and so do its class meetings");
 });
@@ -319,4 +320,148 @@ test("a corrected class time hides the calendar's wrong meetings, and only those
   const mine = m.events.find((e) => e.source === "weekly" && e.start === at(5, 9, 30));
   assert.equal(mine?.end, at(5, 10, 45), "the corrected time stands in");
   assert.deepEqual(sanitizeWorkspace(ws).courseEdits[courseId].feedTimesOff, ["570-750"], "the correction survives storage");
+});
+
+test("set-aside time loads checked, and broken blocks are dropped", () => {
+  const ws = sanitizeWorkspace({
+    blocks: [
+      { id: "b1", taskId: "f:a1", title: "Quiz 3", start: "2026-10-02T15:00:00.000Z", end: "2026-10-02T16:00:00.000Z", color: "#d50000", externalId: "gcal-1" },
+      { id: "b2", taskId: null, title: "Gym", start: "2026-10-02T18:00:00Z", end: "2026-10-02T19:00:00Z", color: "red" },
+      { id: "backwards", start: "2026-10-02T18:00:00Z", end: "2026-10-02T17:00:00Z" },
+      { id: "no-start", end: "2026-10-02T17:00:00Z" },
+      "nonsense",
+    ],
+  });
+  assert.deepEqual(
+    ws.blocks.map((b) => [b.id, b.taskId, b.color, b.externalId]),
+    [
+      ["b1", "f:a1", "#d50000", "gcal-1"],
+      ["b2", null, null, null],
+    ],
+  );
+  assert.equal(ws.blocks[0].updatedAt, "2026-10-02T16:00:00.000Z", "a block without a change time takes its end");
+});
+
+test("an older workspace's start times per task become blocks as long as their estimates", () => {
+  const ws = sanitizeWorkspace({ pins: { "f:a1": "2026-10-02T15:00:00.000Z", "f:a2": "2026-10-03T15:00:00.000Z", broken: "never" }, estimates: { "f:a1": 90 } });
+  assert.deepEqual(
+    ws.blocks.map((b) => [b.taskId, b.start, b.end]),
+    [
+      ["f:a1", "2026-10-02T15:00:00.000Z", "2026-10-02T16:30:00.000Z"],
+      ["f:a2", "2026-10-03T15:00:00.000Z", "2026-10-03T16:00:00.000Z"],
+    ],
+  );
+});
+
+test("set-aside time travels in a setup link", () => {
+  const ws: Workspace = {
+    ...defaultWorkspace(),
+    feeds: [feed("https://a.example/cal.ics")],
+    blocks: [{ id: "b1", taskId: "x", title: "Essay", start: "2026-10-02T15:00:00.000Z", end: "2026-10-02T16:00:00.000Z", color: null, externalId: null, updatedAt: "2026-10-01T12:00:00.000Z" }],
+  };
+  assert.deepEqual(decodeSetup(encodeSetup(ws))?.blocks, ws.blocks);
+});
+
+test("estimates say who set them, and bare minutes from before are the student's own", () => {
+  const ws = sanitizeWorkspace({
+    estimates: {
+      old: 45,
+      mine: { minutes: 90, source: "user", at: "2026-10-01T12:00:00Z" },
+      suggested: { minutes: 30, source: "ai" },
+      odd: { minutes: 30, source: "someone" },
+      tooShort: 2,
+      notANumber: "an hour",
+    },
+  });
+  assert.deepEqual(ws.estimates, {
+    old: { minutes: 45, source: "user" },
+    mine: { minutes: 90, source: "user", at: "2026-10-01T12:00:00.000Z" },
+    suggested: { minutes: 30, source: "ai" },
+    odd: { minutes: 30, source: "user" },
+  });
+});
+
+test("the class ranking loads as unique class ids, and travels in a setup link", () => {
+  const ws = sanitizeWorkspace({ feeds: [feed("https://a.example/cal.ics")], classOrder: ["f:cs", "f:fin", "f:cs", 7, "", null, "f:art"] });
+  assert.deepEqual(ws.classOrder, ["f:cs", "f:fin", "f:art"]);
+  assert.deepEqual(sanitizeWorkspace({ classOrder: "f:cs" }).classOrder, [], "not a list");
+  assert.deepEqual(defaultWorkspace().classOrder, []);
+  assert.deepEqual(decodeSetup(encodeSetup(ws))?.classOrder, ["f:cs", "f:fin", "f:art"]);
+});
+
+test("what happens to unfinished work loads checked, with the latest answers", () => {
+  const ws = sanitizeWorkspace({
+    unfinished: "midnight",
+    unfinishedAnswers: {
+      a: { at: "2026-10-01T14:00:00Z", back: true },
+      b: { at: "2026-10-01T14:00:00Z", back: "yes" },
+      c: { at: "not a time", back: false },
+      d: { at: "2026-10-02T14:00:00Z", back: false },
+    },
+  });
+  assert.equal(ws.unfinished, "midnight");
+  assert.deepEqual(ws.unfinishedAnswers, { d: { at: "2026-10-02T14:00:00.000Z", back: false }, a: { at: "2026-10-01T14:00:00.000Z", back: true } });
+  assert.equal(sanitizeWorkspace({ unfinished: "forever" }).unfinished, "ask", "unknown choices fall back to asking");
+  assert.equal(defaultWorkspace().unfinished, "ask");
+});
+
+test("a picked colour paints every meeting of the event, and only that event", () => {
+  const school = feed("https://school.example/cal.ics");
+  const courseId = `${school.id}:course_1`;
+  const ws: Workspace = {
+    ...defaultWorkspace(),
+    feeds: [school],
+    weekly: [
+      { id: "job", label: "Work", days: [1, 2, 3, 4, 5], start: "13:00", end: "17:00" },
+      { id: "c1", label: "Class", courseId, days: [1, 3], start: "09:30", end: "10:45" },
+    ],
+    eventColors: { "weekly:job": "#0b8043", [`${school.id}:lab@google.com`]: "#d50000" },
+  };
+  const at = NOW.toISOString();
+  const snapshot = {
+    at: null,
+    feeds: {
+      [school.id]: {
+        result: {
+          url: school.url,
+          provider: "canvas" as const,
+          role: "school" as const,
+          calendarName: null,
+          fetchedAt: at,
+          courses: [{ key: "course_1", code: "NET 460", title: "Network Security", url: null }],
+          tasks: [],
+          events: [
+            { uid: "lab@google.com@2026-10-06T15:00:00.000Z", courseKey: "course_1", title: "Lab", start: "2026-10-06T15:00:00.000Z", end: "2026-10-06T16:00:00.000Z", allDay: false, busy: true, kind: "class" as const, location: null, url: null },
+            { uid: "lab@google.com@2026-10-13T15:00:00.000Z", courseKey: "course_1", title: "Lab", start: "2026-10-13T15:00:00.000Z", end: "2026-10-13T16:00:00.000Z", allDay: false, busy: true, kind: "class" as const, location: null, url: null },
+            { uid: "review", courseKey: "course_1", title: "Review", start: "2026-10-08T15:00:00.000Z", end: "2026-10-08T16:00:00.000Z", allDay: false, busy: true, kind: "class" as const, location: null, url: null },
+          ],
+          skipped: 0,
+        },
+        error: null,
+        syncedAt: null,
+      },
+    },
+  };
+  const m = buildModel(ws, snapshot, NOW);
+  const colors = (title: string) => [...new Set(m.events.filter((e) => e.title === title).map((e) => e.color))];
+  assert.deepEqual(colors("Work"), ["#0b8043"], "every day of the weekly busy time");
+  assert.deepEqual(colors("Lab"), ["#d50000"], "every meeting of the repeating event");
+  assert.equal(colors("Review").length, 1);
+  assert.notEqual(colors("Review")[0], "#d50000", "other events keep their class colour");
+  assert.notEqual(colors("NET 460")[0], "#0b8043", "class times keep theirs");
+  assert.deepEqual(sanitizeWorkspace({ eventColors: { a: "#ABCDEF", b: "red", c: 5 } }).eventColors, { a: "#abcdef" });
+});
+
+test("points and priority load checked, and reach the task", () => {
+  const ws = sanitizeWorkspace({ taskMeta: { a: { points: 20.4, priority: "high" }, b: { points: -3, priority: "urgent" }, c: { points: 5 } } });
+  assert.deepEqual(ws.taskMeta, { a: { points: 20, priority: "high" }, c: { points: 5 } });
+  const m = buildModel({ ...defaultWorkspace(), manualTasks: [{ id: "x", title: "Essay", courseId: null, type: "assignment", dueAt: null }], taskMeta: { "manual:x": { points: 30, priority: "high" } } }, { at: null, feeds: {} }, NOW);
+  const t = m.tasks.find((x) => x.id === "manual:x")!;
+  assert.equal(t.points, 30);
+  assert.equal(t.priority, "high");
+  assert.ok(t.customPriority);
+  const plain = buildModel({ ...defaultWorkspace(), manualTasks: [{ id: "y", title: "Read", courseId: null, type: "reading", dueAt: null }] }, { at: null, feeds: {} }, NOW).tasks[0];
+  assert.equal(plain.points, null);
+  assert.equal(plain.priority, "low");
+  assert.equal(plain.customPriority, false);
 });

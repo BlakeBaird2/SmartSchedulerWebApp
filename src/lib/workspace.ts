@@ -6,7 +6,7 @@
  * anything unusable falls back to a default instead of breaking the page.
  */
 import { DEFAULT_PREFS } from "./planner";
-import { ASSIGNMENT_TYPES, normalizeType, type CourseEdit, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type WeeklyBlock, type Workspace } from "./types";
+import { ASSIGNMENT_TYPES, normalizeType, PRIORITIES, UNFINISHED_POLICIES, type CourseEdit, type Priority, type TaskMeta, type UnfinishedAnswer, type UnfinishedPolicy, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
 import { detectProvider, feedIdFor } from "./feeds/url";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
@@ -19,7 +19,13 @@ export function defaultWorkspace(): Workspace {
     manualTasks: [],
     done: {},
     estimates: {},
+    blocks: [],
     courseEdits: {},
+    classOrder: [],
+    eventColors: {},
+    taskMeta: {},
+    unfinished: "ask",
+    unfinishedAnswers: {},
     prefs: { ...DEFAULT_PREFS, estimates: { ...DEFAULT_PREFS.estimates } },
     demo: false,
   };
@@ -101,6 +107,109 @@ function sanitizeManual(raw: unknown): ManualTask | null {
   };
 }
 
+/** The most set-aside time kept, newest first, so stored data and setup links stay small. */
+export const MAX_BLOCKS = 1000;
+const ISO_OK = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
+
+function sanitizeBlock(raw: unknown): ScheduledBlock | null {
+  if (!isObj(raw) || !ISO_OK(raw.start) || !ISO_OK(raw.end)) return null;
+  const start = new Date(raw.start as string);
+  const end = new Date(raw.end as string);
+  if (end.getTime() <= start.getTime() || end.getTime() - start.getTime() > 24 * 3_600_000) return null;
+  const taskId = str(raw.taskId).trim() || null;
+  return {
+    id: str(raw.id).trim().slice(0, 64) || randomId(),
+    taskId,
+    title: str(raw.title).trim().slice(0, 200),
+    start: start.toISOString(),
+    end: end.toISOString(),
+    color: /^#[0-9a-f]{6}$/i.test(str(raw.color)) ? str(raw.color) : null,
+    externalId: str(raw.externalId).trim().slice(0, 1024) || null,
+    updatedAt: ISO_OK(raw.updatedAt) ? new Date(raw.updatedAt as string).toISOString() : end.toISOString(),
+  };
+}
+
+function sanitizeBlocks(raw: Record<string, unknown>): ScheduledBlock[] {
+  const blocks = (Array.isArray(raw.blocks) ? raw.blocks : []).map(sanitizeBlock).filter((b): b is ScheduledBlock => b !== null);
+  // An earlier version kept one start time per task ("pins"), as long as its estimate.
+  if (isObj(raw.pins) && !Array.isArray(raw.blocks)) {
+    const estimates = isObj(raw.estimates) ? raw.estimates : {};
+    for (const [taskId, at] of Object.entries(raw.pins)) {
+      if (!ISO_OK(at)) continue;
+      const e = estimates[taskId];
+      const minutes = num(isObj(e) ? e.minutes : e, 60, 5, 24 * 60);
+      const start = new Date(at);
+      const block = sanitizeBlock({ id: randomId(), taskId, start: at, end: new Date(start.getTime() + minutes * 60_000).toISOString() });
+      if (block) blocks.push(block);
+    }
+  }
+  const unique = [...new Map(blocks.map((b) => [b.id, b])).values()];
+  return unique.sort((a, b) => b.start.localeCompare(a.start)).slice(0, MAX_BLOCKS).reverse();
+}
+
+const MINUTES_OK = (v: unknown): v is number => typeof v === "number" && v >= 5 && v <= 24 * 60;
+
+/** Estimates were once bare minutes; those were always the student's own. */
+function sanitizeEstimates(raw: unknown): Record<string, Estimate> {
+  const out: Record<string, Estimate> = {};
+  if (!isObj(raw)) return out;
+  for (const [taskId, v] of Object.entries(raw)) {
+    if (MINUTES_OK(v)) out[taskId] = { minutes: Math.round(v), source: "user" };
+    else if (isObj(v) && MINUTES_OK(v.minutes)) {
+      const e: Estimate = { minutes: Math.round(v.minutes), source: v.source === "ai" ? "ai" : "user" };
+      if (ISO_OK(v.at)) e.at = new Date(v.at).toISOString();
+      out[taskId] = e;
+    }
+  }
+  return out;
+}
+
+export const MAX_CLASSES = 200;
+
+/** Class ids, in the student's order, each once. */
+function sanitizeClassOrder(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const ids = raw.filter((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 300);
+  return [...new Set(ids)].slice(0, MAX_CLASSES);
+}
+
+export const MAX_EVENT_COLORS = 500;
+const HEX = /^#[0-9a-f]{6}$/i;
+
+function sanitizeEventColors(raw: unknown): Record<string, string> {
+  if (!isObj(raw)) return {};
+  const kept = Object.entries(raw).filter((e): e is [string, string] => e[0].length > 0 && e[0].length <= 400 && typeof e[1] === "string" && HEX.test(e[1]));
+  return Object.fromEntries(kept.slice(0, MAX_EVENT_COLORS).map(([k, v]) => [k, v.toLowerCase()]));
+}
+
+export const MAX_TASK_META = 2000;
+
+function sanitizeTaskMeta(raw: unknown): Record<string, TaskMeta> {
+  if (!isObj(raw)) return {};
+  const out: Record<string, TaskMeta> = {};
+  for (const [id, v] of Object.entries(raw)) {
+    if (!id || id.length > 400 || !isObj(v)) continue;
+    const meta: TaskMeta = {};
+    if (typeof v.points === "number" && Number.isFinite(v.points) && v.points >= 0) meta.points = Math.min(10_000, Math.round(v.points));
+    if (PRIORITIES.includes(v.priority as Priority)) meta.priority = v.priority as Priority;
+    if (Object.keys(meta).length) out[id] = meta;
+    if (Object.keys(out).length >= MAX_TASK_META) break;
+  }
+  return out;
+}
+
+export const MAX_ANSWERS = 500;
+
+/** The latest answers about unfinished work, newest kept when there are too many. */
+function sanitizeAnswers(raw: unknown): Record<string, UnfinishedAnswer> {
+  if (!isObj(raw)) return {};
+  const answers: [string, UnfinishedAnswer][] = [];
+  for (const [id, v] of Object.entries(raw)) {
+    if (isObj(v) && ISO_OK(v.at) && typeof v.back === "boolean") answers.push([id, { at: new Date(v.at).toISOString(), back: v.back }]);
+  }
+  return Object.fromEntries(answers.sort((a, b) => b[1].at.localeCompare(a[1].at)).slice(0, MAX_ANSWERS));
+}
+
 function sanitizeRecord<T>(raw: unknown, check: (v: unknown) => v is T): Record<string, T> {
   const out: Record<string, T> = {};
   if (!isObj(raw)) return out;
@@ -141,8 +250,14 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     weekly: (Array.isArray(raw.weekly) ? raw.weekly : []).map(sanitizeWeekly).filter((w): w is WeeklyBlock => w !== null),
     manualTasks: (Array.isArray(raw.manualTasks) ? raw.manualTasks : []).map(sanitizeManual).filter((m): m is ManualTask => m !== null),
     done: sanitizeRecord(raw.done, (v): v is string => typeof v === "string"),
-    estimates: sanitizeRecord(raw.estimates, (v): v is number => typeof v === "number" && v >= 5 && v <= 24 * 60),
+    estimates: sanitizeEstimates(raw.estimates),
+    blocks: sanitizeBlocks(raw),
     courseEdits,
+    classOrder: sanitizeClassOrder(raw.classOrder),
+    eventColors: sanitizeEventColors(raw.eventColors),
+    taskMeta: sanitizeTaskMeta(raw.taskMeta),
+    unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
+    unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),
     prefs: sanitizePrefs(raw.prefs),
     demo: raw.demo === true,
   };

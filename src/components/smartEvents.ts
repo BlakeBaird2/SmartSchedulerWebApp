@@ -17,6 +17,10 @@ export type SmartEventName =
   | "task_completed"
   | "task_uncompleted"
   | "task_added"
+  | "task_planned"
+  | "task_unplanned"
+  | "unfinished_returned"
+  | "unfinished_left_off"
   | "add_task_opened"
   | "task_opened"
   | "free_gap_opened"
@@ -53,13 +57,17 @@ export function trackEvent(name: SmartEventName, detail: SmartEvent["detail"] = 
   } catch {
     // Analytics must never break the app.
   }
-  try {
-    const url = new URL(window.location.href);
-    url.searchParams.set("event", name.replace(/_/g, "-"));
-    window.history.replaceState(null, "", url);
-  } catch {
-    // Some embedded browsers refuse history changes; the other two signals still fire.
-  }
+  // Next's router listens to the address bar, so change it after the current render
+  // (sample data starts while the app is first drawn), never during it.
+  setTimeout(() => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("event", name.replace(/_/g, "-"));
+      window.history.replaceState(null, "", url);
+    } catch {
+      // Some embedded browsers refuse history changes; the other two signals still fire.
+    }
+  }, 0);
   try {
     const log = readEventLog();
     log.unshift(entry);

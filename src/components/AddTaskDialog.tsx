@@ -1,115 +1,151 @@
 "use client";
 
-import { useState } from "react";
-import { format } from "date-fns";
+import { useEffect, useState } from "react";
+import { addDays, endOfWeek, format } from "date-fns";
+import { PRIORITIES, type Priority } from "@/lib/types";
+import { PRIORITY_LABEL } from "@/lib/todos";
 import { randomId } from "@/lib/workspace";
-import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
-import { duration, typeMeta } from "@/lib/ui";
 import { useApp } from "./context";
-import { Button, ChoicePill, Dialog, DialogActions, Field } from "./ui";
 import { trackEvent } from "./smartEvents";
+import { SsIcon } from "./SsIcon";
 
-const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240];
+type Due = "today" | "tomorrow" | "week" | "date" | "none";
+const ESTIMATES = [15, 30, 45, 60, 90, 120];
 
-/** For work no calendar knows about: a paper, a study session, a form to fill in. */
+/**
+ * Add a task no calendar knows about, as in the Figma prototype: a name, its
+ * class or area, when it's due, how long it takes, what it's worth and how much
+ * it matters. It goes straight onto the planner's list.
+ */
 export function AddTaskDialog({ onClose }: { onClose: () => void }) {
-  const { model, ws, update, toast, now } = useApp();
-  const [title, setTitle] = useState("");
-  const [courseId, setCourseId] = useState("");
-  const [type, setType] = useState<AssignmentType>("assignment");
-  const [date, setDate] = useState(() => format(new Date(Date.now() + 86_400_000), "yyyy-MM-dd"));
-  const [time, setTime] = useState("23:59");
-  const [estimate, setEstimate] = useState<number | null>(null);
-  const minutes = estimate ?? ws.prefs.estimates[type];
-  const past = (() => {
-    if (!date) return false;
-    const [y, m, d] = date.split("-").map(Number);
-    const [hh, mm] = (time || "23:59").split(":").map(Number);
-    return new Date(y, m - 1, d, hh, mm).getTime() < now.getTime();
-  })();
+  const { model, update, toast, now } = useApp();
+  const [due, setDue] = useState<Due>("today");
 
-  const save = (e: React.FormEvent) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const add = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    const id = randomId();
+    const data = new FormData(e.currentTarget);
+    const title = String(data.get("title") ?? "").trim().slice(0, 140);
+    if (!title) return;
+    const courseId = String(data.get("course") ?? "") || null;
+    const [hh, mm] = String(data.get("dueTime") || "17:00").split(":").map(Number);
+    const day = due === "today" ? now : due === "tomorrow" ? addDays(now, 1) : due === "week" ? endOfWeek(now, { weekStartsOn: 1 }) : due === "date" ? new Date(`${data.get("dueDate")}T00:00`) : null;
     let dueAt: string | null = null;
-    if (date) {
-      const [y, m, d] = date.split("-").map(Number);
-      const [hh, mm] = (time || "23:59").split(":").map(Number);
-      dueAt = new Date(y, m - 1, d, hh, mm).toISOString();
+    if (day && !Number.isNaN(day.getTime())) {
+      const at = new Date(day);
+      at.setHours(hh, mm, 0, 0);
+      dueAt = at.toISOString();
     }
+    const minutes = Number(data.get("minutes"));
+    const pointsRaw = String(data.get("points") ?? "").trim();
+    const points = pointsRaw === "" ? undefined : Math.max(0, Math.round(Number(pointsRaw)));
+    const priority = String(data.get("priority")) as Priority;
+    const id = randomId();
+    const taskId = `manual:${id}`;
+    const at = new Date().toISOString();
     update((w) => ({
       ...w,
-      manualTasks: [...w.manualTasks, { id, title: title.trim().slice(0, 140), courseId: courseId || null, type, dueAt }],
-      estimates: estimate !== null ? { ...w.estimates, [`manual:${id}`]: estimate } : w.estimates,
+      manualTasks: [...w.manualTasks, { id, title, courseId, type: "assignment", dueAt }],
+      estimates: { ...w.estimates, [taskId]: { minutes, source: "user", at } },
+      taskMeta: { ...w.taskMeta, [taskId]: { priority, ...(points !== undefined && Number.isFinite(points) ? { points } : {}) } },
     }));
-    trackEvent("task_added", { title: title.trim(), courseId: courseId || null, type, hasDueDate: Boolean(dueAt), minutes });
-    toast(`Added to your plan: ${title.trim()}`, {
+    trackEvent("task_added", { title, courseId, type: "assignment", hasDueDate: Boolean(dueAt), minutes });
+    toast(`Added to Schedule Smart: ${title}`, {
       undo: () => update((w) => ({ ...w, manualTasks: w.manualTasks.filter((t) => t.id !== id) })),
     });
     onClose();
   };
 
   return (
-    <Dialog title="Add a task" description="For work that isn't on any calendar. SmartScheduler fits it into your free time." onClose={onClose} onSubmit={save}>
-      <div className="space-y-4">
-        <Field label="What needs doing?">
-          <input
-            className="input"
-            placeholder="e.g. Finish lab report"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            data-autofocus
-            maxLength={140}
-          />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Class">
-            <select className="input" value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-              <option value="">No class</option>
-              {model.visibleCourses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.code}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Kind">
-            <select className="input" value={type} onChange={(e) => setType(e.target.value as AssignmentType)}>
-              {ASSIGNMENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {typeMeta(t).label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Due date">
-            <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
-          </Field>
-          <Field label="Due time">
-            <input type="time" className="input" value={time} onChange={(e) => setTime(e.target.value)} disabled={!date} />
-          </Field>
-        </div>
-        {past ? <p className="text-sm font-semibold">That time has already passed, so this will show as overdue.</p> : null}
-        <fieldset>
-          <legend className="text-sm font-semibold">Time it needs</legend>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {[...new Set([...ESTIMATES, minutes])]
-              .sort((a, b) => a - b)
-              .map((m) => (
-                <ChoicePill key={m} selected={minutes === m} onClick={() => setEstimate(m)}>
-                  {duration(m)}
-                </ChoicePill>
-              ))}
+    <div className="ss-backdrop" onMouseDown={onClose}>
+      <section className="ss-modal" onMouseDown={(e) => e.stopPropagation()} aria-modal="true" role="dialog" aria-labelledby="add-task-title">
+        <div className="ss-modal-head">
+          <div>
+            <span className="ss-eyebrow">NEW ITEM</span>
+            <h2 id="add-task-title">Add a task</h2>
           </div>
-        </fieldset>
-      </div>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="primary" data-smart-event="task_added" disabled={!title.trim()} title={title.trim() ? undefined : "Name the task first"}>
-          Add task
-        </Button>
-      </DialogActions>
-    </Dialog>
+          <button className="ss-icon-button" onClick={onClose} aria-label="Close">
+            <SsIcon name="x" />
+          </button>
+        </div>
+        <form onSubmit={add}>
+          <label>
+            <span>Task name</span>
+            <input name="title" required autoFocus placeholder="What needs to get done?" maxLength={140} />
+          </label>
+          <div className="ss-form-row">
+            <label>
+              <span>Class or area</span>
+              <select name="course" defaultValue="">
+                <option value="">Personal</option>
+                {model.visibleCourses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.code}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Due</span>
+              <select name="due" value={due} onChange={(e) => setDue(e.target.value as Due)}>
+                <option value="today">Today</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="week">This week</option>
+                <option value="date">Pick a date…</option>
+                <option value="none">No due date</option>
+              </select>
+            </label>
+          </div>
+          {due === "date" ? (
+            <label>
+              <span>Due date</span>
+              <input name="dueDate" type="date" required min={format(now, "yyyy-MM-dd")} defaultValue={format(addDays(now, 2), "yyyy-MM-dd")} />
+            </label>
+          ) : null}
+          {due !== "none" ? (
+            <label>
+              <span>Due time</span>
+              <input name="dueTime" type="time" defaultValue="17:00" />
+            </label>
+          ) : null}
+          <div className="ss-form-row">
+            <label>
+              <span>Estimate</span>
+              <select name="minutes" defaultValue="30">
+                {ESTIMATES.map((m) => (
+                  <option key={m} value={m}>
+                    {m < 60 ? `${m} min` : m === 60 ? "1 hour" : `${m / 60} hours`}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Points</span>
+              <input name="points" type="number" min="0" max="10000" inputMode="numeric" defaultValue="10" />
+            </label>
+          </div>
+          <label>
+            <span>Priority</span>
+            <select name="priority" defaultValue="medium">
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {PRIORITY_LABEL[p]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ss-primary" type="submit" data-smart-event="task_added">
+            <SsIcon name="plus" /> Add to Schedule Smart
+          </button>
+        </form>
+      </section>
+    </div>
   );
 }

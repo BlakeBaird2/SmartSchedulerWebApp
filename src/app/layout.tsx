@@ -1,17 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
+import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/manrope";
 import "./globals.css";
+import "./schedule-smart.css";
 import { DevStateSwitcher, EntryNotices } from "@/components/Prototype";
 
 export const metadata: Metadata = {
-  title: "SmartScheduler — One plan for school, work and life",
+  title: "Schedule Smart — Plan your open time",
   description: "Your classes, work and life on one calendar, and a plan for exactly what to work on in every free gap.",
   icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f5f1" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f7f4" },
     { media: "(prefers-color-scheme: dark)", color: "#121212" },
   ],
   width: "device-width",
@@ -27,7 +30,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem('prio:theme');if
 // calendars goes straight to the plan before anything is drawn (sample data doesn't
 // count, so someone trying the sample can always get back to the home page), and a setup link made before
 // the app moved to /app still lands there. The same page at /about never skips ahead,
-// which is where Settings → About SmartScheduler leads.
+// which is where Settings → About Schedule Smart leads.
 const homeScript = `(function(){try{if(location.pathname!=='/')return;var h=location.hash;if(h.indexOf('#setup=')===0){location.replace('/app'+h);return}var w=JSON.parse(localStorage.getItem('prio:ws')||'null');if(w&&w.feeds&&w.feeds.length&&!w.demo)location.replace('/app')}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

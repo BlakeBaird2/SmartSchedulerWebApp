@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "./Button";
 
 /**
- * Every pop-up in SmartScheduler is this one component, so they all behave the same way:
+ * Every pop-up in Schedule Smart is this one component, so they all behave the same way:
  *
  * - a dimmed backdrop; clicking it closes the dialog (unless `dismissible` is false)
  * - Esc closes it, and the X in the top-right corner closes it

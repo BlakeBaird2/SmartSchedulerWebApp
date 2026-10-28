@@ -12,7 +12,7 @@ import { Button, Card, CardHeader } from "./ui";
 export function HelpView() {
   const { setView, setSettingsPanel, setCalMode } = useApp();
 
-  const go = (view: "plan" | "calendar" | "upcoming") => {
+  const go = (view: "calendar" | "tasks") => {
     if (view === "calendar") setCalMode("week");
     setView(view);
   };
@@ -20,8 +20,8 @@ export function HelpView() {
   return (
     <div className="max-w-2xl space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <Button icon={ArrowLeft} onClick={() => setView("plan")}>
-          Back to Plan
+        <Button icon={ArrowLeft} onClick={() => setView("calendar")}>
+          Back to the calendar
         </Button>
         <Button
           onClick={() => {
@@ -45,21 +45,20 @@ export function HelpView() {
       </Card>
 
       <Card>
-        <CardHeader level={2} title="Three ways to finish the goal" hint="Each path ends the same way: open a task, review it, mark it Done. Shared task state stays in sync everywhere." />
+        <CardHeader level={2} title="Two ways to finish the goal" hint="Each path ends the same way: find the work, then tick it off. The planner, the calendar and Tasks always agree." />
         <ol className="mt-4 space-y-3">
-          <RouteRow icon={Target} title="Plan" steps="Find a free gap → open a planned task → review details → Done" onOpen={() => go("plan")} />
           <RouteRow
             icon={CalendarRange}
             title="Calendar"
-            steps="Open week or day → pick a free gap or planned work → review → Done"
+            steps="Drag the top item in “Plan your open time” onto a free time (or tap a free time → Put it here) → tick it off when it's done"
             onOpen={() => go("calendar")}
           />
-          <RouteRow icon={ListChecks} title="Upcoming" steps="Pick a class (or All classes) → open due work → review the task → Done" onOpen={() => go("upcoming")} />
+          <RouteRow icon={ListChecks} title="Tasks" steps="Find the work (search, or pick Today or a class) → open it → Mark as done" onOpen={() => go("tasks")} />
         </ol>
       </Card>
 
       <Card>
-        <CardHeader level={2} title="If something looks empty" hint="Sample data and real calendars both work. If a day has no free gaps, try tomorrow on Plan, or open Upcoming for work that is still due." />
+        <CardHeader level={2} title="If something looks empty" hint="Sample data and real calendars both work. If a day has no free time, try the next day, or open Tasks for everything that is still due." />
         <Button
           className="mt-3"
           trailingIcon={ArrowRight}

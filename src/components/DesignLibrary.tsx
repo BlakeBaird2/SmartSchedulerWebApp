@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Bell, CalendarClock, Check, Inbox, Plus, Settings, Trash } from "lucide-react";
+import { EVENT_COLORS } from "@/lib/eventColors";
 import { PrototypeBadge } from "./Prototype";
 import {
   Button,
@@ -13,6 +14,7 @@ import {
   Checkbox,
   ChoicePill,
   ClassChip,
+  ColorSwatches,
   Dialog,
   DialogActions,
   EmptyState,
@@ -33,7 +35,7 @@ import {
 } from "./ui";
 
 /**
- * /design: SmartScheduler's design library, drawn live. Each entry shows the
+ * /design: Schedule Smart's design library, drawn live. Each entry shows the
  * component, when to use it, the rules it follows, which screens use it, and
  * what in our discovery research it answers.
  */
@@ -61,6 +63,8 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "type-chip", name: "TypeChip" },
       { id: "planned-due", name: "PlannedBadge / DueBadge" },
       { id: "class-tabs", name: "Class tabs" },
+      { id: "todo-list", name: "To-do list" },
+      { id: "drag-to-plan", name: "Drag to plan" },
     ],
   },
   {
@@ -88,6 +92,7 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "segmented", name: "SegmentedControl" },
       { id: "field", name: "Field" },
       { id: "choice", name: "ChoicePill" },
+      { id: "swatches", name: "ColorSwatches" },
       { id: "switch", name: "Switch" },
     ],
   },
@@ -106,7 +111,7 @@ export function DesignLibrary() {
     <div className="min-h-dvh" data-design-library>
       <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-          <Link href="/" aria-label="SmartScheduler home page" className="shrink-0">
+          <Link href="/" aria-label="Schedule Smart home page" className="shrink-0">
             <Wordmark />
           </Link>
           <PrototypeBadge />
@@ -126,7 +131,7 @@ export function DesignLibrary() {
         <section className="pt-10 pb-8 border-b border-line-strong">
           <h1 className="capability text-4xl sm:text-5xl">Design library</h1>
           <p className="mt-3 max-w-3xl text-lg text-muted leading-relaxed">
-            Every SmartScheduler screen is built from the parts on this page. They are React components in <code className="text-fg">src/components/ui</code>,
+            Every Schedule Smart screen is built from the parts on this page. They are React components in <code className="text-fg">src/components/ui</code>,
             styled with Tailwind CSS and Lucide icons. The look is medium fidelity: a clean type scale, white cards raised above an off-white page, class
             colours for recognition, and one blue for the main action.
           </p>
@@ -358,7 +363,7 @@ function CoreParts() {
       <GroupHeading
         id="core"
         title="Core: planning"
-        lead="These carry SmartScheduler's one job. They get the most space and the strongest outlines; everything else in the library supports them."
+        lead="These carry Schedule Smart's one job. They get the most space and the strongest outlines; everything else in the library supports them."
       />
 
       <Entry
@@ -526,8 +531,76 @@ function CoreParts() {
       >
         <div className="flex items-center gap-2 flex-wrap">
           <PlannedBadge>Planned today 3:25 PM</PlannedBadge>
+          <PlannedBadge pinned>Planned Thu 4 PM</PlannedBadge>
           <DueBadge>Due tomorrow 9:30 AM</DueBadge>
           <DueBadge late>2 days late</DueBadge>
+        </div>
+      </Entry>
+
+      <Entry
+        id="todo-list"
+        name="To-do list"
+        summary="Everything still to schedule, school and personal, in one list."
+        use="Beside the calendar on a computer; a sheet along the bottom on phones and tablets."
+        rules={[
+          "Coloured by how soon it's due, from red (now, or late) to yellow (a week or more away), down the left edge and in the tint. No due date is grey.",
+          "Each task says about how long it needs (“~1.5 hrs”); tap that to change it.",
+          "Scheduled work leaves the list, so the next thing to plan moves up. Sorted by due date, the top one says Next up; ties go to the class ranked higher in Settings.",
+          "“New” marks work a class calendar added since you last looked, until you open it or act on it.",
+          "Ticking one off pops the box, strikes it through and folds the row away. Done work stays on the calendar, faded and ticked.",
+        ]}
+        why="One list beside the calendar, in the order students pick what to do next, puts “what next?” on the same screen as “when?”."
+        usedIn="Calendar"
+      >
+        <div className="w-full max-w-xs space-y-1.5">
+          <div className="todo-item urgency-card flex items-start gap-2 pl-3 pr-2 py-2" style={{ "--u": "oklch(0.63 0.24 27)" } as React.CSSProperties}>
+            <span className="check check-sm mt-0.5" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-start gap-1.5">
+                <span className="text-[13px] font-semibold leading-snug flex-1">Case Write-Up 3</span>
+                <span className="next-pill">Next up</span>
+              </span>
+              <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                <span className="estimate-chip">~1 hr</span>
+                <span className="font-semibold text-danger">due today</span>
+              </span>
+            </span>
+          </div>
+          <div className="todo-item urgency-card flex items-start gap-2 pl-3 pr-2 py-2" style={{ "--u": "oklch(0.8 0.19 70)" } as React.CSSProperties}>
+            <span className="check check-sm mt-0.5" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-start gap-1.5">
+                <span className="text-[13px] font-semibold leading-snug flex-1">Lab 6</span>
+                <span className="new-pill">New</span>
+              </span>
+              <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                <span className="estimate-chip">~1.5 hrs</span>
+                <span>due Fri</span>
+              </span>
+            </span>
+          </div>
+        </div>
+      </Entry>
+
+      <Entry
+        id="drag-to-plan"
+        name="Drag to plan"
+        summary="Put work on the calendar by dragging it there, then move or resize it the same way."
+        use="The calendar: a task from the to-do list onto a free time, a block to a new time, its bottom edge to change how long it is, or back onto the list to take it off. A free gap's Put it here, and Schedule it in a task's details, do the same without dragging."
+        rules={[
+          "While placing work, free gaps are outlined with how much time they hold, and the block is drawn where it will land, as long as the task's estimate.",
+          "With a mouse, a drag starts after a few pixels. On a touch screen, press and hold first, so a quick swipe still scrolls; a block's bottom edge resizes straight away. Near the top or bottom of the screen the page scrolls.",
+          "Every change can be undone from the message that confirms it. A focused block moves with the arrow keys, changes length with Shift and the arrows, and comes off with Delete.",
+        ]}
+        why="Sunsama, Akiflow and Notion Calendar all plan work this way, and here it works on phones as well as computers. It turns “what's due” into “when I'll do it” in one move."
+        usedIn="Calendar (week, 3-day and day), free gaps, task details"
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="plan-block urgency-card relative inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold" style={{ "--u": "oklch(0.72 0.21 50)", "--c": "oklch(0.72 0.21 50)" } as React.CSSProperties}>
+            <span className="plan-tick" aria-hidden />
+            Lab 5
+          </span>
+          <span className="plan-drop inline-block px-2 py-1 text-[11px] font-semibold tabular-nums">2:15 – 3:15 PM</span>
         </div>
       </Entry>
 
@@ -738,6 +811,7 @@ function Containers() {
 function Inputs() {
   const [range, setRange] = useState<"month" | "week" | "day">("week");
   const [est, setEst] = useState(30);
+  const [swatch, setSwatch] = useState<string>(EVENT_COLORS[4].hex);
   const [on, setOn] = useState(true);
   return (
     <>
@@ -800,6 +874,17 @@ function Inputs() {
             </ChoicePill>
           ))}
         </div>
+      </Entry>
+      <Entry
+        id="swatches"
+        name="ColorSwatches"
+        summary="Pick one colour from a row of round swatches."
+        use="Recolouring an event (every time it repeats) or a class."
+        rules={["Each swatch is a radio button named after its colour, so it can be told apart without seeing it.", "The chosen one has a ring around it.", "Events offer Google Calendar's eleven colours, so they carry across to it."]}
+        why="Students colour their week the way they colour their Google Calendar. Matching its colours keeps a shift at work or a lab the same colour in both."
+        usedIn="Event details, Edit class"
+      >
+        <ColorSwatches colors={EVENT_COLORS} value={swatch} onChange={setSwatch} label="Example colour" />
       </Entry>
       <Entry
         id="switch"
@@ -924,7 +1009,7 @@ function Rules() {
       <GroupHeading
         id="rules"
         title="How screens use the library"
-        lead="The rules every SmartScheduler screen follows. Each one was checked screen by screen."
+        lead="The rules every Schedule Smart screen follows. Each one was checked screen by screen."
       />
       <ol className="mt-4 grid gap-3 md:grid-cols-2">
         {RULES.map((r, i) => (
@@ -939,7 +1024,7 @@ function Rules() {
       </ol>
       <div className="mt-10 flex items-center gap-3 flex-wrap">
         <ButtonLink href="/app" variant="primary" size="lg" trailingIcon={ArrowRight}>
-          Open SmartScheduler
+          Open Schedule Smart
         </ButtonLink>
         <ButtonLink href="/" size="lg">
           Back to the home page

@@ -285,3 +285,94 @@ test("a busy week is planned sensibly end to end", () => {
   // No day goes over the limit except to finish something due within a day.
   assert.ok(plan.days.every((d) => d.plannedMinutes <= 150 + 60));
 });
+
+// ---------------------------------------------------------------------------
+// Time set aside on the calendar (dragged there by the student)
+// ---------------------------------------------------------------------------
+
+const block = (taskId: string | null, start: Date, end: Date, id = `b-${taskId ?? "none"}`) => ({ id, taskId, start, end });
+
+test("set-aside work stays where the student put it, and the rest is planned around it", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0, dayStart: 9 * 60, dayEnd: 12 * 60 }),
+    days: 1,
+    busy: [],
+    tasks: [task("essay", 60, at(3, 9)), task("quiz", 30, at(2, 9), "quiz")],
+    fixed: [block("essay", at(1, 10), at(1, 11))],
+  });
+  const blocks = plan.days[0].blocks;
+  assert.deepEqual(blocks.map((b) => `${b.taskId} ${span(b)}${b.pinned ? " pinned" : ""}`), [
+    "quiz 09:00-09:30",
+    "essay 10:00-11:00 pinned",
+  ]);
+  assert.equal(blocks[1].blockId, "b-essay");
+  assert.deepEqual(plan.days[0].gaps.map(span), ["09:00-10:00", "11:00-12:00"], "the set-aside hour is no longer free");
+  assert.equal(plan.atRisk.length, 0);
+});
+
+test("once all of a task's set-aside time has passed, it is planned again", () => {
+  const plan = buildPlan({
+    now: at(1, 12),
+    prefs: prefs({ buffer: 0 }),
+    days: 1,
+    busy: [],
+    tasks: [task("essay", 60, at(3, 9))],
+    fixed: [block("essay", at(1, 9), at(1, 10))],
+  });
+  const [planned] = plan.days[0].blocks;
+  assert.equal(planned.pinned, undefined);
+  assert.equal(span(planned), "12:00-13:00");
+});
+
+test("set-aside work counts toward the day's limit", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0, dailyMax: 60 }),
+    days: 2,
+    busy: [],
+    tasks: [task("a", 60, at(5, 9)), task("b", 60, at(5, 9))],
+    fixed: [block("b", at(1, 15), at(1, 16))],
+  });
+  assert.deepEqual(plan.days[0].blocks.map((b) => b.taskId), ["b"]);
+  assert.deepEqual(plan.days[1].blocks.map((b) => b.taskId), ["a"]);
+});
+
+test("a set-aside block keeps its own length, and its task counts as scheduled even if the block is shorter", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0 }),
+    days: 1,
+    busy: [],
+    tasks: [task("essay", 120, at(3, 9))],
+    fixed: [block("essay", at(1, 14), at(1, 14, 45))],
+  });
+  assert.deepEqual(plan.days[0].blocks.map((b) => `${b.taskId} ${span(b)} ${b.minutes}m`), ["essay 14:00-14:45 45m"]);
+  assert.equal(plan.atRisk.length, 0);
+});
+
+test("set-aside time that isn't for a task is still busy", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0, dayStart: 9 * 60, dayEnd: 12 * 60 }),
+    days: 1,
+    busy: [],
+    tasks: [task("essay", 60, at(3, 9))],
+    fixed: [block(null, at(1, 9), at(1, 11))],
+  });
+  assert.deepEqual(plan.days[0].gaps.map(span), ["11:00-12:00"]);
+  assert.deepEqual(plan.days[0].blocks.map((b) => `${b.taskId} ${span(b)}`), ["essay 11:00-12:00"]);
+});
+
+test("work set aside beyond the two weeks the planner looks at is still scheduled, not planned twice", () => {
+  const plan = buildPlan({
+    now: at(1, 8),
+    prefs: prefs({ buffer: 0 }),
+    days: 3,
+    busy: [],
+    tasks: [task("paper", 60, at(30, 9))],
+    fixed: [block("paper", at(25, 10), at(25, 11))],
+  });
+  assert.equal(plan.days.flatMap((d) => d.blocks).length, 0);
+  assert.equal(plan.atRisk.length, 0);
+});

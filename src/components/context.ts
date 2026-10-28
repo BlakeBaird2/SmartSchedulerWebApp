@@ -4,14 +4,16 @@ import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Model } from "@/lib/model";
 import type { Plan } from "@/lib/planner";
 import type { PlanIndex } from "@/lib/schedule";
-import type { Change, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/lib/types";
+import type { Change, EstimateSource, FeedResult, FeedRole, Priority, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
+import type { TodoScope, TodoSort } from "@/lib/todos";
 
-export type View = "plan" | "calendar" | "upcoming" | "settings" | "help";
-/** "schedule" (an agenda list) and "3day" are the phone views, as in Google Calendar's app. */
-export type CalMode = "month" | "week" | "day" | "3day" | "schedule";
+/** The two main views of the prototype, plus Settings and Help from the profile menu. */
+export type View = "calendar" | "tasks" | "settings" | "help";
+/** On phones "week" shows three days at a time (one beside the open planner), as in the prototype. */
+export type CalMode = "month" | "week" | "day";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
-export type SettingsPanel = "main" | "calendars" | "schedule" | "estimates" | "browser" | "about";
+export type SettingsPanel = "main" | "calendars" | "classes" | "schedule" | "estimates" | "browser" | "about";
 export type Selection =
   | { kind: "task"; id: string }
   | { kind: "event"; id: string }
@@ -30,12 +32,29 @@ export interface AppContextValue {
   plan: Plan;
   index: PlanIndex;
   changes: Change[];
+  /** Tasks added to a class calendar since the student last looked: "New" until opened or acted on. */
+  newWork: Set<string>;
   now: Date;
   timezone: string;
 
   update: (fn: (ws: Workspace) => Workspace) => void;
   toggleDone: (task: Task) => void;
-  setEstimate: (taskId: string, minutes: number | null) => void;
+  /** Set a task's points or priority; undefined leaves that one as it was, null clears it. */
+  setTaskMeta: (taskId: string, patch: { points?: number | null; priority?: Priority | null }) => void;
+  /** Set how long a task needs (null goes back to the default for its kind). */
+  setEstimate: (taskId: string, minutes: number | null, source?: EstimateSource) => void;
+  /** Put a task on the calendar at `start`, for as long as it's expected to take. */
+  scheduleTask: (task: Task, start: Date) => void;
+  /** Put a task into a day's first free time that fits it (noon if none does): a drop on the month. */
+  scheduleOnDay: (task: Task, day: Date) => void;
+  /** Move scheduled time to a new start, keeping its length. */
+  moveScheduled: (blockId: string, start: Date) => void;
+  /** Change when scheduled time ends. */
+  resizeScheduled: (blockId: string, end: Date) => void;
+  /** Take scheduled time off the calendar; its work goes back on the to-do list. */
+  unschedule: (blockId: string) => void;
+  /** Answer "put this unfinished work back on the to-do list?" for these tasks. */
+  answerUnfinished: (taskIds: string[], back: boolean) => void;
 
   /** Returns how many already-past items were marked done. */
   addFeed: (result: FeedResult) => number;
@@ -50,6 +69,20 @@ export interface AppContextValue {
   setSettingsPanel: (p: SettingsPanel) => void;
   calMode: CalMode;
   setCalMode: (m: CalMode) => void;
+  calSidebar: boolean;
+  /** The to-do list: everything, or school work only. */
+  todoScope: TodoScope;
+  setTodoScope: (scope: TodoScope) => void;
+  /** The to-do list's order: most urgent first, or shortest first. */
+  todoSort: TodoSort;
+  setTodoSort: (sort: TodoSort) => void;
+  setCalSidebar: (open: boolean) => void;
+  /** Whether the planner lists up to 15 tasks rather than 5. */
+  plannerMore: boolean;
+  setPlannerMore: (more: boolean) => void;
+  /** Whether the planner's filters (order, class, how many) are open or folded to one line. */
+  plannerFilters: boolean;
+  setPlannerFilters: (open: boolean) => void;
   /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
   openGoal: () => void;
   /** Mark done and optionally show the completion success panel. */
@@ -57,8 +90,6 @@ export interface AppContextValue {
   calCursor: Date;
   setCalCursor: (d: Date) => void;
   /** Which day of the plan is open, as an offset from today. */
-  planDay: number;
-  setPlanDay: (i: number) => void;
   filters: Filters;
   setFilters: (f: Filters | ((prev: Filters) => Filters)) => void;
 
@@ -72,6 +103,8 @@ export interface AppContextValue {
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;
   clearChanges: () => void;
+  /** The student has seen these tasks, so they stop saying "New". */
+  seeWork: (taskIds: string[]) => void;
   /** Confirm what just happened. Pass `undo` when the action can be taken back; the message then offers Undo. */
   toast: (message: string, options?: { undo?: () => void }) => void;
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CalendarDays, CircleHelp, Clock, Compass, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
-import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
+import { classRank } from "@/lib/todos";
+import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
 import { duration, typeIconClass, typeMeta } from "@/lib/ui";
-import { useApp, type SettingsPanel } from "./context";
+import { courseStyle, useApp, type SettingsPanel } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
@@ -28,7 +29,8 @@ const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 
 
 /** Each section has its own icon, so the menu can be scanned by shape as well as by name. */
 export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
-  { id: "calendars", label: "Calendars & class times", hint: "Links SmartScheduler reads, and when classes meet", icon: CalendarDays },
+  { id: "calendars", label: "Calendars & class times", hint: "Links Schedule Smart reads, and when classes meet", icon: CalendarDays },
+  { id: "classes", label: "Class priority", hint: "Which class comes first when work is due at the same time", icon: ListOrdered },
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
   { id: "browser", label: "This browser", hint: "Theme, another device, start over", icon: MonitorSmartphone },
@@ -38,7 +40,7 @@ export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string
 /**
  * Settings.
  *
- * On a computer (md and up) it works like most web apps' settings: the five
+ * On a computer (md and up) it works like most web apps' settings: the
  * sections stay listed on the left the whole time, the open one is highlighted,
  * and its settings fill the right. Nothing is ever more than one click away, and
  * you never lose your place.
@@ -64,6 +66,7 @@ export function SettingsView() {
           <SectionHeading id={desktopPanel} />
           <div className="space-y-4">
             {desktopPanel === "calendars" ? <CalendarsPanel /> : null}
+            {desktopPanel === "classes" ? <ClassesPanel /> : null}
             {desktopPanel === "schedule" ? <SchedulePanel /> : null}
             {desktopPanel === "estimates" ? <EstimatesPanel /> : null}
             {desktopPanel === "browser" ? <BrowserPanel /> : null}
@@ -75,7 +78,7 @@ export function SettingsView() {
   );
 }
 
-/** Computer only: the five sections, always visible, with the open one highlighted. */
+/** Computer only: the sections, always visible, with the open one highlighted. */
 function SettingsSidebar({ active }: { active: SettingsPanel }) {
   const { setSettingsPanel, setView } = useApp();
   return (
@@ -184,7 +187,7 @@ function CalendarsPanel() {
         hint={
           ws.demo
             ? "You're looking at sample calendars."
-            : "SmartScheduler re-reads these when you open it, when you come back to the tab, and every 30 minutes while it's open."
+            : "Schedule Smart re-reads these when you open it, when you come back to the tab, and every 30 minutes while it's open."
         }
       >
         {ws.demo ? (
@@ -209,27 +212,149 @@ function CalendarsPanel() {
             {helpOpen ? <ProviderHelp /> : null}
             <p className="text-xs text-muted leading-relaxed">
               <b className="font-medium text-fg">School</b> calendars bring in classes and assignments. <b className="font-medium text-fg">Personal</b>{" "}
-              calendars only tell SmartScheduler when you&apos;re busy; their events never turn into homework.
+              calendars only tell Schedule Smart when you&apos;re busy; their events never turn into homework.
             </p>
           </div>
         )}
       </Section>
-      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and SmartScheduler plans around it.">
+      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Schedule Smart plans around it.">
         <ClassTimesEditor />
       </Section>
     </div>
   );
 }
 
+/**
+ * The student's own ranking of their classes. Work due at the same moment (most
+ * class work is due at 11:59 PM) is listed by it on the to-do list.
+ */
+function ClassesPanel() {
+  const { model, ws, update } = useApp();
+  const rank = classRank(ws.classOrder);
+  // Classes never ranked keep their calendar order, after the ranked ones.
+  const ranked = model.courses.filter((c) => !c.hidden).sort((a, b) => rank(a.id) - rank(b.id));
+  const custom = ws.classOrder.length > 0;
+
+  const move = (from: number, by: -1 | 1) => {
+    const ids = ranked.map((c) => c.id);
+    const to = from + by;
+    [ids[from], ids[to]] = [ids[to], ids[from]];
+    // Hidden classes keep their place at the end, in case they come back.
+    update((w) => ({ ...w, classOrder: [...ids, ...w.classOrder.filter((id) => !ids.includes(id))] }));
+    // Keep the keyboard on the class that moved, even at the top or bottom of the list.
+    const id = ids[to];
+    requestAnimationFrame(() => {
+      const buttons = [...document.querySelectorAll<HTMLButtonElement>(`[data-rank="${CSS.escape(id)}"]`)];
+      (buttons.find((b) => b.dataset.dir === (by < 0 ? "up" : "down") && !b.disabled) ?? buttons.find((b) => !b.disabled))?.focus();
+    });
+  };
+
+  return (
+    <Section
+      title="Class priority"
+      hint="When two things are due at the same time, work for the class higher on this list comes first on your to-do list. Most class work is due at 11:59 PM, so this decides a lot."
+    >
+      {ranked.length === 0 ? (
+        <p className="text-sm text-muted">No classes yet. Add a school calendar and its classes show up here.</p>
+      ) : (
+        <ol className="divide-y divide-line" aria-label="Classes, most important first">
+          {ranked.map((c, i) => (
+            <li key={c.id} className="flex items-center gap-3 py-2" style={courseStyle(c.color)}>
+              <span className="w-5 text-center text-sm font-semibold tabular-nums text-muted" aria-hidden>
+                {i + 1}
+              </span>
+              <span className="course-dot shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1 text-sm">
+                <span className="course-text font-semibold">{c.code}</span>
+                {c.title !== c.code ? <span className="block text-xs text-muted truncate">{c.title}</span> : null}
+              </span>
+              <Button
+                iconOnly
+                size="sm"
+                variant="quiet"
+                icon={ArrowUp}
+                label={`Move ${c.code} up`}
+                disabled={i === 0}
+                data-rank={c.id}
+                data-dir="up"
+                onClick={() => move(i, -1)}
+              />
+              <Button
+                iconOnly
+                size="sm"
+                variant="quiet"
+                icon={ArrowDown}
+                label={`Move ${c.code} down`}
+                disabled={i === ranked.length - 1}
+                data-rank={c.id}
+                data-dir="down"
+                onClick={() => move(i, 1)}
+              />
+            </li>
+          ))}
+        </ol>
+      )}
+      {custom ? (
+        <TextButton className="mt-3 text-sm" onClick={() => update((w) => ({ ...w, classOrder: [] }))}>
+          Back to calendar order
+        </TextButton>
+      ) : null}
+    </Section>
+  );
+}
+
 function SchedulePanel() {
   return (
     <div className="space-y-4">
-      <Section title="Your schedule" hint="SmartScheduler plans work inside these hours and around everything on your calendars.">
+      <Section title="Your schedule" hint="Schedule Smart plans work inside these hours and around everything on your calendars.">
         <HoursForm advanced />
       </Section>
       <Section title="Other weekly busy times" hint="Things that happen every week but aren't on a calendar you added, like a job or practice.">
         <WeeklyEditor />
       </Section>
+      <Section title="Work you didn't finish" hint="Scheduling something takes it off your to-do list. When its time passes before you tick it off:">
+        <UnfinishedChoice />
+      </Section>
+    </div>
+  );
+}
+
+const UNFINISHED_CHOICES: { id: UnfinishedPolicy; label: string; hint: string }[] = [
+  { id: "ask", label: "Ask me each morning", hint: "The first time you open Schedule Smart each day, choose whether to put it back." },
+  { id: "midnight", label: "Put it back at midnight", hint: "Back on your to-do list once the day it was scheduled for is over." },
+  { id: "keep", label: "Keep it on my to-do list", hint: "Scheduling never takes work off the list. It stays until you tick it off." },
+];
+
+function UnfinishedChoice() {
+  const { ws, update } = useApp();
+  return (
+    <div role="radiogroup" aria-label="When scheduled work isn't finished" className="space-y-2">
+      {UNFINISHED_CHOICES.map((c) => {
+        const on = ws.unfinished === c.id;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => update((w) => ({ ...w, unfinished: c.id }))}
+            className={`choice-card w-full text-left flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+              on ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong"
+            }`}
+          >
+            <span
+              className={`mt-0.5 grid place-items-center h-4 w-4 shrink-0 rounded-full border-2 ${on ? "border-accent" : "border-line-strong"}`}
+              aria-hidden
+            >
+              {on ? <span className="h-2 w-2 rounded-full bg-accent" /> : null}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">{c.label}</span>
+              <span className="block text-xs text-muted">{c.hint}</span>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -291,7 +416,7 @@ function BrowserPanel() {
     <div className="space-y-4">
       {!ws.demo ? (
         <Section
-          title="Use SmartScheduler on another device"
+          title="Use Schedule Smart on another device"
           hint="Copy a setup link and open it on your phone or laptop. It holds your private calendar links, so only send it to yourself. Prototype note: nothing is uploaded to a server account."
         >
           <Button icon={Copy} onClick={copySetup} aria-live="polite">
@@ -299,7 +424,7 @@ function BrowserPanel() {
           </Button>
         </Section>
       ) : (
-        <Section title="Use SmartScheduler on another device" hint="Sample data isn't meant to move between devices. Add your own calendars first.">
+        <Section title="Use Schedule Smart on another device" hint="Sample data isn't meant to move between devices. Add your own calendars first.">
           <Button trailingIcon={ArrowRight} onClick={() => setSettingsPanel("calendars")}>
             Open calendars
           </Button>
@@ -336,7 +461,7 @@ function BrowserPanel() {
 function AboutPanel() {
   const { setView } = useApp();
   return (
-    <Section title="About SmartScheduler" hint="Goal instructions, a four-step walkthrough, how planning works, and the parts the app is built from.">
+    <Section title="About Schedule Smart" hint="Goal instructions, a four-step walkthrough, how planning works, and the parts the app is built from.">
       <div className="flex gap-2 flex-wrap">
         <Button icon={Target} onClick={openGoalNotice}>
           Reopen goal

@@ -1,5 +1,5 @@
 /**
- * Where to find the calendar link in each app, and what SmartScheduler does with each kind
+ * Where to find the calendar link in each app, and what Schedule Smart does with each kind
  * of calendar. Shared by the setup screens and the home page, so nothing here
  * points at a particular spot on either one.
  */
@@ -29,7 +29,7 @@ export const LINK_HELP: LinkHelp[] = [
       </>,
       "Copy the link it shows. One link covers all of your Canvas classes.",
     ],
-    note: "SmartScheduler sorts the feed into classes automatically, and each assignment links straight back to Canvas.",
+    note: "Schedule Smart sorts the feed into classes automatically, and each assignment links straight back to Canvas.",
   },
   {
     id: "learningsuite",
@@ -98,7 +98,7 @@ export const LINK_HELP: LinkHelp[] = [
     name: "Anything else",
     steps: [
       "Any calendar that gives you an iCal, ICS or webcal link works: work rosters, sports schedules, clubs.",
-      "SmartScheduler guesses whether it holds coursework or just busy time. You can switch it after adding.",
+      "Schedule Smart guesses whether it holds coursework or just busy time. You can switch it after adding.",
     ],
   },
 ];
@@ -111,7 +111,7 @@ export interface CalendarKind {
   id: CalendarKindId;
   label: string;
   color: string;
-  /** What SmartScheduler does with this kind of calendar. */
+  /** What Schedule Smart does with this kind of calendar. */
   does: string;
   cards: LinkSteps[];
 }
@@ -122,14 +122,14 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "school",
     label: "School",
     color: "#4f46e5",
-    does: "SmartScheduler pulls in every assignment, quiz and exam, sorted by class.",
+    does: "Schedule Smart pulls in every assignment, quiz and exam, sorted by class.",
     cards: [
       help("canvas"),
       help("learningsuite"),
       {
         name: "Other course sites",
         steps: ["Look on the course site for a calendar, iCal or “subscribe” link.", "Copy it. Each course calendar becomes one class."],
-        note: "Class calendars rarely say when class meets. SmartScheduler asks for your class times during setup.",
+        note: "Class calendars rarely say when class meets. Schedule Smart asks for your class times during setup.",
       },
     ],
   },
@@ -137,7 +137,7 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "work",
     label: "Work",
     color: "#0f766e",
-    does: "SmartScheduler plans around your work schedule and meetings, so homework never lands on top of them.",
+    does: "Schedule Smart plans around your work schedule and meetings, so homework never lands on top of them.",
     cards: [
       help("outlook"),
       help("google"),
@@ -152,7 +152,7 @@ export const CALENDAR_KINDS: CalendarKind[] = [
     id: "personal",
     label: "Personal",
     color: "#9333ea",
-    does: "SmartScheduler plans around everything else you have going on, so the free time it finds is really free.",
+    does: "Schedule Smart plans around everything else you have going on, so the free time it finds is really free.",
     cards: [
       help("google"),
       help("icloud"),

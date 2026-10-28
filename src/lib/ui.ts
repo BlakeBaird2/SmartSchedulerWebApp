@@ -72,6 +72,14 @@ export function duration(minutes: number): string {
   return rest ? `${h}h ${rest}m` : `${h}h`;
 }
 
+/** An estimate, rounded to read at a glance: "~5 min", "~45 min", "~1 hr", "~1.5 hrs", "~2 hrs". */
+export function approxDuration(minutes: number): string {
+  const m = Math.max(1, Math.round(minutes));
+  if (m < 60) return `~${m} min`;
+  const h = Math.round((m / 60) * 2) / 2;
+  return `~${h} ${h === 1 ? "hr" : "hrs"}`;
+}
+
 export function clock(d: Date): string {
   return format(d, d.getMinutes() === 0 ? "h a" : "h:mm a");
 }
@@ -112,6 +120,16 @@ export function relativeDue(d: Date, now: Date): string {
   if (days === 1) return "tomorrow";
   if (days < 14) return `in ${days} days`;
   return `in ${Math.round(days / 7)} weeks`;
+}
+
+/** When something is due, the way the planner says it: "Today", "Tomorrow", "Fri, Apr 25", or how late it is. */
+export function dueLabel(d: Date | null, now: Date): { text: string; late: boolean } {
+  if (!d) return { text: "No due date", late: false };
+  if (d.getTime() < now.getTime()) return { text: relativeDue(d, now), late: true };
+  const days = differenceInCalendarDays(d, now);
+  if (days === 0) return { text: "Today", late: false };
+  if (days === 1) return { text: "Tomorrow", late: false };
+  return { text: format(d, "EEE, MMM d"), late: false };
 }
 
 export function dayHeading(d: Date, now: Date): { title: string; sub: string } {

@@ -1,4 +1,4 @@
-# SmartScheduler.
+# Schedule Smart
 
 Your classes, your job and the rest of your life on one calendar, and a plan for
 exactly what to work on in every free gap.
@@ -14,11 +14,11 @@ it and start.
 
 ## Pages
 
-- **`/`** — the home page for newcomers: what SmartScheduler does, how the plan is made,
-  and where to find the calendar link in each app (Canvas, Learning Suite,
-  Google, Outlook, Apple, scheduling apps), grouped by school, work and personal.
-  It is rendered on the server, so it shows up at once and search engines can
-  read it. Anyone who already has calendars in their browser skips it and goes
+- **`/`** — the home page for newcomers, in the app's design: one line on what
+  SmartScheduler does, **Get started** and **Try it with sample data**, a still
+  of the calendar page, and three steps. Where to find each calendar link is
+  explained during setup. It is rendered on the server, so it shows up at once
+  and search engines can read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.
 - **`/about`** — the same home page, for people who already use SmartScheduler. It never
   skips ahead to the app; Settings → **About SmartScheduler** links to it.
@@ -31,28 +31,40 @@ it and start.
 
 ## What it does
 
-- **Plan** — the home screen, built to answer three questions at a glance:
-  *what should I work on right now* (one task, with a Done button), *what does
-  the rest of my day look like* (your events, and each stretch of free time
-  with the work planned into it), and *what's due this week* (each item says
-  when it's planned, or that it won't fit in time).
-- **Calendar** — month, week and day. Week and day are time grids showing your
-  classes, your personal events and your planned work side by side.
-- **Upcoming** — everything due, by day, with where it sits in the plan.
-- **Classes** — every class side by side in one board, like the days of the
-  week view: when it meets, how much is left, and its work in due order.
-  Classes are created automatically from your calendars; rename, recolour or
-  hide any of them.
-- **Class times** — class calendars list what's due, rarely when class is. Add
-  each class's days and times once (during setup, in Settings, or from the
-  prompt on the Plan screen) and they show on your calendar in the class's
-  colour and block that time in the plan. Classes whose calendar already has
-  meetings say so. Click any class on the calendar to change its time (a wrong
-  time from Canvas is replaced by yours, and you can switch back), or to mark a
-  single day off, like a holiday.
-- **Change alerts** — each refresh is compared with the last. When a due date
-  moves, or work is added or removed, the bell says so. Click to jump to it.
-- **Your own tasks** — add work no calendar knows about with the + button.
+The interface follows the Figma Make prototype **"Smart Calendar Scheduler
+Prototype"** (its layout, fonts, colours, icons and phone breakpoints). The styles
+live in [`src/app/schedule-smart.css`](src/app/schedule-smart.css), with an `ss-`
+prefix on every class.
+
+- **Calendar** — "Plan your open time" on the left: every task still to schedule,
+  ordered by due date, length or points, narrowed to one class (or school only,
+  or personal), five at a time or fifteen. **Drag a task onto the calendar** to
+  schedule it for as long as its estimate. On a phone, press and hold first.
+  Scheduled work leaves the list and the next task moves up.
+  - It opens on today. The week fits the screen, Monday to Friday (plus a
+    weekend day when something is on it), and the month is a click away.
+    Events and scheduled work that have ended keep their colour but fade, as in
+    Google Calendar. Events are coloured Work, School or Personal, and work
+    you scheduled is striped.
+  - Drag scheduled work to move it, drag its bottom edge to change its length,
+    or drag it back onto the planner to take it off. Every change has Undo.
+  - While you drag, everything after the task's deadline greys out, with a red
+    DUE line. In the month view, dropping a task on a day puts it in that day's
+    first free time.
+  - Tap a free time to see what fits there, with **Put it here**.
+  - Phones: the planner and one day side by side, or three days with the planner
+    closed.
+- **Tasks** — the master checklist: how the week is going (a progress ring, due
+  today, due this week), then every task in one table to search, sort (due date,
+  shortest first) and filter (today, a class, personal, completed).
+- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, points, priority.
+- **Points and priority** — calendar feeds don't carry either. Points are yours to
+  add; priority follows the due date until you pick one.
+- Also: ticking work off folds it away with Undo; **New** marks work a class
+  calendar added since you last looked; each morning it asks whether to put
+  yesterday's unfinished work back; **Class priority** (Settings) breaks ties;
+  any event can be recoloured with Google Calendar's colours.
+- **Profile menu** (top right) — refresh calendars, what changed, Settings, Help.
 
 ## How the plan is made
 
@@ -78,6 +90,14 @@ automatically get a "Study for …" task before them.
 
 The code is in [`src/lib/planner.ts`](src/lib/planner.ts), with tests in
 [`src/lib/__tests__/planner.test.ts`](src/lib/__tests__/planner.test.ts).
+
+The **Plan** screen uses this plan. The **Calendar** shows only the time you
+scheduled yourself, and the planner treats it as busy. Work you scheduled is
+planned where you put it; work whose time has passed is planned again.
+
+**Scheduled time** is stored shaped like a Google Calendar event (`start`,
+`end`, `title`, `color`, `externalId`), so a later two-way sync can map it
+across. See `ScheduledBlock` in [`src/lib/types.ts`](src/lib/types.ts).
 
 ## Adding calendars
 
@@ -167,7 +187,8 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 | --- | --- |
 | `prio:prototype-notice`, `prio:goal-notice` | Set when the welcome pop-up (prototype notice + goal) is closed. Missing = it shows on the next page load. |
 | `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Show me around, Settings, or `/app#tour`). |
-| `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
+| `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
+| `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
 
 **Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
@@ -188,7 +209,7 @@ in development (`NODE_ENV=development`) and is not in production builds.
 **Goal routes (same outcome: mark productive work done):**
 
 1. **Plan** → open a free gap → choose a task → review / Why this task? → **Done**
-2. **Calendar** (week/day) → open a free gap or planned-work block → review → **Done**
+2. **Calendar** → drag the next task from the to-do list onto a free time (or open a free gap → **Put it here**) → tick it off
 3. **Upcoming** or **Classes** → open a task → review → **Done**
 
 Help (header) lists these routes. See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
@@ -241,7 +262,7 @@ docker run -p 3000:3000 smartscheduler
 ## Project layout
 
 ```
-src/app/page.tsx            the home page (src/components/Landing*.tsx, LinkGuide.tsx)
+src/app/page.tsx            the home page (src/components/Landing.tsx)
 src/app/app/page.tsx        the app
 src/app/api/feed/route.ts   the only server endpoint: read one calendar link
 src/lib/feeds/              link checks, provider detection, the iCal parser, sample data
@@ -252,5 +273,10 @@ src/lib/workspace.ts        what the browser stores, checked on the way back in
 src/lib/sync.ts             refreshing every calendar
 src/lib/changes.ts          spotting moved, added and removed work
 src/lib/timeline.ts         a day in order, and "what now"
-src/components/             the interface
+src/lib/todos.ts            the to-do list: what's on it, its order, priority and colours
+src/lib/blocks.ts           scheduled time: snapping, moving and resizing
+src/lib/newWork.ts          work that's new since you last looked
+src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
+src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
+src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```

@@ -128,6 +128,38 @@ export function Field({
   );
 }
 
+/** Pick one colour from a row of round swatches. Each is a radio button named after its colour. */
+export function ColorSwatches({
+  colors,
+  value,
+  onChange,
+  label,
+}: {
+  colors: { hex: string; name: string }[];
+  value: string | null;
+  onChange: (hex: string) => void;
+  /** Spoken name for the group, such as "Colour for Work". */
+  label: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
+      {colors.map((c) => (
+        <button
+          key={c.hex}
+          type="button"
+          role="radio"
+          aria-checked={value?.toLowerCase() === c.hex.toLowerCase()}
+          aria-label={c.name}
+          title={c.name}
+          onClick={() => onChange(c.hex)}
+          className="w-7 h-7 rounded-full border border-line-strong"
+          style={{ background: c.hex }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** One of several small choices shown side by side, like "30m · 45m · 1h". Pressed = chosen. */
 export function ChoicePill({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

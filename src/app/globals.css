@@ -4,30 +4,28 @@
 
 :root {
   /*
-   * Full-colour Prio palette (design handoff, section 3): warm neutrals, one indigo
-   * accent, and one soft shadow. The page is a warm off-white "desk"; content sits
-   * on white cards above it. Indigo is reserved for the one main action on each
-   * screen, today's date and focus. Green, amber and red only mean free or done,
-   * soon, and late, and always come with an icon or words.
+   * Schedule Smart palette, from the Figma prototype: a warm off-white page, white
+   * surfaces, hairline warm-grey lines, near-black ink and one purple accent.
+   * Green, amber and red still only mean done, soon and late.
    */
-  --bg: #f6f5f1;
+  --bg: #f7f7f4;
   --surface: #ffffff;
-  --surface-2: #f1efe9;
-  --line: #e6e3db;
-  --line-strong: #d3cfc4;
-  --fg: #1c1b18;
-  --muted: #6f6b62;
-  --faint: #a19c91;
-  --accent: #4f46e5;
-  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
-  --danger: #dc2626;
-  --warn: #d97706;
-  --ok: #059669;
-  --ok-soft: color-mix(in oklab, var(--ok) 7%, var(--surface));
-  --shadow: 0 1px 2px rgb(28 27 24 / 0.05), 0 8px 24px -12px rgb(28 27 24 / 0.18);
+  --surface-2: #f1f1ed;
+  --line: #e4e4de;
+  --line-strong: #d5d5ce;
+  --fg: #20201f;
+  --muted: #777772;
+  --faint: #92928c;
+  --accent: #7066e7;
+  --accent-soft: #eeecff;
+  --danger: #b44949;
+  --warn: #c27a35;
+  --ok: #27764d;
+  --ok-soft: #e7f5ed;
+  --shadow: 0 3px 12px rgb(30 30 27 / 0.04);
   --shadow-sm: var(--shadow);
-  --shadow-md: 0 1px 2px rgb(28 27 24 / 0.06), 0 12px 28px -12px rgb(28 27 24 / 0.26);
-  --shadow-lg: 0 2px 4px rgb(28 27 24 / 0.06), 0 24px 48px -16px rgb(28 27 24 / 0.32);
+  --shadow-md: 0 8px 24px rgb(25 25 23 / 0.1);
+  --shadow-lg: 0 24px 70px rgb(20 20 18 / 0.2);
   color-scheme: light;
 }
 
@@ -41,7 +39,7 @@
   --muted: #a3a09a;
   --faint: #6b6963;
   --accent: #8b85ff;
-  --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  --accent-soft: #27254a;
   --danger: #f87171;
   --warn: #fbbf24;
   --ok: #34d399;
@@ -68,7 +66,7 @@
   --color-warn: var(--warn);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --radius-xl: 14px;
   --radius-2xl: 18px;
 }
@@ -514,17 +512,44 @@
 .fade-in {
   animation: fade-in 160ms ease-out;
 }
+/* Ticking work off: the box pops, the tick draws itself, and a few sparks fly. */
+@keyframes check-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  55% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes tick-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes check-burst {
+  0% {
+    transform: scale(0.35);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
 
 /* ---------------------------------------------------------------------------
  * Home page
  * ------------------------------------------------------------------------- */
 
-@media (prefers-reduced-motion: no-preference) {
-  /* Links to sections of the home page glide rather than jump. */
-  html:has([data-landing]) {
-    scroll-behavior: smooth;
-  }
-}
 
 .skeleton {
   background: var(--surface-2);
@@ -1256,14 +1281,521 @@
     color: var(--fg);
   }
 
-  /* The wordmark's full stop, in the accent: "SmartScheduler." */
-  .wordmark-dot {
+  /*
+   * The calendar, after Notion Calendar: quiet hour lines, a big date under each
+   * weekday, today in a filled circle and a faint wash down its column, and the
+   * time right now as a red line with the time in a pill.
+   */
+  .cal-day-head {
+    border-radius: 0;
+    transition: background 120ms ease;
+  }
+  .cal-day-head:hover {
+    background: var(--surface-2);
+  }
+  .cal-date {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-date-today {
+    background: var(--accent);
+    color: #fff;
+  }
+  [data-theme="dark"] .cal-date-today {
+    color: #14123a;
+  }
+  .cal-col-today {
+    background: color-mix(in oklab, var(--accent) 3.5%, transparent);
+  }
+  .cal-col-weekend {
+    background: color-mix(in oklab, var(--surface-2) 45%, transparent);
+  }
+  .cal-now-pill {
+    border-radius: 9999px;
+    background: var(--danger);
+    color: #fff;
+    padding: 0 0.35rem;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Things that have already happened step back, like Google and Notion calendars. */
+  .cal-past {
+    opacity: 0.6;
+  }
+  .cal-past:hover {
+    opacity: 1;
+  }
+
+  /*
+   * Where dragged work will land: a solid accent outline around a soft wash, with the
+   * time it would take. Solid, not dashed, so it never reads as free time.
+   */
+  .plan-drop {
+    border-radius: 8px;
+    border: 2px solid var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+    color: color-mix(in oklab, var(--accent) 70%, var(--fg));
+    box-shadow: var(--shadow-md);
+  }
+
+  /* The small month in the calendar's sidebar. */
+  .mini-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1px 0 0;
+    border-radius: 8px;
+    color: var(--fg);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .mini-day[data-out] {
+    color: var(--faint);
+  }
+  .mini-day:hover .mini-day-num {
+    background: var(--surface-2);
+  }
+  .mini-day-range {
+    background: var(--accent-soft);
+    border-radius: 0;
+  }
+  .mini-day-range:nth-child(7n + 1),
+  .mini-day-range:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+  .mini-day-range:nth-child(7n) {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  .mini-day-num {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  .mini-day-today,
+  .mini-day:hover .mini-day-today {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+  [data-theme="dark"] .mini-day-today {
+    color: #14123a;
+  }
+  /* An amber dot under a day when something is due, the same amber as every deadline. */
+  .mini-day-dot {
+    width: 4px;
+    height: 4px;
+    margin: 1px 0 2px;
+    border-radius: 9999px;
+    background: var(--warn);
+  }
+
+  /* The sidebar's to-do list, and the drop zone it becomes while a planned block is dragged. */
+  .todo-panel {
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 120ms ease, background 120ms ease;
+  }
+  [data-theme="dark"] .todo-panel {
+    box-shadow: none;
+  }
+  .todo-panel-target {
+    border: 2px solid color-mix(in oklab, var(--accent) 45%, var(--line));
+  }
+  .todo-panel-over {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .todo-item {
+    border-radius: 10px;
+  }
+
+  /* A smaller segmented control, for the to-do list's own choices. */
+  .seg-sm {
+    padding: 2px;
+    border-radius: 10px;
+  }
+  .seg-sm > button {
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+  }
+
+  /*
+   * Work coloured by how soon it is due (--u, bright red through orange to yellow).
+   * It stays a white tile, the app's sign for "a task of yours", with the colour as
+   * a bar down its left edge and in its outline, so a column of work reads from red
+   * to yellow at a glance. The due date is always written too, so colour is never
+   * the only signal.
+   */
+  .urgency-card {
+    background: color-mix(in oklab, var(--u) 7%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--u) 55%, var(--line));
+    box-shadow:
+      inset 4px 0 0 var(--u),
+      0 1px 2px rgb(28 27 24 / 0.06);
+    transition:
+      background 120ms ease,
+      border-color 120ms ease;
+  }
+  .urgency-card:hover {
+    background: color-mix(in oklab, var(--u) 13%, var(--surface));
+    border-color: var(--u);
+  }
+  [data-theme="dark"] .urgency-card {
+    background: color-mix(in oklab, var(--u) 12%, var(--surface-2));
+    box-shadow: inset 4px 0 0 var(--u);
+  }
+  [data-theme="dark"] .urgency-card:hover {
+    background: color-mix(in oklab, var(--u) 18%, var(--surface-2));
+  }
+
+  /* The top of the list when it is sorted by due date: what to schedule next. */
+  .next-pill {
+    border-radius: 9999px;
+    background: var(--accent);
+    color: #fff;
+    padding: 0 0.45rem;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.15rem;
+    white-space: nowrap;
+  }
+  [data-theme="dark"] .next-pill {
+    color: #14123a;
+  }
+
+  /*
+   * Ticking work off the to-do list. The box pops with a little burst, the row
+   * turns green and its title is struck through, then the row folds away so the
+   * rest of the list moves up. With reduced motion it is ticked, then gone.
+   */
+  .todo-fold {
+    display: grid;
+    grid-template-rows: 1fr;
+  }
+  .todo-fold > div {
+    min-height: 0;
+  }
+  /* Over the item's own urgency colour, which is set inline. */
+  .todo-fold[data-completing] .todo-item {
+    --u: var(--ok) !important;
+    pointer-events: none;
+  }
+  .todo-title {
+    background: linear-gradient(currentColor, currentColor) no-repeat 0 60% / 0 1.5px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .todo-fold[data-completing] .todo-title {
+    background-size: 100% 1.5px;
+    color: var(--muted);
+  }
+  .todo-fold[data-completing] .urgency-due {
+    color: var(--muted) !important;
+  }
+  .check-burst {
+    position: relative;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .todo-fold {
+      transition:
+        grid-template-rows 260ms cubic-bezier(0.4, 0, 0.2, 1) 400ms,
+        opacity 220ms ease 400ms;
+    }
+    .todo-fold[data-completing] {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+    .todo-fold[data-completing] > div {
+      overflow: hidden;
+    }
+    .todo-title {
+      transition:
+        background-size 260ms cubic-bezier(0.4, 0, 0.2, 1) 80ms,
+        color 200ms ease 80ms;
+    }
+    .todo-fold[data-completing] .check {
+      animation: check-pop 380ms cubic-bezier(0.3, 1.6, 0.5, 1);
+    }
+    .todo-fold[data-completing] .check svg {
+      stroke-dasharray: 24;
+      animation: tick-draw 240ms ease-out 60ms both;
+    }
+    .todo-fold[data-completing] .check-burst::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: calc(50% + 1px);
+      width: 4px;
+      height: 4px;
+      margin: -2px 0 0 -2px;
+      border-radius: 9999px;
+      pointer-events: none;
+      box-shadow:
+        0 -15px var(--ok),
+        11px -11px var(--accent),
+        15px 0 var(--warn),
+        11px 11px var(--ok),
+        0 15px var(--accent),
+        -11px 11px var(--warn),
+        -15px 0 var(--ok),
+        -11px -11px var(--accent);
+      animation: check-burst 520ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+    }
+  }
+
+  /* Done work stays on the calendar, faded, ticked and struck through. */
+  .plan-tick[data-done="true"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+  [data-theme="dark"] .plan-tick[data-done="true"] {
+    color: #0b1f17;
+  }
+
+  /* Work added to a class calendar since the student last looked. */
+  .new-pill {
+    display: inline-block;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0 0.4rem;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.05rem;
+    white-space: nowrap;
+  }
+
+  /* Anything that can be picked up and dragged: no text selection or phone press menu in the way. */
+  .drag-source {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* While something is being dragged, a grabbing hand everywhere and nothing gets selected. */
+  .plan-dragging,
+  .plan-dragging * {
+    cursor: grabbing !important;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Free gaps light up while work is dragged: dashed green, brighter where it fits. */
+  .gap-hint {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 3px 6px;
+    border-radius: 8px;
+    border: 1.5px dashed color-mix(in oklab, var(--ok) 40%, transparent);
+    background: color-mix(in oklab, var(--ok) 4%, transparent);
+  }
+  .gap-fit {
+    border-color: color-mix(in oklab, var(--ok) 85%, transparent);
+    background: color-mix(in oklab, var(--ok) 10%, transparent);
+  }
+  .gap-hint-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: color-mix(in oklab, var(--ok) 80%, var(--fg));
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The bottom edge of scheduled time: drag it to change how long it is. */
+  .block-resize {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 9px;
+    cursor: ns-resize;
+    touch-action: none;
+  }
+  .block-resize::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    width: 22px;
+    height: 3px;
+    margin-left: -11px;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--u) 70%, var(--fg));
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .plan-block:hover .block-resize::after,
+  .plan-block:focus-visible .block-resize::after {
+    opacity: 0.6;
+  }
+  @media (pointer: coarse) {
+    .block-resize {
+      height: 16px;
+    }
+    .block-resize::after {
+      opacity: 0.5;
+    }
+  }
+
+  /* What's being dragged, following the pointer while it is away from the calendar. */
+  .drag-ghost {
+    position: fixed;
+    z-index: 70;
+    width: 13rem;
+    pointer-events: none;
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklab, var(--u) 60%, var(--line));
+    background: var(--surface);
+    padding: 0.4rem 0.6rem 0.45rem 0.9rem;
+    box-shadow:
+      inset 4px 0 0 var(--u),
+      var(--shadow-md);
+    transform: rotate(-2deg);
+  }
+
+  /* Phones and tablets: the to-do list as a sheet along the bottom, above the tab bar. */
+  .todo-sheet {
+    position: fixed;
+    z-index: 30;
+    inset-inline: 0.75rem;
+    bottom: calc(5.4rem + env(safe-area-inset-bottom));
+    transition:
+      transform 220ms ease,
+      opacity 220ms ease;
+  }
+  @media (min-width: 768px) {
+    .todo-sheet {
+      inset-inline: auto 1rem;
+      bottom: 1rem;
+      width: 24rem;
+    }
+  }
+  /* Out of the way while a task is being placed, so the calendar is free to drop on. */
+  .todo-sheet[data-hidden] {
+    transform: translateY(calc(100% + 7rem));
+    opacity: 0;
+    pointer-events: none;
+  }
+  .todo-sheet-bar,
+  .todo-sheet-handle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--surface) 94%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-lg);
+  }
+  .todo-sheet-bar {
+    border-radius: 18px;
+    padding: 0.6rem 0.85rem;
+    transition:
+      border-color 120ms ease,
+      background 120ms ease;
+  }
+  .todo-sheet-handle {
+    justify-content: center;
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    box-shadow: none;
+  }
+  .todo-sheet[data-open] .todo-panel {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Messages rise above the to-do sheet on phones and tablets, and step aside during a drag. */
+  @media (max-width: 1023px) {
+    html:has(.todo-sheet:not([data-hidden])) .app-toast {
+      bottom: calc(10.25rem + env(safe-area-inset-bottom));
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1023px) {
+    html:has(.todo-sheet:not([data-hidden])) .app-toast {
+      bottom: 6rem;
+    }
+  }
+  .plan-dragging .app-toast {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* How long a task needs; tap it to change. */
+  .estimate-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    border-radius: 9999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 0 0.4rem;
+    line-height: 1.15rem;
+    font-weight: 600;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+  .estimate-chip:hover {
+    border-color: var(--line-strong);
+  }
+  .estimate-chip[aria-expanded="true"] {
+    border-color: var(--accent);
     color: var(--accent);
   }
 
-  /* A soft wash of the accent behind the home page hero and its closing call to action. */
-  .landing-glow {
-    background: radial-gradient(60% 55% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 72%);
+  /* Upcoming's week strip: one tile per day, amber dots for what's due. */
+  .week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 0.45rem 0 0.5rem;
+    color: var(--fg);
+    transition: border-color 120ms ease, background 120ms ease;
+  }
+  .week-day:not(:disabled):hover {
+    border-color: var(--line-strong);
+    background: var(--surface-2);
+  }
+  .week-day:disabled {
+    color: var(--muted);
+    background: transparent;
+    cursor: default;
+  }
+  .week-day[data-today] {
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+    color: var(--accent);
+  }
+
+  /* The wordmark's full stop, in the accent: "Schedule Smart." */
+  .wordmark-dot {
+    color: var(--accent);
   }
 }
 
@@ -1333,7 +1865,44 @@
   }
 }
 
-/* Class tabs carry their own "chosen" look; the colour-swatch radio outline doesn't apply. */
-.class-tab[role="radio"][aria-checked="true"]:not(:focus-visible) {
+/* Class tabs and option cards carry their own "chosen" look; the colour-swatch radio outline doesn't apply. */
+.class-tab[role="radio"][aria-checked="true"]:not(:focus-visible),
+.choice-card[role="radio"][aria-checked="true"]:not(:focus-visible) {
   outline: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Schedule Smart (Figma prototype) across the older screens: Manrope for
+ * headings and the name, the dark button for the main action, 8-10px corners.
+ * Unlayered, so it wins over the low- and medium-fidelity layers above.
+ * ------------------------------------------------------------------------- */
+.wordmark,
+h1,
+h2 {
+  font-family: "Manrope Variable", "Manrope", var(--font-sans);
+  letter-spacing: -0.03em;
+}
+.wordmark {
+  font-weight: 700;
+}
+.btn-primary,
+.btn-primary:hover {
+  background: #282826;
+  border-color: #282826;
+  color: #fff;
+}
+:root[data-theme="dark"] .btn-primary,
+:root[data-theme="dark"] .btn-primary:hover {
+  background: #ecebe6;
+  border-color: #ecebe6;
+  color: #141414;
+}
+.btn,
+.input,
+.seg {
+  border-radius: 9px;
+}
+.card {
+  border-radius: 12px;
+  border-color: var(--line);
 }

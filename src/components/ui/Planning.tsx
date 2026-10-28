@@ -1,11 +1,11 @@
 "use client";
 
-import { CalendarCheck, ChevronRight, Clock, Flag, Undo2 } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, Flag, Pin, Undo2 } from "lucide-react";
 import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
 /**
- * The pieces that carry SmartScheduler's core job: show a student which piece of
+ * The pieces that carry Schedule Smart's core job: show a student which piece of
  * work fits the free gap in front of them, and let them tick it off.
  */
 
@@ -219,10 +219,11 @@ export function FreeGapBlock({
  * When the work is planned: a green chip with a clock ("Planned today 3:25 PM").
  * Paired with DueBadge, so "when you'll do it" and "when it's due" never look alike.
  */
-export function PlannedBadge({ children, title }: { children: React.ReactNode; title?: string }) {
+export function PlannedBadge({ children, title, pinned = false }: { children: React.ReactNode; title?: string; pinned?: boolean }) {
+  const Icon = pinned ? Pin : Clock;
   return (
-    <span className="plan-badge" title={title ?? "When SmartScheduler planned this"}>
-      <Clock size={11} strokeWidth={2.5} aria-hidden />
+    <span className="plan-badge" title={title ?? (pinned ? "A time you picked" : "When Schedule Smart planned this")}>
+      <Icon size={11} strokeWidth={2.5} aria-hidden />
       {children}
     </span>
   );
@@ -250,7 +251,7 @@ export function Wordmark({ size = "md", collapse = false }: { size?: "md" | "lg"
         </span>
       ) : null}
       <span className={`wordmark ${lg ? "text-2xl" : "text-xl"} ${collapse ? "hidden sm:inline" : ""}`}>
-        SmartScheduler<span className="wordmark-dot">.</span>
+        Schedule Smart
       </span>
     </span>
   );
@@ -258,18 +259,19 @@ export function Wordmark({ size = "md", collapse = false }: { size?: "md" | "lg"
 
 /**
  * A short message at the bottom of the screen confirming what just happened.
- * When the action can be taken back, it offers Undo right there.
+ * When the action can be taken back, it offers Undo right there. Only Undo
+ * catches taps; the rest of it lets them through to what is underneath.
  */
 export function Toast({ message, action, onAction }: { message: string; action?: string; onAction?: () => void }) {
   return (
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-xl bg-fg text-bg shadow-[var(--shadow-lg)] text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
+      className="app-toast pointer-events-none fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[calc(100vw-2rem)] rounded-xl bg-fg text-bg shadow-[var(--shadow-lg)] text-[0.9375rem] px-4 py-2.5 fade-in flex items-center gap-4"
     >
       <span className="min-w-0">{message}</span>
       {action && onAction ? (
-        <button type="button" className="shrink-0 inline-flex items-center gap-1 font-bold underline underline-offset-4" onClick={onAction}>
+        <button type="button" className="pointer-events-auto shrink-0 inline-flex items-center gap-1 font-bold underline underline-offset-4" onClick={onAction}>
           <Undo2 size={15} aria-hidden />
           {action}
         </button>

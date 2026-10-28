@@ -156,6 +156,70 @@ export interface PlanPrefs {
   estimates: Record<AssignmentType, number>;
 }
 
+/** Who set an estimate: the student, or (later) a suggestion they accepted. */
+export type EstimateSource = "user" | "ai";
+
+/**
+ * How long a piece of work needs, and where the number came from. Kept as a
+ * record rather than a bare number so suggested estimates can sit alongside the
+ * student's own later.
+ */
+export interface Estimate {
+  minutes: number;
+  source: EstimateSource;
+  /** When it was set. */
+  at?: string;
+}
+
+/**
+ * Time the student set aside on the calendar for a piece of work.
+ *
+ * Shaped like a Google Calendar event (start, end, title, colour, an external id)
+ * so two-way sync can map one onto the other without reshaping anything. The
+ * planner treats it as fixed: that time is taken, and the work it is for is
+ * scheduled.
+ */
+export interface ScheduledBlock {
+  id: string;
+  /** The work this time is for. Null for time not tied to a task, such as an event brought in from Google Calendar. */
+  taskId: string | null;
+  /** Shown when there is no task to take a title from, and the title Google Calendar would show. */
+  title: string;
+  start: string; // ISO instant
+  end: string; // ISO instant, exclusive
+  /** A colour the student picked, or null to colour it by how soon its work is due. */
+  color: string | null;
+  /** The matching Google Calendar event's id, once synced. */
+  externalId: string | null;
+  /** When the block last changed, to settle edits made on both sides of a sync. */
+  updatedAt: string;
+}
+
+/**
+ * What happens to work whose scheduled time passed without it being done.
+ * - ask: each morning, ask whether to put yesterday's unfinished work back on the list.
+ * - midnight: put it back on its own once the day it was scheduled for is over.
+ * - keep: scheduling never takes work off the list; it stays until it is ticked off.
+ */
+export type UnfinishedPolicy = "ask" | "midnight" | "keep";
+export const UNFINISHED_POLICIES: UnfinishedPolicy[] = ["ask", "midnight", "keep"];
+
+/** How much a task matters: set by the student, or worked out from when it is due. */
+export type Priority = "high" | "medium" | "low";
+export const PRIORITIES: Priority[] = ["high", "medium", "low"];
+
+/** What the student adds to a task that no calendar knows: what it's worth, and how much it matters. */
+export interface TaskMeta {
+  points?: number;
+  priority?: Priority;
+}
+
+/** The answer given about one task when asked whether to put it back on the list. */
+export interface UnfinishedAnswer {
+  at: string;
+  back: boolean;
+}
+
 export interface Workspace {
   version: 1;
   feeds: FeedConfig[];
@@ -163,10 +227,22 @@ export interface Workspace {
   manualTasks: ManualTask[];
   /** taskId -> when it was marked done */
   done: Record<string, string>;
-  /** taskId -> minutes the user says it needs */
-  estimates: Record<string, number>;
+  /** taskId -> how long the user says it needs */
+  estimates: Record<string, Estimate>;
+  /** Time set aside on the calendar, by dragging work onto it or picking a time. */
+  blocks: ScheduledBlock[];
   /** courseId -> the user's renames, colours and hiding */
   courseEdits: Record<string, CourseEdit>;
+  /** Class ids, most important first. Breaks ties between work due at the same time. */
+  classOrder: string[];
+  /** Event series (see eventColors.seriesKey) -> the colour the student picked for it. */
+  eventColors: Record<string, string>;
+  /** taskId -> points and priority the student set. */
+  taskMeta: Record<string, TaskMeta>;
+  /** What happens to work whose scheduled time passes before it is done. */
+  unfinished: UnfinishedPolicy;
+  /** taskId -> the last answer to "put it back on the to-do list?" */
+  unfinishedAnswers: Record<string, UnfinishedAnswer>;
   prefs: PlanPrefs;
   /** Showing sample data instead of the user's own calendars. */
   demo: boolean;
@@ -227,9 +303,16 @@ export interface Task {
   estimate: number;
   /** Whether the user set the estimate, rather than it coming from the default for its type. */
   customEstimate: boolean;
+  /** Where the estimate came from: the default for its type, the student, or a suggestion. */
+  estimateSource: "default" | EstimateSource;
   done: boolean;
   manual: boolean;
   generated: "study" | null;
+  /** What it's worth, when the student said. Calendar feeds don't carry points. */
+  points: number | null;
+  priority: Priority;
+  /** Whether the student set the priority, rather than it following the due date. */
+  customPriority: boolean;
 }
 
 export interface CalEvent {
