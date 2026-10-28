@@ -40,8 +40,8 @@ prefix on every class.
   ordered by due date, length or points, narrowed to one class (or school only,
   or personal), five at a time or fifteen. **Drag a task onto the calendar** to
   schedule it for as long as its estimate. On a phone, press and hold first.
-  Each task in the planner is as tall as it will be on the calendar, so longer
-  work looks longer, and it keeps that size while you drag it there.
+  The task is picked up at its card's size; over the calendar it glides into
+  the slot it would drop into, at its real length, so letting go leaves it there.
   Scheduled work leaves the list and the next task moves up.
   - It opens on today. The week fits the screen, Monday to Friday (plus a
     weekend day when something is on it), and the month is a click away.

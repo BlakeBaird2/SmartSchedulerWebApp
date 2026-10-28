@@ -23,22 +23,13 @@ import { clock, dayKey } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
 import { DragGhost } from "./DragGhost";
 import { PlannerPanel } from "./PlannerPanel";
-import {
-  beginPlanDrag,
-  blockHeight,
-  dragSourceRef,
-  HOUR_PX,
-  HOUR_PX_PHONE,
-  PHONE_QUERY,
-  setCalendarScale,
-  targetStart,
-  usePlanDrag,
-  type DropTarget,
-} from "./planDrag";
+import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
 const WEEK = { weekStartsOn: 1 } as const;
 const MIN = 60_000;
+/** Phones and narrow windows get the prototype's phone layout below this width. */
+const PHONE_QUERY = "(max-width: 820px)";
 
 /** Time the student set aside, ready to draw. */
 export interface CalBlock {
@@ -236,6 +227,10 @@ type GridItem =
   | { kind: "event"; id: string; start: number; end: number; event: CalEvent }
   | { kind: "work"; id: string; start: number; end: number; item: CalBlock };
 
+/** How tall an hour is, at least: room for a half-hour block's title and time. */
+const HOUR_PX = 64;
+const HOUR_PX_PHONE = 56;
+
 function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayView: boolean }) {
   const { ws, now, select, setCalCursor, setCalMode, plan, model } = useApp();
   const drag = usePlanDrag();
@@ -294,10 +289,6 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   const ppm = Math.max((frame.phone ? HOUR_PX_PHONE : HOUR_PX) / 60, height > 0 ? height / (hours.length * 60) : 0);
   const bodyHeight = hours.length * 60 * ppm;
   const y = (ms: number, from: number) => ((ms - from) / MIN - startHour * 60) * ppm;
-  // The planner draws its tasks to this scale, so they keep their size on the way here.
-  useLayoutEffect(() => {
-    if (height > 0) setCalendarScale(ppm);
-  }, [ppm, height]);
 
   // Open on what matters: an hour before now when today is showing, otherwise the start of the day.
   const firstDay = days[0]?.getTime() ?? 0;
@@ -402,7 +393,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                     })}
                     {placed.map(({ item, col, cols }) => {
                       const top = y(item.start, c.from) + 3;
-                      const h = blockHeight((item.end - item.start) / MIN, ppm);
+                      const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
                       const style: React.CSSProperties = {
                         top,
                         height: h,
@@ -430,7 +421,8 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                         <span>DUE {clock(deadline).toUpperCase()}</span>
                       </div>
                     ) : null}
-                    {preview && drag ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
+                    {/* Moving work, the ghost itself settles into the slot (DragGhost.tsx); resizing draws it here. */}
+                    {preview && drag?.kind === "resize" ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
                     {isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour ? (
                       <div className="ss-now-line" style={{ top: y(now.getTime(), c.from) }}>
                         <i />
@@ -552,7 +544,8 @@ function PlannedBlock({
         // Where it was grabbed, in minutes from its top, so it doesn't jump under the pointer.
         const box = e.currentTarget.getBoundingClientRect();
         const grab = Math.round((e.clientY - box.top) / ppm);
-        beginPlanDrag(e, { kind: "move", grab, width: box.width, grabX: e.clientX - box.left, ...payload }, (target) => {
+        const source = { width: box.width, height: box.height, grabX: e.clientX - box.left, grabY: e.clientY - box.top };
+        beginPlanDrag(e, { kind: "move", grab, source, ...payload }, (target) => {
           if (target.kind === "list") unschedule(cal.id);
           else if (target.kind === "grid") moveScheduled(cal.id, targetStart(target));
           // Onto a day in the month: the same time, that day.
