@@ -134,6 +134,27 @@ function edgeSpeed(y: number, minY: number, maxY: number): number {
   return 0;
 }
 
+/** A box that scrolls by itself under a drag (the calendar's hours: data-drag-scroll), if the pointer is over it. */
+function scrollerAt(x: number, y: number): HTMLElement | null {
+  for (const el of document.querySelectorAll<HTMLElement>("[data-drag-scroll]")) {
+    const r = el.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top - 80 && y <= r.bottom + 80) return el;
+  }
+  return null;
+}
+
+/** How fast to scroll a box: faster the closer the pointer gets to (or past) its top or bottom edge. */
+function boxSpeed(y: number, top: number, bottom: number, minY: number, maxY: number): number {
+  const zone = 56;
+  const headroom = 16;
+  // As with the page: a drag that starts near an edge scrolls only once it heads that way.
+  const upper = Math.min(top + zone, maxY - headroom);
+  const lower = Math.max(bottom - zone, minY + headroom);
+  if (y < upper) return -Math.min(22, Math.ceil(((upper - y) / zone) * 14));
+  if (y > lower) return Math.min(22, Math.ceil(((y - lower) / zone) * 14));
+  return 0;
+}
+
 /**
  * Touch scrolling can only be stopped by a touchmove listener that isn't passive,
  * and only one that was there when the finger came down. Every drag source gets
@@ -173,13 +194,24 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
     emit();
   };
 
-  // While dragging near an edge, scroll the page and keep the drop time under the pointer.
+  // While dragging near an edge, scroll (the calendar's hours, or the page) and keep
+  // the drop time under the pointer.
   const tick = () => {
     if (!active) return;
-    const speed = edgeSpeed(y, minY, maxY);
-    if (speed) {
-      window.scrollBy(0, speed);
-      update();
+    const box = scrollerAt(x, y);
+    if (box) {
+      const r = box.getBoundingClientRect();
+      const speed = boxSpeed(y, r.top, r.bottom, minY, maxY);
+      if (speed) {
+        box.scrollTop += speed;
+        update();
+      }
+    } else {
+      const speed = edgeSpeed(y, minY, maxY);
+      if (speed) {
+        window.scrollBy(0, speed);
+        update();
+      }
     }
     frame = requestAnimationFrame(tick);
   };

@@ -227,17 +227,22 @@ type GridItem =
   | { kind: "event"; id: string; start: number; end: number; event: CalEvent }
   | { kind: "work"; id: string; start: number; end: number; item: CalBlock };
 
+/** How tall an hour is, at least: room for a half-hour block's title and time. */
+const HOUR_PX = 64;
+const HOUR_PX_PHONE = 56;
+
 function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayView: boolean }) {
   const { ws, now, select, setCalCursor, setCalMode, plan, model } = useApp();
   const drag = usePlanDrag();
-  const body = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
+  const scroller = useRef<HTMLDivElement>(null);
+  const [frame, setFrame] = useState({ height: 0, phone: false });
 
-  // The hours stretch to fill the grid, as in the prototype; the page never scrolls.
+  // The hours scroll inside the frame. Each is at least HOUR_PX tall, and they
+  // stretch to fill the frame when the whole day fits.
   useLayoutEffect(() => {
-    const el = body.current;
+    const el = scroller.current;
     if (!el) return;
-    const update = () => setHeight(el.clientHeight);
+    const update = () => setFrame({ height: el.clientHeight, phone: window.matchMedia(PHONE_QUERY).matches });
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -280,8 +285,22 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   startHour = Math.max(0, startHour);
   endHour = Math.min(24, Math.max(endHour, startHour + 1));
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
-  const ppm = height > 0 ? height / (hours.length * 60) : 1;
+  const height = frame.height;
+  const ppm = Math.max((frame.phone ? HOUR_PX_PHONE : HOUR_PX) / 60, height > 0 ? height / (hours.length * 60) : 0);
+  const bodyHeight = hours.length * 60 * ppm;
   const y = (ms: number, from: number) => ((ms - from) / MIN - startHour * 60) * ppm;
+
+  // Open on what matters: an hour before now when today is showing, otherwise the start of the day.
+  const firstDay = days[0]?.getTime() ?? 0;
+  const showsToday = columns.some((c) => isSameDay(c.day, now));
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    if (!el || height === 0) return;
+    const minute = showsToday ? now.getHours() * 60 + now.getMinutes() - 60 : startHour * 60;
+    el.scrollTop = Math.max(0, (minute - startHour * 60) * ppm);
+    // Only when the days shown change or the frame first gets its size, not on every tick of the clock.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstDay, days.length, height > 0]);
 
   // While a task is dragged, everything after it is due greys out, with a red line at the deadline.
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
@@ -290,125 +309,129 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
 
   return (
     <div className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
-      <div className="ss-day-head ss-time-head">{gmtLabel(now)}</div>
-      {columns.map((c) => (
-        <button
-          key={c.from}
-          className="ss-day-head"
-          data-today={isToday(c.day) || undefined}
-          onClick={() => {
-            setCalCursor(c.day);
-            setCalMode("day");
-          }}
-          aria-label={`Open ${format(c.day, "EEEE, MMMM d")}`}
-        >
-          <span>{format(c.day, "EEE").toUpperCase()}</span>
-          <strong>{format(c.day, "d")}</strong>
-        </button>
-      ))}
+      <div className="ss-week-row">
+        <div className="ss-day-head ss-time-head">{gmtLabel(now)}</div>
+        {columns.map((c) => (
+          <button
+            key={c.from}
+            className="ss-day-head"
+            data-today={isToday(c.day) || undefined}
+            onClick={() => {
+              setCalCursor(c.day);
+              setCalMode("day");
+            }}
+            aria-label={`Open ${format(c.day, "EEEE, MMMM d")}`}
+          >
+            <span>{format(c.day, "EEE").toUpperCase()}</span>
+            <strong>{format(c.day, "d")}</strong>
+          </button>
+        ))}
+      </div>
       {anyAllDay ? (
-        <>
-          <div className="ss-allday-gutter" style={{ gridRow: 2 }}>
-            ALL DAY
-          </div>
+        <div className="ss-week-row">
+          <div className="ss-allday-gutter">ALL DAY</div>
           {columns.map((c) => (
-            <div key={c.from} className="ss-allday" style={{ gridRow: 2 }}>
+            <div key={c.from} className="ss-allday">
               {c.allDay.map((e) => (
                 <EventChip key={e.id} event={e} />
               ))}
             </div>
           ))}
-        </>
+        </div>
       ) : null}
-      <div className="ss-time-column" ref={body} style={{ gridRow: 3 }}>
-        {height > 0
-          ? hours.map((h, i) => (
-              <span key={h} style={{ top: i * 60 * ppm }}>
-                {clock(new Date(2000, 0, 1, h)).toUpperCase()}
-              </span>
-            ))
-          : null}
-      </div>
-      {columns.map((c) => {
-        const placed = layoutColumns(c.items, (i) => i.start, (i) => i.end);
-        const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
-        const dayEnd = addDays(c.day, 1).getTime();
-        const shadeFrom =
-          deadline && deadline.getTime() < dayEnd ? (deadline.getTime() <= c.from ? 0 : Math.max(0, Math.min(height, y(deadline.getTime(), c.from)))) : null;
-        return (
-          <div
-            key={c.from}
-            className={`ss-day-column ${placing ? "ss-drop-ready" : ""}`}
-            style={{ gridRow: 3 }}
-            // How the drag works out the time under the pointer (see planDrag.ts).
-            data-drop-day={c.from}
-            data-drop-min={startHour * 60}
-            data-drop-max={endHour * 60}
-            data-drop-top={0}
-            data-drop-ppm={ppm}
-          >
-            {height > 0 ? (
-              <>
-                {hours.map((h, i) => (
-                  <div key={h} className="ss-hour-line" style={{ top: i * 60 * ppm, height: 60 * ppm }} />
-                ))}
-                {/* Free time is empty, but tapping it offers the next tasks that fit. */}
-                {c.gaps.map((g) => {
-                  const top = y(g.start.getTime(), c.from);
-                  const h = y(g.end.getTime(), c.from) - top;
-                  if (h < 8) return null;
-                  return (
-                    <button
-                      key={g.start.getTime()}
-                      className="ss-gap"
-                      style={{ top, height: h }}
-                      onClick={() => select({ kind: "gap", startMs: g.start.getTime() })}
-                      aria-label={`Free time, ${g.minutes} minutes. Open to put something from your list here.`}
-                      title="Free time. Open to put something here"
-                    />
-                  );
-                })}
-                {placed.map(({ item, col, cols }) => {
-                  const top = y(item.start, c.from) + 3;
-                  const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
-                  const style: React.CSSProperties = {
-                    top,
-                    height: h,
-                    left: `calc(${(col / cols) * 100}% + 5px)`,
-                    width: `calc(${100 / cols}% - 10px)`,
-                  };
-                  if (item.kind === "event") return <GridEvent key={item.id} event={item.event} style={style} h={h} passThrough={Boolean(drag)} />;
-                  return (
-                    <PlannedBlock
-                      key={item.id}
-                      item={item.item}
-                      style={style}
-                      h={h}
-                      ppm={ppm}
-                      dragging={drag?.blockId === item.id}
-                      passThrough={Boolean(drag) && drag?.blockId !== item.id}
-                      course={item.item.task?.courseId ? model.courseById.get(item.item.task.courseId)?.code : undefined}
-                    />
-                  );
-                })}
-                {shadeFrom !== null ? <div className="ss-deadline-shade" style={{ top: shadeFrom }} /> : null}
-                {deadline && isSameDay(deadline, c.day) && shadeFrom !== null && shadeFrom > 0 ? (
-                  <div className="ss-deadline-line" style={{ top: shadeFrom }}>
-                    <span>DUE {clock(deadline).toUpperCase()}</span>
-                  </div>
-                ) : null}
-                {preview && drag ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
-                {isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour ? (
-                  <div className="ss-now-line" style={{ top: y(now.getTime(), c.from) }}>
-                    <i />
-                    <span>{format(now, "h:mm")}</span>
-                  </div>
-                ) : null}
-              </>
-            ) : null}
+      {/* The drag scrolls this box when it nears the top or bottom (see planDrag.ts). */}
+      <div className="ss-week-scroll" ref={scroller} data-drag-scroll>
+        <div className="ss-week-body" style={{ height: bodyHeight }}>
+          <div className="ss-time-column">
+            {height > 0
+              ? hours.map((h, i) => (
+                  <span key={h} style={{ top: i * 60 * ppm }}>
+                    {clock(new Date(2000, 0, 1, h)).toUpperCase()}
+                  </span>
+                ))
+              : null}
           </div>
-        );
-      })}
+          {columns.map((c) => {
+            const placed = layoutColumns(c.items, (i) => i.start, (i) => i.end);
+            const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
+            const dayEnd = addDays(c.day, 1).getTime();
+            const shadeFrom =
+              deadline && deadline.getTime() < dayEnd ? (deadline.getTime() <= c.from ? 0 : Math.max(0, Math.min(bodyHeight, y(deadline.getTime(), c.from)))) : null;
+            return (
+              <div
+                key={c.from}
+                className={`ss-day-column ${placing ? "ss-drop-ready" : ""}`}
+                // How the drag works out the time under the pointer (see planDrag.ts).
+                data-drop-day={c.from}
+                data-drop-min={startHour * 60}
+                data-drop-max={endHour * 60}
+                data-drop-top={0}
+                data-drop-ppm={ppm}
+              >
+                {height > 0 ? (
+                  <>
+                    {hours.map((h, i) => (
+                      <div key={h} className="ss-hour-line" style={{ top: i * 60 * ppm, height: 60 * ppm }} />
+                    ))}
+                    {/* Free time is empty, but tapping it offers the next tasks that fit. */}
+                    {c.gaps.map((g) => {
+                      const top = y(g.start.getTime(), c.from);
+                      const h = y(g.end.getTime(), c.from) - top;
+                      if (h < 8) return null;
+                      return (
+                        <button
+                          key={g.start.getTime()}
+                          className="ss-gap"
+                          style={{ top, height: h }}
+                          onClick={() => select({ kind: "gap", startMs: g.start.getTime() })}
+                          aria-label={`Free time, ${g.minutes} minutes. Open to put something from your list here.`}
+                          title="Free time. Open to put something here"
+                        />
+                      );
+                    })}
+                    {placed.map(({ item, col, cols }) => {
+                      const top = y(item.start, c.from) + 3;
+                      const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
+                      const style: React.CSSProperties = {
+                        top,
+                        height: h,
+                        left: `calc(${(col / cols) * 100}% + 5px)`,
+                        width: `calc(${100 / cols}% - 10px)`,
+                      };
+                      if (item.kind === "event") return <GridEvent key={item.id} event={item.event} style={style} h={h} passThrough={Boolean(drag)} />;
+                      return (
+                        <PlannedBlock
+                          key={item.id}
+                          item={item.item}
+                          style={style}
+                          h={h}
+                          ppm={ppm}
+                          dragging={drag?.blockId === item.id}
+                          passThrough={Boolean(drag) && drag?.blockId !== item.id}
+                          course={item.item.task?.courseId ? model.courseById.get(item.item.task.courseId)?.code : undefined}
+                        />
+                      );
+                    })}
+                    {shadeFrom !== null ? <div className="ss-deadline-shade" style={{ top: shadeFrom }} /> : null}
+                    {deadline && isSameDay(deadline, c.day) && shadeFrom !== null && shadeFrom > 0 ? (
+                      <div className="ss-deadline-line" style={{ top: shadeFrom }}>
+                        <span>DUE {clock(deadline).toUpperCase()}</span>
+                      </div>
+                    ) : null}
+                    {preview && drag ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
+                    {isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour ? (
+                      <div className="ss-now-line" style={{ top: y(now.getTime(), c.from) }}>
+                        <i />
+                        <span>{format(now, "h:mm")}</span>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -428,12 +451,13 @@ function GridEvent({ event: e, style, h, passThrough }: { event: CalEvent; style
     <button
       className={`ss-event ss-${kind} ${e.busy ? "" : "ss-free"}`}
       data-custom={custom ? true : undefined}
+      data-compact={h < 40 || undefined}
       style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       onClick={() => select({ kind: "event", id: e.id })}
       title={`${e.title} · ${shortRange(start, end)}`}
     >
       <strong>{e.title}</strong>
-      {h >= 30 ? <span>{shortRange(start, end)}</span> : null}
+      {h >= 22 ? <span>{h < 40 ? format(start, "h:mm") : shortRange(start, end)}</span> : null}
     </button>
   );
 }
@@ -539,6 +563,7 @@ function PlannedBlock({
       className="ss-event ss-planned ss-movable"
       data-done={done || undefined}
       data-picked={dragging || undefined}
+      data-compact={h < 40 || undefined}
       style={{ ...style, pointerEvents: passThrough ? "none" : undefined }}
       title={`${title} · ${minutes} min. Drag to move, or drag the bottom edge to change its length.`}
       aria-label={`Scheduled: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
@@ -551,9 +576,10 @@ function PlannedBlock({
         ) : null}
         {title}
       </strong>
-      {h >= 30 ? (
+      {h >= 22 ? (
         <span>
-          {format(start, "h:mm")} · {minutes} min{course ? ` · ${course}` : ""}
+          {format(start, "h:mm")}
+          {h >= 40 ? ` · ${minutes} min${course ? ` · ${course}` : ""}` : ""}
         </span>
       ) : null}
       {/* The bottom edge changes how long it is. Fingers get it straight away; it never scrolls anything. */}
