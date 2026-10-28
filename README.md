@@ -62,8 +62,9 @@ prefix on every class.
   ticked off, so a finished week is seven full columns. Then every task in one
   table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
 - **Due dates** — every deadline from every class (and everything added by hand)
-  by the day it's due. It opens on the week: a card for each day, Monday to
-  Sunday, with that day's work listed down it. **Day** shows one day with more
+  by the day it's due. It opens on the week: seven columns side by side, Monday
+  to Sunday, with each day's work stacked down its column, tinted with its class's
+  colour (on a phone the columns scroll sideways, starting at today). **Day** shows one day with more
   about each item; **Month** shows the month, and a day opens that day. Each kind
   of work has its own colour, icon and name — exams (a solid red badge), quizzes,
   projects, assignments and readings — with a count of each for the range shown.

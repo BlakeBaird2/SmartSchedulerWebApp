@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   addDays,
   addMonths,
@@ -43,9 +43,9 @@ const MODES: { id: CalMode; label: string }[] = [
 
 /**
  * Due dates: everything that's due, from every class and everything added by
- * hand, by the day it's due. A week (the default) is a card for each day, Monday
- * to Sunday, with that day's work listed down it; a day shows one day with more
- * about each item; a month shows the shape of the month. Exams, quizzes,
+ * hand, by the day it's due. A week (the default) is a column for each day,
+ * Monday to Sunday, side by side, with that day's work listed down it; a day
+ * shows one day with more about each item; a month shows the shape of the month. Exams, quizzes,
  * projects, assignments and readings each look different at a glance.
  */
 export function DueDatesPage() {
@@ -141,13 +141,14 @@ export function DueDatesPage() {
             setMode("day");
           }}
         />
+      ) : mode === "week" ? (
+        <DueWeek days={eachDayOfInterval({ start: range.from, end: addDays(range.to, -1) })} byDay={byDay} now={now} />
       ) : (
         <div className="ss-due-days">
-          {eachDayOfInterval({ start: range.from, end: addDays(range.to, -1) }).map((d) => (
-            <DayCard key={d.getTime()} day={d} items={byDay.get(dayKey(d)) ?? []} detailed={mode === "day"} now={now} />
-          ))}
+          <DayCard day={range.from} items={byDay.get(dayKey(range.from)) ?? []} now={now} />
         </div>
       )}
+      {mode !== "month" ? <p className="ss-due-note">Times are shown in your time zone ({timeZoneName()}).</p> : null}
     </section>
   );
 }
@@ -161,7 +162,7 @@ function TypeBadge({ type, size = 15 }: { type: AssignmentType; size?: number })
 }
 
 /** One day: its date, how much is due, and each item down the card. */
-function DayCard({ day, items, detailed, now }: { day: Date; items: Task[]; detailed: boolean; now: Date }) {
+function DayCard({ day, items, now }: { day: Date; items: Task[]; now: Date }) {
   const past = day < startOfDay(now);
   return (
     <article className="ss-due-day" data-today={isToday(day) || undefined} data-past={past || undefined} data-empty={items.length === 0 || undefined} aria-label={format(day, "EEEE, MMMM d")}>
@@ -176,7 +177,7 @@ function DayCard({ day, items, detailed, now }: { day: Date; items: Task[]; deta
       {items.length ? (
         <ul>
           {items.map((t) => (
-            <DueItem key={t.id} task={t} detailed={detailed} now={now} />
+            <DueItem key={t.id} task={t} detailed now={now} />
           ))}
         </ul>
       ) : null}
@@ -222,6 +223,100 @@ function DueItem({ task: t, detailed, now }: { task: Task; detailed: boolean; no
           ) : null}
           <time dateTime={t.dueAt!}>{t.allDay ? "All day" : clock(due)}</time>
         </span>
+      </button>
+    </li>
+  );
+}
+
+/** "MDT", "PST": the browser's time zone, short. */
+function timeZoneName(): string {
+  const part = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" }).formatToParts(new Date()).find((x) => x.type === "timeZoneName");
+  return part?.value ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/**
+ * The week: seven columns side by side, Monday to Sunday, each with that day's
+ * work stacked down it. Each item is tinted with its class's colour and marked
+ * with its kind; exams stand out. On a phone the columns scroll sideways, today
+ * first in view.
+ */
+function DueWeek({ days, byDay, now }: { days: Date[]; byDay: Map<string, Task[]>; now: Date }) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const first = days[0]?.getTime();
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    const today = el?.querySelector<HTMLElement>("[data-today]");
+    if (el && el.scrollWidth > el.clientWidth) el.scrollLeft = today ? today.offsetLeft - 8 : 0;
+  }, [first]);
+  return (
+    <div className="ss-due-week" ref={scroller}>
+      {days.map((d) => {
+        const items = byDay.get(dayKey(d)) ?? [];
+        return (
+          <section
+            key={d.getTime()}
+            className="ss-due-col"
+            data-today={isToday(d) || undefined}
+            data-past={d < startOfDay(now) || undefined}
+            aria-label={`${format(d, "EEEE, MMMM d")}: ${items.length ? `${plural(items.length, "item")} due` : "nothing due"}`}
+          >
+            <header>
+              <span>{format(d, "EEE").toUpperCase()}</span>
+              <strong>{format(d, "d")}</strong>
+            </header>
+            {items.length ? (
+              <ul>
+                {items.map((t) => (
+                  <WeekItem key={t.id} task={t} now={now} />
+                ))}
+              </ul>
+            ) : (
+              <p className="ss-due-none" aria-hidden>
+                —
+              </p>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function WeekItem({ task: t, now }: { task: Task; now: Date }) {
+  const { model, select } = useApp();
+  const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+  const due = new Date(t.dueAt!);
+  const late = !t.done && due < now;
+  const meta = typeMeta(t.type);
+  return (
+    <li>
+      <button
+        className="ss-due-card"
+        data-type={t.type}
+        data-done={t.done || undefined}
+        style={{ "--c": course?.color ?? "var(--ss-personal)" } as React.CSSProperties}
+        onClick={() => select({ kind: "task", id: t.id })}
+        aria-label={`${meta.label}: ${t.title}, ${course?.code ?? "Personal"}, due ${clock(due)}${t.done ? ", done" : late ? ", past due" : ""}. Open details`}
+      >
+        <span className="ss-due-card-top">
+          <span className="ss-due-card-class">
+            <span className="ss-due-card-icon" title={meta.label}>
+              <SsIcon name={t.done ? "check" : TYPE_ICON[t.type]} size={15} />
+            </span>
+            {course?.code ?? "Personal"}
+          </span>
+          <time dateTime={t.dueAt!} data-late={late || undefined}>
+            {t.allDay ? (
+              "All day"
+            ) : (
+              <>
+                {format(due, "h:mm")}
+                <small>{format(due, "a").toLowerCase()}</small>
+              </>
+            )}
+          </time>
+        </span>
+        <strong>{t.title}</strong>
       </button>
     </li>
   );
