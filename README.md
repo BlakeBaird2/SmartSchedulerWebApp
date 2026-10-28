@@ -1,4 +1,4 @@
-# SmartScheduler.
+# Schedule Smart
 
 Your classes, your job and the rest of your life on one calendar, and a plan for
 exactly what to work on in every free gap.
@@ -31,49 +31,38 @@ it and start.
 
 ## What it does
 
-- **Plan** — the home screen, built to answer three questions at a glance:
-  *what should I work on right now* (one task, with a Done button), *what does
-  the rest of my day look like* (your events, and each stretch of free time
-  with the work planned into it), and *what's due this week* (each item says
-  when it's planned, or that it won't fit in time).
-- **Calendar and to-do list** — month, week and day, with your classes, work and
-  personal events, and the free time between them left open for you to fill.
-  Beside it (a sheet along the bottom on phones and tablets) is **one to-do
-  list** of everything still to schedule: synced assignments and your own tasks,
-  "All tasks" or "School only", sorted by due date or by how long things take.
-  - Each task shows about how long it needs ("~1.5 hrs"); tap to change it.
-    Estimates record who set them, ready for suggested estimates later.
-  - Tasks and blocks are coloured by how soon they're due, red through yellow.
-  - **Drag a task onto a free time** to schedule it, as long as its estimate.
-    Drag blocks to move them, drag their bottom edge to change their length, or
-    drag them back onto the list. On a phone, press and hold first. A free gap
-    also lists what fits next, with **Put it here**, and a task's details have
-    **Schedule it**.
-  - Scheduled work leaves the list, so the next thing to plan moves up.
-  - Ticking a task off plays a short animation and takes it off the list; it
-    stays on the calendar, marked done.
-  - **New** marks work a class calendar added since you last looked.
-  - **Class priority** (Settings) breaks ties between work due at the same time.
-  - **Work you didn't finish:** each morning SmartScheduler asks whether to put
-    yesterday's unfinished work back on the list. Settings can switch this to
-    "put it back at midnight" or "keep it on my list".
-  - **Recolour any event** (a class, a shift at work) from its details, using
-    Google Calendar's colours. The colour covers every time it repeats.
-- **Upcoming** — everything due, by day, with where it sits in the plan.
-- **Classes** — every class side by side in one board, like the days of the
-  week view: when it meets, how much is left, and its work in due order.
-  Classes are created automatically from your calendars; rename, recolour or
-  hide any of them.
-- **Class times** — class calendars list what's due, rarely when class is. Add
-  each class's days and times once (during setup, in Settings, or from the
-  prompt on the Plan screen) and they show on your calendar in the class's
-  colour and block that time in the plan. Classes whose calendar already has
-  meetings say so. Click any class on the calendar to change its time (a wrong
-  time from Canvas is replaced by yours, and you can switch back), or to mark a
-  single day off, like a holiday.
-- **Change alerts** — each refresh is compared with the last. When a due date
-  moves, or work is added or removed, the bell says so. Click to jump to it.
-- **Your own tasks** — add work no calendar knows about with the + button.
+The interface follows the Figma Make prototype **"Smart Calendar Scheduler
+Prototype"** (its layout, fonts, colours, icons and phone breakpoints). The styles
+live in [`src/app/schedule-smart.css`](src/app/schedule-smart.css), with an `ss-`
+prefix on every class.
+
+- **Calendar** — "Plan your open time" on the left: every task still to schedule,
+  ordered by due date, length or points, narrowed to one class (or school only,
+  or personal), five at a time or fifteen. **Drag a task onto the calendar** to
+  schedule it for as long as its estimate. On a phone, press and hold first.
+  Scheduled work leaves the list and the next task moves up.
+  - The week fits the screen, Monday to Friday (plus a weekend day when
+    something is on it). Events are coloured Work, School or Personal, and work
+    you scheduled is striped.
+  - Drag scheduled work to move it, drag its bottom edge to change its length,
+    or drag it back onto the planner to take it off. Every change has Undo.
+  - While you drag, everything after the task's deadline greys out, with a red
+    DUE line. In the month view, dropping a task on a day puts it in that day's
+    first free time.
+  - Tap a free time to see what fits there, with **Put it here**.
+  - Phones: the planner and one day side by side, or three days with the planner
+    closed.
+- **Tasks** — the master checklist: how the week is going (a progress ring, due
+  today, due this week), then every task in one table to search, sort (due date,
+  priority, shortest first) and filter (today, a class, personal, completed).
+- **Add task** — name, class or area, due, due time, estimate, points, priority.
+- **Points and priority** — calendar feeds don't carry either. Points are yours to
+  add; priority follows the due date until you pick one.
+- Also: ticking work off folds it away with Undo; **New** marks work a class
+  calendar added since you last looked; each morning it asks whether to put
+  yesterday's unfinished work back; **Class priority** (Settings) breaks ties;
+  any event can be recoloured with Google Calendar's colours.
+- **Profile menu** (top right) — refresh calendars, what changed, Settings, Help.
 
 ## How the plan is made
 
@@ -282,9 +271,10 @@ src/lib/workspace.ts        what the browser stores, checked on the way back in
 src/lib/sync.ts             refreshing every calendar
 src/lib/changes.ts          spotting moved, added and removed work
 src/lib/timeline.ts         a day in order, and "what now"
-src/lib/todos.ts            the to-do list: what's on it, its order and its colours
+src/lib/todos.ts            the to-do list: what's on it, its order, priority and colours
 src/lib/blocks.ts           scheduled time: snapping, moving and resizing
 src/lib/newWork.ts          work that's new since you last looked
 src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
-src/components/             the interface
+src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
+src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```

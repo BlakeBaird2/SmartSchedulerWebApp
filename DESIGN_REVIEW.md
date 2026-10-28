@@ -504,6 +504,28 @@ Every change to the calendar can be undone from the message that confirms it.
 Messages let taps through (except Undo) and fade during a drag, so they never
 hide a drop spot.
 
+### 29. The Figma prototype, 1:1
+
+Branch `redesign/figma-prototype` rebuilds the app as the team's Figma Make
+prototype, "Smart Calendar Scheduler Prototype", taken from its source: the same
+fonts (DM Sans, Manrope), palette, icons, type sizes, spacing and phone
+breakpoints (820px and 480px). Calendar and Tasks replace Plan and Upcoming.
+
+Where the prototype was a mock-up, the app keeps what already worked:
+- Scheduled work leaves the planner. The prototype marks it "SET" and keeps it
+  there; the earlier redesign asked for the list to move up.
+- On a touch screen, drag starts after a press and hold, so a swipe still
+  scrolls. The prototype starts dragging on the first touch.
+- Blocks can be resized, and they move in 15-minute steps rather than the
+  prototype's whole slots.
+- The week shows your working hours (stretched to fit), not a fixed 8 to 5.
+- Refresh, change alerts, Settings and Help live in the profile menu, since the
+  prototype's bar has only the two tabs, Add task and the avatar.
+
+Dropped because the prototype doesn't have them: the mini month, the due-date
+row on the calendar (the deadline shading shows it while you drag instead), the
+red-to-yellow due-date colours, and the bottom tab bar on phones.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.
