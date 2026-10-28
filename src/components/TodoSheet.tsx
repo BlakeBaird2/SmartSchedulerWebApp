@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, ListTodo } from "lucide-react";
 import { approxDuration } from "@/lib/ui";
+import { useApp } from "./context";
 import { usePlanDrag } from "./planDrag";
 import { TodoList, useTodos } from "./TodoList";
 
@@ -18,6 +19,8 @@ import { TodoList, useTodos } from "./TodoList";
  */
 export function TodoSheet({ hasTimes, showTimes, className = "" }: { hasTimes: boolean; showTimes: () => void; className?: string }) {
   const todos = useTodos();
+  const { newWork } = useApp();
+  const fresh = todos.filter((t) => newWork.has(t.id)).length;
   const drag = usePlanDrag();
   const [open, setOpen] = useState(false);
   const placing = drag?.kind === "new";
@@ -47,7 +50,7 @@ export function TodoSheet({ hasTimes, showTimes, className = "" }: { hasTimes: b
           className={`todo-sheet-bar ${takingBack ? "todo-panel-target" : ""} ${over ? "todo-panel-over" : ""}`}
           onClick={() => setOpen(true)}
           aria-expanded={false}
-          aria-label={`To do, ${todos.length} ${todos.length === 1 ? "task" : "tasks"}. Open the list`}
+          aria-label={`To do, ${todos.length} ${todos.length === 1 ? "task" : "tasks"}${fresh ? `, ${fresh} new` : ""}. Open the list`}
         >
           <ListTodo size={18} className="shrink-0 text-accent" aria-hidden />
           <span className="min-w-0 flex-1 text-left">
@@ -57,6 +60,7 @@ export function TodoSheet({ hasTimes, showTimes, className = "" }: { hasTimes: b
               <>
                 <span className="block text-sm font-semibold">
                   To do <span className="text-muted font-medium tabular-nums">{todos.length}</span>
+                  {fresh > 0 ? <span className="new-pill ml-1.5">{fresh} new</span> : null}
                 </span>
                 <span className="block text-xs text-muted truncate">
                   {next ? `Next up: ${next.title} · ${approxDuration(next.estimate)}` : "Nothing left to schedule"}

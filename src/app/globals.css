@@ -1580,6 +1580,20 @@
     color: #0b1f17;
   }
 
+  /* Work added to a class calendar since the student last looked. */
+  .new-pill {
+    display: inline-block;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0 0.4rem;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.05rem;
+    white-space: nowrap;
+  }
+
   /* Anything that can be picked up and dragged: no text selection or phone press menu in the way. */
   .drag-source {
     -webkit-user-select: none;

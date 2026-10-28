@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildModel } from "@/lib/model";
 import { indexPlan, makePlan } from "@/lib/schedule";
 import { mergeChanges } from "@/lib/changes";
+import { addNewWork, newIds, parseNewWork, seeWork as seeNewWork } from "@/lib/newWork";
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
@@ -232,6 +233,7 @@ export function App() {
   const wsRaw = useStored(KEYS.workspace);
   const snapRaw = useStored(KEYS.snapshot);
   const changesRaw = useStored(KEYS.changes);
+  const newRaw = useStored(KEYS.newWork);
   const uiRaw = useStored(KEYS.ui);
 
   const ws = useMemo(() => sanitizeWorkspace(parseJson(wsRaw)), [wsRaw]);
@@ -266,6 +268,7 @@ export function App() {
   const model = useMemo(() => buildModel(ws, snapshot, new Date(minute * MINUTE)), [ws, snapshot, minute]);
   const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE), ws.blocks), [model, ws.prefs, ws.blocks, minute]);
   const index = useMemo(() => indexPlan(plan), [plan]);
+  const newWork = useMemo(() => newIds(parseNewWork(newRaw), new Date(minute * MINUTE)), [newRaw, minute]);
 
   const [calCursor, setCalCursor] = useState(() => new Date());
   const [planDay, setPlanDay] = useState(0);
@@ -295,6 +298,11 @@ export function App() {
     },
     [toast],
   );
+
+  const seeWork = useCallback((taskIds: string[]) => {
+    const work = parseNewWork(readStored(KEYS.newWork));
+    if (taskIds.some((id) => work[id])) writeJson(KEYS.newWork, seeNewWork(work, taskIds));
+  }, []);
 
   /** Mark work as done without touching anything the user already marked. */
   const markDone = useCallback(
@@ -350,7 +358,10 @@ export function App() {
           markDone(after.feeds.flatMap((f) => (feeds[f.id]?.result ? pastDueIds(f.id, feeds[f.id]!.result!, cutoff) : [])));
         }
 
-        if (outcome.changes.length) writeJson(KEYS.changes, mergeChanges(outcome.changes, parseChanges(readStored(KEYS.changes)), at));
+        if (outcome.changes.length) {
+          writeJson(KEYS.changes, mergeChanges(outcome.changes, parseChanges(readStored(KEYS.changes)), at));
+          writeJson(KEYS.newWork, addNewWork(parseNewWork(readStored(KEYS.newWork)), outcome.changes, at));
+        }
 
         if (outcome.failed > 0) toast(outcome.failed === 1 ? "One calendar couldn't be read. Its last copy is still shown." : `${outcome.failed} calendars couldn't be read. Their last copies are still shown.`);
         else if (outcome.changes.length) toast(`${plural(outcome.changes.length, "change")} from your classes · see the bell`);
@@ -471,11 +482,12 @@ export function App() {
           return { ...w, done };
         });
       flip();
+      seeWork([task.id]);
       trackEvent(task.done ? "task_uncompleted" : "task_completed", { taskId: task.id, title: task.title, from: parseUi(readStored(KEYS.ui)).view });
       // Ticking something off moves the whole plan, so say so and offer a way back.
       toast(task.done ? `Moved back to your plan: ${task.title}` : `Done: ${task.title}`, { undo: flip });
     },
-    [update, toast],
+    [update, toast, seeWork],
   );
 
   const completeTask = useCallback(
@@ -491,11 +503,12 @@ export function App() {
           return { ...w, done };
         });
       update((w) => ({ ...w, done: { ...w.done, [task.id]: new Date().toISOString() } }));
+      seeWork([task.id]);
       trackEvent("task_completed", { taskId: task.id, title: task.title, from: parseUi(readStored(KEYS.ui)).view });
       if (opts?.celebrate === false) toast(`Done: ${task.title}`, { undo: flip });
       else setSelected({ kind: "completed", id: task.id });
     },
-    [update, toggleDone, toast],
+    [update, toggleDone, toast, seeWork],
   );
 
   const setEstimate = useCallback(
@@ -506,8 +519,9 @@ export function App() {
         else estimates[taskId] = { minutes: Math.max(5, Math.min(24 * 60, Math.round(minutes))), source, at: new Date().toISOString() };
         return { ...w, estimates };
       });
+      seeWork([taskId]);
     },
-    [update],
+    [update, seeWork],
   );
 
   // ---------------------------------------------------------------------------
@@ -541,8 +555,9 @@ export function App() {
       }
       trackEvent("task_planned", { taskId: task.id, title: task.title, at: block.start });
       changeBlock(null, block, `Scheduled ${when(start)}: ${task.title}`);
+      seeWork([task.id]);
     },
-    [changeBlock, toast],
+    [changeBlock, toast, seeWork],
   );
 
   const moveScheduled = useCallback(
@@ -586,12 +601,18 @@ export function App() {
   }, []);
 
   /** Opening something is a smart event too: which task, free gap or explanation. */
-  const select = useCallback((s: Selection) => {
-    if (s?.kind === "task") trackEvent("task_opened", { taskId: s.id });
-    else if (s?.kind === "gap") trackEvent("free_gap_opened", { at: new Date(s.startMs).toISOString() });
-    else if (s?.kind === "why") trackEvent("why_opened", { taskId: s.id });
-    setSelected(s);
-  }, []);
+  const select = useCallback(
+    (s: Selection) => {
+      if (s?.kind === "task") {
+        trackEvent("task_opened", { taskId: s.id });
+        seeWork([s.id]);
+      }
+      else if (s?.kind === "gap") trackEvent("free_gap_opened", { at: new Date(s.startMs).toISOString() });
+      else if (s?.kind === "why") trackEvent("why_opened", { taskId: s.id });
+      setSelected(s);
+    },
+    [seeWork],
+  );
   const setSettingsPanel = useCallback((p: SettingsPanel) => writeUi({ view: "settings", settingsPanel: p }), []);
   const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m }), []);
   const setFilters = useCallback((f: Filters | ((prev: Filters) => Filters)) => {
@@ -608,8 +629,9 @@ export function App() {
         writeUi({ view: "calendar", calMode: "day" });
       }
       setSelected({ kind: "task", id: taskId });
+      seeWork([taskId]);
     },
-    [model.tasks],
+    [model.tasks, seeWork],
   );
 
   const clearChanges = useCallback(() => writeStored(KEYS.changes, null), []);
@@ -624,6 +646,7 @@ export function App() {
     plan,
     index,
     changes,
+    newWork,
     now,
     timezone,
     update,
@@ -667,6 +690,7 @@ export function App() {
     classTimesTipHidden: ui.hideClassTimesTip,
     hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
     clearChanges,
+    seeWork,
     toast,
     openGoal: openGoalNotice,
     completeTask,

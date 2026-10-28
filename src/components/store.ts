@@ -16,6 +16,8 @@ export const KEYS = {
   snapshot: "prio:snap",
   changes: "prio:changes",
   seen: "prio:seen",
+  /** Work added to class calendars that the student hasn't looked at yet. */
+  newWork: "prio:new",
   ui: "prio:ui",
   theme: "prio:theme",
   /** When the "early prototype" notice was dismissed. Kept apart from calendars and settings. */

@@ -31,6 +31,8 @@ export interface AppContextValue {
   plan: Plan;
   index: PlanIndex;
   changes: Change[];
+  /** Tasks added to a class calendar since the student last looked: "New" until opened or acted on. */
+  newWork: Set<string>;
   now: Date;
   timezone: string;
 
@@ -90,6 +92,8 @@ export interface AppContextValue {
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;
   clearChanges: () => void;
+  /** The student has seen these tasks, so they stop saying "New". */
+  seeWork: (taskIds: string[]) => void;
   /** Confirm what just happened. Pass `undo` when the action can be taken back; the message then offers Undo. */
   toast: (message: string, options?: { undo?: () => void }) => void;
 }

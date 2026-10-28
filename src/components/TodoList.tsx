@@ -6,7 +6,7 @@ import { isSchoolWork, todoList, urgencyColor } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { approxDuration, dueIn } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
-import { Button, Checkbox, ChoicePill, SegmentedControl } from "./ui";
+import { Button, Checkbox, ChoicePill, SegmentedControl, TextButton } from "./ui";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag } from "./planDrag";
 
 /** The to-do list's work, in order, honouring the class tabs above the calendar. */
@@ -25,8 +25,9 @@ export function useTodos(): Task[] {
  * scheduled work back here takes it off the calendar again.
  */
 export function TodoList({ className = "" }: { className?: string }) {
-  const { todoScope, setTodoScope, todoSort, setTodoSort, openAddTask } = useApp();
+  const { todoScope, setTodoScope, todoSort, setTodoSort, openAddTask, newWork, seeWork } = useApp();
   const todos = useTodos();
+  const fresh = todos.filter((t) => newWork.has(t.id)).map((t) => t.id);
   const drag = usePlanDrag();
   // Only work already on the calendar can be handed back; the list is where it lands.
   const canDrop = drag?.kind === "move";
@@ -44,6 +45,14 @@ export function TodoList({ className = "" }: { className?: string }) {
             To do
           </h3>
           <span className="text-xs text-muted tabular-nums">{todos.length}</span>
+          {fresh.length > 0 ? (
+            <>
+              <span className="new-pill">{fresh.length} new</span>
+              <TextButton className="text-xs text-muted" onClick={() => seeWork(fresh)}>
+                Mark seen
+              </TextButton>
+            </>
+          ) : null}
           <Button variant="quiet" size="sm" iconOnly icon={Plus} label="Add a task" className="ml-auto" onClick={openAddTask} />
         </div>
         <SegmentedControl
@@ -103,7 +112,7 @@ const COMPLETE_MS_REDUCED = 180;
  * through, then it folds away and the rest of the list moves up.
  */
 function TodoItem({ task, next }: { task: Task; next: boolean }) {
-  const { model, now, ws, select, toggleDone, setEstimate, scheduleTask } = useApp();
+  const { model, now, ws, select, toggleDone, setEstimate, scheduleTask, newWork } = useApp();
   const drag = usePlanDrag();
   const color = urgencyColor(task.dueAt, now);
   const [editing, setEditing] = useState(false);
@@ -112,6 +121,8 @@ function TodoItem({ task, next }: { task: Task; next: boolean }) {
   const late = due ? due.getTime() < now.getTime() : false;
   const typeDefault = ws.prefs.estimates[task.type];
   const [completing, setCompleting] = useState(false);
+  // Added to a class calendar since the student last looked.
+  const fresh = newWork.has(task.id);
   const open = () => select({ kind: "task", id: task.id });
 
   // Done work stays on the calendar; Undo is in the message that follows.
@@ -129,7 +140,7 @@ function TodoItem({ task, next }: { task: Task; next: boolean }) {
           role="button"
           tabIndex={0}
           ref={dragSourceRef}
-          aria-label={`${task.title}, ${approxDuration(task.estimate)}${due ? `, ${dueIn(due, now)}` : ""}${next ? ", next up" : ""}. Open details`}
+          aria-label={`${task.title}, ${approxDuration(task.estimate)}${due ? `, ${dueIn(due, now)}` : ""}${fresh ? ", new" : ""}${next ? ", next up" : ""}. Open details`}
           title="Drag onto the calendar to schedule it"
           onClick={open}
           onKeyDown={(e) => {
@@ -162,6 +173,7 @@ function TodoItem({ task, next }: { task: Task; next: boolean }) {
               <span className="text-[13px] font-semibold leading-snug line-clamp-2 flex-1 min-w-0">
                 <span className="todo-title">{task.title}</span>
               </span>
+              {fresh ? <span className="new-pill shrink-0">New</span> : null}
               {next ? <span className="next-pill shrink-0">Next up</span> : null}
             </span>
             <span className="mt-1 flex items-center gap-x-1.5 gap-y-1 flex-wrap text-[11px] text-muted">
