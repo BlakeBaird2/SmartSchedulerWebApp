@@ -72,6 +72,14 @@ export function duration(minutes: number): string {
   return rest ? `${h}h ${rest}m` : `${h}h`;
 }
 
+/** An estimate, rounded to read at a glance: "~5 min", "~45 min", "~1 hr", "~1.5 hrs", "~2 hrs". */
+export function approxDuration(minutes: number): string {
+  const m = Math.max(1, Math.round(minutes));
+  if (m < 60) return `~${m} min`;
+  const h = Math.round((m / 60) * 2) / 2;
+  return `~${h} ${h === 1 ? "hr" : "hrs"}`;
+}
+
 export function clock(d: Date): string {
   return format(d, d.getMinutes() === 0 ? "h a" : "h:mm a");
 }
