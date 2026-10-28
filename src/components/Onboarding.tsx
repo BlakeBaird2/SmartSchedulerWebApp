@@ -46,7 +46,7 @@ export function startDemo() {
   writeStored(KEYS.workspace, JSON.stringify(demoWorkspace()));
   writeStored(KEYS.snapshot, null);
   writeStored(KEYS.changes, null);
-  writeStored(KEYS.ui, JSON.stringify({ view: "plan", setupDone: true }));
+  writeStored(KEYS.ui, JSON.stringify({ view: "calendar", setupDone: true }));
   trackEvent("sample_data_started");
 }
 
@@ -72,7 +72,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
     <div className="min-h-dvh px-4 py-10 sm:py-16">
       <div className="max-w-xl mx-auto">
         <div className="flex items-center gap-3 flex-wrap">
-          <Link href="/" className="inline-block" aria-label="SmartScheduler home page">
+          <Link href="/" className="inline-block" aria-label="Schedule Smart home page">
             <Wordmark size="lg" />
           </Link>
           <PrototypeBadge />
@@ -83,7 +83,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         </div>
         <CapabilityHero className="mt-6">
           <p className="mt-3 text-lg text-muted leading-relaxed">
-            Add your calendars and SmartScheduler puts your classes, work and life in one place, then plans each free gap for you.
+            Add your calendars and Schedule Smart puts your classes, work and life in one place, then plans each free gap for you.
           </p>
         </CapabilityHero>
 
@@ -99,7 +99,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <div>
               <h2 className="text-xl font-semibold">Add your calendars</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                Start with your school calendar from Canvas, Learning Suite or any course site. SmartScheduler finds your classes and assignments on its own. Then add
+                Start with your school calendar from Canvas, Learning Suite or any course site. Schedule Smart finds your classes and assignments on its own. Then add
                 your work and personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
               </p>
             </div>
@@ -131,7 +131,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <h2 className="text-xl font-semibold">When do your classes meet?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
                 Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times once so they show on your calendar and
-                SmartScheduler plans around them. Skip any class that doesn&apos;t meet in person.
+                Schedule Smart plans around them. Skip any class that doesn&apos;t meet in person.
               </p>
             </div>
             <ClassTimesEditor />
@@ -149,7 +149,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <div>
               <h2 className="text-xl font-semibold">When do you like to work?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                SmartScheduler fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
+                Schedule Smart fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
               </p>
             </div>
             <HoursForm />

@@ -1,11 +1,11 @@
 /**
- * The home page: what SmartScheduler does, how it works, and where to find each calendar
+ * The home page: what Schedule Smart does, how it works, and where to find each calendar
  * link. It renders on the server so it shows up at once; only the link guide's
  * tabs and the Prototype tag run in the browser. Anyone who already has calendars
  * set up skips it (see the root layout) and goes straight to the app at /app.
  *
  * The same page is served at /about (`variant="about"`) for people who already use
- * SmartScheduler, where the main button opens the app instead of starting setup.
+ * Schedule Smart, where the main button opens the app instead of starting setup.
  *
  * This is a low-fidelity prototype: illustrations are grey placeholders, and each
  * screen has one primary (accent) button, with every other action drawn quieter.
@@ -76,7 +76,7 @@ function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-bg/80 backdrop-blur-md">
       <div className={`${WRAP} flex h-14 items-center gap-3 sm:gap-6`}>
-        <a href="#top" className="shrink-0" aria-label="SmartScheduler, back to top">
+        <a href="#top" className="shrink-0" aria-label="Schedule Smart, back to top">
           <Wordmark collapse />
         </a>
         <PrototypeBadge />
@@ -95,7 +95,7 @@ function Nav() {
         {/* Quiet on purpose: the hero holds this screen's one primary button. */}
         <ButtonLink href="/app" className="ml-auto shrink-0">
           <span className="sm:hidden">Open app</span>
-          <span className="hidden sm:inline">Open SmartScheduler</span>
+          <span className="hidden sm:inline">Open Schedule Smart</span>
         </ButtonLink>
       </div>
     </header>
@@ -110,12 +110,12 @@ function Hero({ variant }: { variant: LandingVariant }) {
         {/* The overarching capability comes first and is the biggest thing on the page. */}
         <CapabilityHero id="hero-title" size="page" className="mx-auto max-w-5xl">
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted text-pretty sm:text-xl">
-            SmartScheduler puts your classes and assignments from Canvas, your work schedule and your plans from Google, Outlook or Apple on one calendar. Then it fills each
+            Schedule Smart puts your classes and assignments from Canvas, your work schedule and your plans from Google, Outlook or Apple on one calendar. Then it fills each
             free gap with whatever&apos;s due soonest.
           </p>
         </CapabilityHero>
         <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          {variant === "about" ? <StartLink primary>Open SmartScheduler</StartLink> : <StartLink primary>Start planning</StartLink>}
+          {variant === "about" ? <StartLink primary>Open Schedule Smart</StartLink> : <StartLink primary>Start planning</StartLink>}
           <SampleLink className="btn btn-lg" />
         </div>
         <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-base text-muted">
@@ -161,15 +161,15 @@ function HowItWorks() {
         <SectionIntro
           id="how-title"
           eyebrow="How it works"
-          title="Paste your links. SmartScheduler does the rest."
+          title="Paste your links. Schedule Smart does the rest."
           lead="Setting up takes a couple of minutes. After that, your plan keeps itself up to date."
         />
         <ol className="mt-12 grid gap-5 sm:mt-16 md:grid-cols-3">
           <Step n={1} title="Add your calendar links" art={<LinkSketch />}>
             Paste a private link from Canvas, Learning Suite, Google, Outlook or Apple. School calendars bring in your classes and assignments. Work and
-            personal calendars tell SmartScheduler when you&apos;re busy.
+            personal calendars tell Schedule Smart when you&apos;re busy.
           </Step>
-          <Step n={2} title="SmartScheduler finds your free time" art={<DaySketch filled={false} />}>
+          <Step n={2} title="Schedule Smart finds your free time" art={<DaySketch filled={false} />}>
             Classes, work and other plans are blocked out, with a little breathing room around each. What&apos;s left inside the hours you choose is your free
             time.
           </Step>
@@ -203,12 +203,12 @@ const FEATURES = [
   {
     icon: Target,
     title: "What to do right now",
-    text: "Open SmartScheduler and the first thing you see is the one task to work on now, with a Done button.",
+    text: "Open Schedule Smart and the first thing you see is the one task to work on now, with a Done button.",
   },
   {
     icon: CircleAlert,
     title: "Warnings while there's still time",
-    text: "If something won't fit before it's due, SmartScheduler tells you early, while you can still make room for it.",
+    text: "If something won't fit before it's due, Schedule Smart tells you early, while you can still make room for it.",
   },
   {
     icon: Bell,
@@ -218,7 +218,7 @@ const FEATURES = [
   {
     icon: RefreshCw,
     title: "Always up to date",
-    text: "Calendar links are live. SmartScheduler re-reads them whenever you open it, and every 30 minutes while it's open.",
+    text: "Calendar links are live. Schedule Smart re-reads them whenever you open it, and every 30 minutes while it's open.",
   },
   {
     icon: GraduationCap,
@@ -238,9 +238,9 @@ function Features() {
       <div className={WRAP}>
         <SectionIntro
           id="features-title"
-          eyebrow="Why SmartScheduler"
+          eyebrow="Why Schedule Smart"
           title="Always know what to work on next"
-          lead="No more checking three apps to work out when you'll get anything done. SmartScheduler keeps one plan, and keeps it current."
+          lead="No more checking three apps to work out when you'll get anything done. Schedule Smart keeps one plan, and keeps it current."
         />
         <div className="mt-12 grid gap-x-10 gap-y-10 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
@@ -268,13 +268,13 @@ function GetYourLinks() {
           id="links-title"
           eyebrow="Get started"
           title="Where to find your calendar links"
-          lead="Every calendar app can share a private link to your calendar, usually called iCal, ICS or webcal. Copy one from each app you use and paste them into SmartScheduler. They stay up to date on their own."
+          lead="Every calendar app can share a private link to your calendar, usually called iCal, ICS or webcal. Copy one from each app you use and paste them into Schedule Smart. They stay up to date on their own."
         />
         <div className="mt-10 sm:mt-12">
           <LinkGuide />
         </div>
         <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <StartLink>Paste your links into SmartScheduler</StartLink>
+          <StartLink>Paste your links into Schedule Smart</StartLink>
           <SampleLink className="btn btn-lg">No links handy? Try sample data</SampleLink>
         </div>
         <p className="mt-5 text-center text-xs text-muted">
@@ -290,7 +290,7 @@ function GetYourLinks() {
 
 const FAQ = [
   {
-    q: "Is SmartScheduler free? Do I need an account?",
+    q: "Is Schedule Smart free? Do I need an account?",
     a: "It's free, and there's no account or sign-up. Open it, paste your calendar links and you have a plan.",
   },
   {
@@ -298,19 +298,19 @@ const FAQ = [
     a: "In your browser. Your calendar links, classes, done marks and settings are saved on your device. When a calendar is refreshed, the server reads it, hands it straight back and keeps nothing.",
   },
   {
-    q: "Can SmartScheduler tell when I've turned something in?",
+    q: "Can Schedule Smart tell when I've turned something in?",
     a: "No. Calendar links say when work is due, not whether you've handed it in, so you tick things off as you finish them. When you first add a school calendar, anything already past due is marked done for you.",
   },
   {
     q: "My class calendar doesn't say when class meets. Is that a problem?",
-    a: "Most don't, so SmartScheduler asks. Add each class's days and times once during setup, and SmartScheduler shows them on your calendar and plans around them.",
+    a: "Most don't, so Schedule Smart asks. Add each class's days and times once during setup, and Schedule Smart shows them on your calendar and plans around them.",
   },
   {
     q: "What if my job isn't on any calendar?",
-    a: "Add your work schedule as a weekly busy time during setup, the same way you'd add practice or a commute. SmartScheduler plans around them like anything else.",
+    a: "Add your work schedule as a weekly busy time during setup, the same way you'd add practice or a commute. Schedule Smart plans around them like anything else.",
   },
   {
-    q: "How does SmartScheduler decide what comes first?",
+    q: "How does Schedule Smart decide what comes first?",
     a: "Whatever's due soonest goes first. If the most urgent thing is too long for a short gap, the next thing that fits goes there instead, so short gaps still get used. You can change how long anything takes and the plan updates.",
   },
   {
@@ -398,7 +398,7 @@ function Footer() {
             Design library
           </Link>
           <Link href="/app" className="hover:text-fg">
-            Open SmartScheduler
+            Open Schedule Smart
           </Link>
         </nav>
       </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { approxDuration } from "@/lib/ui";
 import { usePlanDrag } from "./planDrag";
 
 /**
@@ -16,9 +15,9 @@ export function DragGhost() {
   const left = drag.touch ? drag.x - 104 : drag.x + 14;
   const top = drag.touch ? drag.y - 84 : drag.y + 10;
   return createPortal(
-    <div className="drag-ghost" style={{ left, top, "--u": drag.color } as React.CSSProperties} aria-hidden>
-      <div className="text-[13px] font-semibold leading-snug truncate">{drag.title}</div>
-      <div className="text-[11px] text-muted">{drag.target?.kind === "list" ? "Drop to take it off the calendar" : approxDuration(drag.minutes)}</div>
+    <div className="ss-ghost" style={{ left, top }} aria-hidden>
+      <strong>{drag.title}</strong>
+      <span>{drag.target?.kind === "list" ? "Drop to take it off the calendar" : drag.target?.kind === "date" ? "Drop to put it in that day's free time" : `${drag.minutes} min`}</span>
     </div>,
     document.body,
   );

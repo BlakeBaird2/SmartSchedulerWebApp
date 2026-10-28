@@ -1,0 +1,218 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { endOfWeek, isSameDay, startOfWeek } from "date-fns";
+import { byUrgency, classRank, isSchoolWork, PRIORITY_LABEL, PRIORITY_ORDER } from "@/lib/todos";
+import type { Task } from "@/lib/types";
+import { dueLabel } from "@/lib/ui";
+import { useApp } from "./context";
+import { SsIcon } from "./SsIcon";
+
+type TaskSort = "due" | "priority" | "length";
+
+const DAY = 86_400_000;
+/** Late work older than this has gone quiet; done work shows for a week. */
+const LATE_WINDOW = 14 * DAY;
+const DONE_WINDOW = 7 * DAY;
+const COMPLETED_WINDOW = 30 * DAY;
+
+/**
+ * Tasks, the prototype's "master checklist": how the week is going, then every
+ * piece of work in one table to search, sort and filter. Synced assignments and
+ * your own tasks sit side by side.
+ */
+export function TasksPage() {
+  const { model, ws, now, openAddTask, select, toggleDone } = useApp();
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<TaskSort>("due");
+  const [filter, setFilter] = useState("All");
+
+  const nowMs = now.getTime();
+  const doneAt = (t: Task) => {
+    const at = ws.done[t.id];
+    // "auto:" marks work assumed done because it was already past due when its calendar was added.
+    return at && !at.startsWith("auto:") ? Date.parse(at) : null;
+  };
+
+  const pool = useMemo(
+    () =>
+      model.tasks.filter((t) => {
+        if (t.done) {
+          const at = doneAt(t);
+          return at !== null && at >= nowMs - COMPLETED_WINDOW;
+        }
+        return !t.dueAt || Date.parse(t.dueAt) >= nowMs - LATE_WINDOW;
+      }),
+    // doneAt reads ws.done, listed here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [model.tasks, ws.done, nowMs],
+  );
+
+  // The week at a glance: work due Monday to Sunday, done or not.
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }).getTime();
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 }).getTime();
+  const thisWeek = pool.filter((t) => t.dueAt && Date.parse(t.dueAt) >= weekStart && Date.parse(t.dueAt) <= weekEnd);
+  const today = pool.filter((t) => t.dueAt && isSameDay(new Date(t.dueAt), now));
+  const weekDone = thisWeek.filter((t) => t.done).length;
+  const todayDone = today.filter((t) => t.done).length;
+  const percent = thisWeek.length ? Math.round((weekDone / thisWeek.length) * 100) : 0;
+
+  const filters = ["All", "Today", ...model.visibleCourses.map((c) => c.code), "Personal", "Completed"];
+  const rank = classRank(ws.classOrder);
+
+  const visible = useMemo(() => {
+    const code = (t: Task) => (t.courseId ? model.courseById.get(t.courseId)?.code : undefined);
+    let items = pool.filter((t) => {
+      if (filter === "Completed") return t.done;
+      // Done work shows for a week after it's ticked off, then only under Completed.
+      if (t.done && (doneAt(t) ?? 0) < nowMs - DONE_WINDOW) return false;
+      if (filter === "All") return true;
+      if (filter === "Today") return Boolean(t.dueAt && isSameDay(new Date(t.dueAt), now));
+      if (filter === "Personal") return !isSchoolWork(t);
+      return code(t) === filter;
+    });
+    const q = search.trim().toLowerCase();
+    if (q) items = items.filter((t) => `${t.title} ${code(t) ?? "Personal"}`.toLowerCase().includes(q));
+    const urgency = byUrgency(rank);
+    return [...items].sort((a, b) =>
+      sort === "length" ? a.estimate - b.estimate || urgency(a, b) : sort === "priority" ? PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] || urgency(a, b) : urgency(a, b),
+    );
+    // doneAt reads ws.done, which pool already follows.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, filter, search, sort, model.courseById, rank, nowMs]);
+
+  return (
+    <section className="ss-tasks-page fade-in">
+      <div className="ss-tasks-header">
+        <div>
+          <span className="ss-eyebrow">MASTER CHECKLIST</span>
+          <h1>Everything, in one place.</h1>
+          <p>Capture tasks from every part of your life, then let Schedule Smart find the right moment.</p>
+        </div>
+        <button className="ss-primary" onClick={openAddTask} data-smart-event="add_task_opened">
+          <SsIcon name="plus" /> Add new task
+        </button>
+      </div>
+
+      <div className="ss-summary">
+        <div className="ss-summary-card ss-completion">
+          <div className="ss-ring">
+            <svg viewBox="0 0 58 58" aria-label={`${percent}% complete`}>
+              <circle className="ss-ring-track" cx="29" cy="29" r="24" />
+              <circle className="ss-ring-progress" cx="29" cy="29" r="24" strokeDasharray="151" strokeDashoffset={151 - (151 * percent) / 100} />
+            </svg>
+            <strong>
+              {percent}
+              <small>%</small>
+            </strong>
+          </div>
+          <div className="ss-summary-copy">
+            <span>WEEKLY PROGRESS</span>
+            <h2>
+              {weekDone} of {thisWeek.length} complete
+            </h2>
+            <p>{thisWeek.length - weekDone} items still open</p>
+          </div>
+        </div>
+        <div className="ss-summary-card ss-workload">
+          <div className="ss-summary-copy">
+            <span>DUE TODAY</span>
+            <h2>{today.length - todayDone} items open</h2>
+            <p>
+              {todayDone} of {today.length} completed
+            </p>
+          </div>
+          <div className="ss-graphic-line" aria-label={`${todayDone} of ${today.length} completed`}>
+            {today.length === 0 ? <i /> : today.map((t, i) => <i className={i < todayDone ? "ss-filled" : ""} key={t.id} />)}
+          </div>
+        </div>
+        <div className="ss-summary-card ss-workload">
+          <div className="ss-summary-copy">
+            <span>DUE THIS WEEK</span>
+            <h2>{thisWeek.length - weekDone} items open</h2>
+            <p>
+              {weekDone} of {thisWeek.length} completed
+            </p>
+          </div>
+          <div className="ss-graphic-bars" aria-label={`${weekDone} of ${thisWeek.length} completed`}>
+            {thisWeek.slice(0, 24).map((t) => (
+              <i className={t.done ? "ss-filled" : ""} key={t.id} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="ss-task-tools">
+        <label className="ss-search">
+          <SsIcon name="search" size={17} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tasks or classes" aria-label="Search tasks" />
+        </label>
+        <label className="ss-sort">
+          <span>Sort by</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value as TaskSort)}>
+            <option value="due">Due date</option>
+            <option value="priority">Priority</option>
+            <option value="length">Shortest first</option>
+          </select>
+        </label>
+      </div>
+      <div className="ss-filter-row" role="group" aria-label="Show">
+        {filters.map((f) => (
+          <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)}>
+            {f}
+          </button>
+        ))}
+      </div>
+      <div className="ss-table">
+        <div className="ss-table-head" aria-hidden>
+          <span>TASK</span>
+          <span>AREA</span>
+          <span>DUE</span>
+          <span>ESTIMATE</span>
+          <span>PRIORITY</span>
+        </div>
+        {visible.length === 0 ? <p className="ss-table-empty">{search ? "Nothing matches that search." : "Nothing here. Nice work."}</p> : null}
+        {visible.map((task) => {
+          const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
+          const due = dueLabel(task.dueAt ? new Date(task.dueAt) : null, now);
+          return (
+            <div
+              key={task.id}
+              role="button"
+              tabIndex={0}
+              className={`ss-task-row ${task.done ? "ss-done" : ""}`}
+              onClick={() => select({ kind: "task", id: task.id })}
+              onKeyDown={(e) => {
+                if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  select({ kind: "task", id: task.id });
+                }
+              }}
+              aria-label={`${task.title}, ${course?.code ?? "Personal"}, ${due.text}, ${task.estimate} min, ${PRIORITY_LABEL[task.priority]} priority${task.done ? ", done" : ""}. Open details`}
+            >
+              <div className="ss-task-name">
+                <button
+                  className="ss-check"
+                  role="checkbox"
+                  aria-checked={task.done}
+                  aria-label={task.done ? `Mark ${task.title} as not done` : `Complete ${task.title}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDone(task);
+                  }}
+                >
+                  <SsIcon name="check" size={14} />
+                </button>
+                <strong>{task.title}</strong>
+              </div>
+              <span className="ss-area">{course?.code ?? "Personal"}</span>
+              <span className={due.late && !task.done ? "text-[var(--ss-danger)] font-semibold" : ""}>{due.text}</span>
+              <span>{task.estimate} min</span>
+              <span className={`ss-priority ss-${task.priority}`}>{PRIORITY_LABEL[task.priority]}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

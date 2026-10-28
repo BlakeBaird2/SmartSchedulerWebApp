@@ -5,7 +5,7 @@ import { wireGray } from "../context";
 import { Checkbox } from "./Controls";
 
 /**
- * The pieces that carry SmartScheduler's core job: show a student which piece of
+ * The pieces that carry Schedule Smart's core job: show a student which piece of
  * work fits the free gap in front of them, and let them tick it off.
  */
 
@@ -222,7 +222,7 @@ export function FreeGapBlock({
 export function PlannedBadge({ children, title, pinned = false }: { children: React.ReactNode; title?: string; pinned?: boolean }) {
   const Icon = pinned ? Pin : Clock;
   return (
-    <span className="plan-badge" title={title ?? (pinned ? "A time you picked" : "When SmartScheduler planned this")}>
+    <span className="plan-badge" title={title ?? (pinned ? "A time you picked" : "When Schedule Smart planned this")}>
       <Icon size={11} strokeWidth={2.5} aria-hidden />
       {children}
     </span>
@@ -251,7 +251,7 @@ export function Wordmark({ size = "md", collapse = false }: { size?: "md" | "lg"
         </span>
       ) : null}
       <span className={`wordmark ${lg ? "text-2xl" : "text-xl"} ${collapse ? "hidden sm:inline" : ""}`}>
-        SmartScheduler<span className="wordmark-dot">.</span>
+        Schedule Smart
       </span>
     </span>
   );

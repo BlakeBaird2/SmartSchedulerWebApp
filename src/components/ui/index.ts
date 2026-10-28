@@ -1,5 +1,5 @@
 /**
- * SmartScheduler's design library: the small set of parts every screen is built
+ * Schedule Smart's design library: the small set of parts every screen is built
  * from. See /design for each one drawn live, with when to use it and why it exists.
  */
 export { Button, ButtonLink, TextButton, buttonClass, type ButtonProps, type ButtonVariant } from "./Button";

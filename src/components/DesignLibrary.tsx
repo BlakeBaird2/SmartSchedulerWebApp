@@ -35,7 +35,7 @@ import {
 } from "./ui";
 
 /**
- * /design: SmartScheduler's design library, drawn live. Each entry shows the
+ * /design: Schedule Smart's design library, drawn live. Each entry shows the
  * component, when to use it, the rules it follows, which screens use it, and
  * what in our discovery research it answers.
  */
@@ -111,7 +111,7 @@ export function DesignLibrary() {
     <div className="min-h-dvh" data-design-library>
       <header className="sticky top-0 z-30 bg-bg border-b border-line-strong">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-          <Link href="/" aria-label="SmartScheduler home page" className="shrink-0">
+          <Link href="/" aria-label="Schedule Smart home page" className="shrink-0">
             <Wordmark />
           </Link>
           <PrototypeBadge />
@@ -131,7 +131,7 @@ export function DesignLibrary() {
         <section className="pt-10 pb-8 border-b border-line-strong">
           <h1 className="capability text-4xl sm:text-5xl">Design library</h1>
           <p className="mt-3 max-w-3xl text-lg text-muted leading-relaxed">
-            Every SmartScheduler screen is built from the parts on this page. They are React components in <code className="text-fg">src/components/ui</code>,
+            Every Schedule Smart screen is built from the parts on this page. They are React components in <code className="text-fg">src/components/ui</code>,
             styled with Tailwind CSS and Lucide icons. The look is medium fidelity: a clean type scale, white cards raised above an off-white page, class
             colours for recognition, and one blue for the main action.
           </p>
@@ -363,7 +363,7 @@ function CoreParts() {
       <GroupHeading
         id="core"
         title="Core: planning"
-        lead="These carry SmartScheduler's one job. They get the most space and the strongest outlines; everything else in the library supports them."
+        lead="These carry Schedule Smart's one job. They get the most space and the strongest outlines; everything else in the library supports them."
       />
 
       <Entry
@@ -1009,7 +1009,7 @@ function Rules() {
       <GroupHeading
         id="rules"
         title="How screens use the library"
-        lead="The rules every SmartScheduler screen follows. Each one was checked screen by screen."
+        lead="The rules every Schedule Smart screen follows. Each one was checked screen by screen."
       />
       <ol className="mt-4 grid gap-3 md:grid-cols-2">
         {RULES.map((r, i) => (
@@ -1024,7 +1024,7 @@ function Rules() {
       </ol>
       <div className="mt-10 flex items-center gap-3 flex-wrap">
         <ButtonLink href="/app" variant="primary" size="lg" trailingIcon={ArrowRight}>
-          Open SmartScheduler
+          Open Schedule Smart
         </ButtonLink>
         <ButtonLink href="/" size="lg">
           Back to the home page

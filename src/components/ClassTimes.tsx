@@ -299,7 +299,7 @@ export function ClassTimesDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog
       title="When do your classes meet?"
-      description="They'll show on your calendar, and SmartScheduler will plan work around them."
+      description="They'll show on your calendar, and Schedule Smart will plan work around them."
       onClose={onClose}
       size="lg"
     >

@@ -50,7 +50,7 @@ export function HoursForm({ advanced = false }: { advanced?: boolean }) {
 
   return (
     <div className="divide-y divide-line">
-      <Field label="Working hours" hint={`SmartScheduler only plans work between ${minutesLabel(p.dayStart)} and ${minutesLabel(p.dayEnd)}.`}>
+      <Field label="Working hours" hint={`Schedule Smart only plans work between ${minutesLabel(p.dayStart)} and ${minutesLabel(p.dayEnd)}.`}>
         <input type="time" step={900} className="input input-sm" aria-label="Day starts" value={minutesToHHMM(p.dayStart)} onChange={(e) => setHours("dayStart", e.target.value)} />
         <span className="text-muted text-sm">to</span>
         <input

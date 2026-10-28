@@ -29,7 +29,7 @@ const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 
 
 /** Each section has its own icon, so the menu can be scanned by shape as well as by name. */
 export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
-  { id: "calendars", label: "Calendars & class times", hint: "Links SmartScheduler reads, and when classes meet", icon: CalendarDays },
+  { id: "calendars", label: "Calendars & class times", hint: "Links Schedule Smart reads, and when classes meet", icon: CalendarDays },
   { id: "classes", label: "Class priority", hint: "Which class comes first when work is due at the same time", icon: ListOrdered },
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
@@ -187,7 +187,7 @@ function CalendarsPanel() {
         hint={
           ws.demo
             ? "You're looking at sample calendars."
-            : "SmartScheduler re-reads these when you open it, when you come back to the tab, and every 30 minutes while it's open."
+            : "Schedule Smart re-reads these when you open it, when you come back to the tab, and every 30 minutes while it's open."
         }
       >
         {ws.demo ? (
@@ -212,12 +212,12 @@ function CalendarsPanel() {
             {helpOpen ? <ProviderHelp /> : null}
             <p className="text-xs text-muted leading-relaxed">
               <b className="font-medium text-fg">School</b> calendars bring in classes and assignments. <b className="font-medium text-fg">Personal</b>{" "}
-              calendars only tell SmartScheduler when you&apos;re busy; their events never turn into homework.
+              calendars only tell Schedule Smart when you&apos;re busy; their events never turn into homework.
             </p>
           </div>
         )}
       </Section>
-      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and SmartScheduler plans around it.">
+      <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Schedule Smart plans around it.">
         <ClassTimesEditor />
       </Section>
     </div>
@@ -306,7 +306,7 @@ function ClassesPanel() {
 function SchedulePanel() {
   return (
     <div className="space-y-4">
-      <Section title="Your schedule" hint="SmartScheduler plans work inside these hours and around everything on your calendars.">
+      <Section title="Your schedule" hint="Schedule Smart plans work inside these hours and around everything on your calendars.">
         <HoursForm advanced />
       </Section>
       <Section title="Other weekly busy times" hint="Things that happen every week but aren't on a calendar you added, like a job or practice.">
@@ -320,7 +320,7 @@ function SchedulePanel() {
 }
 
 const UNFINISHED_CHOICES: { id: UnfinishedPolicy; label: string; hint: string }[] = [
-  { id: "ask", label: "Ask me each morning", hint: "The first time you open SmartScheduler each day, choose whether to put it back." },
+  { id: "ask", label: "Ask me each morning", hint: "The first time you open Schedule Smart each day, choose whether to put it back." },
   { id: "midnight", label: "Put it back at midnight", hint: "Back on your to-do list once the day it was scheduled for is over." },
   { id: "keep", label: "Keep it on my to-do list", hint: "Scheduling never takes work off the list. It stays until you tick it off." },
 ];
@@ -416,7 +416,7 @@ function BrowserPanel() {
     <div className="space-y-4">
       {!ws.demo ? (
         <Section
-          title="Use SmartScheduler on another device"
+          title="Use Schedule Smart on another device"
           hint="Copy a setup link and open it on your phone or laptop. It holds your private calendar links, so only send it to yourself. Prototype note: nothing is uploaded to a server account."
         >
           <Button icon={Copy} onClick={copySetup} aria-live="polite">
@@ -424,7 +424,7 @@ function BrowserPanel() {
           </Button>
         </Section>
       ) : (
-        <Section title="Use SmartScheduler on another device" hint="Sample data isn't meant to move between devices. Add your own calendars first.">
+        <Section title="Use Schedule Smart on another device" hint="Sample data isn't meant to move between devices. Add your own calendars first.">
           <Button trailingIcon={ArrowRight} onClick={() => setSettingsPanel("calendars")}>
             Open calendars
           </Button>
@@ -461,7 +461,7 @@ function BrowserPanel() {
 function AboutPanel() {
   const { setView } = useApp();
   return (
-    <Section title="About SmartScheduler" hint="Goal instructions, a four-step walkthrough, how planning works, and the parts the app is built from.">
+    <Section title="About Schedule Smart" hint="Goal instructions, a four-step walkthrough, how planning works, and the parts the app is built from.">
       <div className="flex gap-2 flex-wrap">
         <Button icon={Target} onClick={openGoalNotice}>
           Reopen goal

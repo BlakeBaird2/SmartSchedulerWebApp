@@ -6,14 +6,14 @@ import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, Exter
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
-import type { CalEvent, Task } from "@/lib/types";
+import { PRIORITIES, type CalEvent, type Task } from "@/lib/types";
 import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
-import { todoState, urgencyColor } from "@/lib/todos";
+import { PRIORITY_LABEL, todoState, urgencyColor } from "@/lib/todos";
 import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
-import { useTodos } from "./TodoList";
+import { useTodos } from "./PlannerPanel";
 import { Button, buttonClass, ChoicePill, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
 import { ClassEditForm } from "./ClassSummary";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
@@ -115,7 +115,7 @@ function Label({ children }: { children: React.ReactNode }) {
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, index, now, changes, ws, setEstimate, update, setView, setCalCursor, toggleDone, select, completeTask, toast, unschedule, answerUnfinished } = useApp();
+  const { model, index, now, changes, ws, setEstimate, setTaskMeta, update, setView, setCalCursor, toggleDone, select, completeTask, toast, unschedule, answerUnfinished } = useApp();
   const [picking, setPicking] = useState(false);
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
@@ -153,7 +153,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               </span>
             ) : null}
             <TypeChip type={task.type} />
-            {task.generated === "study" ? <span className="text-xs text-muted">Study time added by SmartScheduler</span> : null}
+            {task.generated === "study" ? <span className="text-xs text-muted">Study time added by Schedule Smart</span> : null}
           </div>
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
@@ -211,6 +211,46 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               `The default for ${typeMeta(task.type).plural.toLowerCase()}. Part-way through? Lower it to what's left.`
             )}
           </p>
+        </div>
+
+        <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-4">
+          <div>
+            <Label>Priority</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {PRIORITIES.map((p) => (
+                <ChoicePill key={p} selected={task.priority === p} onClick={() => setTaskMeta(task.id, { priority: p })}>
+                  {PRIORITY_LABEL[p]}
+                </ChoicePill>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted">
+              {task.customPriority ? (
+                <TextButton onClick={() => setTaskMeta(task.id, { priority: null })}>Follow the due date</TextButton>
+              ) : (
+                "Follows the due date until you pick one."
+              )}
+            </p>
+          </div>
+          <div>
+            <Label>Points</Label>
+            <input
+              className="input input-sm w-full"
+              type="number"
+              min={0}
+              max={10000}
+              inputMode="numeric"
+              placeholder="None"
+              aria-label={`Points for ${task.title}`}
+              defaultValue={task.points ?? ""}
+              key={`${task.id}:${task.points ?? ""}`}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                const next = v === "" ? null : Number(v);
+                if (next === task.points || (next !== null && !Number.isFinite(next))) return;
+                setTaskMeta(task.id, { points: next });
+              }}
+            />
+          </div>
         </div>
 
         {!task.done ? (
@@ -503,7 +543,7 @@ const GAP_SUGGESTIONS = 4;
  * "Put it here" is the tap-and-done way to schedule, for anyone who'd rather not drag.
  */
 function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void }) {
-  const { plan, model, select, scheduleTask, setView, setPlanDay, now } = useApp();
+  const { plan, model, select, scheduleTask, setView, now } = useApp();
   const todos = useTodos();
   const dayIndex = plan.days.findIndex((d) => d.gaps.some((g) => g.start.getTime() <= startMs && g.end.getTime() > startMs));
   const gap = dayIndex >= 0 ? plan.days[dayIndex].gaps.find((g) => g.start.getTime() <= startMs && g.end.getTime() > startMs) : undefined;
@@ -594,20 +634,11 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
         <div className="flex flex-wrap gap-2 pt-1">
           <Button
             onClick={() => {
-              setPlanDay(dayIndex);
-              setView("plan");
+              setView("tasks");
               onClose();
             }}
           >
-            Back to Plan
-          </Button>
-          <Button
-            onClick={() => {
-              setView("upcoming");
-              onClose();
-            }}
-          >
-            Upcoming
+            View all tasks
           </Button>
         </div>
       </div>
@@ -641,7 +672,7 @@ function WhyDetail({ task, onClose }: { task: Task; onClose: () => void }) {
       </header>
       <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
         <p className="text-sm leading-relaxed">
-          SmartScheduler plans unfinished work by <b className="font-semibold">soonest deadline first</b>, into free gaps that are long enough. Quizzes are
+          Schedule Smart plans unfinished work by <b className="font-semibold">soonest deadline first</b>, into free gaps that are long enough. Quizzes are
           not split; longer work can be.
         </p>
         <ul className="space-y-2 text-sm">
@@ -717,7 +748,7 @@ function WhyDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, plan, select, setView, setPlanDay, now } = useApp();
+  const { model, plan, select, setView, now } = useApp();
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const nextId = plan.order[0];
   const next = nextId ? model.tasks.find((t) => t.id === nextId) : undefined;
@@ -755,20 +786,19 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => {
-              setPlanDay(0);
-              setView("plan");
+              setView("calendar");
               onClose();
             }}
           >
-            Back to Plan
+            Back to the calendar
           </Button>
           <Button
             onClick={() => {
-              setView("upcoming");
+              setView("tasks");
               onClose();
             }}
           >
-            Upcoming
+            View all tasks
           </Button>
           <Button onClick={() => select({ kind: "task", id: task.id })}>Open this task</Button>
         </div>

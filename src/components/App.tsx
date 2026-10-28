@@ -8,19 +8,17 @@ import { addNewWork, newIds, parseNewWork, seeWork as seeNewWork } from "@/lib/n
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
-import { type Change, type EstimateSource, type FeedResult, type FeedRole, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
+import { type Change, type EstimateSource, type FeedResult, type FeedRole, type Priority, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
 import type { TodoScope, TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
-import { Header } from "./Header";
-import { Banners } from "./Banners";
+import { Notices, Topbar } from "./Topbar";
 import { Onboarding, startDemo } from "./Onboarding";
-import { PlanHeading, PlanView } from "./PlanView";
 import { CalendarView } from "./CalendarView";
-import { UpcomingView } from "./UpcomingView";
+import { TasksPage } from "./TasksPage";
 import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
@@ -28,7 +26,6 @@ import { AddTaskDialog } from "./AddTaskDialog";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
-import { BottomNav } from "./BottomNav";
 import { AppTour } from "./AppTour";
 import { ViewHeading } from "./ViewHeading";
 import { UnfinishedPrompt } from "./UnfinishedPrompt";
@@ -49,23 +46,32 @@ interface UiPrefs {
   settingsPanel: SettingsPanel;
   /** Whether the calendar's sidebar (small month and to-do list) is open on a computer. */
   calSidebar: boolean;
+  plannerMore: boolean;
   /** The to-do list: everything, or school work only. */
   todoScope: TodoScope;
   /** The to-do list's order: most urgent first, or shortest first. */
   todoSort: TodoSort;
 }
 
-const VIEWS: View[] = ["plan", "calendar", "upcoming", "settings", "help"];
-const CAL_MODES: CalMode[] = ["month", "week", "day", "3day", "schedule"];
+const VIEWS: View[] = ["calendar", "tasks", "settings", "help"];
+const CAL_MODES: CalMode[] = ["month", "week", "day"];
+
+/** Screens from before the redesign: Plan became the calendar, Upcoming and Classes the task list. */
+function viewFrom(v: unknown): View | null {
+  if (v === "plan") return "calendar";
+  if (v === "upcoming" || v === "classes") return "tasks";
+  return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
+}
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "classes", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
-  view: "plan",
+  view: "calendar",
   calMode: "week",
   filters: DEFAULT_FILTERS,
   setupDone: false,
   hideClassTimesTip: false,
   settingsPanel: "main",
   calSidebar: true,
+  plannerMore: false,
   todoScope: "all",
   todoSort: "due",
 };
@@ -75,8 +81,8 @@ function parseUi(raw: string | null): UiPrefs {
   if (!p || typeof p !== "object") return DEFAULT_UI;
   const f = p.filters;
   return {
-    // Classes was folded into Upcoming; a saved "classes" view opens Upcoming.
-    view: (p.view as string) === "classes" ? "upcoming" : p.view && VIEWS.includes(p.view) ? p.view : DEFAULT_UI.view,
+    view: viewFrom(p.view) ?? DEFAULT_UI.view,
+    // The old phone views (an agenda, three days) open as the week.
     calMode: p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
     filters: {
       // One class or all of them (class tabs). An older multi-class choice falls back to all.
@@ -89,8 +95,9 @@ function parseUi(raw: string | null): UiPrefs {
     hideClassTimesTip: p.hideClassTimesTip === true,
     settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
     calSidebar: p.calSidebar !== false,
-    todoScope: p.todoScope === "school" ? "school" : "all",
-    todoSort: p.todoSort === "duration" ? "duration" : "due",
+    plannerMore: p.plannerMore === true,
+    todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
+    todoSort: p.todoSort === "duration" || p.todoSort === "points" ? p.todoSort : "due",
   };
 }
 
@@ -143,7 +150,7 @@ function applyImport(ws: Workspace) {
   writeJson(KEYS.workspace, ws);
   writeStored(KEYS.snapshot, null);
   writeStored(KEYS.changes, null);
-  writeUi({ setupDone: true, view: "plan" });
+  writeUi({ setupDone: true, view: "calendar" });
 }
 
 /**
@@ -184,24 +191,21 @@ let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
   if (!opened) {
-    // Every visit opens on the Plan screen, which leads with what SmartScheduler does,
-    // unless the address names a screen (?view=calendar). The calendar mode and filters
-    // are still remembered.
+    // Every visit opens on the calendar unless the address names a screen
+    // (?view=tasks). The calendar mode and filters are still remembered.
     const asked = viewFromUrl();
     const raw = readStored(KEYS.ui);
     if (asked) writeUi({ view: asked });
-    else if (raw && parseUi(raw).view !== "plan") writeUi({ view: "plan" });
+    else if (raw && parseUi(raw).view !== "calendar") writeUi({ view: "calendar" });
     opened = takeDemoFromUrl() ?? takeSetupFromUrl();
   }
   return opened;
 }
 
-/** The screen named in the address (?view=upcoming), if it is one. */
+/** The screen named in the address (?view=tasks), if it is one. */
 function viewFromUrl(): View | null {
   if (typeof window === "undefined") return null;
-  const v = new URLSearchParams(window.location.search).get("view");
-  if (v === "classes") return "upcoming";
-  return v && VIEWS.includes(v as View) ? (v as View) : null;
+  return viewFrom(new URLSearchParams(window.location.search).get("view"));
 }
 
 function clearUrlFragment() {
@@ -272,7 +276,6 @@ export function App() {
   const newWork = useMemo(() => newIds(parseNewWork(newRaw), new Date(minute * MINUTE)), [newRaw, minute]);
 
   const [calCursor, setCalCursor] = useState(() => new Date());
-  const [planDay, setPlanDay] = useState(0);
   const [selected, setSelected] = useState<Selection>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [classTimesOpen, setClassTimesOpen] = useState(false);
@@ -318,7 +321,7 @@ export function App() {
 
   const saveSnapshot = useCallback(
     (s: Snapshot) => {
-      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open SmartScheduler.");
+      if (!writeJson(KEYS.snapshot, s)) toast("Browser storage is full, so calendars will be re-read next time you open Schedule Smart.");
     },
     [toast],
   );
@@ -512,6 +515,24 @@ export function App() {
     [update, toggleDone, toast, seeWork],
   );
 
+  const setTaskMeta = useCallback(
+    (taskId: string, patch: { points?: number | null; priority?: Priority | null }) => {
+      update((w) => {
+        const meta = { ...w.taskMeta[taskId] };
+        if (patch.points === null) delete meta.points;
+        else if (patch.points !== undefined) meta.points = Math.max(0, Math.min(10_000, Math.round(patch.points)));
+        if (patch.priority === null) delete meta.priority;
+        else if (patch.priority !== undefined) meta.priority = patch.priority;
+        const taskMeta = { ...w.taskMeta };
+        if (Object.keys(meta).length) taskMeta[taskId] = meta;
+        else delete taskMeta[taskId];
+        return { ...w, taskMeta };
+      });
+      seeWork([taskId]);
+    },
+    [update, seeWork],
+  );
+
   const setEstimate = useCallback(
     (taskId: string, minutes: number | null, source: EstimateSource = "user") => {
       update((w) => {
@@ -559,6 +580,23 @@ export function App() {
       seeWork([task.id]);
     },
     [changeBlock, toast, seeWork],
+  );
+
+  const scheduleOnDay = useCallback(
+    (task: Task, day: Date) => {
+      const dayStart = new Date(day).setHours(0, 0, 0, 0);
+      const free = plan.days.find((d) => new Date(d.date).setHours(0, 0, 0, 0) === dayStart)?.gaps ?? [];
+      const nowMs = Date.now();
+      const quarter = 15 * MINUTE;
+      for (const g of free) {
+        const start = Math.ceil(Math.max(g.start.getTime(), nowMs) / quarter) * quarter;
+        if (start + task.estimate * MINUTE <= g.end.getTime()) return scheduleTask(task, new Date(start));
+      }
+      const noon = new Date(dayStart);
+      noon.setHours(12, 0, 0, 0);
+      scheduleTask(task, noon);
+    },
+    [plan.days, scheduleTask],
   );
 
   const moveScheduled = useCallback(
@@ -650,9 +688,6 @@ export function App() {
 
   const clearChanges = useCallback(() => writeStored(KEYS.changes, null), []);
 
-  // A plan day past the horizon (after midnight rolls over) falls back to today.
-  const safePlanDay = planDay < plan.days.length ? planDay : 0;
-
   const ctx: AppContextValue = {
     ws,
     snapshot,
@@ -665,8 +700,10 @@ export function App() {
     timezone,
     update,
     toggleDone,
+    setTaskMeta,
     setEstimate,
     scheduleTask,
+    scheduleOnDay,
     moveScheduled,
     resizeScheduled,
     unschedule,
@@ -684,14 +721,14 @@ export function App() {
     setCalMode,
     calSidebar: ui.calSidebar,
     setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
+    plannerMore: ui.plannerMore,
+    setPlannerMore: (more: boolean) => writeUi({ plannerMore: more }),
     todoScope: ui.todoScope,
     setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
     todoSort: ui.todoSort,
     setTodoSort: (sort: TodoSort) => writeUi({ todoSort: sort }),
     calCursor,
     setCalCursor,
-    planDay: safePlanDay,
-    setPlanDay,
     filters: ui.filters,
     setFilters,
     selected,
@@ -713,7 +750,7 @@ export function App() {
 
   const finishSetup = useCallback(() => {
     trackEvent("setup_finished");
-    writeUi({ setupDone: true, view: "plan" });
+    writeUi({ setupDone: true, view: "calendar" });
   }, []);
 
   return (
@@ -721,20 +758,22 @@ export function App() {
       {!ready ? (
         <Onboarding onFinish={finishSetup} />
       ) : (
-        <div className="min-h-dvh flex flex-col">
-          <Header />
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pb-32 md:pb-24">
-            {ui.view === "plan" ? <PlanHeading /> : <ViewHeading />}
-            <Banners />
-            <div className="mt-4 fade-in" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
-              {ui.view === "plan" && <PlanView />}
-              {ui.view === "calendar" && <CalendarView />}
-              {ui.view === "upcoming" && <UpcomingView />}
-              {ui.view === "settings" && <SettingsView />}
-              {ui.view === "help" && <HelpView />}
-            </div>
-          </main>
-          <BottomNav />
+        <div className="ss-shell">
+          <Topbar />
+          <Notices />
+          {ui.view === "calendar" ? (
+            <CalendarView />
+          ) : (
+            <main className="ss-scroll" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
+              {ui.view === "tasks" ? <TasksPage /> : null}
+              {ui.view === "settings" || ui.view === "help" ? (
+                <div className="ss-page fade-in">
+                  <ViewHeading />
+                  <div className="mt-6">{ui.view === "settings" ? <SettingsView /> : <HelpView />}</div>
+                </div>
+              ) : null}
+            </main>
+          )}
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}

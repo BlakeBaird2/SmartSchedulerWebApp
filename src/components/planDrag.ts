@@ -21,7 +21,9 @@ import { MIN_BLOCK_MINUTES, snapMinutes } from "@/lib/blocks";
  * file can work out the time under the pointer without knowing how they are drawn:
  * data-drop-day (the day's midnight, in ms), data-drop-min and data-drop-max (the
  * first and last minute shown), data-drop-top (px above the first minute) and
- * data-drop-ppm (px per minute). The to-do list marks itself data-drop-list.
+ * data-drop-ppm (px per minute). The to-do list marks itself data-drop-list, and a
+ * day in the month view data-drop-date (its midnight, in ms): work dropped there
+ * goes into that day's first free time.
  */
 
 export type DragKind = "new" | "move" | "resize";
@@ -42,7 +44,10 @@ export interface DragPayload {
 }
 
 /** Where a drag would land. Minutes count from the day's midnight. */
-export type DropTarget = { kind: "grid"; dayStart: number; startMinute: number; endMinute: number } | { kind: "list" };
+export type DropTarget =
+  | { kind: "grid"; dayStart: number; startMinute: number; endMinute: number }
+  | { kind: "date"; dayStart: number }
+  | { kind: "list" };
 
 export interface PlanDrag extends DragPayload {
   x: number;
@@ -79,7 +84,7 @@ export function usePlanDrag(): PlanDrag | null {
 function targetAt(x: number, y: number, d: DragPayload): DropTarget | null {
   let hit: HTMLElement | null = null;
   for (const el of document.elementsFromPoint(x, y)) {
-    hit = el.closest<HTMLElement>("[data-drop-day],[data-drop-list]");
+    hit = el.closest<HTMLElement>("[data-drop-day],[data-drop-date],[data-drop-list]");
     if (hit) break;
   }
   // Resizing only ever changes the block's own day.
@@ -89,7 +94,10 @@ function targetAt(x: number, y: number, d: DragPayload): DropTarget | null {
       : hit?.dataset.dropDay !== undefined
         ? hit
         : null;
-  if (!col) return hit?.dataset.dropList !== undefined && d.kind === "move" ? { kind: "list" } : null;
+  if (!col) {
+    if (hit?.dataset.dropDate !== undefined && d.kind !== "resize") return { kind: "date", dayStart: Number(hit.dataset.dropDate) };
+    return hit?.dataset.dropList !== undefined && d.kind === "move" ? { kind: "list" } : null;
+  }
 
   const dayStart = Number(col.dataset.dropDay);
   const min = Number(col.dataset.dropMin);

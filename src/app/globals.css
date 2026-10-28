@@ -4,30 +4,28 @@
 
 :root {
   /*
-   * Full-colour Prio palette (design handoff, section 3): warm neutrals, one indigo
-   * accent, and one soft shadow. The page is a warm off-white "desk"; content sits
-   * on white cards above it. Indigo is reserved for the one main action on each
-   * screen, today's date and focus. Green, amber and red only mean free or done,
-   * soon, and late, and always come with an icon or words.
+   * Schedule Smart palette, from the Figma prototype: a warm off-white page, white
+   * surfaces, hairline warm-grey lines, near-black ink and one purple accent.
+   * Green, amber and red still only mean done, soon and late.
    */
-  --bg: #f6f5f1;
+  --bg: #f7f7f4;
   --surface: #ffffff;
-  --surface-2: #f1efe9;
-  --line: #e6e3db;
-  --line-strong: #d3cfc4;
-  --fg: #1c1b18;
-  --muted: #6f6b62;
-  --faint: #a19c91;
-  --accent: #4f46e5;
-  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
-  --danger: #dc2626;
-  --warn: #d97706;
-  --ok: #059669;
-  --ok-soft: color-mix(in oklab, var(--ok) 7%, var(--surface));
-  --shadow: 0 1px 2px rgb(28 27 24 / 0.05), 0 8px 24px -12px rgb(28 27 24 / 0.18);
+  --surface-2: #f1f1ed;
+  --line: #e4e4de;
+  --line-strong: #d5d5ce;
+  --fg: #20201f;
+  --muted: #777772;
+  --faint: #92928c;
+  --accent: #7066e7;
+  --accent-soft: #eeecff;
+  --danger: #b44949;
+  --warn: #c27a35;
+  --ok: #27764d;
+  --ok-soft: #e7f5ed;
+  --shadow: 0 3px 12px rgb(30 30 27 / 0.04);
   --shadow-sm: var(--shadow);
-  --shadow-md: 0 1px 2px rgb(28 27 24 / 0.06), 0 12px 28px -12px rgb(28 27 24 / 0.26);
-  --shadow-lg: 0 2px 4px rgb(28 27 24 / 0.06), 0 24px 48px -16px rgb(28 27 24 / 0.32);
+  --shadow-md: 0 8px 24px rgb(25 25 23 / 0.1);
+  --shadow-lg: 0 24px 70px rgb(20 20 18 / 0.2);
   color-scheme: light;
 }
 
@@ -41,7 +39,7 @@
   --muted: #a3a09a;
   --faint: #6b6963;
   --accent: #8b85ff;
-  --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  --accent-soft: #27254a;
   --danger: #f87171;
   --warn: #fbbf24;
   --ok: #34d399;
@@ -68,7 +66,7 @@
   --color-warn: var(--warn);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --radius-xl: 14px;
   --radius-2xl: 18px;
 }
@@ -1801,7 +1799,7 @@
     color: var(--accent);
   }
 
-  /* The wordmark's full stop, in the accent: "SmartScheduler." */
+  /* The wordmark's full stop, in the accent: "Schedule Smart." */
   .wordmark-dot {
     color: var(--accent);
   }
@@ -1882,4 +1880,40 @@
 .class-tab[role="radio"][aria-checked="true"]:not(:focus-visible),
 .choice-card[role="radio"][aria-checked="true"]:not(:focus-visible) {
   outline: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Schedule Smart (Figma prototype) across the older screens: Manrope for
+ * headings and the name, the dark button for the main action, 8-10px corners.
+ * Unlayered, so it wins over the low- and medium-fidelity layers above.
+ * ------------------------------------------------------------------------- */
+.wordmark,
+h1,
+h2 {
+  font-family: "Manrope Variable", "Manrope", var(--font-sans);
+  letter-spacing: -0.03em;
+}
+.wordmark {
+  font-weight: 700;
+}
+.btn-primary,
+.btn-primary:hover {
+  background: #282826;
+  border-color: #282826;
+  color: #fff;
+}
+:root[data-theme="dark"] .btn-primary,
+:root[data-theme="dark"] .btn-primary:hover {
+  background: #ecebe6;
+  border-color: #ecebe6;
+  color: #141414;
+}
+.btn,
+.input,
+.seg {
+  border-radius: 9px;
+}
+.card {
+  border-radius: 12px;
+  border-color: var(--line);
 }

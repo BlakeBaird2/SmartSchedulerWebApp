@@ -154,11 +154,11 @@ export function AppTour({ blocked }: { blocked: boolean }) {
   return (
     <Tour
       steps={STEPS}
-      finishLabel="Show my plan"
+      finishLabel="Show my calendar"
       onClose={() => {
         writeStored(KEYS.tour, new Date().toISOString());
         setAsked(false);
-        setView("plan");
+        setView("calendar");
       }}
     />
   );
