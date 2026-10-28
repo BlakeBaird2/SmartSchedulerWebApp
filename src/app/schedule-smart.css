@@ -203,7 +203,6 @@
   justify-content: flex-end;
   align-items: center;
 }
-.ss-add,
 .ss-primary {
   display: flex;
   align-items: center;
@@ -218,7 +217,6 @@
   white-space: nowrap;
   transition: opacity 0.15s ease;
 }
-.ss-add:hover,
 .ss-primary:hover {
   opacity: 0.88;
 }
@@ -424,8 +422,13 @@
   color: var(--ss-ink);
   border-color: var(--ss-line-2);
 }
+.ss-planner-add {
+  width: 100%;
+  justify-content: center;
+  margin-top: 18px;
+}
 .ss-filters {
-  margin-top: 24px;
+  margin-top: 16px;
   padding: 16px;
   border: 1px solid var(--ss-line);
   border-radius: 12px;
@@ -1865,9 +1868,6 @@ button.ss-event:hover {
   .ss-brand {
     font-size: 17px;
   }
-  .ss-add {
-    display: none;
-  }
   .ss-nav {
     gap: 18px;
   }
@@ -1909,8 +1909,13 @@ button.ss-event:hover {
     width: 34px;
     height: 34px;
   }
+  .ss-planner-add {
+    margin-top: 12px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+  }
   .ss-filters {
-    margin-top: 16px;
+    margin-top: 12px;
     padding: 11px;
   }
   .ss-filters-body > span,

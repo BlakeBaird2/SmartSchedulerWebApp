@@ -44,7 +44,7 @@ const SORTS: { id: TodoSort; label: string }[] = [
  * scheduled work back here takes it off the calendar.
  */
 export function PlannerPanel({ onClose }: { onClose: () => void }) {
-  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore, plannerFilters, setPlannerFilters } = useApp();
+  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore, plannerFilters, setPlannerFilters, openAddTask } = useApp();
   const todos = useTodos();
   const drag = usePlanDrag();
   const shown = todos.slice(0, plannerMore ? MANY : FEW);
@@ -84,6 +84,10 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
           <SsIcon name="x" />
         </button>
       </div>
+
+      <button className="ss-primary ss-planner-add" onClick={openAddTask} data-smart-event="add_task_opened">
+        <SsIcon name="plus" /> Add task
+      </button>
 
       <div className="ss-filters" data-collapsed={!plannerFilters || undefined}>
         <button

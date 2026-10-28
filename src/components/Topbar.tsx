@@ -11,12 +11,12 @@ import { SsIcon } from "./SsIcon";
 
 /**
  * The bar across the top, as in the Figma prototype: the name on the left, the
- * two views in the middle, Add task and the profile on the right. Everything the
- * prototype has no room for (refreshing calendars, what changed, Settings, Help)
- * is in the profile menu.
+ * two views in the middle, the profile on the right. Add task lives in the
+ * planner and on the Tasks page. Everything the prototype has no room for
+ * (refreshing calendars, what changed, Settings, Help) is in the profile menu.
  */
 export function Topbar() {
-  const { view, setView, openAddTask } = useApp();
+  const { view, setView } = useApp();
   return (
     <header className="ss-topbar">
       <button className="ss-brand" onClick={() => setView("calendar")} aria-label="Schedule Smart, go to your calendar">
@@ -33,9 +33,6 @@ export function Topbar() {
         </button>
       </nav>
       <div className="ss-actions">
-        <button className="ss-add" onClick={openAddTask} data-smart-event="add_task_opened">
-          <SsIcon name="plus" /> Add task
-        </button>
         <ProfileMenu />
       </div>
     </header>
