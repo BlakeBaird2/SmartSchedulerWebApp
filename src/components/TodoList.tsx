@@ -79,11 +79,9 @@ export function TodoList({ className = "" }: { className?: string }) {
         {todos.length === 0 ? (
           <p className="px-1 py-6 text-sm text-muted text-center">{todoScope === "school" ? "No school work left to plan." : "Nothing left to plan. Nice work."}</p>
         ) : (
-          <ol className="space-y-1.5">
+          <ol>
             {todos.map((t, i) => (
-              <li key={t.id}>
-                <TodoItem task={t} next={i === 0 && todoSort === "due"} />
-              </li>
+              <TodoItem key={t.id} task={t} next={i === 0 && todoSort === "due"} />
             ))}
           </ol>
         )}
@@ -94,9 +92,15 @@ export function TodoList({ className = "" }: { className?: string }) {
 
 const ESTIMATE_CHOICES = [5, 15, 30, 45, 60, 90, 120, 180];
 
+/** How long ticking a task off plays before it leaves the list: the tick lands, then the row folds away. */
+const COMPLETE_MS = 680;
+const COMPLETE_MS_REDUCED = 180;
+
 /**
  * One piece of work: tick it off, open it, change how long it needs, or drag it
- * onto a time. Coloured by how soon it is due, red to yellow.
+ * onto a time. Coloured by how soon it is due, red to yellow. Ticking it off
+ * plays out before it leaves: the box pops, the row turns green and is struck
+ * through, then it folds away and the rest of the list moves up.
  */
 function TodoItem({ task, next }: { task: Task; next: boolean }) {
   const { model, now, ws, select, toggleDone, setEstimate, scheduleTask } = useApp();
@@ -107,90 +111,105 @@ function TodoItem({ task, next }: { task: Task; next: boolean }) {
   const due = task.dueAt ? new Date(task.dueAt) : null;
   const late = due ? due.getTime() < now.getTime() : false;
   const typeDefault = ws.prefs.estimates[task.type];
+  const [completing, setCompleting] = useState(false);
   const open = () => select({ kind: "task", id: task.id });
 
+  // Done work stays on the calendar; Undo is in the message that follows.
+  const complete = () => {
+    if (completing) return;
+    setCompleting(true);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(() => toggleDone(task), reduce ? COMPLETE_MS_REDUCED : COMPLETE_MS);
+  };
+
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      ref={dragSourceRef}
-      aria-label={`${task.title}, ${approxDuration(task.estimate)}${due ? `, ${dueIn(due, now)}` : ""}${next ? ", next up" : ""}. Open details`}
-      title="Drag onto the calendar to schedule it"
-      onClick={open}
-      onKeyDown={(e) => {
-        if (e.target !== e.currentTarget) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          open();
-        }
-      }}
-      onPointerDown={(e) => {
-        // The tick box and the estimate are their own controls.
-        if ((e.target as HTMLElement).closest("button, input")) return;
-        beginPlanDrag(
-          e,
-          // A finger would hide the top of the block, so on touch the block hangs above it.
-          { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color },
-          (target) => {
-            if (target.kind === "grid") scheduleTask(task, targetStart(target));
-          },
-        );
-      }}
-      style={{ "--u": color } as React.CSSProperties}
-      className={`todo-item urgency-card drag-source group flex items-start gap-2 pl-3 pr-1 py-2 cursor-grab ${drag?.kind === "new" && drag.taskId === task.id ? "opacity-40" : ""}`}
-    >
-      <span className="pt-0.5" onClick={(e) => e.stopPropagation()}>
-        <Checkbox checked={task.done} onChange={() => toggleDone(task)} size="sm" label={`Mark ${task.title} as done`} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-start gap-1.5">
-          <span className="text-[13px] font-semibold leading-snug line-clamp-2 flex-1 min-w-0">{task.title}</span>
-          {next ? <span className="next-pill shrink-0">Next up</span> : null}
-        </span>
-        <span className="mt-1 flex items-center gap-x-1.5 gap-y-1 flex-wrap text-[11px] text-muted">
-          <button
-            type="button"
-            className="estimate-chip"
-            aria-expanded={editing}
-            aria-label={`About ${approxDuration(task.estimate).slice(1)}. Change how long it needs`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditing((v) => !v);
-            }}
-          >
-            <Timer size={11} aria-hidden />
-            {approxDuration(task.estimate)}
-          </button>
-          {course ? (
-            <span className="inline-flex items-center gap-1 course-text font-medium" style={courseStyle(course.color)}>
-              <span className="course-dot !w-1.5 !h-1.5" aria-hidden />
-              {course.code}
-            </span>
-          ) : !isSchoolWork(task) ? (
-            <span className="font-medium">Personal</span>
-          ) : null}
-          <span className={`urgency-due ${late ? "font-semibold text-danger" : ""}`}>{due ? dueIn(due, now) : "No due date"}</span>
-        </span>
-        {editing ? (
-          <span className="mt-2 flex flex-wrap items-center gap-1" role="group" aria-label={`How long ${task.title} needs`} onClick={(e) => e.stopPropagation()}>
-            {[...new Set([...ESTIMATE_CHOICES, task.estimate])]
-              .sort((a, b) => a - b)
-              .map((m) => (
-                <ChoicePill
-                  key={m}
-                  selected={task.estimate === m}
-                  onClick={() => {
-                    setEstimate(task.id, m === typeDefault && task.customEstimate ? null : m);
-                    setEditing(false);
-                  }}
-                >
-                  {approxDuration(m).slice(1)}
-                </ChoicePill>
-              ))}
+    <li className="todo-fold" data-completing={completing || undefined}>
+      <div>
+        <div
+          role="button"
+          tabIndex={0}
+          ref={dragSourceRef}
+          aria-label={`${task.title}, ${approxDuration(task.estimate)}${due ? `, ${dueIn(due, now)}` : ""}${next ? ", next up" : ""}. Open details`}
+          title="Drag onto the calendar to schedule it"
+          onClick={open}
+          onKeyDown={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              open();
+            }
+          }}
+          onPointerDown={(e) => {
+            // The tick box and the estimate are their own controls.
+            if ((e.target as HTMLElement).closest("button, input")) return;
+            beginPlanDrag(
+              e,
+              // A finger would hide the top of the block, so on touch the block hangs above it.
+              { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color },
+              (target) => {
+                if (target.kind === "grid") scheduleTask(task, targetStart(target));
+              },
+            );
+          }}
+          style={{ "--u": color } as React.CSSProperties}
+          className={`todo-item urgency-card drag-source group mb-1.5 flex items-start gap-2 pl-3 pr-1 py-2 cursor-grab ${drag?.kind === "new" && drag.taskId === task.id ? "opacity-40" : ""}`}
+        >
+          <span className="check-burst pt-0.5" onClick={(e) => e.stopPropagation()}>
+            <Checkbox checked={task.done || completing} onChange={complete} size="sm" label={`Mark ${task.title} as done`} />
           </span>
-        ) : null}
-      </span>
-      <GripVertical size={14} className="mt-0.5 shrink-0 text-faint opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
-    </div>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-start gap-1.5">
+              <span className="text-[13px] font-semibold leading-snug line-clamp-2 flex-1 min-w-0">
+                <span className="todo-title">{task.title}</span>
+              </span>
+              {next ? <span className="next-pill shrink-0">Next up</span> : null}
+            </span>
+            <span className="mt-1 flex items-center gap-x-1.5 gap-y-1 flex-wrap text-[11px] text-muted">
+              <button
+                type="button"
+                className="estimate-chip"
+                aria-expanded={editing}
+                aria-label={`About ${approxDuration(task.estimate).slice(1)}. Change how long it needs`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing((v) => !v);
+                }}
+              >
+                <Timer size={11} aria-hidden />
+                {approxDuration(task.estimate)}
+              </button>
+              {course ? (
+                <span className="inline-flex items-center gap-1 course-text font-medium" style={courseStyle(course.color)}>
+                  <span className="course-dot !w-1.5 !h-1.5" aria-hidden />
+                  {course.code}
+                </span>
+              ) : !isSchoolWork(task) ? (
+                <span className="font-medium">Personal</span>
+              ) : null}
+              <span className={`urgency-due ${late ? "font-semibold text-danger" : ""}`}>{due ? dueIn(due, now) : "No due date"}</span>
+            </span>
+            {editing ? (
+              <span className="mt-2 flex flex-wrap items-center gap-1" role="group" aria-label={`How long ${task.title} needs`} onClick={(e) => e.stopPropagation()}>
+                {[...new Set([...ESTIMATE_CHOICES, task.estimate])]
+                  .sort((a, b) => a - b)
+                  .map((m) => (
+                    <ChoicePill
+                      key={m}
+                      selected={task.estimate === m}
+                      onClick={() => {
+                        setEstimate(task.id, m === typeDefault && task.customEstimate ? null : m);
+                        setEditing(false);
+                      }}
+                    >
+                      {approxDuration(m).slice(1)}
+                    </ChoicePill>
+                  ))}
+              </span>
+            ) : null}
+          </span>
+          <GripVertical size={14} className="mt-0.5 shrink-0 text-faint opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
+        </div>
+      </div>
+    </li>
   );
 }

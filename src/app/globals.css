@@ -514,6 +514,39 @@
 .fade-in {
   animation: fade-in 160ms ease-out;
 }
+/* Ticking work off: the box pops, the tick draws itself, and a few sparks fly. */
+@keyframes check-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  55% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes tick-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes check-burst {
+  0% {
+    transform: scale(0.35);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
 
 /* ---------------------------------------------------------------------------
  * Home page
@@ -1454,6 +1487,97 @@
   }
   [data-theme="dark"] .next-pill {
     color: #14123a;
+  }
+
+  /*
+   * Ticking work off the to-do list. The box pops with a little burst, the row
+   * turns green and its title is struck through, then the row folds away so the
+   * rest of the list moves up. With reduced motion it is ticked, then gone.
+   */
+  .todo-fold {
+    display: grid;
+    grid-template-rows: 1fr;
+  }
+  .todo-fold > div {
+    min-height: 0;
+  }
+  /* Over the item's own urgency colour, which is set inline. */
+  .todo-fold[data-completing] .todo-item {
+    --u: var(--ok) !important;
+    pointer-events: none;
+  }
+  .todo-title {
+    background: linear-gradient(currentColor, currentColor) no-repeat 0 60% / 0 1.5px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .todo-fold[data-completing] .todo-title {
+    background-size: 100% 1.5px;
+    color: var(--muted);
+  }
+  .todo-fold[data-completing] .urgency-due {
+    color: var(--muted) !important;
+  }
+  .check-burst {
+    position: relative;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .todo-fold {
+      transition:
+        grid-template-rows 260ms cubic-bezier(0.4, 0, 0.2, 1) 400ms,
+        opacity 220ms ease 400ms;
+    }
+    .todo-fold[data-completing] {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+    .todo-fold[data-completing] > div {
+      overflow: hidden;
+    }
+    .todo-title {
+      transition:
+        background-size 260ms cubic-bezier(0.4, 0, 0.2, 1) 80ms,
+        color 200ms ease 80ms;
+    }
+    .todo-fold[data-completing] .check {
+      animation: check-pop 380ms cubic-bezier(0.3, 1.6, 0.5, 1);
+    }
+    .todo-fold[data-completing] .check svg {
+      stroke-dasharray: 24;
+      animation: tick-draw 240ms ease-out 60ms both;
+    }
+    .todo-fold[data-completing] .check-burst::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: calc(50% + 1px);
+      width: 4px;
+      height: 4px;
+      margin: -2px 0 0 -2px;
+      border-radius: 9999px;
+      pointer-events: none;
+      box-shadow:
+        0 -15px var(--ok),
+        11px -11px var(--accent),
+        15px 0 var(--warn),
+        11px 11px var(--ok),
+        0 15px var(--accent),
+        -11px 11px var(--warn),
+        -15px 0 var(--ok),
+        -11px -11px var(--accent);
+      animation: check-burst 520ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+    }
+  }
+
+  /* Done work stays on the calendar, faded, ticked and struck through. */
+  .plan-tick[data-done="true"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+  [data-theme="dark"] .plan-tick[data-done="true"] {
+    color: #0b1f17;
   }
 
   /* Anything that can be picked up and dragged: no text selection or phone press menu in the way. */

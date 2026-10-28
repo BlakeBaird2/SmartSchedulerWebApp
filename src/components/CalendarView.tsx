@@ -16,7 +16,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Flag, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Flag, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { layoutColumns } from "@/lib/layout";
 import { NO_DUE_COLOR, urgencyColor } from "@/lib/todos";
 import type { CalEvent, ScheduledBlock, Task } from "@/lib/types";
@@ -352,9 +352,11 @@ function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }
                       className={`plan-block urgency-card w-full text-left pl-3.5 pr-3 py-2 flex items-start gap-2 ${task?.done ? "opacity-50" : ""}`}
                       style={{ "--u": blockTint(r.item, now), "--c": blockTint(r.item, now) } as React.CSSProperties}
                     >
-                      <span className="plan-tick mt-1" data-done={task?.done || undefined} aria-hidden />
+                      <span className="plan-tick mt-1" data-done={task?.done || undefined} aria-hidden>
+                        {task?.done ? <Check size={8} strokeWidth={4} /> : null}
+                      </span>
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold truncate">{r.item.title}</span>
+                        <span className={`block text-sm font-semibold truncate ${task?.done ? "line-through" : ""}`}>{r.item.title}</span>
                         <span className="block text-xs text-muted truncate">
                           {clockRange(r.item.start, r.item.end)}
                           {course ? (
@@ -888,8 +890,10 @@ function PlannedTile({
       aria-label={`Scheduled: ${title}, ${clockRange(start, end)}${done ? ", done" : ""}. Open details`}
     >
       <div className="flex items-start gap-1.5 min-w-0">
-        <span className="plan-tick mt-[3px]" data-done={done || undefined} aria-hidden />
-        <span className={`text-xs font-semibold leading-tight flex-1 min-w-0 ${titleFit}`}>{title}</span>
+        <span className="plan-tick mt-[3px]" data-done={done || undefined} aria-hidden>
+          {done ? <Check size={8} strokeWidth={4} /> : null}
+        </span>
+        <span className={`text-xs font-semibold leading-tight flex-1 min-w-0 ${titleFit} ${done ? "line-through" : ""}`}>{title}</span>
       </div>
       {h >= 40 ? (
         <div className="text-[11px] text-muted leading-tight truncate">
