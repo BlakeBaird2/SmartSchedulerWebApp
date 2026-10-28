@@ -6,6 +6,7 @@ import type { Plan } from "@/lib/planner";
 import type { PlanIndex } from "@/lib/schedule";
 import type { Change, EstimateSource, FeedResult, FeedRole, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
+import type { TodoScope, TodoSort } from "@/lib/todos";
 
 export type View = "plan" | "calendar" | "upcoming" | "settings" | "help";
 /** "schedule" (an agenda list) and "3day" are the phone views, as in Google Calendar's app. */
@@ -57,6 +58,12 @@ export interface AppContextValue {
   calMode: CalMode;
   setCalMode: (m: CalMode) => void;
   calSidebar: boolean;
+  /** The to-do list: everything, or school work only. */
+  todoScope: TodoScope;
+  setTodoScope: (scope: TodoScope) => void;
+  /** The to-do list's order: most urgent first, or shortest first. */
+  todoSort: TodoSort;
+  setTodoSort: (sort: TodoSort) => void;
   setCalSidebar: (open: boolean) => void;
   /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
   openGoal: () => void;

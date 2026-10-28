@@ -18,6 +18,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Flag, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { layoutColumns } from "@/lib/layout";
+import { NO_DUE_COLOR, urgencyColor } from "@/lib/todos";
 import type { CalEvent, ScheduledBlock, Task } from "@/lib/types";
 import { applyFilters, clock, clockRange, dayKey, duration, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
@@ -64,6 +65,16 @@ export interface CalBlock {
   start: Date;
   end: Date;
   minutes: number;
+}
+
+/**
+ * The colour scheduled work is drawn in: one the student picked, or by how soon
+ * its work is due (red to yellow). Done work goes grey, so it reads as finished.
+ */
+function blockTint(item: CalBlock, now: Date): string {
+  if (item.block.color) return item.block.color;
+  if (!item.task) return NO_DUE_COLOR;
+  return item.task.done ? NO_DUE_COLOR : urgencyColor(item.task.dueAt, now);
 }
 
 /** Tasks and events that pass the filters, plus set-aside time, grouped for quick lookup by day. */
@@ -329,8 +340,8 @@ function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }
                       key={r.key}
                       type="button"
                       onClick={() => (task ? select({ kind: "task", id: task.id }) : undefined)}
-                      className={`plan-block w-full text-left px-3 py-2 flex items-start gap-2 ${task?.done ? "opacity-50" : ""}`}
-                      style={courseStyle(course?.color)}
+                      className={`plan-block urgency-card w-full text-left pl-3.5 pr-3 py-2 flex items-start gap-2 ${task?.done ? "opacity-50" : ""}`}
+                      style={{ "--u": blockTint(r.item, now), "--c": blockTint(r.item, now) } as React.CSSProperties}
                     >
                       <span className="plan-tick mt-1" data-done={task?.done || undefined} aria-hidden />
                       <span className="min-w-0">
@@ -340,7 +351,9 @@ function Agenda({ data, count = AGENDA_DAYS }: { data: CalData; count?: number }
                           {course ? (
                             <>
                               {" · "}
-                              <span className="course-text">{course.code}</span>
+                              <span className="course-text font-medium" style={courseStyle(course.color)}>
+                                {course.code}
+                              </span>
                             </>
                           ) : null}
                         </span>
@@ -829,10 +842,11 @@ function PlannedTile({
   dragging: boolean;
   passThrough: boolean;
 }) {
-  const { model, select } = useApp();
+  const { model, select, now } = useApp();
   const { task, start, end, minutes, title } = item.item;
   const course = task?.courseId ? model.courseById.get(task.courseId) : undefined;
   const done = Boolean(task?.done);
+  const tint = blockTint(item.item, now);
   const open = () => (task ? select({ kind: "task", id: task.id }) : undefined);
   return (
     <div
@@ -852,8 +866,8 @@ function PlannedTile({
         startPlanDrag(e, { taskId: task.id, title, minutes, grab, pinned: true, color: course?.color ?? null });
       }}
       onDragEnd={endPlanDrag}
-      className={`plan-block absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden px-2 py-1.5 cursor-grab active:cursor-grabbing ${done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
-      style={{ ...style, ...courseStyle(item.item.block.color ?? course?.color) }}
+      className={`plan-block urgency-card absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden pl-2.5 pr-2 py-1.5 cursor-grab active:cursor-grabbing ${done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
+      style={{ ...style, "--u": tint, "--c": tint } as React.CSSProperties}
       title={`${title} · ${duration(minutes)}. Drag to move.`}
       aria-label={`Scheduled: ${title}, ${clockRange(start, end)}${done ? ", done" : ""}. Open details`}
     >
@@ -863,7 +877,11 @@ function PlannedTile({
       </div>
       {h >= 40 ? (
         <div className="text-[11px] text-muted leading-tight truncate">
-          {course ? <span className="course-text">{course.code} · </span> : null}
+          {course ? (
+            <span className="course-text font-medium" style={courseStyle(course.color)}>
+              {course.code} ·{" "}
+            </span>
+          ) : null}
           {h >= 60 ? clockRange(start, end) : duration(minutes)}
         </div>
       ) : null}

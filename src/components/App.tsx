@@ -10,6 +10,7 @@ import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace
 import { type Change, type EstimateSource, type FeedResult, type FeedRole, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
+import type { TodoScope, TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Header } from "./Header";
@@ -45,6 +46,10 @@ interface UiPrefs {
   settingsPanel: SettingsPanel;
   /** Whether the calendar's sidebar (small month and to-do list) is open on a computer. */
   calSidebar: boolean;
+  /** The to-do list: everything, or school work only. */
+  todoScope: TodoScope;
+  /** The to-do list's order: most urgent first, or shortest first. */
+  todoSort: TodoSort;
 }
 
 const VIEWS: View[] = ["plan", "calendar", "upcoming", "settings", "help"];
@@ -58,6 +63,8 @@ const DEFAULT_UI: UiPrefs = {
   hideClassTimesTip: false,
   settingsPanel: "main",
   calSidebar: true,
+  todoScope: "all",
+  todoSort: "due",
 };
 
 function parseUi(raw: string | null): UiPrefs {
@@ -79,6 +86,8 @@ function parseUi(raw: string | null): UiPrefs {
     hideClassTimesTip: p.hideClassTimesTip === true,
     settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
     calSidebar: p.calSidebar !== false,
+    todoScope: p.todoScope === "school" ? "school" : "all",
+    todoSort: p.todoSort === "duration" ? "duration" : "due",
   };
 }
 
@@ -596,6 +605,10 @@ export function App() {
     setCalMode,
     calSidebar: ui.calSidebar,
     setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
+    todoScope: ui.todoScope,
+    setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
+    todoSort: ui.todoSort,
+    setTodoSort: (sort: TodoSort) => writeUi({ todoSort: sort }),
     calCursor,
     setCalCursor,
     planDay: safePlanDay,

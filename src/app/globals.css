@@ -1401,6 +1401,84 @@
     border-radius: 10px;
   }
 
+  /* A smaller segmented control, for the to-do list's own choices. */
+  .seg-sm {
+    padding: 2px;
+    border-radius: 10px;
+  }
+  .seg-sm > button {
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+  }
+
+  /*
+   * Work coloured by how soon it is due (--u, bright red through orange to yellow).
+   * It stays a white tile, the app's sign for "a task of yours", with the colour as
+   * a bar down its left edge and in its outline, so a column of work reads from red
+   * to yellow at a glance. The due date is always written too, so colour is never
+   * the only signal.
+   */
+  .urgency-card {
+    background: color-mix(in oklab, var(--u) 7%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--u) 55%, var(--line));
+    box-shadow:
+      inset 4px 0 0 var(--u),
+      0 1px 2px rgb(28 27 24 / 0.06);
+    transition:
+      background 120ms ease,
+      border-color 120ms ease;
+  }
+  .urgency-card:hover {
+    background: color-mix(in oklab, var(--u) 13%, var(--surface));
+    border-color: var(--u);
+  }
+  [data-theme="dark"] .urgency-card {
+    background: color-mix(in oklab, var(--u) 12%, var(--surface-2));
+    box-shadow: inset 4px 0 0 var(--u);
+  }
+  [data-theme="dark"] .urgency-card:hover {
+    background: color-mix(in oklab, var(--u) 18%, var(--surface-2));
+  }
+
+  /* The top of the list when it is sorted by due date: what to schedule next. */
+  .next-pill {
+    border-radius: 9999px;
+    background: var(--accent);
+    color: #fff;
+    padding: 0 0.45rem;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.15rem;
+    white-space: nowrap;
+  }
+  [data-theme="dark"] .next-pill {
+    color: #14123a;
+  }
+
+  /* How long a task needs; tap it to change. */
+  .estimate-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    border-radius: 9999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 0 0.4rem;
+    line-height: 1.15rem;
+    font-weight: 600;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+  .estimate-chip:hover {
+    border-color: var(--line-strong);
+  }
+  .estimate-chip[aria-expanded="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
   /* Upcoming's week strip: one tile per day, amber dots for what's due. */
   .week-day {
     display: flex;
