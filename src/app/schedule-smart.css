@@ -1462,6 +1462,144 @@ button.ss-event:hover {
 }
 
 /* What is being dragged, while it is away from the calendar. */
+.ss-modal-lead {
+  margin: 12px 0 0;
+  color: var(--ss-muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.ss-modal-actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.ss-quiet-button {
+  padding: 10px 17px;
+  border: 1px solid var(--ss-line);
+  border-radius: 10px;
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.ss-quiet-button:hover {
+  background: var(--ss-chip);
+}
+
+/* Which classes are yours: one row per class, ticked when it's in the plan. */
+.ss-class-picker {
+  width: min(620px, 100%);
+}
+.ss-picker-auto {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border-radius: 10px;
+  background: var(--ss-accent-soft);
+  color: var(--ss-work-fg);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.ss-picker-auto svg {
+  flex: none;
+  margin-top: 2px;
+}
+.ss-picker-tools {
+  margin: 18px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--ss-muted);
+  font-size: 13px;
+}
+.ss-picker-tools span {
+  margin-right: auto;
+  font-weight: 600;
+}
+.ss-picker-tools button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ss-accent);
+  font-weight: 700;
+}
+.ss-picker-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--ss-line);
+  border-radius: 12px;
+  background: var(--ss-surface);
+}
+.ss-picker-row {
+  padding: 11px 14px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.ss-picker-row + .ss-picker-row {
+  border-top: 1px solid var(--ss-line-soft);
+}
+.ss-picker-row .ss-check {
+  margin-top: 1px;
+}
+.ss-picker-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+.ss-picker-row strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+.ss-picker-row strong span {
+  overflow: hidden;
+  color: var(--ss-muted);
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+.ss-picker-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c);
+}
+.ss-picker-row small {
+  color: var(--ss-faint);
+  font-size: 12.5px;
+}
+.ss-picker-row em {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--ss-chip);
+  color: var(--ss-text-3);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+}
+.ss-picker-row em[data-reason="teaching"] {
+  background: var(--ss-school-bg);
+  color: var(--ss-school-fg);
+}
+.ss-picker-row[data-off] strong {
+  color: var(--ss-muted);
+}
+.ss-picker-row[data-off] .ss-picker-dot {
+  opacity: 0.4;
+}
+
 /*
  * What is being dragged. In the hand it looks like the card that was picked up;
  * over the calendar it glides into its slot and becomes the striped block it

@@ -119,6 +119,19 @@ Each calendar is either **School** (its entries become classes and assignments)
 or **Personal** (its entries only mark you as busy and never turn into homework).
 SmartScheduler picks one when you add a link and you can switch it at any time.
 
+**Choosing your classes.** A Canvas link can't be split: it brings every course on
+the account, including ones you TA, last term's, sandboxes and pages that aren't
+classes (orientation, advisement, clubs). So after you add a school calendar,
+SmartScheduler asks **Which classes are yours?** and lists every class it found.
+Ones that look like they aren't yours start unticked, with the reason: a name
+like "TA", "Teaching Assistants", "Sandbox" or "Template"; a page such as
+orientation or a library guide; or nothing due or on in the last three weeks (an
+earlier term). Untick any others you don't take. A class left out drops out
+everywhere — its work, its class times and its changes in the bell — and you can
+bring it back from **Choose classes** under the calendar in Settings. When a
+calendar picks up classes later (a new term, a class you start TAing), a line under
+the top bar says so, and the same rules decide which start out left out.
+
 **Staying up to date.** These links are live. SmartScheduler re-reads every calendar when
 you open it, when you come back to the tab, and every 30 minutes while it's open.
 Google and Apple reflect changes within minutes; Outlook can take a few hours to

@@ -121,12 +121,17 @@ function ProfileMenu() {
   );
 }
 
-/** App-wide messages, one slim line each under the bar: sample data, or a calendar that couldn't be read. */
+/**
+ * App-wide messages, one slim line each under the bar: sample data, a calendar
+ * that couldn't be read, or classes a school calendar brought in that the student
+ * hasn't said are theirs.
+ */
 export function Notices() {
   const { ws, snapshot, setView } = useApp();
   const broken = ws.feeds.filter((f) => f.enabled && snapshot.feeds[f.id]?.error);
   return (
     <>
+      <ClassesNotice />
       {ws.demo ? (
         <div className="ss-notice" role="note">
           <SsIcon name="spark" size={14} />
@@ -151,5 +156,43 @@ export function Notices() {
         </div>
       ) : null}
     </>
+  );
+}
+
+/**
+ * Classes the student hasn't decided on: everything a school calendar brought in
+ * the first time, or a course it picked up later (a new term, a class they now
+ * TA). Ones that look like they aren't theirs are already left out; this says so,
+ * and Looks right keeps things as they are.
+ */
+function ClassesNotice() {
+  const { ws, model, update, openClassPicker } = useApp();
+  // Sample data has nothing to sort out.
+  if (ws.demo) return null;
+  const open = model.courses.filter((c) => !c.decided && model.feedById.get(c.feedId)?.enabled);
+  if (open.length === 0) return null;
+  const feeds = [...new Set(open.map((c) => c.feedId))];
+  const source = feeds.length === 1 ? (model.feedById.get(feeds[0])?.name ?? "Your school calendar") : "Your school calendars";
+  const left = open.filter((c) => c.hidden).length;
+  const settle = () =>
+    update((w) => {
+      const courseEdits = { ...w.courseEdits };
+      for (const c of open) courseEdits[c.id] = { ...courseEdits[c.id], hidden: c.hidden };
+      return { ...w, courseEdits };
+    });
+  return (
+    <div className="ss-notice" role="note">
+      <SsIcon name="list" size={14} />
+      <span className="min-w-0 truncate">
+        <strong>
+          {source} added {open.length === 1 ? "a class" : `${open.length} classes`}.
+        </strong>{" "}
+        {left ? `${left} that ${left === 1 ? "doesn't" : "don't"} look like yours ${left === 1 ? "is" : "are"} left out.` : "Untick any you TA or aren't taking."}
+      </span>
+      <span className="ss-notice-actions">
+        <button onClick={() => openClassPicker(feeds.length === 1 ? feeds[0] : null)}>Choose classes</button>
+        <button onClick={settle}>Looks right</button>
+      </span>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CircleAlert, Eye, EyeOff, Link as LinkIcon, Pencil, Plus, Trash } from "lucide-react";
+import { CircleAlert, Eye, EyeOff, Link as LinkIcon, ListChecks, Pencil, Plus, Trash } from "lucide-react";
 import { feedIdFor, normalizeFeedUrl, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { fetchFeedFromApi } from "@/lib/sync";
 import type { FeedConfig, FeedResult, FeedRole, Provider } from "@/lib/types";
@@ -31,7 +31,7 @@ export function feedSummary(result: FeedResult | null | undefined, role: FeedRol
  * else on screen is the main action.
  */
 export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: boolean; primary?: boolean }) {
-  const { ws, addFeed, timezone } = useApp();
+  const { ws, addFeed, timezone, openClassPicker } = useApp();
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +58,8 @@ export function FeedAdder({ autoFocus = false, primary = true }: { autoFocus?: b
       const result = await fetchFeedFromApi(url, "auto", timezone);
       const past = addFeed(result);
       setValue("");
+      // One link for a whole school account brings every course on it; ask which are theirs.
+      if (result.role === "school" && result.courses.length > 1) openClassPicker(feedIdFor(url));
       const label = result.provider === "other" ? result.calendarName || "Calendar" : PROVIDER_LABEL[result.provider];
       setAdded(
         `Added ${label}: ${feedSummary(result, result.role)}.` +
@@ -195,12 +197,13 @@ export function FeedList({ manage = false }: { manage?: boolean }) {
   );
 }
 
-/** The classes a school calendar brought in. Click one to fix its name. */
+/** The classes a school calendar brought in. Click one to fix its name; Choose classes picks which are yours. */
 function ClassChips({ feedId }: { feedId: string }) {
-  const { model } = useApp();
+  const { model, openClassPicker } = useApp();
   const [editing, setEditing] = useState<string | null>(null);
-  const courses = model.courses.filter((c) => c.feedId === feedId);
-  if (courses.length === 0) return null;
+  const all = model.courses.filter((c) => c.feedId === feedId);
+  const courses = all.filter((c) => !c.hidden);
+  if (all.length === 0) return null;
   const editingCourse = courses.find((c) => c.id === editing);
 
   return (
@@ -222,6 +225,10 @@ function ClassChips({ feedId }: { feedId: string }) {
             <Pencil size={11} className="text-faint" aria-hidden />
           </button>
         ))}
+        <Button size="sm" variant="quiet" icon={ListChecks} onClick={() => openClassPicker(feedId)} title="Pick which classes from this calendar are yours">
+          Choose classes
+          {all.length > courses.length ? <span className="text-muted font-normal"> · {all.length - courses.length} left out</span> : null}
+        </Button>
         {editing ? null : <span className="text-[11px] text-faint">Name not right? Click a class to rename it.</span>}
       </div>
       {editingCourse ? <ClassNameForm key={editingCourse.id} course={editingCourse} onDone={() => setEditing(null)} /> : null}

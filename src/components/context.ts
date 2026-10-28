@@ -99,6 +99,8 @@ export interface AppContextValue {
   reveal: (taskId: string) => void;
   openAddTask: () => void;
   openClassTimes: () => void;
+  /** Choose which classes from one school calendar (or all of them) are the student's. */
+  openClassPicker: (feedId?: string | null) => void;
   /** Whether the "add your class times" suggestion was dismissed. */
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;

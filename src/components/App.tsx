@@ -23,6 +23,7 @@ import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
+import { ClassPicker } from "./ClassPicker";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
@@ -278,6 +279,11 @@ export function App() {
   // The plan only needs to move when the minute changes.
   const minute = Math.floor(now.getTime() / MINUTE);
   const model = useMemo(() => buildModel(ws, snapshot, new Date(minute * MINUTE)), [ws, snapshot, minute]);
+  // Changes in classes the student left out aren't theirs to hear about; they come back with the class.
+  const shownChanges = useMemo(() => {
+    const left = new Set(model.courses.filter((c) => c.hidden).map((c) => c.id));
+    return left.size ? changes.filter((c) => !c.courseId || !left.has(c.courseId)) : changes;
+  }, [changes, model.courses]);
   const plan = useMemo(() => makePlan(model, ws.prefs, new Date(minute * MINUTE), ws.blocks), [model, ws.prefs, ws.blocks, minute]);
   const index = useMemo(() => indexPlan(plan), [plan]);
   const newWork = useMemo(() => newIds(parseNewWork(newRaw), new Date(minute * MINUTE)), [newRaw, minute]);
@@ -286,6 +292,8 @@ export function App() {
   const [selected, setSelected] = useState<Selection>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [classTimesOpen, setClassTimesOpen] = useState(false);
+  // Which calendar's classes are being chosen: one feed's id, null for all, undefined when closed.
+  const [pickerFeed, setPickerFeed] = useState<string | null | undefined>(undefined);
   const [syncing, setSyncing] = useState(false);
   const syncingRef = useRef(false);
 
@@ -375,8 +383,13 @@ export function App() {
         }
 
         if (outcome.failed > 0) toast(outcome.failed === 1 ? "One calendar couldn't be read. Its last copy is still shown." : `${outcome.failed} calendars couldn't be read. Their last copies are still shown.`);
-        else if (outcome.changes.length) toast(`${plural(outcome.changes.length, "change")} from your classes · see the bell`);
-        else if (!quiet) toast("Everything is up to date");
+        else {
+          // Classes the student left out (ones they TA, say) keep their changes to themselves.
+          const left = new Set(buildModel(after, { feeds, at: outcome.snapshot.at }, at).courses.filter((c) => c.hidden).map((c) => c.id));
+          const shown = outcome.changes.filter((c) => !c.courseId || !left.has(c.courseId)).length;
+          if (shown) toast(`${plural(shown, "change")} from your classes · see the bell`);
+          else if (!quiet) toast("Everything is up to date");
+        }
       } catch (e) {
         if (!quiet) toast(e instanceof Error ? e.message : "Sync failed");
       } finally {
@@ -701,7 +714,7 @@ export function App() {
     model,
     plan,
     index,
-    changes,
+    changes: shownChanges,
     newWork,
     now,
     timezone,
@@ -748,6 +761,7 @@ export function App() {
       setAddOpen(true);
     },
     openClassTimes: () => setClassTimesOpen(true),
+    openClassPicker: (feedId) => setPickerFeed(feedId ?? null),
     classTimesTipHidden: ui.hideClassTimesTip,
     hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
     clearChanges,
@@ -786,10 +800,12 @@ export function App() {
           {selected ? <DetailPanel selection={selected} onClose={() => setSelected(null)} /> : null}
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
-          <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
-          <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
+          <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
+          <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
         </div>
       )}
+      {/* Here rather than in the shell, so setup can open it too. */}
+      {pickerFeed !== undefined ? <ClassPicker feedId={pickerFeed} onClose={() => setPickerFeed(undefined)} /> : null}
       {incoming.pending ? (
         <ImportDialog
           incoming={incoming.pending}
