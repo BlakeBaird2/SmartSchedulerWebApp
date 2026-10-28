@@ -11,7 +11,7 @@ import { SsIcon } from "./SsIcon";
 
 /**
  * The bar across the top, as in the Figma prototype: the name on the left, the
- * two views in the middle, the profile on the right. Add task lives in the
+ * three views in the middle (Calendar, Tasks, Due dates), the profile on the right. Add task lives in the
  * planner and on the Tasks page. Everything the prototype has no room for
  * (refreshing calendars, what changed, Settings, Help) is in the profile menu.
  */
@@ -30,6 +30,11 @@ export function Topbar() {
         <button aria-current={view === "tasks" ? "page" : undefined} onClick={() => setView("tasks")}>
           <SsIcon name="list" />
           Tasks
+        </button>
+        <button aria-current={view === "due" ? "page" : undefined} onClick={() => setView("due")}>
+          <SsIcon name="flag" />
+          <span className="ss-nav-long">Due dates</span>
+          <span className="ss-nav-short">Due</span>
         </button>
       </nav>
       <div className="ss-actions">

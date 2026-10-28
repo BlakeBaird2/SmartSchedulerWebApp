@@ -24,6 +24,7 @@ import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { ClassPicker } from "./ClassPicker";
+import { DueDatesPage } from "./DueDatesPage";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
 import { Toast } from "./ui";
@@ -42,6 +43,7 @@ interface UiPrefs {
   calMode: CalMode;
   /** Set once the student picks a view themselves; until then the calendar opens on the day. */
   calModePicked: boolean;
+  dueMode: CalMode;
   filters: Filters;
   /** Whether the first-run setup has been finished. */
   setupDone: boolean;
@@ -57,7 +59,7 @@ interface UiPrefs {
   todoSort: TodoSort;
 }
 
-const VIEWS: View[] = ["calendar", "tasks", "settings", "help"];
+const VIEWS: View[] = ["calendar", "tasks", "due", "settings", "help"];
 const CAL_MODES: CalMode[] = ["month", "week", "day"];
 
 /** Screens from before the redesign: Plan became the calendar, Upcoming and Classes the task list. */
@@ -71,6 +73,7 @@ const DEFAULT_UI: UiPrefs = {
   view: "calendar",
   calMode: "day",
   calModePicked: false,
+  dueMode: "week",
   filters: DEFAULT_FILTERS,
   setupDone: false,
   hideClassTimesTip: false,
@@ -91,6 +94,7 @@ function parseUi(raw: string | null): UiPrefs {
     // The day is the default. A view saved before that, which nobody picked, opens as the day too.
     calMode: p.calModePicked === true && p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
     calModePicked: p.calModePicked === true,
+    dueMode: p.dueMode && CAL_MODES.includes(p.dueMode) ? p.dueMode : DEFAULT_UI.dueMode,
     filters: {
       // One class or all of them (class tabs). An older multi-class choice falls back to all.
       courses: Array.isArray(f?.courses) && f.courses.length === 1 && typeof f.courses[0] === "string" ? [f.courses[0]] : null,
@@ -687,6 +691,7 @@ export function App() {
   );
   const setSettingsPanel = useCallback((p: SettingsPanel) => writeUi({ view: "settings", settingsPanel: p }), []);
   const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m, calModePicked: true }), []);
+  const setDueMode = useCallback((m: CalMode) => writeUi({ dueMode: m }), []);
   const setFilters = useCallback((f: Filters | ((prev: Filters) => Filters)) => {
     const prev = parseUi(readStored(KEYS.ui)).filters;
     writeUi({ filters: typeof f === "function" ? f(prev) : f });
@@ -739,6 +744,8 @@ export function App() {
     setSettingsPanel,
     calMode: ui.calMode,
     setCalMode,
+    dueMode: ui.dueMode,
+    setDueMode,
     calSidebar: ui.calSidebar,
     setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
     plannerMore: ui.plannerMore,
@@ -789,6 +796,7 @@ export function App() {
           ) : (
             <main className="ss-scroll" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
               {ui.view === "tasks" ? <TasksPage /> : null}
+              {ui.view === "due" ? <DueDatesPage /> : null}
               {ui.view === "settings" || ui.view === "help" ? (
                 <div className="ss-page fade-in">
                   <ViewHeading />

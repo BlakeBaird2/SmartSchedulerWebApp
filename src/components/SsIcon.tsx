@@ -16,7 +16,12 @@ export type SsIconName =
   | "settings"
   | "help"
   | "home"
-  | "grip";
+  | "grip"
+  | "flag"
+  | "cap"
+  | "pen"
+  | "book"
+  | "folder";
 
 const PATHS: Record<SsIconName, React.ReactNode> = {
   calendar: (
@@ -66,6 +71,12 @@ const PATHS: Record<SsIconName, React.ReactNode> = {
     </>
   ),
   home: <path d="M4 11 12 4l8 7M6 9.5V20h12V9.5" />,
+  // Due dates, and the kinds of work on them.
+  flag: <path d="M5 21V4m0 0h11l-2 4 2 4H5" />,
+  cap: <path d="m2 9 10-5 10 5-10 5L2 9Zm4 2.2V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.8M22 9v5" />,
+  pen: <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4" />,
+  book: <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15ZM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />,
+  folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />,
   // Six dots: something you can pick up and move.
   grip: (
     <>

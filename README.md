@@ -61,6 +61,13 @@ prefix on every class.
   estimate). Each column starts grey and fills with colour as that day's work is
   ticked off, so a finished week is seven full columns. Then every task in one
   table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
+- **Due dates** — every deadline from every class (and everything added by hand)
+  by the day it's due. It opens on the week: a card for each day, Monday to
+  Sunday, with that day's work listed down it. **Day** shows one day with more
+  about each item; **Month** shows the month, and a day opens that day. Each kind
+  of work has its own colour, icon and name — exams (a solid red badge), quizzes,
+  projects, assignments and readings — with a count of each for the range shown.
+  The colours were checked for colour-blind separation in light and dark.
 - **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
 - **Points and priority** — calendar feeds don't carry either. Points are for
   assignments from a class calendar (what they're worth in the class), so you add

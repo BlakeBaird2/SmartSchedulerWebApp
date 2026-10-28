@@ -38,6 +38,12 @@
   --ss-avatar-bg: #ddf0e4;
   --ss-avatar-fg: #27764d;
   --ss-shade: rgba(39, 39, 37, 0.2);
+  /* Kinds of work on Due dates (checked for colour-blind separation; each also has an icon and its name). */
+  --ss-exam: #d6455d;
+  --ss-quiz: #c98a12;
+  --ss-project: #2a9d8f;
+  --ss-assignment: #7066e7;
+  --ss-reading: #4c9a3c;
   /* Event kinds: the colour itself, its wash, and its text. */
   --ss-work: #7066e7;
   --ss-work-bg: #eeecff;
@@ -87,6 +93,11 @@
   --ss-avatar-bg: #1f3a2b;
   --ss-avatar-fg: #8fd4ad;
   --ss-shade: rgba(0, 0, 0, 0.45);
+  --ss-exam: #e0606f;
+  --ss-quiz: #b7841f;
+  --ss-project: #2fa898;
+  --ss-assignment: #7a73f0;
+  --ss-reading: #5ea84b;
   --ss-work: #8b85ff;
   --ss-work-bg: #26244a;
   --ss-work-fg: #c9c5ff;
@@ -180,6 +191,9 @@
   background: none;
   font-size: 15px;
   font-weight: 600;
+}
+.ss-nav-short {
+  display: none;
 }
 .ss-nav button:hover {
   color: var(--ss-ink);
@@ -1706,9 +1720,354 @@ button.ss-event:hover {
   }
 }
 
+/* --------------------------------------------------------- due dates */
+
+[data-type="exam"] {
+  --ty: var(--ss-exam);
+}
+[data-type="quiz"] {
+  --ty: var(--ss-quiz);
+}
+[data-type="project"] {
+  --ty: var(--ss-project);
+}
+[data-type="assignment"] {
+  --ty: var(--ss-assignment);
+}
+[data-type="reading"] {
+  --ty: var(--ss-reading);
+}
+/* The kind of work: its icon on a tint of its colour. */
+.ss-type-badge {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--ty);
+  background: color-mix(in oklab, var(--ty) 14%, var(--ss-surface));
+}
+/* Exams are the loudest thing on the page: a solid badge. */
+.ss-type-badge[data-type="exam"] {
+  color: #fff;
+  background: var(--ty);
+}
+.ss-due-toolbar {
+  margin: 30px 0 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 18px;
+}
+.ss-due-title span {
+  color: var(--ss-faint);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.ss-due-title h2 {
+  margin: 4px 0 0;
+  font: 700 21px "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.02em;
+}
+.ss-due-modes {
+  display: flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--ss-chip);
+}
+.ss-controls .ss-due-modes button {
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ss-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ss-controls .ss-due-modes button[aria-pressed="true"] {
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  box-shadow: 0 1px 3px rgba(30, 30, 27, 0.1);
+}
+.ss-due-legend {
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: var(--ss-muted);
+  font-size: 13.5px;
+}
+.ss-due-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.ss-due-legend .ss-type-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+}
+.ss-due-legend strong {
+  color: var(--ss-ink);
+}
+.ss-due-legend li[data-none] {
+  opacity: 0.55;
+}
+/* A week: a card for each day, one under the other. */
+.ss-due-days {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ss-due-day {
+  border: 1px solid var(--ss-line);
+  border-radius: 14px;
+  background: var(--ss-surface);
+  box-shadow: 0 3px 12px rgba(30, 30, 27, 0.025);
+}
+.ss-due-day[data-today] {
+  border-color: var(--ss-accent-ring);
+  box-shadow: 0 0 0 3px var(--ss-accent-soft);
+}
+.ss-due-day > header {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ss-due-day > header > div {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.ss-due-day > header strong {
+  font: 700 16px "Manrope Variable", "Manrope", sans-serif;
+}
+.ss-due-day > header span {
+  color: var(--ss-muted);
+  font-size: 13.5px;
+}
+.ss-due-day > header em {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--ss-accent);
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ss-due-count {
+  font-weight: 600;
+}
+.ss-due-day[data-past] > header strong {
+  color: var(--ss-muted);
+}
+/* A day with nothing due stays one slim line. */
+.ss-due-day[data-empty] > header {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.ss-due-day[data-empty] .ss-due-count {
+  color: var(--ss-faint);
+  font-weight: 500;
+}
+.ss-due-day ul {
+  margin: 0;
+  padding: 0 10px 10px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ss-due-item {
+  width: 100%;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--ss-line-soft);
+  border-left: 3px solid var(--ty);
+  border-radius: 10px;
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.ss-due-item:hover {
+  background: var(--ss-panel);
+  border-color: var(--ss-line);
+  border-left-color: var(--ty);
+}
+.ss-due-item[data-type="exam"] {
+  background: color-mix(in oklab, var(--ty) 6%, var(--ss-surface));
+}
+.ss-due-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ss-due-main strong {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ss-due-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  color: var(--ss-muted);
+  font-size: 12.5px;
+}
+.ss-due-type {
+  color: var(--ss-text-3);
+  font-weight: 700;
+}
+.ss-due-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ss-due-class i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.ss-due-when {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ss-text-3);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ss-due-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ss-personal-fg);
+  font-size: 12px;
+}
+.ss-due-late {
+  color: var(--ss-danger);
+  font-size: 12px;
+}
+.ss-due-item[data-done] .ss-due-main strong {
+  color: var(--ss-muted);
+  text-decoration: line-through;
+}
+.ss-due-item[data-done] .ss-type-badge {
+  opacity: 0.55;
+}
+/* A day on its own: room for more about each item. */
+.ss-due-days:has(> .ss-due-day:only-child) .ss-due-item {
+  padding: 14px 16px;
+}
+.ss-due-days:has(> .ss-due-day:only-child) .ss-type-badge {
+  width: 36px;
+  height: 36px;
+}
+.ss-due-days:has(> .ss-due-day:only-child) .ss-due-main strong {
+  font-size: 15.5px;
+}
+/* A month: the calendar's month grid, with a chip per item. */
+.ss-due-month {
+  min-height: 640px;
+}
+/* Each day is a button here (it opens the day), laid out like the calendar's month cells. */
+.ss-due-month .ss-month-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  border-top: 0;
+  border-left: 0;
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  font: inherit;
+}
+.ss-due-month .ss-month-cell.ss-outside {
+  background: var(--ss-panel);
+}
+.ss-due-chip {
+  min-width: 0;
+  padding: 2px 6px 2px 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--ty) 10%, var(--ss-surface));
+  color: var(--ss-ink);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.ss-due-chip span:last-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ss-due-chip .ss-type-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+.ss-due-chip[data-done] span:last-child {
+  color: var(--ss-muted);
+  text-decoration: line-through;
+}
+@media (max-width: 820px) {
+  .ss-due-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .ss-due-toolbar .ss-controls {
+    justify-content: space-between;
+  }
+  .ss-due-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .ss-due-when {
+    grid-column: 2;
+  }
+  .ss-due-month {
+    min-height: 0;
+  }
+  .ss-due-month .ss-month-grid {
+    grid-auto-rows: minmax(64px, 1fr);
+  }
+  /* Phones: each item in the month is a coloured mark; the day view has the words. */
+  .ss-due-chip {
+    padding: 0;
+    background: none;
+  }
+  .ss-due-chip span:last-child {
+    display: none;
+  }
+  .ss-due-month .ss-month-events {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 /* --------------------------------------------------------- tasks page */
 
-.ss-tasks-page {
+.ss-tasks-page,
+.ss-due-page {
   max-width: 1160px;
   margin: 0 auto;
   padding: 48px 40px 64px;
@@ -2403,6 +2762,7 @@ button.ss-event:hover {
     font-size: 10px;
   }
   .ss-tasks-page,
+  .ss-due-page,
   .ss-page {
     width: 100%;
     padding: 28px 16px 48px;
@@ -2526,9 +2886,13 @@ button.ss-event:hover {
     gap: 5px;
     font-size: 13.5px;
   }
-  .ss-nav svg {
-    width: 17px;
-    height: 17px;
+  /* Three tabs on a phone: words only, and the short one for Due dates. */
+  .ss-nav svg,
+  .ss-nav-long {
+    display: none;
+  }
+  .ss-nav-short {
+    display: inline;
   }
   .ss-avatar {
     width: 32px;
@@ -2577,7 +2941,8 @@ button.ss-event:hover {
   .ss-calendar-page:not(.ss-panel-closed) .ss-mini-task h3 {
     font-size: 13.5px;
   }
-  .ss-tasks-page {
+  .ss-tasks-page,
+  .ss-due-page {
     padding: 24px 14px 40px;
   }
   .ss-tasks-header h1 {
@@ -2631,6 +2996,7 @@ button.ss-event:hover {
     font-size: 0;
   }
   .ss-nav button svg {
+    display: block;
     width: 19px;
     height: 19px;
   }
