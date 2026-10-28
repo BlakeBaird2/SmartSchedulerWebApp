@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { endOfWeek, isSameDay, startOfWeek } from "date-fns";
-import { byUrgency, classRank, isSchoolWork, PRIORITY_LABEL, PRIORITY_ORDER } from "@/lib/todos";
+import { byUrgency, classRank, isSchoolWork, PRIORITY_LABEL } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { dueLabel } from "@/lib/ui";
 import { useApp } from "./context";
 import { SsIcon } from "./SsIcon";
 
-type TaskSort = "due" | "priority" | "length";
+type TaskSort = "due" | "length";
 
 const DAY = 86_400_000;
 /** Late work older than this has gone quiet; done work shows for a week. */
@@ -74,9 +74,7 @@ export function TasksPage() {
     const q = search.trim().toLowerCase();
     if (q) items = items.filter((t) => `${t.title} ${code(t) ?? "Personal"}`.toLowerCase().includes(q));
     const urgency = byUrgency(rank);
-    return [...items].sort((a, b) =>
-      sort === "length" ? a.estimate - b.estimate || urgency(a, b) : sort === "priority" ? PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] || urgency(a, b) : urgency(a, b),
-    );
+    return [...items].sort((a, b) => (sort === "length" ? a.estimate - b.estimate || urgency(a, b) : urgency(a, b)));
     // doneAt reads ws.done, which pool already follows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pool, filter, search, sort, model.courseById, rank, nowMs]);
@@ -151,7 +149,6 @@ export function TasksPage() {
           <span>Sort by</span>
           <select value={sort} onChange={(e) => setSort(e.target.value as TaskSort)}>
             <option value="due">Due date</option>
-            <option value="priority">Priority</option>
             <option value="length">Shortest first</option>
           </select>
         </label>
