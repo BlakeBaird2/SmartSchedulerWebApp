@@ -1731,7 +1731,7 @@ button.ss-event:hover {
 .ss-summary {
   margin: 36px 0 30px;
   display: grid;
-  grid-template-columns: 1.15fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 14px;
 }
 .ss-summary-card {
@@ -1802,50 +1802,104 @@ button.ss-event:hover {
   color: var(--ss-muted);
   font-size: 13.5px;
 }
-.ss-workload {
+/*
+ * The week at a glance. One column per day, as tall as the work due that day; the
+ * grey track fills with the accent from the bottom as the work is done. Bars stay
+ * thin (22px) with a rounded top and a square foot on one baseline.
+ */
+.ss-week-chart {
   align-items: stretch;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 28px;
 }
-.ss-graphic-line {
-  height: 8px;
-  display: flex;
-  gap: 5px;
+.ss-week-chart .ss-summary-copy {
+  flex: 0 1 220px;
+  align-self: center;
 }
-.ss-graphic-line i {
+.ss-week-bars {
   flex: 1;
-  border-radius: 99px;
-  background: var(--ss-track);
-  transition: background 0.25s ease;
+  min-width: 0;
+  min-height: 120px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
 }
-.ss-graphic-line i.ss-filled {
-  background: var(--ss-accent);
+.ss-week-bars li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  outline: none;
 }
-.ss-graphic-bars {
-  height: 32px;
+/* The plot: bars grow up from one baseline, above the day letters; the busiest day fills it. */
+.ss-week-plot {
+  align-self: stretch;
+  flex: 1;
   display: flex;
   align-items: flex-end;
-  gap: 5px;
+  justify-content: center;
+  border-bottom: 1px solid var(--ss-line);
 }
-.ss-graphic-bars i {
-  flex: 1;
-  height: 45%;
-  border-radius: 3px 3px 1px 1px;
+.ss-week-bar {
+  position: relative;
+  width: min(22px, 70%);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
   background: var(--ss-track);
-  transition:
-    height 0.25s ease,
-    background 0.25s ease;
+  transition: height 0.35s ease;
 }
-.ss-graphic-bars i:nth-child(2n) {
-  height: 72%;
-}
-.ss-graphic-bars i:nth-child(3n) {
-  height: 100%;
-}
-.ss-graphic-bars i.ss-filled {
-  height: 100%;
+.ss-week-bar i {
+  width: 100%;
   background: var(--ss-accent);
+  transition: height 0.35s ease;
+}
+/* A day with nothing due: a short stub on the baseline, so the day still reads as counted. */
+.ss-week-bar[data-empty] {
+  height: 3px !important;
+  border-radius: 2px;
+  background: var(--ss-line);
+}
+.ss-week-bars b {
+  height: 15px;
+  color: var(--ss-faint);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 15px;
+}
+.ss-week-bars li[data-today] b {
+  color: var(--ss-accent);
+}
+.ss-week-tip {
+  position: absolute;
+  bottom: calc(100% - 14px);
+  left: 50%;
+  z-index: 5;
+  padding: 7px 10px;
+  display: none;
+  border-radius: 8px;
+  background: var(--ss-dark);
+  color: var(--ss-on-dark);
+  font-size: 12px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.ss-week-tip strong {
+  display: block;
+  margin-bottom: 1px;
+  font-weight: 700;
+}
+.ss-week-bars li:hover .ss-week-tip,
+.ss-week-bars li:focus-visible .ss-week-tip {
+  display: block;
+}
+.ss-week-bars li:focus-visible .ss-week-bar {
+  box-shadow: 0 0 0 2px var(--ss-surface), 0 0 0 4px var(--ss-accent-ring);
 }
 .ss-filter-row {
   display: flex;
@@ -2379,8 +2433,18 @@ button.ss-event:hover {
     min-height: 120px;
     padding: 16px;
   }
-  .ss-completion {
+  .ss-completion,
+  .ss-week-chart {
     grid-column: 1 / -1;
+  }
+  /* Phones: the words above the columns, which get the card's full width. */
+  .ss-week-chart {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ss-week-chart .ss-summary-copy {
+    flex: none;
+    align-self: stretch;
   }
   .ss-ring {
     width: 76px;

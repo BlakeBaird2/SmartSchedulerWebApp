@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { autoPriority, blocksByTask, classRank, isSchoolWork, sortTodos, todoList, todoState, unfinishedToAsk, urgency, urgencyColor, NO_DUE_COLOR } from "../todos";
+import { autoPriority, blocksByTask, classRank, isSchoolWork, sortTodos, todoList, todoState, unfinishedToAsk, urgency, urgencyColor, weekLoad, NO_DUE_COLOR } from "../todos";
 import { approxDuration, dueLabel } from "../ui";
 import type { ScheduledBlock, Task } from "../types";
 
@@ -176,4 +176,32 @@ test("due dates read the planner's way", () => {
   assert.deepEqual(dueLabel(at(5, 9), NOW), { text: "Mon, Oct 5", late: false });
   assert.deepEqual(dueLabel(at(0, 9), NOW), { text: "1 day late", late: true });
   assert.deepEqual(dueLabel(null, NOW), { text: "No due date", late: false });
+});
+
+test("the week at a glance adds up each day's work by its estimate, and what of it is done", () => {
+  // Monday, September 28 to Sunday, October 4 (October 1 is the Thursday).
+  const days = weekLoad(
+    [
+      task("essay", { dueAt: at(1, 23, 59).toISOString(), estimate: 120 }),
+      task("reading", { dueAt: at(1, 9).toISOString(), estimate: 30, done: true }),
+      task("quiz", { dueAt: at(4, 23, 59).toISOString(), estimate: 45, done: true }),
+      task("next week", { dueAt: at(5, 0, 1).toISOString() }),
+      task("last week", { dueAt: new Date(2026, 8, 27, 23, 59).toISOString() }),
+      task("no date", { dueAt: null }),
+    ],
+    new Date(2026, 8, 28),
+  );
+  assert.equal(days.length, 7);
+  assert.deepEqual(
+    days.map((d) => [d.date.getDate(), d.items, d.done, d.minutes, d.doneMinutes]),
+    [
+      [28, 0, 0, 0, 0],
+      [29, 0, 0, 0, 0],
+      [30, 0, 0, 0, 0],
+      [1, 2, 1, 150, 30],
+      [2, 0, 0, 0, 0],
+      [3, 0, 0, 0, 0],
+      [4, 1, 1, 45, 45],
+    ],
+  );
 });

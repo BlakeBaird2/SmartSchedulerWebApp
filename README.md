@@ -56,9 +56,11 @@ prefix on every class.
   - Tap a free time to see what fits there, with **Put it here**.
   - Phones: the planner and one day side by side, or three days with the planner
     closed.
-- **Tasks** — the master checklist: how the week is going (a progress ring, due
-  today, due this week), then every task in one table to search, sort (due date,
-  shortest first) and filter (today, a class, personal, completed).
+- **Tasks** — the master checklist: a ring for what's due today, and a column
+  for each day of the week, Monday to Sunday, as tall as the work due that day (by
+  estimate). Each column starts grey and fills with colour as that day's work is
+  ticked off, so a finished week is seven full columns. Then every task in one
+  table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
 - **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
 - **Points and priority** — calendar feeds don't carry either. Points are for
   assignments from a class calendar (what they're worth in the class), so you add
