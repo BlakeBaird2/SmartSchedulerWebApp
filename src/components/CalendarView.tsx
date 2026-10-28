@@ -149,6 +149,20 @@ export function CalendarView() {
               <h1 aria-live="polite">{title}</h1>
             </div>
           </div>
+          <div className="ss-key">
+            <span>
+              <i className="ss-key-work" />
+              Work
+            </span>
+            <span>
+              <i className="ss-key-school" />
+              School
+            </span>
+            <span>
+              <i className="ss-key-personal" />
+              Personal
+            </span>
+          </div>
           <div className="ss-controls">
             <button className="ss-today" onClick={() => setCalCursor(new Date())} aria-current={isSameDay(calCursor, today) ? "date" : undefined}>
               Today
@@ -175,20 +189,6 @@ export function CalendarView() {
               <option value="month">Month</option>
             </select>
           </div>
-        </div>
-        <div className="ss-key">
-          <span>
-            <i className="ss-key-work" />
-            Work
-          </span>
-          <span>
-            <i className="ss-key-school" />
-            School
-          </span>
-          <span>
-            <i className="ss-key-personal" />
-            Personal
-          </span>
         </div>
         {calMode === "month" ? <MonthGrid data={data} /> : <TimeGrid days={days} data={data} dayView={calMode === "day"} />}
       </section>
