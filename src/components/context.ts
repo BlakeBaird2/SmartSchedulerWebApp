@@ -38,11 +38,6 @@ export interface AppContextValue {
   toggleDone: (task: Task) => void;
   /** Set how long a task needs (null goes back to the default for its kind). */
   setEstimate: (taskId: string, minutes: number | null, source?: EstimateSource) => void;
-  /**
-   * Put a task at a time of the student's choosing (dragged onto the calendar or
-   * picked in its details), or pass null to let SmartScheduler choose again.
-   */
-  planAt: (task: Task, start: Date | null) => void;
   /** Put a task on the calendar at `start`, for as long as it's expected to take. */
   scheduleTask: (task: Task, start: Date) => void;
   /** Move scheduled time to a new start, keeping its length. */

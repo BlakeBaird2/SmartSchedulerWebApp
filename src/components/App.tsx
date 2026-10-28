@@ -123,20 +123,6 @@ function writeJson(key: string, value: unknown): boolean {
   return writeStored(key, JSON.stringify(value));
 }
 
-/** Time set aside for a task, shaped like a Google Calendar event. */
-function newBlock(task: Task, start: Date, end: Date): ScheduledBlock {
-  return {
-    id: randomId(),
-    taskId: task.id,
-    title: task.title,
-    start: start.toISOString(),
-    end: end.toISOString(),
-    color: null,
-    externalId: null,
-    updatedAt: new Date().toISOString(),
-  };
-}
-
 function browserTimezone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -524,25 +510,6 @@ export function App() {
     [update],
   );
 
-  /** Set aside time for a task on the calendar, as long as its estimate; or, with null, take its time back off. */
-  const planAt = useCallback(
-    (task: Task, start: Date | null) => {
-      if (start && start.getTime() + task.estimate * MINUTE <= Date.now()) {
-        toast("That time has already passed. Pick a time from now on.");
-        return;
-      }
-      const prev = readWorkspace().blocks.filter((b) => b.taskId === task.id);
-      const write = (mine: ScheduledBlock[]) => update((w) => ({ ...w, blocks: [...w.blocks.filter((b) => b.taskId !== task.id), ...mine] }));
-      write(start ? [newBlock(task, start, new Date(start.getTime() + task.estimate * MINUTE))] : []);
-      trackEvent(start ? "task_planned" : "task_unplanned", { taskId: task.id, title: task.title, at: start ? start.toISOString() : null });
-      toast(
-        start ? `Planned ${format(start, "EEE")} ${clock(start)}: ${task.title}` : `Back on your to-do list: ${task.title}`,
-        { undo: () => write(prev) },
-      );
-    },
-    [update, toast],
-  );
-
   // ---------------------------------------------------------------------------
   // Time set aside on the calendar
   // ---------------------------------------------------------------------------
@@ -662,7 +629,6 @@ export function App() {
     update,
     toggleDone,
     setEstimate,
-    planAt,
     scheduleTask,
     moveScheduled,
     resizeScheduled,

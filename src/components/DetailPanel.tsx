@@ -1,18 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
-import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Pin, Trash, Undo2, X } from "lucide-react";
+import { addDays, format, startOfDay } from "date-fns";
+import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
-import { buildDaySchedule } from "@/lib/timeline";
 import type { CalEvent, Task } from "@/lib/types";
-import { clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
-import type { PlannedBlock } from "@/lib/planner";
+import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
+import { urgencyColor } from "@/lib/todos";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
+import { useTodos } from "./TodoList";
 import { Button, buttonClass, ChoicePill, ClassChip, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
@@ -54,19 +54,15 @@ export function DetailPanel({ selection, onClose }: { selection: NonNullable<Sel
   );
 }
 
-function blocksPinned(blocks: PlannedBlock[] | undefined): boolean {
-  return Boolean(blocks?.some((b) => b.pinned));
-}
-
 /**
  * Choose when to work on a task: a day and a start time. The same as dragging it
- * onto the calendar, for phones, keyboards and anyone who'd rather type.
+ * onto the calendar, for keyboards and anyone who'd rather type.
  */
 function PickTime({ task, start, onDone }: { task: Task; start?: Date; onDone: () => void }) {
-  const { planAt, now } = useApp();
+  const { scheduleTask, now } = useApp();
   const today = startOfDay(now);
   const days = Array.from({ length: PLAN_DAYS }, (_, i) => addDays(today, i));
-  // Start from the planned time, or the next whole hour.
+  // Start from the scheduled time, or the next whole hour.
   const initial = start ?? new Date(Math.ceil((now.getTime() + 1) / 3_600_000) * 3_600_000);
   const [day, setDay] = useState(dayKey(initial < addDays(today, PLAN_DAYS) ? initial : today));
   const [time, setTime] = useState(format(initial, "HH:mm"));
@@ -77,7 +73,7 @@ function PickTime({ task, start, onDone }: { task: Task; start?: Date; onDone: (
     const at = days.find((d) => dayKey(d) === day) ?? today;
     const when = new Date(at);
     when.setHours(h, m, 0, 0);
-    planAt(task, when);
+    scheduleTask(task, when);
     onDone();
   };
 
@@ -97,13 +93,13 @@ function PickTime({ task, start, onDone }: { task: Task; start?: Date; onDone: (
           <input className="input" type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} required />
         </Field>
       </div>
-      <p className="text-xs text-muted">Takes {duration(task.estimate)}. SmartScheduler plans everything else around it.</p>
+      <p className="text-xs text-muted">Takes {approxDuration(task.estimate)}. It goes on your calendar and comes off your to-do list.</p>
       <div className="flex justify-end gap-2">
         <Button size="sm" onClick={onDone}>
           Cancel
         </Button>
         <Button size="sm" variant="primary" type="submit" data-smart-event="task_planned">
-          Plan it
+          Schedule it
         </Button>
       </div>
     </form>
@@ -117,23 +113,27 @@ function Label({ children }: { children: React.ReactNode }) {
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, index, now, changes, ws, setEstimate, update, setView, setPlanDay, toggleDone, select, completeTask, toast, planAt } = useApp();
+  const { model, index, now, changes, ws, setEstimate, update, setView, setCalCursor, toggleDone, select, completeTask, toast, unschedule } = useApp();
   const [picking, setPicking] = useState(false);
-  const pinned = Boolean(blocksPinned(index.blocks.get(task.id)));
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
   const d = dueDate(task);
   const overdue = Boolean(d && d.getTime() < now.getTime() && !task.done);
-  const blocks = index.blocks.get(task.id) ?? [];
-  const risk = index.atRisk.get(task.id);
+  const scheduled = useMemo(
+    () => ws.blocks.filter((b) => b.taskId === task.id).sort((a, b) => Date.parse(a.start) - Date.parse(b.start)),
+    [ws.blocks, task.id],
+  );
+  const lastEnd = scheduled.length ? Date.parse(scheduled[scheduled.length - 1].end) : 0;
+  const ahead = scheduled.some((b) => Date.parse(b.end) > now.getTime());
+  const risk = ahead ? undefined : index.atRisk.get(task.id);
   const history = useMemo(() => changes.filter((c) => c.taskId === task.id).slice(0, 6), [changes, task.id]);
   const typeDefault = ws.prefs.estimates[task.type];
   const options = [...new Set([...ESTIMATES, task.estimate])].sort((a, b) => a - b);
   const rank = index.rank.get(task.id);
 
   const openDay = (date: Date) => {
-    setPlanDay(differenceInCalendarDays(date, now));
-    setView("plan");
+    setCalCursor(date);
+    setView("calendar");
     onClose();
   };
 
@@ -213,41 +213,45 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         {!task.done ? (
           <div>
             <SectionLabel className="mb-1 inline-flex items-center gap-1.5">
-              <Clock3 size={12} className="text-ok" aria-hidden />
-              Planned (when you&apos;ll work on it)
+              <CalendarClock size={12} className="text-ok" aria-hidden />
+              On your calendar
             </SectionLabel>
-            {blocks.length > 0 ? (
+            {scheduled.length > 0 ? (
               <ul className="space-y-1">
-                {blocks.map((b) => (
-                  <li key={b.part}>
-                    <button
-                      type="button"
-                      onClick={() => openDay(b.start)}
-                      className="w-full text-left flex items-center gap-2 rounded-lg border border-ok/30 bg-ok-soft px-3 py-2 text-sm hover:border-ok/60 transition"
-                    >
-                      {b.pinned ? <Pin size={14} className="shrink-0 text-ok" aria-label="A time you picked" /> : <Clock3 size={14} className="shrink-0 text-ok" aria-hidden />}
-                      <span className="flex-1 min-w-0">
-                        {format(b.start, "EEE, MMM d")} · {clockRange(b.start, b.end)}
-                      </span>
-                      <span className="text-xs text-muted tabular-nums">{duration(b.minutes)}</span>
-                      <ArrowRight size={13} className="text-muted" aria-label="Open this day in your plan" />
-                    </button>
-                  </li>
-                ))}
+                {scheduled.map((b) => {
+                  const start = new Date(b.start);
+                  const end = new Date(b.end);
+                  const past = end.getTime() <= now.getTime();
+                  return (
+                    <li key={b.id} className={`flex items-stretch rounded-lg border border-ok/30 bg-ok-soft text-sm ${past ? "opacity-60" : ""}`}>
+                      <button
+                        type="button"
+                        onClick={() => openDay(start)}
+                        className="flex-1 min-w-0 text-left flex items-center gap-2 pl-3 pr-1 py-2 rounded-l-lg hover:bg-ok/10 transition"
+                      >
+                        <Clock3 size={14} className="shrink-0 text-ok" aria-hidden />
+                        <span className="flex-1 min-w-0">
+                          {format(start, "EEE, MMM d")} · {clockRange(start, end)}
+                        </span>
+                        <span className="text-xs text-muted tabular-nums">{duration((end.getTime() - start.getTime()) / 60_000)}</span>
+                        <ArrowRight size={13} className="text-muted" aria-label="Show it on the calendar" />
+                      </button>
+                      <Button iconOnly size="sm" variant="quiet" icon={X} label={`Take ${format(start, "EEE h:mm a")} off the calendar`} onClick={() => unschedule(b.id)} />
+                    </li>
+                  );
+                })}
               </ul>
-            ) : null}
-            {pinned ? (
-              <p className="mt-1.5 text-xs text-muted flex items-center gap-1.5 flex-wrap">
-                <Pin size={12} className="text-ok" aria-hidden />
-                You picked this time.
-                <TextButton onClick={() => planAt(task, null)}>Let SmartScheduler choose</TextButton>
-              </p>
-            ) : null}
-            {pinned && d && blocks[blocks.length - 1].end.getTime() > d.getTime() ? (
+            ) : (
+              <p className="text-sm text-muted">Not yet. Drag it from your to-do list onto a free time, or pick one here.</p>
+            )}
+            {d && !overdue && lastEnd > d.getTime() ? (
               <p className="mt-1.5 text-sm text-danger font-semibold flex gap-1.5">
                 <CircleAlert size={15} className="shrink-0 mt-0.5" />
                 That&apos;s after it&apos;s due.
               </p>
+            ) : null}
+            {scheduled.length > 0 && !ahead ? (
+              <p className="mt-1.5 text-xs text-muted">That time has passed and it isn&apos;t marked done, so it&apos;s back on your to-do list.</p>
             ) : null}
             {risk ? (
               <p className="mt-2 text-sm text-danger font-semibold flex gap-1.5">
@@ -256,18 +260,12 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   ? `Only ${duration(risk.planned)} of free time before it's due. ${duration(risk.shortBy)} won't fit.`
                   : "There's no free time left before it's due."}
               </p>
-            ) : blocks.length === 0 ? (
-              <p className="text-sm text-muted">
-                {d && d.getTime() < now.getTime() - 7 * 86_400_000
-                  ? "More than a week late, so it's left out of the plan."
-                  : "Due more than two weeks out. It'll be planned as it gets closer."}
-              </p>
             ) : null}
             {picking ? (
-              <PickTime task={task} start={blocks[0]?.start} onDone={() => setPicking(false)} />
+              <PickTime task={task} onDone={() => setPicking(false)} />
             ) : (
               <Button size="sm" icon={CalendarClock} className="mt-2" onClick={() => setPicking(true)}>
-                {blocks.length ? "Pick a different time" : "Pick a time"}
+                {ahead ? "Add another time" : "Schedule it"}
               </Button>
             )}
           </div>
@@ -399,7 +397,7 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
           </div>
         ) : null}
         <p className="text-sm text-muted">
-          {event.busy ? "SmartScheduler plans your work around this." : "This doesn't block your time, so SmartScheduler can plan work during it."}
+          {event.busy ? "You're busy then, so it isn't offered as free time." : "This doesn't block your time, so it still counts as free time."}
         </p>
         {editable ? (
           editing ? (
@@ -454,24 +452,20 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
   );
 }
 
-function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void }) {
-  const { plan, model, select, completeTask, setView, setPlanDay, now } = useApp();
-  let found: {
-    dayIndex: number;
-    day: (typeof plan.days)[number];
-    gap: Extract<ReturnType<typeof buildDaySchedule>["items"][number], { kind: "free" }>;
-  } | null = null;
-  for (let i = 0; i < plan.days.length; i++) {
-    const day = plan.days[i];
-    const schedule = buildDaySchedule(day.date, day, model.events, model.tasks);
-    const gap = schedule.items.find((it) => it.kind === "free" && it.start.getTime() <= startMs && it.end.getTime() > startMs);
-    if (gap && gap.kind === "free") {
-      found = { dayIndex: i, day, gap };
-      break;
-    }
-  }
+/** How many tasks a free gap suggests. */
+const GAP_SUGGESTIONS = 4;
 
-  if (!found) {
+/**
+ * A free stretch of time, with the next things on the to-do list that fit in it.
+ * "Put it here" is the tap-and-done way to schedule, for anyone who'd rather not drag.
+ */
+function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void }) {
+  const { plan, model, select, scheduleTask, setView, setPlanDay, now } = useApp();
+  const todos = useTodos();
+  const dayIndex = plan.days.findIndex((d) => d.gaps.some((g) => g.start.getTime() <= startMs && g.end.getTime() > startMs));
+  const gap = dayIndex >= 0 ? plan.days[dayIndex].gaps.find((g) => g.start.getTime() <= startMs && g.end.getTime() > startMs) : undefined;
+
+  if (!gap) {
     return (
       <>
         <header className="flex items-center gap-3 p-4 border-b border-line">
@@ -479,7 +473,7 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
           <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
         </header>
         <div className="p-4 space-y-3">
-          <p className="text-sm text-muted">This free gap is no longer on your plan (the day may have moved on).</p>
+          <p className="text-sm text-muted">This free time isn&apos;t free any more (something was scheduled, or the day moved on).</p>
           <Button block onClick={onClose}>
             Close
           </Button>
@@ -488,7 +482,12 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
     );
   }
 
-  const { dayIndex, day, gap } = found;
+  // Work starts on a quarter hour, like a drop on the calendar.
+  const start = new Date(Math.ceil(Math.max(gap.start.getTime(), now.getTime()) / (15 * 60_000)) * 15 * 60_000);
+  const room = Math.max(0, (gap.end.getTime() - start.getTime()) / 60_000);
+  const fits = todos.filter((t) => t.estimate <= room);
+  const shown = fits.slice(0, GAP_SUGGESTIONS);
+  const next = todos[0];
 
   return (
     <>
@@ -496,45 +495,59 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
         <div className="min-w-0 flex-1">
           <h2 className="font-semibold">Free · {duration(gap.minutes)}</h2>
           <p className="mt-1 text-sm text-muted">
-            {format(day.date, "EEEE, MMM d")} · {clockRange(gap.start, gap.end)}
+            {format(gap.start, "EEEE, MMM d")} · {clockRange(gap.start, gap.end)}
           </p>
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
       <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
-        <p className="text-sm text-muted leading-relaxed">
-          SmartScheduler fills this gap with unfinished work that is due soonest and that fits. Open a task, review it, then mark it done.
-        </p>
-        {gap.work.length === 0 ? (
-          <p className="text-sm text-muted">Nothing due soon fits here. Enjoy the break, or pick work from Upcoming.</p>
+        {shown.length > 0 ? (
+          <>
+            <p className="text-sm text-muted leading-relaxed">
+              Next on your to-do list that fits. Put one here to start at {clock(start)}, or drag any task onto this time.
+            </p>
+            <ul className="space-y-2">
+              {shown.map((t, i) => {
+                const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+                return (
+                  <li key={t.id} className="urgency-card rounded-xl border border-line p-3 flex items-center gap-3" style={{ "--u": urgencyColor(t.dueAt, now) } as React.CSSProperties}>
+                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => select({ kind: "task", id: t.id })}>
+                      <div className="font-semibold leading-snug line-clamp-2">{t.title}</div>
+                      <div className="mt-1 text-xs text-muted flex flex-wrap gap-x-2">
+                        <span>{approxDuration(t.estimate)}</span>
+                        {course ? <ClassChip code={course.code} color={course.color} /> : <span>Personal</span>}
+                        {t.dueAt ? <span>{relativeDue(new Date(t.dueAt), now)}</span> : null}
+                      </div>
+                    </button>
+                    <Button
+                      size="sm"
+                      variant={i === 0 ? "primary" : "secondary"}
+                      icon={CalendarClock}
+                      data-smart-event="task_planned"
+                      onClick={() => {
+                        scheduleTask(t, start);
+                        onClose();
+                      }}
+                    >
+                      Put it here
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+            {fits.length > shown.length ? (
+              <p className="text-xs text-muted">
+                {fits.length - shown.length} more {fits.length - shown.length === 1 ? "task fits" : "tasks fit"}. Drag one from your to-do list.
+              </p>
+            ) : null}
+          </>
         ) : (
-          <ul className="space-y-2">
-            {gap.work.map((w) => {
-              const course = w.task.courseId ? model.courseById.get(w.task.courseId) : undefined;
-              return (
-                <li key={`${w.task.id}:${w.block.part}`} className="rounded-xl border border-line p-3 space-y-2" style={courseStyle(course?.color)}>
-                  <button type="button" className="text-left w-full" onClick={() => select({ kind: "task", id: w.task.id })}>
-                    <div className="font-semibold leading-snug">{w.task.title}</div>
-                    <div className="mt-1 text-xs text-muted flex flex-wrap gap-x-2">
-                      {course ? <ClassChip code={course.code} color={course.color} /> : null}
-                      <span>{duration(w.block.minutes)}</span>
-                      {w.task.dueAt ? <span>{relativeDue(new Date(w.task.dueAt), now)}</span> : null}
-                    </div>
-                  </button>
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={() => select({ kind: "why", id: w.task.id })}>
-                      Why this task?
-                    </Button>
-                    <Button size="sm" variant="primary" className="ml-auto" icon={Check} onClick={() => completeTask(w.task)}>
-                      Done
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <p className="text-sm text-muted leading-relaxed">
+            {next
+              ? `Nothing on your to-do list fits in ${duration(room)}. Next up is ${next.title}, which needs ${approxDuration(next.estimate)}. Enjoy the break, or drag it here anyway.`
+              : "Your to-do list is empty. Enjoy the break."}
+          </p>
         )}
-        {gap.leftover >= 15 ? <p className="text-xs text-muted">{duration(gap.leftover)} of this gap stays free.</p> : null}
         <div className="flex flex-wrap gap-2 pt-1">
           <Button
             onClick={() => {
