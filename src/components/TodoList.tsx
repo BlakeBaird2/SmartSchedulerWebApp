@@ -7,7 +7,7 @@ import type { Task } from "@/lib/types";
 import { approxDuration, dueIn } from "@/lib/ui";
 import { courseStyle, useApp } from "./context";
 import { Button, Checkbox, ChoicePill, SegmentedControl } from "./ui";
-import { endPlanDrag, PLAN_DRAG_TYPE, startPlanDrag, usePlanDrag } from "./planDrag";
+import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag } from "./planDrag";
 
 /** The to-do list's work, in order, honouring the class tabs above the calendar. */
 export function useTodos(): Task[] {
@@ -25,34 +25,18 @@ export function useTodos(): Task[] {
  * scheduled work back here takes it off the calendar again.
  */
 export function TodoList({ className = "" }: { className?: string }) {
-  const { model, planAt, todoScope, setTodoScope, todoSort, setTodoSort, openAddTask } = useApp();
+  const { todoScope, setTodoScope, todoSort, setTodoSort, openAddTask } = useApp();
   const todos = useTodos();
   const drag = usePlanDrag();
-  const [over, setOver] = useState(false);
   // Only work already on the calendar can be handed back; the list is where it lands.
-  const canDrop = Boolean(drag?.pinned);
+  const canDrop = drag?.kind === "move";
+  const over = drag?.target?.kind === "list";
 
   return (
     <section
+      data-drop-list
       className={`todo-panel flex flex-col min-h-0 ${canDrop ? "todo-panel-target" : ""} ${over ? "todo-panel-over" : ""} ${className}`}
       aria-labelledby="todo-title"
-      onDragOver={(e) => {
-        if (!canDrop || !e.dataTransfer.types.includes(PLAN_DRAG_TYPE)) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        setOver(true);
-      }}
-      onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false);
-      }}
-      onDrop={(e) => {
-        setOver(false);
-        if (!canDrop || !drag) return;
-        e.preventDefault();
-        const task = model.tasks.find((t) => t.id === drag.taskId);
-        if (task) planAt(task, null);
-        endPlanDrag();
-      }}
     >
       <header className="px-3 pt-3 pb-2.5 border-b border-line space-y-2">
         <div className="flex items-center gap-2">
@@ -115,8 +99,9 @@ const ESTIMATE_CHOICES = [5, 15, 30, 45, 60, 90, 120, 180];
  * onto a time. Coloured by how soon it is due, red to yellow.
  */
 function TodoItem({ task, next }: { task: Task; next: boolean }) {
-  const { model, now, ws, select, toggleDone, setEstimate } = useApp();
+  const { model, now, ws, select, toggleDone, setEstimate, scheduleTask } = useApp();
   const drag = usePlanDrag();
+  const color = urgencyColor(task.dueAt, now);
   const [editing, setEditing] = useState(false);
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const due = task.dueAt ? new Date(task.dueAt) : null;
@@ -128,7 +113,7 @@ function TodoItem({ task, next }: { task: Task; next: boolean }) {
     <div
       role="button"
       tabIndex={0}
-      draggable
+      ref={dragSourceRef}
       aria-label={`${task.title}, ${approxDuration(task.estimate)}${due ? `, ${dueIn(due, now)}` : ""}${next ? ", next up" : ""}. Open details`}
       title="Drag onto the calendar to schedule it"
       onClick={open}
@@ -139,10 +124,20 @@ function TodoItem({ task, next }: { task: Task; next: boolean }) {
           open();
         }
       }}
-      onDragStart={(e) => startPlanDrag(e, { taskId: task.id, title: task.title, minutes: task.estimate, grab: 0, pinned: false, color: urgencyColor(task.dueAt, now) })}
-      onDragEnd={endPlanDrag}
-      style={{ "--u": urgencyColor(task.dueAt, now) } as React.CSSProperties}
-      className={`todo-item urgency-card group flex items-start gap-2 pl-3 pr-1 py-2 cursor-grab active:cursor-grabbing ${drag?.taskId === task.id ? "opacity-40" : ""}`}
+      onPointerDown={(e) => {
+        // The tick box and the estimate are their own controls.
+        if ((e.target as HTMLElement).closest("button, input")) return;
+        beginPlanDrag(
+          e,
+          // A finger would hide the top of the block, so on touch the block hangs above it.
+          { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color },
+          (target) => {
+            if (target.kind === "grid") scheduleTask(task, targetStart(target));
+          },
+        );
+      }}
+      style={{ "--u": color } as React.CSSProperties}
+      className={`todo-item urgency-card drag-source group flex items-start gap-2 pl-3 pr-1 py-2 cursor-grab ${drag?.kind === "new" && drag.taskId === task.id ? "opacity-40" : ""}`}
     >
       <span className="pt-0.5" onClick={(e) => e.stopPropagation()}>
         <Checkbox checked={task.done} onChange={() => toggleDone(task)} size="sm" label={`Mark ${task.title} as done`} />

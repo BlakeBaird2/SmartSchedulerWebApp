@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   addDays,
   addMonths,
@@ -24,7 +24,8 @@ import { applyFilters, clock, clockRange, dayKey, duration, typeMeta } from "@/l
 import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
 import { CalendarSidebar } from "./CalendarSidebar";
-import { endPlanDrag, PLAN_DRAG_TYPE, startPlanDrag, usePlanDrag } from "./planDrag";
+import { DragGhost } from "./DragGhost";
+import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
 import { Button, SegmentedControl } from "./ui";
 
 const MODES: { id: CalMode; label: string }[] = [
@@ -176,6 +177,8 @@ export function CalendarView() {
           <SegmentedControl label="Calendar view" stretch options={PHONE_MODES} value={calMode} onChange={setCalMode} />
         </div>
         {views}
+        {/* Room under the last hour for the to-do sheet. */}
+        <DragGhost />
       </div>
     );
   }
@@ -213,6 +216,8 @@ export function CalendarView() {
           <Legend month={calMode === "month"} timezone={timezone} />
         </div>
       </div>
+      {/* Tablets: no room for the sidebar, so the to-do list is a sheet, as on phones. */}
+      <DragGhost />
     </div>
   );
 }
@@ -511,17 +516,15 @@ type GridItem =
   | { kind: "work"; id: string; start: number; end: number; item: CalBlock };
 
 const MIN = 60_000;
-/** Dropped work snaps to quarter hours. */
-const SNAP = 15;
 
 type GapItem = { id: string; start: number; end: number; startMs: number; minutes: number };
 
 function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
-  const { ws, now, select, setCalCursor, setCalMode, model, plan, planAt } = useApp();
+  const { ws, now, select, setCalCursor, setCalMode, model, plan } = useApp();
   const single = days.length === 1;
   const drag = usePlanDrag();
-  // Where dragged work would land: which day, and minutes after that day's midnight.
-  const [drop, setDrop] = useState<{ from: number; minute: number } | null>(null);
+  // While work is dragged, free gaps light up, brighter where it fits.
+  const placing = drag && drag.kind !== "resize" ? drag : null;
 
   const columns = useMemo(
     () =>
@@ -573,13 +576,6 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
   const top = (ms: number, from: number) => TOP_PAD + ((ms - from) / MIN - startHour * 60) * (HOUR_PX / 60);
   const gridHeight = TOP_PAD + hours.length * HOUR_PX;
   const nowInView = columns.some((c) => isSameDay(c.day, now)) && now.getHours() >= startHour && now.getHours() < endHour;
-
-  /** The minute of the day that dragged work would start at, from the pointer's height. */
-  const minuteAt = (e: React.DragEvent<HTMLElement>, minutes: number, grab: number) => {
-    const y = e.clientY - e.currentTarget.getBoundingClientRect().top - TOP_PAD;
-    const m = Math.round((startHour * 60 + (y / HOUR_PX) * 60 - grab) / SNAP) * SNAP;
-    return Math.max(startHour * 60, Math.min(endHour * 60 - Math.min(minutes, 60), m));
-  };
 
   // On a narrow screen the week scrolls sideways; start it at today.
   const scroller = useRef<HTMLDivElement>(null);
@@ -694,31 +690,18 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
             const today = isSameDay(c.day, now);
             const showNow = today && nowInView;
             const weekend = c.day.getDay() === 0 || c.day.getDay() === 6;
-            const preview = drag && drop?.from === c.from ? drop.minute : null;
+            const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
             return (
               <div
                 key={c.from}
                 className={`flex-1 min-w-0 relative border-l border-line/70 ${today ? "cal-col-today" : weekend ? "cal-col-weekend" : ""}`}
                 style={{ height: gridHeight }}
-                onDragOver={(e) => {
-                  if (!drag || !e.dataTransfer.types.includes(PLAN_DRAG_TYPE)) return;
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                  const minute = minuteAt(e, drag.minutes, drag.grab);
-                  if (drop?.from !== c.from || drop.minute !== minute) setDrop({ from: c.from, minute });
-                }}
-                onDragLeave={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDrop((d) => (d?.from === c.from ? null : d));
-                }}
-                onDrop={(e) => {
-                  setDrop(null);
-                  if (!drag) return;
-                  e.preventDefault();
-                  const task = model.tasks.find((t) => t.id === drag.taskId);
-                  const minute = minuteAt(e, drag.minutes, drag.grab);
-                  if (task) planAt(task, new Date(c.from + minute * MIN));
-                  endPlanDrag();
-                }}
+                // How the drag works out the time under the pointer (see planDrag.ts).
+                data-drop-day={c.from}
+                data-drop-min={startHour * 60}
+                data-drop-max={endHour * 60}
+                data-drop-top={TOP_PAD}
+                data-drop-ppm={HOUR_PX / 60}
               >
                 {hours.map((h, i) => (
                   <div key={h} className="absolute inset-x-0 border-t border-line/60" style={{ top: TOP_PAD + i * HOUR_PX }} />
@@ -727,16 +710,19 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                   const y = top(g.start, c.from);
                   const gh = Math.max(14, top(g.end, c.from) - y - 2);
                   if (y + gh < 0 || y > gridHeight) return null;
+                  const fits = placing ? g.minutes >= placing.minutes : false;
                   return (
                     <button
                       key={g.id}
                       type="button"
                       onClick={() => select({ kind: "gap", startMs: g.startMs })}
-                      className="absolute inset-x-0.5 z-0 cursor-pointer"
+                      className={`absolute inset-x-0.5 z-0 cursor-pointer ${placing ? `gap-hint ${fits ? "gap-fit" : ""}` : ""}`}
                       style={{ top: y + 1, height: gh }}
-                      title={`Free · ${duration(g.minutes)} — open gap`}
-                      aria-label={`Free time, ${duration(g.minutes)}. Open to see what fits.`}
-                    />
+                      title={`Free · ${duration(g.minutes)}. Open to put something here`}
+                      aria-label={`Free time, ${duration(g.minutes)}. Open to put something from your to-do list here.`}
+                    >
+                      {placing && gh >= 30 ? <span className="gap-hint-label">{duration(g.minutes)} free</span> : null}
+                    </button>
                   );
                 })}
                 {placed.map(({ item, col, cols }) => {
@@ -775,22 +761,12 @@ function TimeGrid({ days, data }: { days: Date[]; data: CalData }) {
                       style={style}
                       h={h}
                       titleFit={titleFit}
-                      dragging={Boolean(item.item.task) && drag?.taskId === item.item.task?.id}
-                      passThrough={Boolean(drag) && drag?.taskId !== item.item.task?.id}
+                      dragging={drag?.blockId === item.id}
+                      passThrough={Boolean(drag) && drag?.blockId !== item.id}
                     />
                   );
                 })}
-                {preview !== null && drag ? (
-                  <div
-                    className="plan-drop absolute inset-x-1 z-[5] pointer-events-none px-2 py-1"
-                    style={{ top: top(c.from + preview * MIN, c.from) + 2, height: Math.max(22, (drag.minutes * HOUR_PX) / 60 - 4), ...courseStyle(drag.color) }}
-                    aria-hidden
-                  >
-                    {/* Short blocks put the time first on one line, so where it lands is always readable. */}
-                    {drag.minutes >= 45 ? <div className="text-xs font-semibold truncate">{drag.title}</div> : null}
-                    <div className="text-[11px] font-semibold tabular-nums truncate">{clockRange(new Date(c.from + preview * MIN), new Date(c.from + (preview + drag.minutes) * MIN))}</div>
-                  </div>
-                ) : null}
+                {preview && drag ? <DropPreview target={preview} title={drag.title} top={(m) => top(c.from + m * MIN, c.from)} /> : null}
                 {showNow ? (
                   <div className="absolute inset-x-0 z-10 pointer-events-none" style={{ top: top(now.getTime(), c.from) }}>
                     <div className="h-[2px] bg-danger" />
@@ -823,9 +799,27 @@ function LaneCell({ children }: { children: React.ReactNode }) {
   return <div className="flex-1 min-w-0 border-l border-line/70 p-1 space-y-1">{children}</div>;
 }
 
+/** Where dragged work would land, and the time it would take. */
+function DropPreview({ target, title, top }: { target: Extract<DropTarget, { kind: "grid" }>; title: string; top: (minute: number) => number }) {
+  const y = top(target.startMinute);
+  const h = Math.max(22, top(target.endMinute) - y - 4);
+  const start = targetStart(target);
+  const end = new Date(start.getTime() + (target.endMinute - target.startMinute) * MIN);
+  return (
+    <div className="plan-drop absolute inset-x-1 z-[5] pointer-events-none px-2 py-1" style={{ top: y + 2, height: h }} aria-hidden>
+      {/* Short blocks put the time first, so where it lands is always readable. */}
+      {h >= 40 ? <div className="text-xs font-semibold truncate">{title}</div> : null}
+      <div className="text-[11px] font-semibold tabular-nums truncate">{clockRange(start, end)}</div>
+    </div>
+  );
+}
+
 /**
- * Time the student set aside on the grid: a white tile in its class colour with a
- * tick box. It can be dragged to another time. Done work stays, ticked and faded.
+ * Time the student set aside, on the grid: a white tile coloured by how soon its
+ * work is due, with a tick box. Drag it to move it, drag its bottom edge to change
+ * its length, or drag it back onto the to-do list to take it off the calendar. With
+ * a keyboard: arrows move it, Shift and arrows change its length, Delete takes it off.
+ * Done work stays, ticked and faded.
  */
 function PlannedTile({
   item,
@@ -842,33 +836,51 @@ function PlannedTile({
   dragging: boolean;
   passThrough: boolean;
 }) {
-  const { model, select, now } = useApp();
-  const { task, start, end, minutes, title } = item.item;
+  const { model, select, now, moveScheduled, resizeScheduled, unschedule } = useApp();
+  const cal = item.item;
+  const { task, start, end, minutes, title } = cal;
   const course = task?.courseId ? model.courseById.get(task.courseId) : undefined;
   const done = Boolean(task?.done);
-  const tint = blockTint(item.item, now);
+  const tint = blockTint(cal, now);
   const open = () => (task ? select({ kind: "task", id: task.id }) : undefined);
+  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: tint };
+
   return (
     <div
       role="button"
       tabIndex={0}
-      draggable={Boolean(task) && !done}
+      ref={dragSourceRef}
       onClick={open}
+      onPointerDown={(e) => {
+        if ((e.target as HTMLElement).closest("[data-resize]")) return;
+        // Where it was grabbed, in minutes from its top, so it doesn't jump under the pointer.
+        const grab = Math.round((e.clientY - e.currentTarget.getBoundingClientRect().top) / (HOUR_PX / 60));
+        beginPlanDrag(e, { kind: "move", grab, ...payload }, (target) => {
+          if (target.kind === "list") unschedule(cal.id);
+          else moveScheduled(cal.id, targetStart(target));
+        });
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           open();
+          return;
         }
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          unschedule(cal.id);
+          return;
+        }
+        const step = e.key === "ArrowUp" ? -15 : e.key === "ArrowDown" ? 15 : 0;
+        if (!step) return;
+        e.preventDefault();
+        if (e.shiftKey) resizeScheduled(cal.id, new Date(end.getTime() + step * MIN));
+        else moveScheduled(cal.id, new Date(start.getTime() + step * MIN));
       }}
-      onDragStart={(e) => {
-        if (!task) return;
-        const grab = Math.round(((e.clientY - e.currentTarget.getBoundingClientRect().top) / HOUR_PX) * 60);
-        startPlanDrag(e, { taskId: task.id, title, minutes, grab, pinned: true, color: course?.color ?? null });
-      }}
-      onDragEnd={endPlanDrag}
-      className={`plan-block urgency-card absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden pl-2.5 pr-2 py-1.5 cursor-grab active:cursor-grabbing ${done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
+      aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
+      className={`plan-block urgency-card drag-source absolute z-[2] flex flex-col justify-start gap-0.5 text-left overflow-hidden pl-2.5 pr-2 py-1.5 cursor-grab ${done ? "opacity-50" : ""} ${dragging ? "opacity-30" : ""} ${passThrough ? "pointer-events-none" : ""}`}
       style={{ ...style, "--u": tint, "--c": tint } as React.CSSProperties}
-      title={`${title} · ${duration(minutes)}. Drag to move.`}
+      title={`${title} · ${duration(minutes)}. Drag to move, or drag the bottom edge to change its length. Arrow keys move it; Shift and arrows change its length; Delete takes it off.`}
       aria-label={`Scheduled: ${title}, ${clockRange(start, end)}${done ? ", done" : ""}. Open details`}
     >
       <div className="flex items-start gap-1.5 min-w-0">
@@ -885,6 +897,25 @@ function PlannedTile({
           {h >= 60 ? clockRange(start, end) : duration(minutes)}
         </div>
       ) : null}
+      {/* The bottom edge changes how long it is. Fingers get it straight away; it never scrolls anything. */}
+      <span
+        data-resize
+        aria-hidden
+        className="block-resize"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          const top = e.currentTarget.closest(".plan-block")!.getBoundingClientRect().top;
+          beginPlanDrag(
+            e,
+            { kind: "resize", grab: (e.clientY - top) / (HOUR_PX / 60), ...payload },
+            (target) => {
+              if (target.kind === "grid") resizeScheduled(cal.id, new Date(targetStart(target).getTime() + (target.endMinute - target.startMinute) * MIN));
+            },
+            { immediate: true },
+          );
+        }}
+      />
     </div>
   );
 }

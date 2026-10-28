@@ -9,7 +9,8 @@ import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
 import { type Change, type EstimateSource, type FeedResult, type FeedRole, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { format } from "date-fns";
-import { clock, DEFAULT_FILTERS, plural, type Filters } from "@/lib/ui";
+import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
+import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
 import type { TodoScope, TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
@@ -542,6 +543,76 @@ export function App() {
     [update, toast],
   );
 
+  // ---------------------------------------------------------------------------
+  // Time set aside on the calendar
+  // ---------------------------------------------------------------------------
+
+  /** Change one block, saying what happened and offering a way back. */
+  const changeBlock = useCallback(
+    (before: ScheduledBlock | null, after: ScheduledBlock | null, message: string) => {
+      const swap = (from: ScheduledBlock | null, to: ScheduledBlock | null) =>
+        update((w) => {
+          let blocks = from ? dropBlock(w.blocks, from.id) : w.blocks;
+          if (to) blocks = putBlock(blocks, to);
+          return { ...w, blocks };
+        });
+      swap(before, after);
+      toast(message, { undo: () => swap(after, before) });
+    },
+    [update, toast],
+  );
+
+  const blockTitle = useCallback((b: ScheduledBlock) => model.tasks.find((t) => t.id === b.taskId)?.title ?? b.title, [model.tasks]);
+  const when = (d: Date) => `${format(d, "EEE")} ${clock(d)}`;
+
+  const scheduleTask = useCallback(
+    (task: Task, start: Date) => {
+      const block = makeBlock(randomId(), task, start, task.estimate, new Date());
+      if (Date.parse(block.end) <= Date.now()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      trackEvent("task_planned", { taskId: task.id, title: task.title, at: block.start });
+      changeBlock(null, block, `Scheduled ${when(start)}: ${task.title}`);
+    },
+    [changeBlock, toast],
+  );
+
+  const moveScheduled = useCallback(
+    (blockId: string, start: Date) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before || Date.parse(before.start) === start.getTime()) return;
+      const after = moveBlockTo(before, start, new Date());
+      if (Date.parse(after.end) <= Date.now()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      trackEvent("task_planned", { taskId: before.taskId, at: after.start });
+      changeBlock(before, after, `Moved to ${when(start)}: ${blockTitle(before)}`);
+    },
+    [changeBlock, toast, blockTitle],
+  );
+
+  const resizeScheduled = useCallback(
+    (blockId: string, end: Date) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before || Date.parse(before.end) === end.getTime()) return;
+      const after = resizeBlockTo(before, end, new Date());
+      changeBlock(before, after, `${blockTitle(before)}: now ${duration(blockMinutes(after))}, until ${clock(new Date(after.end))}`);
+    },
+    [changeBlock, blockTitle],
+  );
+
+  const unschedule = useCallback(
+    (blockId: string) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before) return;
+      trackEvent("task_unplanned", { taskId: before.taskId });
+      changeBlock(before, null, `Back on your to-do list: ${blockTitle(before)}`);
+    },
+    [changeBlock, blockTitle],
+  );
+
   const setView = useCallback((v: View) => {
     if (v !== parseUi(readStored(KEYS.ui)).view) trackEvent("view_changed", { view: v });
     writeUi(v === "settings" ? { view: v, settingsPanel: "main" } : { view: v });
@@ -592,6 +663,10 @@ export function App() {
     toggleDone,
     setEstimate,
     planAt,
+    scheduleTask,
+    moveScheduled,
+    resizeScheduled,
+    unschedule,
     addFeed,
     removeFeed,
     setFeedRole,

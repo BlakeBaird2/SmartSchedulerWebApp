@@ -43,6 +43,14 @@ export interface AppContextValue {
    * picked in its details), or pass null to let SmartScheduler choose again.
    */
   planAt: (task: Task, start: Date | null) => void;
+  /** Put a task on the calendar at `start`, for as long as it's expected to take. */
+  scheduleTask: (task: Task, start: Date) => void;
+  /** Move scheduled time to a new start, keeping its length. */
+  moveScheduled: (blockId: string, start: Date) => void;
+  /** Change when scheduled time ends. */
+  resizeScheduled: (blockId: string, end: Date) => void;
+  /** Take scheduled time off the calendar; its work goes back on the to-do list. */
+  unschedule: (blockId: string) => void;
 
   /** Returns how many already-past items were marked done. */
   addFeed: (result: FeedResult) => number;

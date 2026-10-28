@@ -1456,6 +1456,98 @@
     color: #14123a;
   }
 
+  /* Anything that can be picked up and dragged: no text selection or phone press menu in the way. */
+  .drag-source {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* While something is being dragged, a grabbing hand everywhere and nothing gets selected. */
+  .plan-dragging,
+  .plan-dragging * {
+    cursor: grabbing !important;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Free gaps light up while work is dragged: dashed green, brighter where it fits. */
+  .gap-hint {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 3px 6px;
+    border-radius: 8px;
+    border: 1.5px dashed color-mix(in oklab, var(--ok) 40%, transparent);
+    background: color-mix(in oklab, var(--ok) 4%, transparent);
+  }
+  .gap-fit {
+    border-color: color-mix(in oklab, var(--ok) 85%, transparent);
+    background: color-mix(in oklab, var(--ok) 10%, transparent);
+  }
+  .gap-hint-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: color-mix(in oklab, var(--ok) 80%, var(--fg));
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The bottom edge of scheduled time: drag it to change how long it is. */
+  .block-resize {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 9px;
+    cursor: ns-resize;
+    touch-action: none;
+  }
+  .block-resize::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    width: 22px;
+    height: 3px;
+    margin-left: -11px;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--u) 70%, var(--fg));
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .plan-block:hover .block-resize::after,
+  .plan-block:focus-visible .block-resize::after {
+    opacity: 0.6;
+  }
+  @media (pointer: coarse) {
+    .block-resize {
+      height: 16px;
+    }
+    .block-resize::after {
+      opacity: 0.5;
+    }
+  }
+
+  /* What's being dragged, following the pointer while it is away from the calendar. */
+  .drag-ghost {
+    position: fixed;
+    z-index: 70;
+    width: 13rem;
+    pointer-events: none;
+    border-radius: 10px;
+    border: 1px solid color-mix(in oklab, var(--u) 60%, var(--line));
+    background: var(--surface);
+    padding: 0.4rem 0.6rem 0.45rem 0.9rem;
+    box-shadow:
+      inset 4px 0 0 var(--u),
+      var(--shadow-md);
+    transform: rotate(-2deg);
+  }
+
+  /* Messages step aside during a drag. */
+  .plan-dragging .app-toast {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   /* How long a task needs; tap it to change. */
   .estimate-chip {
     display: inline-flex;
