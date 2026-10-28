@@ -306,6 +306,9 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
   const deadline = draggedTask?.dueAt ? new Date(draggedTask.dueAt) : null;
   const placing = Boolean(drag && drag.kind !== "resize");
+  // What has gone by is grey: earlier days, today up to now, and anything that has ended.
+  const nowMs = now.getTime();
+  const todayStart = startOfDay(now).getTime();
 
   return (
     <div className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
@@ -316,6 +319,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
             key={c.from}
             className="ss-day-head"
             data-today={isToday(c.day) || undefined}
+            data-past={c.from < todayStart || undefined}
             onClick={() => {
               setCalCursor(c.day);
               setCalMode("day");
@@ -333,7 +337,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
           {columns.map((c) => (
             <div key={c.from} className="ss-allday">
               {c.allDay.map((e) => (
-                <EventChip key={e.id} event={e} />
+                <EventChip key={e.id} event={e} past={Date.parse(e.end) <= nowMs} />
               ))}
             </div>
           ))}
@@ -361,6 +365,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
               <div
                 key={c.from}
                 className={`ss-day-column ${placing ? "ss-drop-ready" : ""}`}
+                data-past={c.from < todayStart || undefined}
                 // How the drag works out the time under the pointer (see planDrag.ts).
                 data-drop-day={c.from}
                 data-drop-min={startHour * 60}
@@ -370,6 +375,9 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
               >
                 {height > 0 ? (
                   <>
+                    {c.from === todayStart && nowMs > c.from + startHour * 60 * MIN ? (
+                      <div className="ss-past-shade" style={{ height: Math.min(bodyHeight, y(nowMs, c.from)) }} />
+                    ) : null}
                     {hours.map((h, i) => (
                       <div key={h} className="ss-hour-line" style={{ top: i * 60 * ppm, height: 60 * ppm }} />
                     ))}
@@ -398,7 +406,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                         left: `calc(${(col / cols) * 100}% + 5px)`,
                         width: `calc(${100 / cols}% - 10px)`,
                       };
-                      if (item.kind === "event") return <GridEvent key={item.id} event={item.event} style={style} h={h} passThrough={Boolean(drag)} />;
+                      if (item.kind === "event") return <GridEvent key={item.id} event={item.event} style={style} h={h} passThrough={Boolean(drag)} past={item.end <= nowMs} />;
                       return (
                         <PlannedBlock
                           key={item.id}
@@ -408,6 +416,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                           ppm={ppm}
                           dragging={drag?.blockId === item.id}
                           passThrough={Boolean(drag) && drag?.blockId !== item.id}
+                          past={item.end <= nowMs}
                           course={item.item.task?.courseId ? model.courseById.get(item.item.task.courseId)?.code : undefined}
                         />
                       );
@@ -442,7 +451,7 @@ function useEventLook(e: CalEvent): { kind: Kind; custom: string | null } {
   return { kind: eventKind(e, model.feedById), custom: ws.eventColors[seriesKey(e.id)] ?? null };
 }
 
-function GridEvent({ event: e, style, h, passThrough }: { event: CalEvent; style: React.CSSProperties; h: number; passThrough: boolean }) {
+function GridEvent({ event: e, style, h, passThrough, past }: { event: CalEvent; style: React.CSSProperties; h: number; passThrough: boolean; past: boolean }) {
   const { select } = useApp();
   const { kind, custom } = useEventLook(e);
   const start = new Date(e.start);
@@ -452,6 +461,7 @@ function GridEvent({ event: e, style, h, passThrough }: { event: CalEvent; style
       className={`ss-event ss-${kind} ${e.busy ? "" : "ss-free"}`}
       data-custom={custom ? true : undefined}
       data-compact={h < 40 || undefined}
+      data-past={past || undefined}
       style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       onClick={() => select({ kind: "event", id: e.id })}
       title={`${e.title} · ${shortRange(start, end)}`}
@@ -462,13 +472,14 @@ function GridEvent({ event: e, style, h, passThrough }: { event: CalEvent; style
   );
 }
 
-function EventChip({ event: e }: { event: CalEvent }) {
+function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
   const { select } = useApp();
   const { kind, custom } = useEventLook(e);
   return (
     <button
       className={`ss-month-event ss-${kind}`}
       data-custom={custom ? true : undefined}
+      data-past={past || undefined}
       style={custom ? ({ "--ev": custom } as React.CSSProperties) : undefined}
       onClick={(ev) => {
         ev.stopPropagation();
@@ -509,6 +520,7 @@ function PlannedBlock({
   ppm,
   dragging,
   passThrough,
+  past,
   course,
 }: {
   item: CalBlock;
@@ -517,6 +529,7 @@ function PlannedBlock({
   ppm: number;
   dragging: boolean;
   passThrough: boolean;
+  past: boolean;
   course?: string;
 }) {
   const { select, moveScheduled, resizeScheduled, unschedule } = useApp();
@@ -564,6 +577,7 @@ function PlannedBlock({
       data-done={done || undefined}
       data-picked={dragging || undefined}
       data-compact={h < 40 || undefined}
+      data-past={past || undefined}
       style={{ ...style, pointerEvents: passThrough ? "none" : undefined }}
       title={`${title} · ${minutes} min. Drag to move, or drag the bottom edge to change its length.`}
       aria-label={`Scheduled: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
@@ -610,8 +624,10 @@ function PlannedBlock({
 // ---------------------------------------------------------------------------
 
 function MonthGrid({ data }: { data: CalData }) {
-  const { calCursor, setCalCursor, setCalMode, select } = useApp();
+  const { calCursor, setCalCursor, setCalMode, select, now } = useApp();
   const drag = usePlanDrag();
+  const nowMs = now.getTime();
+  const todayStart = startOfDay(now).getTime();
   const placing = Boolean(drag && drag.kind !== "resize");
   // The prototype's month starts on Sunday.
   const days = useMemo(
@@ -651,6 +667,7 @@ function MonthGrid({ data }: { data: CalData }) {
               tabIndex={0}
               className={`ss-month-cell ${inMonth ? "" : "ss-outside"} ${placing ? "ss-drop-ready" : ""} ${deadline !== null && from > deadline ? "ss-past-deadline" : ""}`}
               data-today={isToday(d) || undefined}
+              data-past={from < todayStart || undefined}
               data-drop-date={inMonth ? from : undefined}
               data-drop-over={(drag?.target?.kind === "date" && drag.target.dayStart === from) || undefined}
               onClick={() => {
@@ -669,11 +686,12 @@ function MonthGrid({ data }: { data: CalData }) {
               <div className="ss-month-events">
                 {entries.slice(0, 3).map((en) =>
                   en.event ? (
-                    <EventChip key={en.key} event={en.event} />
+                    <EventChip key={en.key} event={en.event} past={Date.parse(en.event.end) <= nowMs} />
                   ) : (
                     <button
                       key={en.key}
                       className="ss-month-event"
+                      data-past={en.block!.end.getTime() <= nowMs || undefined}
                       onClick={(ev) => {
                         ev.stopPropagation();
                         if (en.block?.task) select({ kind: "task", id: en.block.task.id });

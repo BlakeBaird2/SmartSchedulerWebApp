@@ -38,6 +38,7 @@
   --ss-avatar-bg: #ddf0e4;
   --ss-avatar-fg: #27764d;
   --ss-shade: rgba(39, 39, 37, 0.2);
+  --ss-past: #efefeb;
   /* Event kinds: the colour itself, its wash, and its text. */
   --ss-work: #7066e7;
   --ss-work-bg: #eeecff;
@@ -87,6 +88,7 @@
   --ss-avatar-bg: #1f3a2b;
   --ss-avatar-fg: #8fd4ad;
   --ss-shade: rgba(0, 0, 0, 0.45);
+  --ss-past: #0e0e0f;
   --ss-work: #8b85ff;
   --ss-work-bg: #26244a;
   --ss-work-fg: #c9c5ff;
@@ -1045,6 +1047,29 @@ button.ss-day-head:hover {
   min-width: 0;
   border-left: 1px solid var(--ss-line);
 }
+/* Time that has gone by: earlier days, and today up to now, are grey. */
+.ss-day-column[data-past],
+.ss-past-shade {
+  background: var(--ss-past);
+}
+.ss-past-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+.ss-day-head[data-past] {
+  color: var(--ss-fainter);
+}
+.ss-day-head[data-past] strong {
+  color: var(--ss-faint);
+}
+.ss-event[data-past],
+.ss-month-event[data-past] {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
 .ss-day-column.ss-drop-ready {
   background: var(--ss-accent-tint);
   box-shadow: inset 0 0 0 1px var(--ss-accent-ring);
@@ -1369,6 +1394,12 @@ button.ss-event:hover {
 .ss-month-cell.ss-outside {
   color: #b9b9b3;
   background: var(--ss-panel);
+}
+.ss-month-cell[data-past] {
+  background: var(--ss-past);
+}
+.ss-month-cell[data-past] > strong {
+  color: var(--ss-faint);
 }
 .ss-month-cell[data-today] > strong {
   color: #fff;

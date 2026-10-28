@@ -41,8 +41,10 @@ prefix on every class.
   or personal), five at a time or fifteen. **Drag a task onto the calendar** to
   schedule it for as long as its estimate. On a phone, press and hold first.
   Scheduled work leaves the list and the next task moves up.
-  - The week fits the screen, Monday to Friday (plus a weekend day when
-    something is on it). Events are coloured Work, School or Personal, and work
+  - It opens on today. The week fits the screen, Monday to Friday (plus a
+    weekend day when something is on it), and the month is a click away.
+    What has gone by is grey: earlier days, today up to now, and anything that
+    has ended. Events are coloured Work, School or Personal, and work
     you scheduled is striped.
   - Drag scheduled work to move it, drag its bottom edge to change its length,
     or drag it back onto the planner to take it off. Every change has Undo.
@@ -54,8 +56,8 @@ prefix on every class.
     closed.
 - **Tasks** — the master checklist: how the week is going (a progress ring, due
   today, due this week), then every task in one table to search, sort (due date,
-  priority, shortest first) and filter (today, a class, personal, completed).
-- **Add task** — name, class or area, due, due time, estimate, points, priority.
+  shortest first) and filter (today, a class, personal, completed).
+- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, points, priority.
 - **Points and priority** — calendar feeds don't carry either. Points are yours to
   add; priority follows the due date until you pick one.
 - Also: ticking work off folds it away with Undo; **New** marks work a class
