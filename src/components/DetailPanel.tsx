@@ -8,7 +8,7 @@ import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
 import type { CalEvent, Task } from "@/lib/types";
 import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
-import { urgencyColor } from "@/lib/todos";
+import { todoState, urgencyColor } from "@/lib/todos";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
@@ -113,7 +113,7 @@ function Label({ children }: { children: React.ReactNode }) {
 const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { model, index, now, changes, ws, setEstimate, update, setView, setCalCursor, toggleDone, select, completeTask, toast, unschedule } = useApp();
+  const { model, index, now, changes, ws, setEstimate, update, setView, setCalCursor, toggleDone, select, completeTask, toast, unschedule, answerUnfinished } = useApp();
   const [picking, setPicking] = useState(false);
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
@@ -125,6 +125,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   );
   const lastEnd = scheduled.length ? Date.parse(scheduled[scheduled.length - 1].end) : 0;
   const ahead = scheduled.some((b) => Date.parse(b.end) > now.getTime());
+  const state = todoState(task, scheduled, now, ws.unfinished, ws.unfinishedAnswers[task.id]);
   const risk = ahead ? undefined : index.atRisk.get(task.id);
   const history = useMemo(() => changes.filter((c) => c.taskId === task.id).slice(0, 6), [changes, task.id]);
   const typeDefault = ws.prefs.estimates[task.type];
@@ -250,8 +251,19 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                 That&apos;s after it&apos;s due.
               </p>
             ) : null}
-            {scheduled.length > 0 && !ahead ? (
-              <p className="mt-1.5 text-xs text-muted">That time has passed and it isn&apos;t marked done, so it&apos;s back on your to-do list.</p>
+            {state === "unfinished" ? (
+              <p className="mt-1.5 text-xs text-muted flex flex-wrap items-center gap-x-1.5">
+                {ws.unfinished === "midnight"
+                  ? "That time has passed. It goes back on your to-do list at midnight."
+                  : ws.unfinishedAnswers[task.id]?.back === false
+                    ? "That time has passed, and you left it off your to-do list."
+                    : "That time has passed. You'll be asked tomorrow morning whether to put it back on your to-do list."}
+                <TextButton onClick={() => answerUnfinished([task.id], true)}>Put it back now</TextButton>
+              </p>
+            ) : scheduled.length > 0 && !ahead ? (
+              <p className="mt-1.5 text-xs text-muted">That time has passed, so it&apos;s back on your to-do list.</p>
+            ) : ahead && ws.unfinished === "keep" ? (
+              <p className="mt-1.5 text-xs text-muted">It stays on your to-do list until you tick it off.</p>
             ) : null}
             {risk ? (
               <p className="mt-2 text-sm text-danger font-semibold flex gap-1.5">

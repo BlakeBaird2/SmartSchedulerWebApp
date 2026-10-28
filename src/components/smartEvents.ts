@@ -19,6 +19,8 @@ export type SmartEventName =
   | "task_added"
   | "task_planned"
   | "task_unplanned"
+  | "unfinished_returned"
+  | "unfinished_left_off"
   | "add_task_opened"
   | "task_opened"
   | "free_gap_opened"

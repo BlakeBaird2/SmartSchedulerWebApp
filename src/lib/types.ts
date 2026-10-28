@@ -195,6 +195,21 @@ export interface ScheduledBlock {
   updatedAt: string;
 }
 
+/**
+ * What happens to work whose scheduled time passed without it being done.
+ * - ask: each morning, ask whether to put yesterday's unfinished work back on the list.
+ * - midnight: put it back on its own once the day it was scheduled for is over.
+ * - keep: scheduling never takes work off the list; it stays until it is ticked off.
+ */
+export type UnfinishedPolicy = "ask" | "midnight" | "keep";
+export const UNFINISHED_POLICIES: UnfinishedPolicy[] = ["ask", "midnight", "keep"];
+
+/** The answer given about one task when asked whether to put it back on the list. */
+export interface UnfinishedAnswer {
+  at: string;
+  back: boolean;
+}
+
 export interface Workspace {
   version: 1;
   feeds: FeedConfig[];
@@ -210,6 +225,10 @@ export interface Workspace {
   courseEdits: Record<string, CourseEdit>;
   /** Class ids, most important first. Breaks ties between work due at the same time. */
   classOrder: string[];
+  /** What happens to work whose scheduled time passes before it is done. */
+  unfinished: UnfinishedPolicy;
+  /** taskId -> the last answer to "put it back on the to-do list?" */
+  unfinishedAnswers: Record<string, UnfinishedAnswer>;
   prefs: PlanPrefs;
   /** Showing sample data instead of the user's own calendars. */
   demo: boolean;

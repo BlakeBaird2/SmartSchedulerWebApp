@@ -65,6 +65,7 @@ test("unfinished work: asked about, put back at midnight, or never taken off the
   // midnight: back once the day is over
   assert.equal(todoState(t, yesterday, NOW, "midnight"), "todo");
   assert.equal(todoState(t, thisMorning, NOW, "midnight"), "unfinished");
+  assert.equal(todoState(t, thisMorning, NOW, "midnight", { at: NOW.toISOString(), back: true }), "todo", "put back by hand before midnight");
   // keep: scheduling never takes it off
   assert.equal(todoState(t, [block("essay", at(1, 15), at(1, 16))], NOW, "keep"), "todo");
 });

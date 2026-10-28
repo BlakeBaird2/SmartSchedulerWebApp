@@ -7,24 +7,11 @@
  * done is a choice (see `UnfinishedPolicy`), so other behaviours can be swapped in
  * without touching the list itself.
  */
-import type { AssignmentType, ScheduledBlock, Task } from "./types";
+import type { AssignmentType, ScheduledBlock, Task, UnfinishedAnswer, UnfinishedPolicy } from "./types";
 
+export type { UnfinishedAnswer, UnfinishedPolicy };
 export type TodoScope = "all" | "school";
 export type TodoSort = "due" | "duration";
-
-/**
- * What happens to work whose scheduled time passed without it being done.
- * - ask: each morning, ask whether to put yesterday's unfinished work back on the list.
- * - midnight: put it back on its own once the day it was scheduled for is over.
- * - keep: scheduling never takes work off the list; it stays until it is ticked off.
- */
-export type UnfinishedPolicy = "ask" | "midnight" | "keep";
-
-/** The answer given about one task when asked whether to put it back on the list. */
-export interface UnfinishedAnswer {
-  at: string;
-  back: boolean;
-}
 
 /** Where a task stands: on the list, on the calendar, waiting to be asked about, or done. */
 export type TodoState = "todo" | "scheduled" | "unfinished" | "done";
@@ -54,9 +41,10 @@ export function todoState(
   const nowMs = now.getTime();
   const lastEnd = Math.max(...blocks.map((b) => Date.parse(b.end)));
   if (lastEnd > nowMs) return "scheduled";
+  // An answer only counts for time that had passed when it was given. Putting work
+  // back by hand works whatever the choice.
+  if (answer?.back && Date.parse(answer.at) >= lastEnd) return "todo";
   if (policy === "midnight") return lastEnd <= startOfLocalDay(now) ? "todo" : "unfinished";
-  // An answer only counts for time that had passed when it was given.
-  if (answer && Date.parse(answer.at) >= lastEnd) return answer.back ? "todo" : "unfinished";
   return "unfinished";
 }
 

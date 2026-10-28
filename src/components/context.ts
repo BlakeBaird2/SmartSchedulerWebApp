@@ -48,6 +48,8 @@ export interface AppContextValue {
   resizeScheduled: (blockId: string, end: Date) => void;
   /** Take scheduled time off the calendar; its work goes back on the to-do list. */
   unschedule: (blockId: string) => void;
+  /** Answer "put this unfinished work back on the to-do list?" for these tasks. */
+  answerUnfinished: (taskIds: string[], back: boolean) => void;
 
   /** Returns how many already-past items were marked done. */
   addFeed: (result: FeedResult) => number;

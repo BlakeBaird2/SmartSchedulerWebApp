@@ -388,3 +388,19 @@ test("the class ranking loads as unique class ids, and travels in a setup link",
   assert.deepEqual(defaultWorkspace().classOrder, []);
   assert.deepEqual(decodeSetup(encodeSetup(ws))?.classOrder, ["f:cs", "f:fin", "f:art"]);
 });
+
+test("what happens to unfinished work loads checked, with the latest answers", () => {
+  const ws = sanitizeWorkspace({
+    unfinished: "midnight",
+    unfinishedAnswers: {
+      a: { at: "2026-10-01T14:00:00Z", back: true },
+      b: { at: "2026-10-01T14:00:00Z", back: "yes" },
+      c: { at: "not a time", back: false },
+      d: { at: "2026-10-02T14:00:00Z", back: false },
+    },
+  });
+  assert.equal(ws.unfinished, "midnight");
+  assert.deepEqual(ws.unfinishedAnswers, { d: { at: "2026-10-02T14:00:00.000Z", back: false }, a: { at: "2026-10-01T14:00:00.000Z", back: true } });
+  assert.equal(sanitizeWorkspace({ unfinished: "forever" }).unfinished, "ask", "unknown choices fall back to asking");
+  assert.equal(defaultWorkspace().unfinished, "ask");
+});

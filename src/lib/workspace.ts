@@ -6,7 +6,7 @@
  * anything unusable falls back to a default instead of breaking the page.
  */
 import { DEFAULT_PREFS } from "./planner";
-import { ASSIGNMENT_TYPES, normalizeType, type CourseEdit, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
+import { ASSIGNMENT_TYPES, normalizeType, UNFINISHED_POLICIES, type CourseEdit, type UnfinishedAnswer, type UnfinishedPolicy, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
 import { detectProvider, feedIdFor } from "./feeds/url";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
@@ -22,6 +22,8 @@ export function defaultWorkspace(): Workspace {
     blocks: [],
     courseEdits: {},
     classOrder: [],
+    unfinished: "ask",
+    unfinishedAnswers: {},
     prefs: { ...DEFAULT_PREFS, estimates: { ...DEFAULT_PREFS.estimates } },
     demo: false,
   };
@@ -169,6 +171,18 @@ function sanitizeClassOrder(raw: unknown): string[] {
   return [...new Set(ids)].slice(0, MAX_CLASSES);
 }
 
+export const MAX_ANSWERS = 500;
+
+/** The latest answers about unfinished work, newest kept when there are too many. */
+function sanitizeAnswers(raw: unknown): Record<string, UnfinishedAnswer> {
+  if (!isObj(raw)) return {};
+  const answers: [string, UnfinishedAnswer][] = [];
+  for (const [id, v] of Object.entries(raw)) {
+    if (isObj(v) && ISO_OK(v.at) && typeof v.back === "boolean") answers.push([id, { at: new Date(v.at).toISOString(), back: v.back }]);
+  }
+  return Object.fromEntries(answers.sort((a, b) => b[1].at.localeCompare(a[1].at)).slice(0, MAX_ANSWERS));
+}
+
 function sanitizeRecord<T>(raw: unknown, check: (v: unknown) => v is T): Record<string, T> {
   const out: Record<string, T> = {};
   if (!isObj(raw)) return out;
@@ -213,6 +227,8 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     blocks: sanitizeBlocks(raw),
     courseEdits,
     classOrder: sanitizeClassOrder(raw.classOrder),
+    unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
+    unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),
     prefs: sanitizePrefs(raw.prefs),
     demo: raw.demo === true,
   };

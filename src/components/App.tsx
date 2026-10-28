@@ -31,6 +31,7 @@ import { Toast } from "./ui";
 import { BottomNav } from "./BottomNav";
 import { AppTour } from "./AppTour";
 import { ViewHeading } from "./ViewHeading";
+import { UnfinishedPrompt } from "./UnfinishedPrompt";
 import { openGoalNotice } from "./Prototype";
 import { trackEvent } from "./smartEvents";
 
@@ -595,6 +596,19 @@ export function App() {
     [changeBlock, blockTitle],
   );
 
+  const answerUnfinished = useCallback(
+    (taskIds: string[], back: boolean) => {
+      const prev = readWorkspace().unfinishedAnswers;
+      const at = new Date().toISOString();
+      const write = (answers: Workspace["unfinishedAnswers"]) => update((w) => ({ ...w, unfinishedAnswers: answers }));
+      write({ ...prev, ...Object.fromEntries(taskIds.map((id) => [id, { at, back }])) });
+      trackEvent(back ? "unfinished_returned" : "unfinished_left_off", { count: taskIds.length });
+      const n = plural(taskIds.length, "task");
+      toast(back ? `Back on your to-do list: ${n}` : `Left off your to-do list: ${n}`, { undo: () => write(prev) });
+    },
+    [update, toast],
+  );
+
   const setView = useCallback((v: View) => {
     if (v !== parseUi(readStored(KEYS.ui)).view) trackEvent("view_changed", { view: v });
     writeUi(v === "settings" ? { view: v, settingsPanel: "main" } : { view: v });
@@ -656,6 +670,7 @@ export function App() {
     moveScheduled,
     resizeScheduled,
     unschedule,
+    answerUnfinished,
     addFeed,
     removeFeed,
     setFeedRole,
@@ -724,6 +739,7 @@ export function App() {
           {addOpen ? <AddTaskDialog onClose={() => setAddOpen(false)} /> : null}
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
           <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
+          <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending)} />
         </div>
       )}
       {incoming.pending ? (

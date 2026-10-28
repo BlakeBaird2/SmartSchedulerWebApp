@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { classRank } from "@/lib/todos";
-import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
+import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
 import { duration, typeIconClass, typeMeta } from "@/lib/ui";
 import { courseStyle, useApp, type SettingsPanel } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
@@ -312,6 +312,49 @@ function SchedulePanel() {
       <Section title="Other weekly busy times" hint="Things that happen every week but aren't on a calendar you added, like a job or practice.">
         <WeeklyEditor />
       </Section>
+      <Section title="Work you didn't finish" hint="Scheduling something takes it off your to-do list. When its time passes before you tick it off:">
+        <UnfinishedChoice />
+      </Section>
+    </div>
+  );
+}
+
+const UNFINISHED_CHOICES: { id: UnfinishedPolicy; label: string; hint: string }[] = [
+  { id: "ask", label: "Ask me each morning", hint: "The first time you open SmartScheduler each day, choose whether to put it back." },
+  { id: "midnight", label: "Put it back at midnight", hint: "Back on your to-do list once the day it was scheduled for is over." },
+  { id: "keep", label: "Keep it on my to-do list", hint: "Scheduling never takes work off the list. It stays until you tick it off." },
+];
+
+function UnfinishedChoice() {
+  const { ws, update } = useApp();
+  return (
+    <div role="radiogroup" aria-label="When scheduled work isn't finished" className="space-y-2">
+      {UNFINISHED_CHOICES.map((c) => {
+        const on = ws.unfinished === c.id;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => update((w) => ({ ...w, unfinished: c.id }))}
+            className={`w-full text-left flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+              on ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong"
+            }`}
+          >
+            <span
+              className={`mt-0.5 grid place-items-center h-4 w-4 shrink-0 rounded-full border-2 ${on ? "border-accent" : "border-line-strong"}`}
+              aria-hidden
+            >
+              {on ? <span className="h-2 w-2 rounded-full bg-accent" /> : null}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">{c.label}</span>
+              <span className="block text-xs text-muted">{c.hint}</span>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
