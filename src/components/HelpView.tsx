@@ -51,7 +51,7 @@ export function HelpView() {
           <RouteRow
             icon={CalendarRange}
             title="Calendar"
-            steps="Open week or day → drag a task onto a time, or open planned work → review → Done"
+            steps="Drag the next task from your to-do list onto a free time (or tap a free time → Put it here) → tick it off when it's done"
             onOpen={() => go("calendar")}
           />
           <RouteRow icon={ListChecks} title="Upcoming" steps="Pick a class (or All classes) → open due work → review the task → Done" onOpen={() => go("upcoming")} />

@@ -338,7 +338,7 @@ function UnfinishedChoice() {
             role="radio"
             aria-checked={on}
             onClick={() => update((w) => ({ ...w, unfinished: c.id }))}
-            className={`w-full text-left flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+            className={`choice-card w-full text-left flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
               on ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong"
             }`}
           >

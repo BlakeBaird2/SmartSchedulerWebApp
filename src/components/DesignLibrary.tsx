@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Bell, CalendarClock, Check, Inbox, Pin, Plus, Settings, Trash } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, CalendarClock, Check, Inbox, Plus, Settings, Trash } from "lucide-react";
+import { EVENT_COLORS } from "@/lib/eventColors";
 import { PrototypeBadge } from "./Prototype";
-import { courseStyle } from "./context";
 import {
   Button,
   ButtonLink,
@@ -14,6 +14,7 @@ import {
   Checkbox,
   ChoicePill,
   ClassChip,
+  ColorSwatches,
   Dialog,
   DialogActions,
   EmptyState,
@@ -62,6 +63,7 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "type-chip", name: "TypeChip" },
       { id: "planned-due", name: "PlannedBadge / DueBadge" },
       { id: "class-tabs", name: "Class tabs" },
+      { id: "todo-list", name: "To-do list" },
       { id: "drag-to-plan", name: "Drag to plan" },
     ],
   },
@@ -90,6 +92,7 @@ const GROUPS: { id: string; title: string; items: { id: string; name: string }[]
       { id: "segmented", name: "SegmentedControl" },
       { id: "field", name: "Field" },
       { id: "choice", name: "ChoicePill" },
+      { id: "swatches", name: "ColorSwatches" },
       { id: "switch", name: "Switch" },
     ],
   },
@@ -535,23 +538,67 @@ function CoreParts() {
       </Entry>
 
       <Entry
+        id="todo-list"
+        name="To-do list"
+        summary="Everything still to schedule, school and personal, in one list."
+        use="Beside the calendar on a computer; a sheet along the bottom on phones and tablets."
+        rules={[
+          "Coloured by how soon it's due, from red (now, or late) to yellow (a week or more away), down the left edge and in the tint. No due date is grey.",
+          "Each task says about how long it needs (“~1.5 hrs”); tap that to change it.",
+          "Scheduled work leaves the list, so the next thing to plan moves up. Sorted by due date, the top one says Next up; ties go to the class ranked higher in Settings.",
+          "“New” marks work a class calendar added since you last looked, until you open it or act on it.",
+          "Ticking one off pops the box, strikes it through and folds the row away. Done work stays on the calendar, faded and ticked.",
+        ]}
+        why="One list beside the calendar, in the order students pick what to do next, puts “what next?” on the same screen as “when?”."
+        usedIn="Calendar"
+      >
+        <div className="w-full max-w-xs space-y-1.5">
+          <div className="todo-item urgency-card flex items-start gap-2 pl-3 pr-2 py-2" style={{ "--u": "oklch(0.63 0.24 27)" } as React.CSSProperties}>
+            <span className="check check-sm mt-0.5" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-start gap-1.5">
+                <span className="text-[13px] font-semibold leading-snug flex-1">Case Write-Up 3</span>
+                <span className="next-pill">Next up</span>
+              </span>
+              <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                <span className="estimate-chip">~1 hr</span>
+                <span className="font-semibold text-danger">due today</span>
+              </span>
+            </span>
+          </div>
+          <div className="todo-item urgency-card flex items-start gap-2 pl-3 pr-2 py-2" style={{ "--u": "oklch(0.8 0.19 70)" } as React.CSSProperties}>
+            <span className="check check-sm mt-0.5" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-start gap-1.5">
+                <span className="text-[13px] font-semibold leading-snug flex-1">Lab 6</span>
+                <span className="new-pill">New</span>
+              </span>
+              <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                <span className="estimate-chip">~1.5 hrs</span>
+                <span>due Fri</span>
+              </span>
+            </span>
+          </div>
+        </div>
+      </Entry>
+
+      <Entry
         id="drag-to-plan"
         name="Drag to plan"
-        summary="Pick when you'll do something by dragging it onto the calendar."
-        use="The calendar on a computer: from the To do list onto a time, or a planned block to a new time. Phones and keyboards use Pick a time in the task's details."
+        summary="Put work on the calendar by dragging it there, then move or resize it the same way."
+        use="The calendar: a task from the to-do list onto a free time, a block to a new time, its bottom edge to change how long it is, or back onto the list to take it off. A free gap's Put it here, and Schedule it in a task's details, do the same without dragging."
         rules={[
-          "While dragging, a solid accent block shows exactly where it will land and from when to when. Solid, never dashed, so it can't be mistaken for free time.",
-          "A time you picked keeps a pin icon (on the calendar, in the To do list and on the Planned chip), so you can tell your choices from SmartScheduler's.",
-          "Every change can be undone from the message that confirms it. Drag a picked block back onto the To do list, or press Let SmartScheduler choose, to hand it back.",
+          "While placing work, free gaps are outlined with how much time they hold, and the block is drawn where it will land, as long as the task's estimate.",
+          "With a mouse, a drag starts after a few pixels. On a touch screen, press and hold first, so a quick swipe still scrolls; a block's bottom edge resizes straight away. Near the top or bottom of the screen the page scrolls.",
+          "Every change can be undone from the message that confirms it. A focused block moves with the arrow keys, changes length with Shift and the arrows, and comes off with Delete.",
         ]}
-        why="Sunsama, Akiflow and Notion Calendar all plan work this way: a list of tasks beside the calendar, dragged into the day. It turns 'what's due' into 'when I'll do it' in one move."
-        usedIn="Calendar (week, 3-day and day), task details"
+        why="Sunsama, Akiflow and Notion Calendar all plan work this way, and here it works on phones as well as computers. It turns “what's due” into “when I'll do it” in one move."
+        usedIn="Calendar (week, 3-day and day), free gaps, task details"
       >
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="plan-block relative inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold" style={courseStyle("#2563eb")}>
+          <span className="plan-block urgency-card relative inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold" style={{ "--u": "oklch(0.72 0.21 50)", "--c": "oklch(0.72 0.21 50)" } as React.CSSProperties}>
             <span className="plan-tick" aria-hidden />
             Lab 5
-            <Pin size={11} className="text-ok" aria-hidden />
           </span>
           <span className="plan-drop inline-block px-2 py-1 text-[11px] font-semibold tabular-nums">2:15 – 3:15 PM</span>
         </div>
@@ -764,6 +811,7 @@ function Containers() {
 function Inputs() {
   const [range, setRange] = useState<"month" | "week" | "day">("week");
   const [est, setEst] = useState(30);
+  const [swatch, setSwatch] = useState<string>(EVENT_COLORS[4].hex);
   const [on, setOn] = useState(true);
   return (
     <>
@@ -826,6 +874,17 @@ function Inputs() {
             </ChoicePill>
           ))}
         </div>
+      </Entry>
+      <Entry
+        id="swatches"
+        name="ColorSwatches"
+        summary="Pick one colour from a row of round swatches."
+        use="Recolouring an event (every time it repeats) or a class."
+        rules={["Each swatch is a radio button named after its colour, so it can be told apart without seeing it.", "The chosen one has a ring around it.", "Events offer Google Calendar's eleven colours, so they carry across to it."]}
+        why="Students colour their week the way they colour their Google Calendar. Matching its colours keeps a shift at work or a lab the same colour in both."
+        usedIn="Event details, Edit class"
+      >
+        <ColorSwatches colors={EVENT_COLORS} value={swatch} onChange={setSwatch} label="Example colour" />
       </Entry>
       <Entry
         id="switch"

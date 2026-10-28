@@ -1878,7 +1878,8 @@
   }
 }
 
-/* Class tabs carry their own "chosen" look; the colour-swatch radio outline doesn't apply. */
-.class-tab[role="radio"][aria-checked="true"]:not(:focus-visible) {
+/* Class tabs and option cards carry their own "chosen" look; the colour-swatch radio outline doesn't apply. */
+.class-tab[role="radio"][aria-checked="true"]:not(:focus-visible),
+.choice-card[role="radio"][aria-checked="true"]:not(:focus-visible) {
   outline: none;
 }

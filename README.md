@@ -36,8 +36,29 @@ it and start.
   the rest of my day look like* (your events, and each stretch of free time
   with the work planned into it), and *what's due this week* (each item says
   when it's planned, or that it won't fit in time).
-- **Calendar** — month, week and day. Week and day are time grids showing your
-  classes, your personal events and your planned work side by side.
+- **Calendar and to-do list** — month, week and day, with your classes, work and
+  personal events, and the free time between them left open for you to fill.
+  Beside it (a sheet along the bottom on phones and tablets) is **one to-do
+  list** of everything still to schedule: synced assignments and your own tasks,
+  "All tasks" or "School only", sorted by due date or by how long things take.
+  - Each task shows about how long it needs ("~1.5 hrs"); tap to change it.
+    Estimates record who set them, ready for suggested estimates later.
+  - Tasks and blocks are coloured by how soon they're due, red through yellow.
+  - **Drag a task onto a free time** to schedule it, as long as its estimate.
+    Drag blocks to move them, drag their bottom edge to change their length, or
+    drag them back onto the list. On a phone, press and hold first. A free gap
+    also lists what fits next, with **Put it here**, and a task's details have
+    **Schedule it**.
+  - Scheduled work leaves the list, so the next thing to plan moves up.
+  - Ticking a task off plays a short animation and takes it off the list; it
+    stays on the calendar, marked done.
+  - **New** marks work a class calendar added since you last looked.
+  - **Class priority** (Settings) breaks ties between work due at the same time.
+  - **Work you didn't finish:** each morning SmartScheduler asks whether to put
+    yesterday's unfinished work back on the list. Settings can switch this to
+    "put it back at midnight" or "keep it on my list".
+  - **Recolour any event** (a class, a shift at work) from its details, using
+    Google Calendar's colours. The colour covers every time it repeats.
 - **Upcoming** — everything due, by day, with where it sits in the plan.
 - **Classes** — every class side by side in one board, like the days of the
   week view: when it meets, how much is left, and its work in due order.
@@ -78,6 +99,14 @@ automatically get a "Study for …" task before them.
 
 The code is in [`src/lib/planner.ts`](src/lib/planner.ts), with tests in
 [`src/lib/__tests__/planner.test.ts`](src/lib/__tests__/planner.test.ts).
+
+The **Plan** screen uses this plan. The **Calendar** shows only the time you
+scheduled yourself, and the planner treats it as busy. Work you scheduled is
+planned where you put it; work whose time has passed is planned again.
+
+**Scheduled time** is stored shaped like a Google Calendar event (`start`,
+`end`, `title`, `color`, `externalId`), so a later two-way sync can map it
+across. See `ScheduledBlock` in [`src/lib/types.ts`](src/lib/types.ts).
 
 ## Adding calendars
 
@@ -167,7 +196,8 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 | --- | --- |
 | `prio:prototype-notice`, `prio:goal-notice` | Set when the welcome pop-up (prototype notice + goal) is closed. Missing = it shows on the next page load. |
 | `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Show me around, Settings, or `/app#tour`). |
-| `prio:ws` | Calendars and choices. Calendars here + finished setup = returning user. |
+| `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
+| `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
 
 **Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
@@ -188,7 +218,7 @@ in development (`NODE_ENV=development`) and is not in production builds.
 **Goal routes (same outcome: mark productive work done):**
 
 1. **Plan** → open a free gap → choose a task → review / Why this task? → **Done**
-2. **Calendar** (week/day) → open a free gap or planned-work block → review → **Done**
+2. **Calendar** → drag the next task from the to-do list onto a free time (or open a free gap → **Put it here**) → tick it off
 3. **Upcoming** or **Classes** → open a task → review → **Done**
 
 Help (header) lists these routes. See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md) and [`SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md).
@@ -252,5 +282,9 @@ src/lib/workspace.ts        what the browser stores, checked on the way back in
 src/lib/sync.ts             refreshing every calendar
 src/lib/changes.ts          spotting moved, added and removed work
 src/lib/timeline.ts         a day in order, and "what now"
+src/lib/todos.ts            the to-do list: what's on it, its order and its colours
+src/lib/blocks.ts           scheduled time: snapping, moving and resizing
+src/lib/newWork.ts          work that's new since you last looked
+src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
 src/components/             the interface
 ```

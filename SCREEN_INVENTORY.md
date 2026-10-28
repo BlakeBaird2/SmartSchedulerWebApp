@@ -1,6 +1,6 @@
 # Screen inventory — SmartScheduler (Flows, Goal & Submission)
 
-Meaningful screens / distinct user-facing states in **SmartScheduler** that support the core goal (find productive work in free time and mark it done). Count: **29**.
+Meaningful screens / distinct user-facing states in **SmartScheduler** that support the core goal (find productive work in free time and mark it done). Count: **32**.
 
 For each **new** destination added for this rubric, two entry points and a return path are listed.
 
@@ -16,9 +16,9 @@ For each **new** destination added for this rubric, two entry points and a retur
 | 8 | Onboarding step 3 — hours | Continue from step 1/2 | Skip / Back / Build my plan |
 | 9 | Plan (work on now, today's goal, the rest of today) | Header tab; wordmark; Help routes; `/app?view=plan` | Tabs; Back to home page (sample data) |
 | 10 | Plan — empty / no-fit free time | Plan when nothing fits | Stay on Plan / Upcoming |
-| 11 | **Free-gap detail panel** *(new)* | Plan “Open gap”; Calendar free-gap band; Focus “See this free gap” | Close / Back to Plan / Upcoming |
+| 11 | **Free-gap detail panel** *(new; now lists the next to-do items that fit, each with **Put it here**)* | Plan “Open gap”; Calendar free-gap band; Focus “See this free gap” | Close / Back to Plan / Upcoming |
 | 12 | Calendar month | Header → Calendar → Month | Day click / tabs |
-| 13 | Calendar week *(now with a To do list and mini month on computers; drag a task onto a time to plan it)* | Header → Calendar → Week | Tabs |
+| 13 | Calendar week *(with the to-do list and mini month on computers; drag a task onto a free time to schedule it, then move or resize it)* | Header → Calendar → Week | Tabs |
 | 14 | Calendar day | Month day click; Week day header | Tabs |
 | 15 | Upcoming, all classes | Header tab; Plan “See everything that's due”; Help; `/app?view=upcoming` | Tabs |
 | 16 | Upcoming empty / caught-up | Upcoming with no open work | Add task / tabs |
@@ -35,6 +35,9 @@ For each **new** destination added for this rubric, two entry points and a retur
 | 27 | **Help** *(new)* | Header Help; Settings hub / About | Back to Plan; Settings; route Open buttons |
 | 28 | **Settings hub + sub-pages** *(new structure)* | Header Settings; Help → Settings | All settings / tabs |
 | 29 | Page not found (404) | Any mistyped or old address | Open SmartScheduler / Home page buttons |
+| 30 | **To-do sheet (phones and tablets)** *(new)* | Calendar on a phone or tablet (always along the bottom); tap it to open the list | Tap the handle / hold a task (it slides away while you drag) |
+| 31 | **Unfinished work question** *(new)* | First open of a day after scheduled work went unfinished | Yes / No / Close (asks again next time) / Change this in Settings |
+| 32 | **Settings → Class priority** *(new)* | Settings sections list; Settings hub on phones | Other sections / tabs |
 
 Each main screen also has its own address (`/app?view=plan`, `calendar`, `upcoming`, `settings`, `help`), so the browser Back button moves between them. Change alerts, sync error banner, and sample-data banner are additional operational states counted inside the above flows rather than as separate “screens.”
 
@@ -48,3 +51,6 @@ Each main screen also has its own address (`/app?view=plan`, `calendar`, `upcomi
 | Completed success | Plan Focus **Done**; free-gap panel **Done** | Task detail **Mark as done** (also Calendar→task→Done) | Back to Plan / Upcoming / Open this task / Close |
 | Help | Header **Help** | Settings hub **Open Help** and Settings → About | Back to Plan / Settings |
 | Settings sub-pages | Settings hub section cards | Help → Open calendar settings / Settings button | **All settings** back button |
+| To-do sheet | Calendar on a phone (closed bar says what's next) | Calendar on a tablet | Close the list (handle) |
+| Unfinished work question | First open of the day | Reopening the app after closing it without answering | Yes / No / Close |
+| Class priority | Settings → Class priority | Settings hub (phones) → Class priority | Other sections |

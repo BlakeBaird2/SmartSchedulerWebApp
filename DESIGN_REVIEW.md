@@ -480,6 +480,30 @@ Also fixed: starting sample data from `/app#demo` changed the address bar while 
 page was still drawing, which React flagged as an error. The smart-event address
 update now waits until drawing is done.
 
+### 28. One to-do list beside the calendar, from user interviews
+
+Branch `redesign/sidebar-planner`, built on 27, from the team's user interviews.
+The left column is what the interviews asked for; the sync with class calendars
+is unchanged, and this is all about planning.
+
+| Asked for | What we built | Principle |
+| --- | --- | --- |
+| Choosing when work happens | The calendar shows only classes, events and time you scheduled. Free gaps stay empty, and while you place work they light up with how much time they hold. | User control; guide attention |
+| One list of school and personal work | One to-do list of synced and personal work, "All tasks" or "School only", by due date or by length. Scheduled work leaves it, so the next thing to plan moves up and says **Next up**. | Recognition over recall; grouping |
+| An editable time estimate on each task | "~1.5 hrs" on every task, one tap to change. Stored with who set it, so a suggested estimate can sit beside yours later. | Recognition over recall |
+| Colour by due date | Red (due now, or late) through yellow (a week or more out), in the list and on scheduled blocks, always with the words ("due tomorrow"). | Pre-attentive colour, never colour alone |
+| Drag and drop on phones too | Pointer events for mouse, pen and touch. On touch, press and hold to pick something up, so a swipe still scrolls; resizing starts straight away from the bottom edge. Below desktop size the list is a sheet that gets out of the way while you drag, and switches the agenda to a day with times so there's somewhere to drop. | Fitts's law; conventions (iOS and Android long-press) |
+| Easy to fill an empty gap with the next item | A free gap lists what fits next on the list, with **Put it here**. A task's details have **Schedule it**. A focused block moves with the arrow keys, Shift changes its length, and Delete takes it off. | Accessibility; flexibility |
+| A satisfying completion | The box pops, the tick draws itself, the row turns green and folds away. Done work stays on the calendar, faded and ticked. Reduced-motion settings get a plain tick. | Feedback; delight |
+| Class priority as a tiebreaker | **Class priority** in Settings decides which class's work comes first when things are due at the same time. | User control |
+| A New badge on unseen assignments | **New** on work a class calendar added, until it's opened or acted on, with a count and **Mark seen** in the list header. | Visibility of system status |
+| A morning question about unfinished work | The first open each day asks whether to put yesterday's unfinished work back on the list (Yes / No). Settings can switch this to "put it back at midnight" or "keep it on my list". | User control; error recovery |
+| Custom event colours, like Google Calendar | Recolour any event (a class, a shift) from its details, with Google Calendar's eleven colours. The colour covers every time it repeats. | External consistency |
+
+Every change to the calendar can be undone from the message that confirms it.
+Messages let taps through (except Undo) and fade during a drag, so they never
+hide a drop spot.
+
 ## Before and after
 
 The `Graces-branch` commit `b07e572` is the "before" for every screenshot comparison.
