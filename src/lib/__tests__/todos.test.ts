@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { blocksByTask, classRank, isSchoolWork, sortTodos, todoList, todoState, unfinishedToAsk, urgency, urgencyColor, NO_DUE_COLOR } from "../todos";
-import { approxDuration } from "../ui";
+import { autoPriority, blocksByTask, classRank, isSchoolWork, sortTodos, todoList, todoState, unfinishedToAsk, urgency, urgencyColor, NO_DUE_COLOR } from "../todos";
+import { approxDuration, dueLabel } from "../ui";
 import type { ScheduledBlock, Task } from "../types";
 
 // Tests run with TZ=America/Denver. October 1, 2026 is a Thursday.
@@ -25,6 +25,9 @@ function task(id: string, over: Partial<Task> = {}): Task {
     done: false,
     manual: false,
     generated: null,
+    points: null,
+    priority: "low",
+    customPriority: false,
     ...over,
   };
 }
@@ -123,6 +126,7 @@ test("the list leaves out scheduled and done work, and can show school work only
   const base = { tasks, blocks, now: NOW, sort: "due" as const, classOrder: [] };
   assert.deepEqual(todoList({ ...base, scope: "all" }).map((t) => t.id), ["essay", "scriptures"]);
   assert.deepEqual(todoList({ ...base, scope: "school" }).map((t) => t.id), ["essay"]);
+  assert.deepEqual(todoList({ ...base, scope: "personal" }).map((t) => t.id), ["scriptures"]);
 });
 
 // ---------------------------------------------------------------------------
@@ -150,4 +154,26 @@ test("estimates read at a glance", () => {
   assert.equal(approxDuration(90), "~1.5 hrs");
   assert.equal(approxDuration(80), "~1.5 hrs");
   assert.equal(approxDuration(120), "~2 hrs");
+});
+
+test("priority follows the due date unless the student set it", () => {
+  assert.equal(autoPriority("assignment", at(0, 9).toISOString(), NOW), "high", "late");
+  assert.equal(autoPriority("assignment", at(2, 9).toISOString(), NOW), "high", "within a day");
+  assert.equal(autoPriority("assignment", at(3, 23, 59).toISOString(), NOW), "medium", "within three days");
+  assert.equal(autoPriority("exam", at(3, 23, 59).toISOString(), NOW), "high", "an exam within three days");
+  assert.equal(autoPriority("assignment", at(9, 9).toISOString(), NOW), "low");
+  assert.equal(autoPriority("assignment", null, NOW), "low", "no due date");
+});
+
+test("sorting by points puts what's worth the most first", () => {
+  const tasks = [task("none"), task("ten", { points: 10 }), task("fifty", { points: 50 }), task("zero", { points: 0 })];
+  assert.deepEqual(sortTodos(tasks, "points", classRank([])).map((t) => t.id), ["fifty", "ten", "zero", "none"]);
+});
+
+test("due dates read the planner's way", () => {
+  assert.deepEqual(dueLabel(at(1, 18), NOW), { text: "Today", late: false });
+  assert.deepEqual(dueLabel(at(2, 9), NOW), { text: "Tomorrow", late: false });
+  assert.deepEqual(dueLabel(at(5, 9), NOW), { text: "Mon, Oct 5", late: false });
+  assert.deepEqual(dueLabel(at(0, 9), NOW), { text: "1 day late", late: true });
+  assert.deepEqual(dueLabel(null, NOW), { text: "No due date", late: false });
 });

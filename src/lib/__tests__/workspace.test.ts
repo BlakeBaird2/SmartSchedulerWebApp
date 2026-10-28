@@ -451,3 +451,17 @@ test("a picked colour paints every meeting of the event, and only that event", (
   assert.notEqual(colors("NET 460")[0], "#0b8043", "class times keep theirs");
   assert.deepEqual(sanitizeWorkspace({ eventColors: { a: "#ABCDEF", b: "red", c: 5 } }).eventColors, { a: "#abcdef" });
 });
+
+test("points and priority load checked, and reach the task", () => {
+  const ws = sanitizeWorkspace({ taskMeta: { a: { points: 20.4, priority: "high" }, b: { points: -3, priority: "urgent" }, c: { points: 5 } } });
+  assert.deepEqual(ws.taskMeta, { a: { points: 20, priority: "high" }, c: { points: 5 } });
+  const m = buildModel({ ...defaultWorkspace(), manualTasks: [{ id: "x", title: "Essay", courseId: null, type: "assignment", dueAt: null }], taskMeta: { "manual:x": { points: 30, priority: "high" } } }, { at: null, feeds: {} }, NOW);
+  const t = m.tasks.find((x) => x.id === "manual:x")!;
+  assert.equal(t.points, 30);
+  assert.equal(t.priority, "high");
+  assert.ok(t.customPriority);
+  const plain = buildModel({ ...defaultWorkspace(), manualTasks: [{ id: "y", title: "Read", courseId: null, type: "reading", dueAt: null }] }, { at: null, feeds: {} }, NOW).tasks[0];
+  assert.equal(plain.points, null);
+  assert.equal(plain.priority, "low");
+  assert.equal(plain.customPriority, false);
+});

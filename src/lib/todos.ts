@@ -7,11 +7,13 @@
  * done is a choice (see `UnfinishedPolicy`), so other behaviours can be swapped in
  * without touching the list itself.
  */
-import type { AssignmentType, ScheduledBlock, Task, UnfinishedAnswer, UnfinishedPolicy } from "./types";
+import type { AssignmentType, Priority, ScheduledBlock, Task, UnfinishedAnswer, UnfinishedPolicy } from "./types";
 
 export type { UnfinishedAnswer, UnfinishedPolicy };
-export type TodoScope = "all" | "school";
-export type TodoSort = "due" | "duration";
+/** Everything, school work only, or personal work only. */
+export type TodoScope = "all" | "school" | "personal";
+/** Due date (most urgent first), length (shortest first) or points (worth the most first). */
+export type TodoSort = "due" | "duration" | "points";
 
 /** Where a task stands: on the list, on the calendar, waiting to be asked about, or done. */
 export type TodoState = "todo" | "scheduled" | "unfinished" | "done";
@@ -110,9 +112,27 @@ export function byUrgency(rank: (courseId: string | null) => number): (a: Task, 
   };
 }
 
+/**
+ * How much a task matters when the student hasn't said: late work, anything due
+ * within a day, and exams or projects due within three days are high; anything
+ * else due within three days is medium; the rest is low.
+ */
+export function autoPriority(type: AssignmentType, dueAt: string | null, now: Date): Priority {
+  if (!dueAt) return "low";
+  const left = Date.parse(dueAt) - now.getTime();
+  if (left <= DAY) return "high";
+  if (left <= 3 * DAY) return type === "exam" || type === "project" ? "high" : "medium";
+  return "low";
+}
+
+export const PRIORITY_ORDER: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
+export const PRIORITY_LABEL: Record<Priority, string> = { high: "High", medium: "Medium", low: "Low" };
+
 export function sortTodos(tasks: Task[], sort: TodoSort, rank: (courseId: string | null) => number): Task[] {
   const urgency = byUrgency(rank);
   if (sort === "due") return [...tasks].sort(urgency);
+  // Worth the most first; work with no points after, most urgent first.
+  if (sort === "points") return [...tasks].sort((a, b) => (b.points ?? -1) - (a.points ?? -1) || urgency(a, b));
   // Shortest first, to fill a gap of a given size; the most urgent of equal length first.
   return [...tasks].sort((a, b) => a.estimate - b.estimate || urgency(a, b));
 }
@@ -133,7 +153,7 @@ export function todoList(input: TodoListInput): Task[] {
   const mine = blocksByTask(input.blocks);
   const answers = input.answers ?? {};
   const open = input.tasks.filter(
-    (t) => (input.scope === "all" || isSchoolWork(t)) && todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]) === "todo",
+    (t) => (input.scope === "all" || (input.scope === "school") === isSchoolWork(t)) && todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]) === "todo",
   );
   return sortTodos(open, input.sort, classRank(input.classOrder));
 }

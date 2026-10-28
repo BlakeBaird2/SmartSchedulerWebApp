@@ -6,7 +6,7 @@
  * anything unusable falls back to a default instead of breaking the page.
  */
 import { DEFAULT_PREFS } from "./planner";
-import { ASSIGNMENT_TYPES, normalizeType, UNFINISHED_POLICIES, type CourseEdit, type UnfinishedAnswer, type UnfinishedPolicy, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
+import { ASSIGNMENT_TYPES, normalizeType, PRIORITIES, UNFINISHED_POLICIES, type CourseEdit, type Priority, type TaskMeta, type UnfinishedAnswer, type UnfinishedPolicy, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
 import { detectProvider, feedIdFor } from "./feeds/url";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
@@ -23,6 +23,7 @@ export function defaultWorkspace(): Workspace {
     courseEdits: {},
     classOrder: [],
     eventColors: {},
+    taskMeta: {},
     unfinished: "ask",
     unfinishedAnswers: {},
     prefs: { ...DEFAULT_PREFS, estimates: { ...DEFAULT_PREFS.estimates } },
@@ -181,6 +182,22 @@ function sanitizeEventColors(raw: unknown): Record<string, string> {
   return Object.fromEntries(kept.slice(0, MAX_EVENT_COLORS).map(([k, v]) => [k, v.toLowerCase()]));
 }
 
+export const MAX_TASK_META = 2000;
+
+function sanitizeTaskMeta(raw: unknown): Record<string, TaskMeta> {
+  if (!isObj(raw)) return {};
+  const out: Record<string, TaskMeta> = {};
+  for (const [id, v] of Object.entries(raw)) {
+    if (!id || id.length > 400 || !isObj(v)) continue;
+    const meta: TaskMeta = {};
+    if (typeof v.points === "number" && Number.isFinite(v.points) && v.points >= 0) meta.points = Math.min(10_000, Math.round(v.points));
+    if (PRIORITIES.includes(v.priority as Priority)) meta.priority = v.priority as Priority;
+    if (Object.keys(meta).length) out[id] = meta;
+    if (Object.keys(out).length >= MAX_TASK_META) break;
+  }
+  return out;
+}
+
 export const MAX_ANSWERS = 500;
 
 /** The latest answers about unfinished work, newest kept when there are too many. */
@@ -238,6 +255,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     courseEdits,
     classOrder: sanitizeClassOrder(raw.classOrder),
     eventColors: sanitizeEventColors(raw.eventColors),
+    taskMeta: sanitizeTaskMeta(raw.taskMeta),
     unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
     unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),
     prefs: sanitizePrefs(raw.prefs),

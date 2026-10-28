@@ -204,6 +204,16 @@ export interface ScheduledBlock {
 export type UnfinishedPolicy = "ask" | "midnight" | "keep";
 export const UNFINISHED_POLICIES: UnfinishedPolicy[] = ["ask", "midnight", "keep"];
 
+/** How much a task matters: set by the student, or worked out from when it is due. */
+export type Priority = "high" | "medium" | "low";
+export const PRIORITIES: Priority[] = ["high", "medium", "low"];
+
+/** What the student adds to a task that no calendar knows: what it's worth, and how much it matters. */
+export interface TaskMeta {
+  points?: number;
+  priority?: Priority;
+}
+
 /** The answer given about one task when asked whether to put it back on the list. */
 export interface UnfinishedAnswer {
   at: string;
@@ -227,6 +237,8 @@ export interface Workspace {
   classOrder: string[];
   /** Event series (see eventColors.seriesKey) -> the colour the student picked for it. */
   eventColors: Record<string, string>;
+  /** taskId -> points and priority the student set. */
+  taskMeta: Record<string, TaskMeta>;
   /** What happens to work whose scheduled time passes before it is done. */
   unfinished: UnfinishedPolicy;
   /** taskId -> the last answer to "put it back on the to-do list?" */
@@ -296,6 +308,11 @@ export interface Task {
   done: boolean;
   manual: boolean;
   generated: "study" | null;
+  /** What it's worth, when the student said. Calendar feeds don't carry points. */
+  points: number | null;
+  priority: Priority;
+  /** Whether the student set the priority, rather than it following the due date. */
+  customPriority: boolean;
 }
 
 export interface CalEvent {

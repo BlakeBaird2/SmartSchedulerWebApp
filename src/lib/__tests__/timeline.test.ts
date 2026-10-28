@@ -11,7 +11,7 @@ const event = (id: string, start: Date, end: Date, busy = true, allDay = false):
   id, feedId: "f", courseId: null, title: id, start: start.toISOString(), end: end.toISOString(), allDay, busy, kind: "class", location: null, url: null, color: "#000000", source: "feed",
 });
 const task = (id: string, estimate: number, due: Date, allDay = false): Task => ({
-  id, feedId: "f", courseId: null, title: id, type: "assignment", dueAt: due.toISOString(), allDay, url: null, description: null, estimate, customEstimate: false, estimateSource: "default", done: false, manual: false, generated: null,
+  id, feedId: "f", courseId: null, title: id, type: "assignment", dueAt: due.toISOString(), allDay, url: null, description: null, estimate, customEstimate: false, estimateSource: "default", done: false, manual: false, generated: null, points: null, priority: "low", customPriority: false,
 });
 
 function setup(now: Date) {
