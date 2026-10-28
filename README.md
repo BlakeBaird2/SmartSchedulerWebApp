@@ -59,9 +59,11 @@ prefix on every class.
 - **Tasks** — the master checklist: how the week is going (a progress ring, due
   today, due this week), then every task in one table to search, sort (due date,
   shortest first) and filter (today, a class, personal, completed).
-- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, points, priority.
-- **Points and priority** — calendar feeds don't carry either. Points are yours to
-  add; priority follows the due date until you pick one.
+- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
+- **Points and priority** — calendar feeds don't carry either. Points are for
+  assignments from a class calendar (what they're worth in the class), so you add
+  them in an assignment's details; work you add by hand has none. Priority follows
+  the due date until you pick one.
 - Also: ticking work off folds it away with Undo; **New** marks work a class
   calendar added since you last looked; each morning it asks whether to put
   yesterday's unfinished work back; **Class priority** (Settings) breaks ties;
