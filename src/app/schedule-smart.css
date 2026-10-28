@@ -1753,8 +1753,16 @@ button.ss-event:hover {
   color: #fff;
   background: var(--ty);
 }
+section.ss-due-page {
+  padding-top: 28px;
+}
+.ss-due-heading {
+  margin: 0;
+  font: 700 30px/1.15 "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.03em;
+}
 .ss-due-toolbar {
-  margin: 30px 0 14px;
+  margin: 14px 0 12px;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;

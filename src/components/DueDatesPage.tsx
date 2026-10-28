@@ -88,13 +88,8 @@ export function DueDatesPage() {
 
   return (
     <section className="ss-due-page fade-in">
-      <div className="ss-tasks-header">
-        <div>
-          <span className="ss-eyebrow">DUE DATES</span>
-          <h1>Every deadline, in one place.</h1>
-          <p>Exams, quizzes, projects, assignments and readings from all your classes, by the day they&apos;re due.</p>
-        </div>
-      </div>
+      {/* Just the name, so a whole week fits on the screen below it. */}
+      <h1 className="ss-due-heading">Due Dates</h1>
 
       <div className="ss-due-toolbar">
         <div className="ss-due-title">
