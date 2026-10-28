@@ -1462,28 +1462,110 @@ button.ss-event:hover {
 }
 
 /* What is being dragged, while it is away from the calendar. */
+/*
+ * What is being dragged. In the hand it looks like the card that was picked up;
+ * over the calendar it glides into its slot and becomes the striped block it
+ * will be, at the block's size, so dropping it changes nothing on screen.
+ */
 .ss-ghost {
   position: fixed;
   z-index: 80;
-  width: 228px;
+  box-sizing: border-box;
   padding: 9px 12px;
+  overflow: hidden;
+  border: 1px solid var(--ss-accent-ring);
   border-left: 3px solid var(--ss-accent);
-  border-radius: 9px;
+  border-radius: 12px;
+  color: var(--ss-ink);
   background: var(--ss-surface);
-  box-shadow: 0 12px 32px rgba(20, 20, 18, 0.18);
+  box-shadow: 0 14px 34px rgba(20, 20, 18, 0.2);
   pointer-events: none;
-  transform: rotate(-2deg);
+  transition:
+    width 0.16s ease,
+    height 0.16s ease,
+    padding 0.16s ease,
+    border-radius 0.16s ease,
+    box-shadow 0.16s ease,
+    color 0.16s ease;
 }
-.ss-ghost strong {
+.ss-ghost::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, var(--ss-stripe-a), var(--ss-stripe-a) 6px, var(--ss-stripe-b) 6px, var(--ss-stripe-b) 12px);
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+.ss-ghost > * {
+  position: relative;
+}
+.ss-ghost strong,
+.ss-ghost span {
   display: block;
-  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.ss-ghost strong {
+  font-size: 14px;
+  line-height: 1.3;
+}
 .ss-ghost span {
-  font-size: 12px;
+  margin-top: 2px;
   color: var(--ss-muted);
+  font-size: 12px;
+  transition: color 0.16s ease;
+}
+/* Over the calendar: in its slot, and sliding from one slot to the next. */
+.ss-ghost[data-slot] {
+  padding: 6px 9px;
+  border-color: transparent;
+  border-left-color: var(--ss-accent);
+  border-radius: 7px;
+  color: var(--ss-work-fg);
+  box-shadow: 0 6px 18px rgba(20, 20, 18, 0.14);
+  transition:
+    left 0.12s ease-out,
+    top 0.12s ease-out,
+    width 0.16s ease,
+    height 0.16s ease,
+    padding 0.16s ease,
+    border-radius 0.16s ease,
+    box-shadow 0.16s ease,
+    color 0.16s ease;
+}
+.ss-ghost[data-slot]::before {
+  opacity: 1;
+}
+.ss-ghost[data-slot] strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+.ss-ghost[data-slot] span {
+  color: inherit;
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+.ss-ghost[data-compact] {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-top: 2px;
+  padding-bottom: 0;
+}
+.ss-ghost[data-compact] strong {
+  min-width: 0;
+}
+.ss-ghost[data-compact] span {
+  flex: none;
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-ghost,
+  .ss-ghost::before,
+  .ss-ghost[data-slot] {
+    transition: none;
+  }
 }
 
 /* --------------------------------------------------------- tasks page */

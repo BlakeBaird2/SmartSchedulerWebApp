@@ -421,7 +421,8 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                         <span>DUE {clock(deadline).toUpperCase()}</span>
                       </div>
                     ) : null}
-                    {preview && drag ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
+                    {/* Moving work, the ghost itself settles into the slot (DragGhost.tsx); resizing draws it here. */}
+                    {preview && drag?.kind === "resize" ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
                     {isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour ? (
                       <div className="ss-now-line" style={{ top: y(now.getTime(), c.from) }}>
                         <i />
@@ -541,8 +542,10 @@ function PlannedBlock({
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("[data-resize]")) return;
         // Where it was grabbed, in minutes from its top, so it doesn't jump under the pointer.
-        const grab = Math.round((e.clientY - e.currentTarget.getBoundingClientRect().top) / ppm);
-        beginPlanDrag(e, { kind: "move", grab, ...payload }, (target) => {
+        const box = e.currentTarget.getBoundingClientRect();
+        const grab = Math.round((e.clientY - box.top) / ppm);
+        const source = { width: box.width, height: box.height, grabX: e.clientX - box.left, grabY: e.clientY - box.top };
+        beginPlanDrag(e, { kind: "move", grab, source, ...payload }, (target) => {
           if (target.kind === "list") unschedule(cal.id);
           else if (target.kind === "grid") moveScheduled(cal.id, targetStart(target));
           // Onto a day in the month: the same time, that day.

@@ -204,10 +204,20 @@ function PlannerTask({ task }: { task: Task }) {
       }}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("button, input")) return;
+        const box = e.currentTarget.getBoundingClientRect();
         beginPlanDrag(
           e,
-          // A finger would hide the top of the block, so on touch the block hangs above it.
-          { kind: "new", taskId: task.id, blockId: null, title: task.title, minutes: task.estimate, grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60), color: "var(--ss-accent)" },
+          {
+            kind: "new",
+            taskId: task.id,
+            blockId: null,
+            title: task.title,
+            minutes: task.estimate,
+            // A finger would hide the top of the block, so on touch the block hangs above it.
+            grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60),
+            color: "var(--ss-accent)",
+            source: { width: box.width, height: box.height, grabX: e.clientX - box.left, grabY: e.clientY - box.top },
+          },
           (target) => {
             if (target.kind === "grid") scheduleTask(task, targetStart(target));
             else if (target.kind === "date") scheduleOnDay(task, new Date(target.dayStart));

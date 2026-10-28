@@ -41,6 +41,8 @@ export interface DragPayload {
   /** When the block starts (ms), for resizing. */
   start?: number;
   color: string;
+  /** The size of what was picked up, and where on it (px), so the ghost starts out the same. */
+  source?: { width: number; height: number; grabX: number; grabY: number };
 }
 
 /** Where a drag would land. Minutes count from the day's midnight. */
@@ -292,6 +294,28 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
 }
 
 /** The time a drop target starts, as a date. */
+/** Where a time slot is on screen right now, as the calendar would draw a block there. */
+export function slotRect(t: Extract<DropTarget, { kind: "grid" }>): { left: number; top: number; width: number; height: number; clipTop: number; clipBottom: number } | null {
+  const col = document.querySelector<HTMLElement>(`[data-drop-day="${t.dayStart}"]`);
+  if (!col) return null;
+  const r = col.getBoundingClientRect();
+  const min = Number(col.dataset.dropMin);
+  const ppm = Number(col.dataset.dropPpm);
+  // Blocks sit inside the column's border, 5px from each side and 3px below their start.
+  const top = r.top + col.clientTop + Number(col.dataset.dropTop) + (t.startMinute - min) * ppm + 3;
+  const height = Math.max(16, (t.endMinute - t.startMinute) * ppm - 6);
+  // The hours scroll inside a frame; the part of the block outside it is hidden, as on the calendar.
+  const frame = col.closest<HTMLElement>("[data-drag-scroll]")?.getBoundingClientRect();
+  return {
+    left: r.left + col.clientLeft + 5,
+    top,
+    width: col.clientWidth - 10,
+    height,
+    clipTop: frame ? Math.max(0, frame.top - top) : 0,
+    clipBottom: frame ? Math.max(0, top + height - frame.bottom) : 0,
+  };
+}
+
 export function targetStart(t: Extract<DropTarget, { kind: "grid" }>): Date {
   const d = new Date(t.dayStart);
   d.setMinutes(t.startMinute);
