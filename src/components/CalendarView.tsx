@@ -25,6 +25,7 @@ import { courseStyle, useApp, useIsPhone, type CalMode } from "./context";
 import { FilterBar } from "./FilterBar";
 import { CalendarSidebar } from "./CalendarSidebar";
 import { DragGhost } from "./DragGhost";
+import { TodoSheet } from "./TodoSheet";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
 import { Button, SegmentedControl } from "./ui";
 
@@ -178,6 +179,8 @@ export function CalendarView() {
         </div>
         {views}
         {/* Room under the last hour for the to-do sheet. */}
+        <div className="h-20" aria-hidden />
+        <TodoSheet hasTimes={calMode === "day" || calMode === "3day"} showTimes={() => setCalMode("day")} />
         <DragGhost />
       </div>
     );
@@ -217,6 +220,7 @@ export function CalendarView() {
         </div>
       </div>
       {/* Tablets: no room for the sidebar, so the to-do list is a sheet, as on phones. */}
+      <TodoSheet className="lg:hidden" hasTimes={calMode !== "month"} showTimes={() => setCalMode("week")} />
       <DragGhost />
     </div>
   );

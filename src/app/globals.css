@@ -1542,7 +1542,72 @@
     transform: rotate(-2deg);
   }
 
-  /* Messages step aside during a drag. */
+  /* Phones and tablets: the to-do list as a sheet along the bottom, above the tab bar. */
+  .todo-sheet {
+    position: fixed;
+    z-index: 30;
+    inset-inline: 0.75rem;
+    bottom: calc(5.4rem + env(safe-area-inset-bottom));
+    transition:
+      transform 220ms ease,
+      opacity 220ms ease;
+  }
+  @media (min-width: 768px) {
+    .todo-sheet {
+      inset-inline: auto 1rem;
+      bottom: 1rem;
+      width: 24rem;
+    }
+  }
+  /* Out of the way while a task is being placed, so the calendar is free to drop on. */
+  .todo-sheet[data-hidden] {
+    transform: translateY(calc(100% + 7rem));
+    opacity: 0;
+    pointer-events: none;
+  }
+  .todo-sheet-bar,
+  .todo-sheet-handle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--surface) 94%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-lg);
+  }
+  .todo-sheet-bar {
+    border-radius: 18px;
+    padding: 0.6rem 0.85rem;
+    transition:
+      border-color 120ms ease,
+      background 120ms ease;
+  }
+  .todo-sheet-handle {
+    justify-content: center;
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    box-shadow: none;
+  }
+  .todo-sheet[data-open] .todo-panel {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Messages rise above the to-do sheet on phones and tablets, and step aside during a drag. */
+  @media (max-width: 1023px) {
+    html:has(.todo-sheet:not([data-hidden])) .app-toast {
+      bottom: calc(10.25rem + env(safe-area-inset-bottom));
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1023px) {
+    html:has(.todo-sheet:not([data-hidden])) .app-toast {
+      bottom: 6rem;
+    }
+  }
   .plan-dragging .app-toast {
     opacity: 0;
     pointer-events: none;
