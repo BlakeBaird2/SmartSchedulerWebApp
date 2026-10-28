@@ -39,6 +39,8 @@ import { trackEvent } from "./smartEvents";
 interface UiPrefs {
   view: View;
   calMode: CalMode;
+  /** Set once the student picks a view themselves; until then the calendar opens on the day. */
+  calModePicked: boolean;
   filters: Filters;
   /** Whether the first-run setup has been finished. */
   setupDone: boolean;
@@ -66,7 +68,8 @@ function viewFrom(v: unknown): View | null {
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "classes", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
   view: "calendar",
-  calMode: "week",
+  calMode: "day",
+  calModePicked: false,
   filters: DEFAULT_FILTERS,
   setupDone: false,
   hideClassTimesTip: false,
@@ -84,8 +87,9 @@ function parseUi(raw: string | null): UiPrefs {
   const f = p.filters;
   return {
     view: viewFrom(p.view) ?? DEFAULT_UI.view,
-    // The old phone views (an agenda, three days) open as the week.
-    calMode: p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
+    // The day is the default. A view saved before that, which nobody picked, opens as the day too.
+    calMode: p.calModePicked === true && p.calMode && CAL_MODES.includes(p.calMode) ? p.calMode : DEFAULT_UI.calMode,
+    calModePicked: p.calModePicked === true,
     filters: {
       // One class or all of them (class tabs). An older multi-class choice falls back to all.
       courses: Array.isArray(f?.courses) && f.courses.length === 1 && typeof f.courses[0] === "string" ? [f.courses[0]] : null,
@@ -669,7 +673,7 @@ export function App() {
     [seeWork],
   );
   const setSettingsPanel = useCallback((p: SettingsPanel) => writeUi({ view: "settings", settingsPanel: p }), []);
-  const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m }), []);
+  const setCalMode = useCallback((m: CalMode) => writeUi({ calMode: m, calModePicked: true }), []);
   const setFilters = useCallback((f: Filters | ((prev: Filters) => Filters)) => {
     const prev = parseUi(readStored(KEYS.ui)).filters;
     writeUi({ filters: typeof f === "function" ? f(prev) : f });
