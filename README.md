@@ -14,11 +14,11 @@ it and start.
 
 ## Pages
 
-- **`/`** — the home page for newcomers: what SmartScheduler does, how the plan is made,
-  and where to find the calendar link in each app (Canvas, Learning Suite,
-  Google, Outlook, Apple, scheduling apps), grouped by school, work and personal.
-  It is rendered on the server, so it shows up at once and search engines can
-  read it. Anyone who already has calendars in their browser skips it and goes
+- **`/`** — the home page for newcomers, in the app's design: one line on what
+  SmartScheduler does, **Get started** and **Try it with sample data**, a still
+  of the calendar page, and three steps. Where to find each calendar link is
+  explained during setup. It is rendered on the server, so it shows up at once
+  and search engines can read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.
 - **`/about`** — the same home page, for people who already use SmartScheduler. It never
   skips ahead to the app; Settings → **About SmartScheduler** links to it.
@@ -262,7 +262,7 @@ docker run -p 3000:3000 smartscheduler
 ## Project layout
 
 ```
-src/app/page.tsx            the home page (src/components/Landing*.tsx, LinkGuide.tsx)
+src/app/page.tsx            the home page (src/components/Landing.tsx)
 src/app/app/page.tsx        the app
 src/app/api/feed/route.ts   the only server endpoint: read one calendar link
 src/lib/feeds/              link checks, provider detection, the iCal parser, sample data

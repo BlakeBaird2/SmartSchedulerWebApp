@@ -550,12 +550,6 @@
  * Home page
  * ------------------------------------------------------------------------- */
 
-@media (prefers-reduced-motion: no-preference) {
-  /* Links to sections of the home page glide rather than jump. */
-  html:has([data-landing]) {
-    scroll-behavior: smooth;
-  }
-}
 
 .skeleton {
   background: var(--surface-2);
@@ -1802,11 +1796,6 @@
   /* The wordmark's full stop, in the accent: "Schedule Smart." */
   .wordmark-dot {
     color: var(--accent);
-  }
-
-  /* A soft wash of the accent behind the home page hero and its closing call to action. */
-  .landing-glow {
-    background: radial-gradient(60% 55% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 72%);
   }
 }
 
