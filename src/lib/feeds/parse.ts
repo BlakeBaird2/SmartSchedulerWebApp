@@ -345,7 +345,10 @@ export function parseFeed(text: string, options: ParseOptions): FeedResult {
             courseKey,
             title,
             type: classify({ title }),
-            dueAt: o.start.toISOString(),
+            // Canvas sends work due at 11:59 PM as a date with no time. That means the
+            // end of that day where the student is, not its first moment (which, read
+            // on a server in UTC, is the evening before in the Americas).
+            dueAt: (o.allDay ? endOfDate(o) : o.start).toISOString(),
             allDay: false,
             url: direct,
             description: o.description,

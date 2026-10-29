@@ -150,6 +150,24 @@ test("Canvas: assignments lose the bracket and link straight to the assignment",
   assert.equal(r.tasks.find((t) => t.uid === "event-assignment-556")!.type, "quiz");
 });
 
+test("Canvas: work due at 11:59 PM, sent as a date with no time, is due at the end of that day where the student is", () => {
+  const feed = cal("Blake Student", [
+    ev([
+      "UID:event-assignment-700",
+      "DTSTART;VALUE=DATE:20261030",
+      "DTEND;VALUE=DATE:20261030",
+      "SUMMARY:RDS Lab [IS 531]",
+      "URL:https://byu.instructure.com/calendar?include_contexts=course_531#assignment_700",
+    ]),
+  ]);
+  const lab = parseFeed(feed, { url: CANVAS_URL, role: "auto", timezone: TZ, now: NOW }).tasks.find((t) => t.uid === "event-assignment-700")!;
+  // 11:59:59 PM on Friday, October 30 in Denver (MDT, UTC-6), never the evening before.
+  assert.equal(lab.dueAt, "2026-10-31T05:59:59.000Z");
+  assert.equal(lab.allDay, false, "it's due at 11:59 PM, so it shows that time");
+  const tokyo = parseFeed(feed, { url: CANVAS_URL, role: "auto", timezone: "Asia/Tokyo", now: NOW }).tasks[0];
+  assert.equal(tokyo.dueAt, "2026-10-30T14:59:59.000Z", "the end of the 30th in the student's own zone");
+});
+
 test("Canvas: weekly class meetings become busy time, one entry per meeting", () => {
   const r = parseFeed(canvasFeed, { url: CANVAS_URL, role: "auto", timezone: TZ, now: NOW });
   const classes = r.events.filter((e) => e.uid.startsWith("event-calendar-event-900"));

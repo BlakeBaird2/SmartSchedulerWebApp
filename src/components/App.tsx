@@ -23,6 +23,7 @@ import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
+import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
 import { DueDatesPage } from "./DueDatesPage";
 import { ImportDialog } from "./ImportDialog";
@@ -381,16 +382,18 @@ export function App() {
           markDone(after.feeds.flatMap((f) => (feeds[f.id]?.result ? pastDueIds(f.id, feeds[f.id]!.result!, cutoff) : [])));
         }
 
-        if (outcome.changes.length) {
-          writeJson(KEYS.changes, mergeChanges(outcome.changes, parseChanges(readStored(KEYS.changes)), at));
-          writeJson(KEYS.newWork, addNewWork(parseNewWork(readStored(KEYS.newWork)), outcome.changes, at));
+        // Due dates that only moved because they used to be read wrong aren't news.
+        const changes = outcome.changes.filter((c) => !isDateOnlyCorrection(c));
+        if (changes.length) {
+          writeJson(KEYS.changes, mergeChanges(changes, parseChanges(readStored(KEYS.changes)), at));
+          writeJson(KEYS.newWork, addNewWork(parseNewWork(readStored(KEYS.newWork)), changes, at));
         }
 
         if (outcome.failed > 0) toast(outcome.failed === 1 ? "One calendar couldn't be read. Its last copy is still shown." : `${outcome.failed} calendars couldn't be read. Their last copies are still shown.`);
         else {
           // Classes the student left out (ones they TA, say) keep their changes to themselves.
           const left = new Set(buildModel(after, { feeds, at: outcome.snapshot.at }, at).courses.filter((c) => c.hidden).map((c) => c.id));
-          const shown = outcome.changes.filter((c) => !c.courseId || !left.has(c.courseId)).length;
+          const shown = changes.filter((c) => !c.courseId || !left.has(c.courseId)).length;
           if (shown) toast(`${plural(shown, "change")} from your classes · see the bell`);
           else if (!quiet) toast("Everything is up to date");
         }
