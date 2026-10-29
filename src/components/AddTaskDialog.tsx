@@ -14,8 +14,10 @@ const ESTIMATES = [15, 30, 45, 60, 90, 120];
 
 /**
  * Add a task no calendar knows about, as in the Figma prototype: a name, its
- * class or area, when it's due, how long it takes, what it's worth and how much
- * it matters. It goes straight onto the planner's list.
+ * class or area, when it's due, how long it takes and how much it matters. It
+ * goes straight onto the planner's list. Points are left out: they say what an
+ * assignment is worth in its class, so they belong to assignments from a class
+ * calendar.
  */
 export function AddTaskDialog({ onClose }: { onClose: () => void }) {
   const { model, update, toast, now } = useApp();
@@ -44,8 +46,6 @@ export function AddTaskDialog({ onClose }: { onClose: () => void }) {
       dueAt = at.toISOString();
     }
     const minutes = Number(data.get("minutes"));
-    const pointsRaw = String(data.get("points") ?? "").trim();
-    const points = pointsRaw === "" ? undefined : Math.max(0, Math.round(Number(pointsRaw)));
     const priority = String(data.get("priority")) as Priority;
     const id = randomId();
     const taskId = `manual:${id}`;
@@ -54,7 +54,7 @@ export function AddTaskDialog({ onClose }: { onClose: () => void }) {
       ...w,
       manualTasks: [...w.manualTasks, { id, title, courseId, type: "assignment", dueAt }],
       estimates: { ...w.estimates, [taskId]: { minutes, source: "user", at } },
-      taskMeta: { ...w.taskMeta, [taskId]: { priority, ...(points !== undefined && Number.isFinite(points) ? { points } : {}) } },
+      taskMeta: { ...w.taskMeta, [taskId]: { priority } },
     }));
     trackEvent("task_added", { title, courseId, type: "assignment", hasDueDate: Boolean(dueAt), minutes });
     toast(`Added to Schedule Smart: ${title}`, {
@@ -127,20 +127,16 @@ export function AddTaskDialog({ onClose }: { onClose: () => void }) {
               </select>
             </label>
             <label>
-              <span>Points</span>
-              <input name="points" type="number" min="0" max="10000" inputMode="numeric" defaultValue="10" />
+              <span>Priority</span>
+              <select name="priority" defaultValue="medium">
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_LABEL[p]}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
-          <label>
-            <span>Priority</span>
-            <select name="priority" defaultValue="medium">
-              {PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {PRIORITY_LABEL[p]}
-                </option>
-              ))}
-            </select>
-          </label>
           <button className="ss-primary" type="submit" data-smart-event="task_added">
             <SsIcon name="plus" /> Add to Schedule Smart
           </button>

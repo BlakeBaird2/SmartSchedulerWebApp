@@ -213,7 +213,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-4">
+        {/* Points are for real assignments (what they're worth in the class); work added by hand has none. */}
+        <div className={task.manual ? "" : "grid grid-cols-[minmax(0,1fr)_7rem] gap-4"}>
           <div>
             <Label>Priority</Label>
             <div className="flex flex-wrap gap-1.5">
@@ -231,26 +232,28 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               )}
             </p>
           </div>
-          <div>
-            <Label>Points</Label>
-            <input
-              className="input input-sm w-full"
-              type="number"
-              min={0}
-              max={10000}
-              inputMode="numeric"
-              placeholder="None"
-              aria-label={`Points for ${task.title}`}
-              defaultValue={task.points ?? ""}
-              key={`${task.id}:${task.points ?? ""}`}
-              onBlur={(e) => {
-                const v = e.target.value.trim();
-                const next = v === "" ? null : Number(v);
-                if (next === task.points || (next !== null && !Number.isFinite(next))) return;
-                setTaskMeta(task.id, { points: next });
-              }}
-            />
-          </div>
+          {task.manual ? null : (
+            <div>
+              <Label>Points</Label>
+              <input
+                className="input input-sm w-full"
+                type="number"
+                min={0}
+                max={10000}
+                inputMode="numeric"
+                placeholder="None"
+                aria-label={`Points for ${task.title}`}
+                defaultValue={task.points ?? ""}
+                key={`${task.id}:${task.points ?? ""}`}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  const next = v === "" ? null : Number(v);
+                  if (next === task.points || (next !== null && !Number.isFinite(next))) return;
+                  setTaskMeta(task.id, { points: next });
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {!task.done ? (

@@ -9,7 +9,7 @@ import type { Filters } from "@/lib/ui";
 import type { TodoScope, TodoSort } from "@/lib/todos";
 
 /** The two main views of the prototype, plus Settings and Help from the profile menu. */
-export type View = "calendar" | "tasks" | "settings" | "help";
+export type View = "calendar" | "tasks" | "due" | "settings" | "help";
 /** On phones "week" shows three days at a time (one beside the open planner), as in the prototype. */
 export type CalMode = "month" | "week" | "day";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
@@ -69,6 +69,9 @@ export interface AppContextValue {
   setSettingsPanel: (p: SettingsPanel) => void;
   calMode: CalMode;
   setCalMode: (m: CalMode) => void;
+  /** Due dates: a day, a week (the default) or a month. */
+  dueMode: CalMode;
+  setDueMode: (m: CalMode) => void;
   calSidebar: boolean;
   /** The to-do list: everything, or school work only. */
   todoScope: TodoScope;
@@ -99,6 +102,8 @@ export interface AppContextValue {
   reveal: (taskId: string) => void;
   openAddTask: () => void;
   openClassTimes: () => void;
+  /** Choose which classes from one school calendar (or all of them) are the student's. */
+  openClassPicker: (feedId?: string | null) => void;
   /** Whether the "add your class times" suggestion was dismissed. */
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;

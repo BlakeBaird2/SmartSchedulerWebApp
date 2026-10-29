@@ -7,6 +7,8 @@
  * into Courses, Tasks and CalEvents for display and planning.
  */
 
+import type { ClassHint } from "./classes";
+
 export type AssignmentType = "exam" | "quiz" | "reading" | "project" | "assignment";
 
 export const ASSIGNMENT_TYPES: AssignmentType[] = ["exam", "quiz", "project", "assignment", "reading"];
@@ -131,6 +133,11 @@ export interface CourseEdit {
   code?: string;
   title?: string;
   color?: string;
+  /**
+   * Whether the student left this class out (true) or kept it (false). Unset until
+   * they decide; until then a class that looks like it isn't theirs is left out
+   * (see classes.ts).
+   */
   hidden?: boolean;
   /**
    * Meeting times from the class's calendar that the user corrected, as
@@ -287,6 +294,10 @@ export interface Course {
   color: string;
   url: string | null;
   hidden: boolean;
+  /** Why it looks like it isn't one of the student's classes, if it does. */
+  hint: ClassHint | null;
+  /** Whether the student has said if it's theirs. */
+  decided: boolean;
 }
 
 export interface Task {

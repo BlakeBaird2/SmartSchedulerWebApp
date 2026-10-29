@@ -56,12 +56,24 @@ prefix on every class.
   - Tap a free time to see what fits there, with **Put it here**.
   - Phones: the planner and one day side by side, or three days with the planner
     closed.
-- **Tasks** — the master checklist: how the week is going (a progress ring, due
-  today, due this week), then every task in one table to search, sort (due date,
-  shortest first) and filter (today, a class, personal, completed).
-- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, points, priority.
-- **Points and priority** — calendar feeds don't carry either. Points are yours to
-  add; priority follows the due date until you pick one.
+- **Tasks** — the master checklist: a ring for what's due today, and a column
+  for each day of the week, Monday to Sunday, as tall as the work due that day (by
+  estimate). Each column starts grey and fills with colour as that day's work is
+  ticked off, so a finished week is seven full columns. Then every task in one
+  table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
+- **Due dates** — every deadline from every class (and everything added by hand)
+  by the day it's due. It opens on the week: seven columns side by side, Monday
+  to Sunday, with each day's work stacked down its column, tinted with its class's
+  colour (on a phone the columns scroll sideways, starting at today). **Day** shows one day with more
+  about each item; **Month** shows the month, and a day opens that day. Each kind
+  of work has its own colour, icon and name — exams (a solid red badge), quizzes,
+  projects, assignments and readings — with a count of each for the range shown.
+  The colours were checked for colour-blind separation in light and dark.
+- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
+- **Points and priority** — calendar feeds don't carry either. Points are for
+  assignments from a class calendar (what they're worth in the class), so you add
+  them in an assignment's details; work you add by hand has none. Priority follows
+  the due date until you pick one.
 - Also: ticking work off folds it away with Undo; **New** marks work a class
   calendar added since you last looked; each morning it asks whether to put
   yesterday's unfinished work back; **Class priority** (Settings) breaks ties;
@@ -118,6 +130,19 @@ webcal). SmartScheduler reads that link, so it always sees the latest version.
 Each calendar is either **School** (its entries become classes and assignments)
 or **Personal** (its entries only mark you as busy and never turn into homework).
 SmartScheduler picks one when you add a link and you can switch it at any time.
+
+**Choosing your classes.** A Canvas link can't be split: it brings every course on
+the account, including ones you TA, last term's, sandboxes and pages that aren't
+classes (orientation, advisement, clubs). So after you add a school calendar,
+SmartScheduler asks **Which classes are yours?** and lists every class it found.
+Ones that look like they aren't yours start unticked, with the reason: a name
+like "TA", "Teaching Assistants", "Sandbox" or "Template"; a page such as
+orientation or a library guide; or nothing due or on in the last three weeks (an
+earlier term). Untick any others you don't take. A class left out drops out
+everywhere — its work, its class times and its changes in the bell — and you can
+bring it back from **Choose classes** under the calendar in Settings. When a
+calendar picks up classes later (a new term, a class you start TAing), a line under
+the top bar says so, and the same rules decide which start out left out.
 
 **Staying up to date.** These links are live. SmartScheduler re-reads every calendar when
 you open it, when you come back to the tab, and every 30 minutes while it's open.

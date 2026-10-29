@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { endOfWeek, isSameDay, startOfWeek } from "date-fns";
-import { byUrgency, classRank, isSchoolWork, PRIORITY_LABEL } from "@/lib/todos";
+import { format, isSameDay, startOfWeek } from "date-fns";
+import { byUrgency, classRank, isSchoolWork, PRIORITY_LABEL, weekLoad, type DayLoad } from "@/lib/todos";
 import type { Task } from "@/lib/types";
-import { dueLabel } from "@/lib/ui";
+import { approxDuration, dueLabel, plural } from "@/lib/ui";
 import { useApp } from "./context";
 import { SsIcon } from "./SsIcon";
 
@@ -48,14 +48,11 @@ export function TasksPage() {
     [model.tasks, ws.done, nowMs],
   );
 
-  // The week at a glance: work due Monday to Sunday, done or not.
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 }).getTime();
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 }).getTime();
-  const thisWeek = pool.filter((t) => t.dueAt && Date.parse(t.dueAt) >= weekStart && Date.parse(t.dueAt) <= weekEnd);
+  // Today's work, and the week's day by day, done or not.
   const today = pool.filter((t) => t.dueAt && isSameDay(new Date(t.dueAt), now));
-  const weekDone = thisWeek.filter((t) => t.done).length;
   const todayDone = today.filter((t) => t.done).length;
-  const percent = thisWeek.length ? Math.round((weekDone / thisWeek.length) * 100) : 0;
+  const percent = today.length ? Math.round((todayDone / today.length) * 100) : 0;
+  const week = useMemo(() => weekLoad(pool, startOfWeek(now, { weekStartsOn: 1 })), [pool, now]);
 
   const filters = ["All", "Today", ...model.visibleCourses.map((c) => c.code), "Personal", "Completed"];
   const rank = classRank(ws.classOrder);
@@ -95,7 +92,7 @@ export function TasksPage() {
       <div className="ss-summary">
         <div className="ss-summary-card ss-completion">
           <div className="ss-ring">
-            <svg viewBox="0 0 58 58" aria-label={`${percent}% complete`}>
+            <svg viewBox="0 0 58 58" aria-hidden>
               <circle className="ss-ring-track" cx="29" cy="29" r="24" />
               <circle className="ss-ring-progress" cx="29" cy="29" r="24" strokeDasharray="151" strokeDashoffset={151 - (151 * percent) / 100} />
             </svg>
@@ -105,39 +102,14 @@ export function TasksPage() {
             </strong>
           </div>
           <div className="ss-summary-copy">
-            <span>WEEKLY PROGRESS</span>
-            <h2>
-              {weekDone} of {thisWeek.length} complete
-            </h2>
-            <p>{thisWeek.length - weekDone} items still open</p>
-          </div>
-        </div>
-        <div className="ss-summary-card ss-workload">
-          <div className="ss-summary-copy">
             <span>DUE TODAY</span>
-            <h2>{today.length - todayDone} items open</h2>
-            <p>
-              {todayDone} of {today.length} completed
-            </p>
-          </div>
-          <div className="ss-graphic-line" aria-label={`${todayDone} of ${today.length} completed`}>
-            {today.length === 0 ? <i /> : today.map((t, i) => <i className={i < todayDone ? "ss-filled" : ""} key={t.id} />)}
+            <h2>
+              {todayDone} of {today.length} done
+            </h2>
+            <p>{today.length === 0 ? "Nothing due today" : today.length === todayDone ? "All done for today" : `${plural(today.length - todayDone, "item")} still to do`}</p>
           </div>
         </div>
-        <div className="ss-summary-card ss-workload">
-          <div className="ss-summary-copy">
-            <span>DUE THIS WEEK</span>
-            <h2>{thisWeek.length - weekDone} items open</h2>
-            <p>
-              {weekDone} of {thisWeek.length} completed
-            </p>
-          </div>
-          <div className="ss-graphic-bars" aria-label={`${weekDone} of ${thisWeek.length} completed`}>
-            {thisWeek.slice(0, 24).map((t) => (
-              <i className={t.done ? "ss-filled" : ""} key={t.id} />
-            ))}
-          </div>
-        </div>
+        <WeekChart days={week} now={now} />
       </div>
 
       <div className="ss-task-tools">
@@ -211,5 +183,50 @@ export function TasksPage() {
         })}
       </div>
     </section>
+  );
+}
+
+/**
+ * The week at a glance: a column for each day, Monday to Sunday, as tall as the
+ * work due that day (by estimate). It starts grey and fills with colour from the
+ * bottom as that day's work is ticked off, so a finished week is seven full
+ * columns.
+ */
+function WeekChart({ days, now }: { days: DayLoad[]; now: Date }) {
+  const most = Math.max(...days.map((d) => d.minutes), 1);
+  const items = days.reduce((n, d) => n + d.items, 0);
+  const done = days.reduce((n, d) => n + d.done, 0);
+  return (
+    <div className="ss-summary-card ss-week-chart">
+      <div className="ss-summary-copy">
+        <span>THIS WEEK</span>
+        <h2>
+          {done} of {items} done
+        </h2>
+        <p>Taller days have more work due. Each fills in as you finish it.</p>
+      </div>
+      <ol className="ss-week-bars" aria-label="Work due each day this week">
+        {days.map((d) => {
+          const label = format(d.date, "EEEE");
+          const summary = d.items
+            ? `${label}: ${d.done} of ${plural(d.items, "item")} done, about ${approxDuration(d.minutes).replace("~", "")} of work`
+            : `${label}: nothing due`;
+          return (
+            <li key={d.date.getTime()} tabIndex={0} aria-label={summary} data-today={isSameDay(d.date, now) || undefined}>
+              <span className="ss-week-plot">
+                <span className="ss-week-bar" style={{ height: `${d.minutes ? Math.max(6, (d.minutes / most) * 100) : 0}%` }} data-empty={!d.items || undefined}>
+                  <i style={{ height: `${d.minutes ? (d.doneMinutes / d.minutes) * 100 : 0}%` }} />
+                </span>
+              </span>
+              <b>{format(d.date, "EEEEE")}</b>
+              <span className="ss-week-tip" role="tooltip">
+                <strong>{format(d.date, "EEE, MMM d")}</strong>
+                {d.items ? `${d.done} of ${d.items} done · ${approxDuration(d.minutes)}` : "Nothing due"}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

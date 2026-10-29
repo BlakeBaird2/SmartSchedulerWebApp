@@ -7,6 +7,7 @@ import { normalizeType } from "./types";
 import { meetingKey } from "./meetings";
 import { seriesKey } from "./eventColors";
 import { autoPriority } from "./todos";
+import { classHidden, classHint } from "./classes";
 
 export const COURSE_COLORS = ["#4f46e5", "#059669", "#d97706", "#e11d48", "#0284c7", "#7c3aed", "#0d9488", "#ea580c", "#2563eb", "#c026d3"];
 export const WEEKLY_COLOR = "#78716c";
@@ -109,16 +110,27 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
   for (const feed of feeds) {
     const result = snapshot.feeds[feed.id]?.result;
     if (!result || feed.role !== "school") continue;
+    // When each class has anything on: how the hints tell an earlier term's class.
+    const dates = new Map<string, number[]>();
+    const note = (key: string | null, iso: string) => {
+      if (key) dates.set(key, [...(dates.get(key) ?? []), Date.parse(iso)]);
+    };
+    for (const t of result.tasks) note(t.courseKey, t.dueAt);
+    for (const e of result.events) note(e.courseKey, e.start);
     for (const c of result.courses) {
       const id = `${feed.id}:${c.key}`;
       const edit = ws.courseEdits[id] ?? {};
+      // Hints read the calendar's own name, so renaming a class doesn't change them.
+      const hint = classHint(c, dates.get(c.key) ?? [], now);
       rawCourses.push({
         id,
         feedId: feed.id,
         code: edit.code ?? c.code,
         title: edit.title ?? c.title,
         url: c.url,
-        hidden: edit.hidden === true,
+        hidden: classHidden(edit.hidden, hint),
+        hint,
+        decided: edit.hidden !== undefined,
       });
     }
   }

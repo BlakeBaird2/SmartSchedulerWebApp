@@ -236,7 +236,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
       if (typeof v.code === "string" && v.code.trim()) edit.code = v.code.trim().slice(0, 24);
       if (typeof v.title === "string" && v.title.trim()) edit.title = v.title.trim().slice(0, 80);
       if (typeof v.color === "string" && /^#[0-9a-f]{6}$/i.test(v.color)) edit.color = v.color;
-      if (v.hidden === true) edit.hidden = true;
+      if (typeof v.hidden === "boolean") edit.hidden = v.hidden;
       if (Array.isArray(v.feedTimesOff)) {
         const off = [...new Set(v.feedTimesOff.filter((x): x is string => typeof x === "string" && /^\d{1,4}-\d{1,4}$/.test(x)))].slice(0, 20);
         if (off.length) edit.feedTimesOff = off;

@@ -186,3 +186,44 @@ export function urgencyColor(dueAt: string | null, now: Date): string {
   const mix = (a: number, b: number) => a + (b - a) * t;
   return `oklch(${mix(RED.l, YELLOW.l).toFixed(3)} ${mix(RED.c, YELLOW.c).toFixed(3)} ${mix(RED.h, YELLOW.h).toFixed(1)})`;
 }
+
+export interface DayLoad {
+  /** Midnight at the start of the day. */
+  date: Date;
+  items: number;
+  done: number;
+  /** Estimated minutes of work due that day, and how many of them are done. */
+  minutes: number;
+  doneMinutes: number;
+}
+
+/**
+ * The work due on each of seven days from `start` (a Monday, for the week at a
+ * glance): how much there is and how much is done. Work is measured by its
+ * estimate, so a long project counts for more than a reading.
+ */
+export function weekLoad(tasks: Task[], start: Date): DayLoad[] {
+  const days: DayLoad[] = Array.from({ length: 7 }, (_, i) => ({
+    date: new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
+    items: 0,
+    done: 0,
+    minutes: 0,
+    doneMinutes: 0,
+  }));
+  const from = days[0].date.getTime();
+  const to = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7).getTime();
+  for (const t of tasks) {
+    if (!t.dueAt) continue;
+    const at = Date.parse(t.dueAt);
+    if (at < from || at >= to) continue;
+    const due = new Date(at);
+    const day = days.find((d) => d.date.getDate() === due.getDate() && d.date.getMonth() === due.getMonth())!;
+    day.items++;
+    day.minutes += t.estimate;
+    if (t.done) {
+      day.done++;
+      day.doneMinutes += t.estimate;
+    }
+  }
+  return days;
+}
