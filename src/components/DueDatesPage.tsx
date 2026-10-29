@@ -15,7 +15,8 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ASSIGNMENT_TYPES, type AssignmentType, type Task } from "@/lib/types";
+import { dueEntries, type DueEntry } from "@/lib/dueDates";
+import { ASSIGNMENT_TYPES, type AssignmentType } from "@/lib/types";
 import { approxDuration, clock, dayKey, plural, typeMeta } from "@/lib/ui";
 import { useApp, type CalMode } from "./context";
 import { SsIcon, type SsIconName } from "./SsIcon";
@@ -30,8 +31,6 @@ const TYPE_ICON: Record<AssignmentType, SsIconName> = {
   assignment: "pen",
   reading: "book",
 };
-/** Exams first, then quizzes and projects, when several things are due at the same time. */
-const TYPE_ORDER: Record<AssignmentType, number> = { exam: 0, quiz: 1, project: 2, assignment: 3, reading: 4 };
 /** The legend's order, loudest first. */
 const LEGEND: AssignmentType[] = ["exam", "quiz", "project", "assignment", "reading"];
 
@@ -43,7 +42,7 @@ const MODES: { id: CalMode; label: string }[] = [
 
 /**
  * Due dates: everything that's due, from every class and everything added by
- * hand, by the day it's due. A week (the default) is a column for each day,
+ * hand, by the day it's due, and exams by the day they happen (see dueDates.ts). A week (the default) is a column for each day,
  * Monday to Sunday, side by side, with that day's work listed down it; a day
  * shows one day with more about each item; a month shows the shape of the month. Exams, quizzes,
  * projects, assignments and readings each look different at a glance.
@@ -58,20 +57,18 @@ export function DueDatesPage() {
     return { from: startOfMonth(cursor), to: addDays(endOfMonth(cursor), 1) };
   }, [mode, cursor]);
 
-  // Everything with a due date, by day. Study time Schedule Smart made up isn't a due date.
+  // Everything with a date, by the day it falls on here: work by its due date, exams by when they start.
   const byDay = useMemo(() => {
-    const m = new Map<string, Task[]>();
-    for (const t of model.tasks) {
-      if (!t.dueAt || t.generated) continue;
-      const k = dayKey(new Date(t.dueAt));
-      m.set(k, [...(m.get(k) ?? []), t]);
+    const m = new Map<string, DueEntry[]>();
+    for (const e of dueEntries(model.tasks, model.events)) {
+      const k = dayKey(new Date(e.at));
+      m.set(k, [...(m.get(k) ?? []), e]);
     }
-    for (const list of m.values()) list.sort((a, b) => Date.parse(a.dueAt!) - Date.parse(b.dueAt!) || TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.title.localeCompare(b.title));
     return m;
-  }, [model.tasks]);
+  }, [model.tasks, model.events]);
 
   const inRange = useMemo(() => {
-    const out: Task[] = [];
+    const out: DueEntry[] = [];
     for (let d = range.from; d < range.to; d = addDays(d, 1)) out.push(...(byDay.get(dayKey(d)) ?? []));
     return out;
   }, [byDay, range]);
@@ -157,7 +154,7 @@ function TypeBadge({ type, size = 15 }: { type: AssignmentType; size?: number })
 }
 
 /** One day: its date, how much is due, and each item down the card. */
-function DayCard({ day, items, now }: { day: Date; items: Task[]; now: Date }) {
+function DayCard({ day, items, now }: { day: Date; items: DueEntry[]; now: Date }) {
   const past = day < startOfDay(now);
   return (
     <article className="ss-due-day" data-today={isToday(day) || undefined} data-past={past || undefined} data-empty={items.length === 0 || undefined} aria-label={format(day, "EEEE, MMMM d")}>
@@ -180,11 +177,12 @@ function DayCard({ day, items, now }: { day: Date; items: Task[]; now: Date }) {
   );
 }
 
-function DueItem({ task: t, detailed, now }: { task: Task; detailed: boolean; now: Date }) {
+function DueItem({ task: t, detailed, now }: { task: DueEntry; detailed: boolean; now: Date }) {
   const { model, select } = useApp();
   const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
-  const due = new Date(t.dueAt!);
-  const late = !t.done && due < now;
+  const due = new Date(t.at);
+  // Only work can be late; an exam that has happened is just over.
+  const late = t.source === "task" && !t.done && due < now;
   const meta = typeMeta(t.type);
   return (
     <li>
@@ -192,8 +190,8 @@ function DueItem({ task: t, detailed, now }: { task: Task; detailed: boolean; no
         className="ss-due-item"
         data-type={t.type}
         data-done={t.done || undefined}
-        onClick={() => select({ kind: "task", id: t.id })}
-        aria-label={`${meta.label}: ${t.title}, ${course?.code ?? "Personal"}, due ${clock(due)}${t.done ? ", done" : late ? ", past due" : ""}. Open details`}
+        onClick={() => select({ kind: t.source, id: t.id })}
+        aria-label={`${meta.label}: ${t.title}, ${course?.code ?? "Personal"}, ${t.source === "event" ? "starts" : "due"} ${clock(due)}${t.done ? ", done" : late ? ", past due" : ""}. Open details`}
       >
         <TypeBadge type={t.type} size={detailed ? 17 : 15} />
         <span className="ss-due-main">
@@ -204,7 +202,7 @@ function DueItem({ task: t, detailed, now }: { task: Task; detailed: boolean; no
               <i style={{ background: course?.color ?? "var(--ss-personal)" }} aria-hidden />
               {course?.code ?? "Personal"}
             </span>
-            {detailed ? <span>About {approxDuration(t.estimate).replace("~", "")}</span> : null}
+            {detailed && t.estimate ? <span>About {approxDuration(t.estimate).replace("~", "")}</span> : null}
             {t.points !== null ? <span>{t.points} pts</span> : null}
           </span>
         </span>
@@ -216,7 +214,7 @@ function DueItem({ task: t, detailed, now }: { task: Task; detailed: boolean; no
           ) : late ? (
             <span className="ss-due-late">Past due</span>
           ) : null}
-          <time dateTime={t.dueAt!}>{t.allDay ? "All day" : clock(due)}</time>
+          <time dateTime={t.at}>{t.allDay ? "All day" : clock(due)}</time>
         </span>
       </button>
     </li>
@@ -235,7 +233,7 @@ function timeZoneName(): string {
  * with its kind; exams stand out. On a phone the columns scroll sideways, today
  * first in view.
  */
-function DueWeek({ days, byDay, now }: { days: Date[]; byDay: Map<string, Task[]>; now: Date }) {
+function DueWeek({ days, byDay, now }: { days: Date[]; byDay: Map<string, DueEntry[]>; now: Date }) {
   const scroller = useRef<HTMLDivElement>(null);
   const first = days[0]?.getTime();
   useLayoutEffect(() => {
@@ -277,11 +275,12 @@ function DueWeek({ days, byDay, now }: { days: Date[]; byDay: Map<string, Task[]
   );
 }
 
-function WeekItem({ task: t, now }: { task: Task; now: Date }) {
+function WeekItem({ task: t, now }: { task: DueEntry; now: Date }) {
   const { model, select } = useApp();
   const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
-  const due = new Date(t.dueAt!);
-  const late = !t.done && due < now;
+  const due = new Date(t.at);
+  // Only work can be late; an exam that has happened is just over.
+  const late = t.source === "task" && !t.done && due < now;
   const meta = typeMeta(t.type);
   return (
     <li>
@@ -290,8 +289,8 @@ function WeekItem({ task: t, now }: { task: Task; now: Date }) {
         data-type={t.type}
         data-done={t.done || undefined}
         style={{ "--c": course?.color ?? "var(--ss-personal)" } as React.CSSProperties}
-        onClick={() => select({ kind: "task", id: t.id })}
-        aria-label={`${meta.label}: ${t.title}, ${course?.code ?? "Personal"}, due ${clock(due)}${t.done ? ", done" : late ? ", past due" : ""}. Open details`}
+        onClick={() => select({ kind: t.source, id: t.id })}
+        aria-label={`${meta.label}: ${t.title}, ${course?.code ?? "Personal"}, ${t.source === "event" ? "starts" : "due"} ${clock(due)}${t.done ? ", done" : late ? ", past due" : ""}. Open details`}
       >
         <span className="ss-due-card-top">
           <span className="ss-due-card-class">
@@ -300,7 +299,7 @@ function WeekItem({ task: t, now }: { task: Task; now: Date }) {
             </span>
             {course?.code ?? "Personal"}
           </span>
-          <time dateTime={t.dueAt!} data-late={late || undefined}>
+          <time dateTime={t.at} data-late={late || undefined}>
             {t.allDay ? (
               "All day"
             ) : (
@@ -318,7 +317,7 @@ function WeekItem({ task: t, now }: { task: Task; now: Date }) {
 }
 
 /** The month: what's due each day, as a stripe per item, Sunday first like the calendar. */
-function DueMonth({ cursor, byDay, onOpenDay }: { cursor: Date; byDay: Map<string, Task[]>; onOpenDay: (d: Date) => void }) {
+function DueMonth({ cursor, byDay, onOpenDay }: { cursor: Date; byDay: Map<string, DueEntry[]>; onOpenDay: (d: Date) => void }) {
   const days = eachDayOfInterval({ start: startOfWeek(startOfMonth(cursor)), end: endOfWeek(endOfMonth(cursor)) });
   return (
     <div className="ss-month ss-due-month">

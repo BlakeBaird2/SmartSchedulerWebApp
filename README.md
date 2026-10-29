@@ -66,7 +66,8 @@ prefix on every class.
   to Sunday, with each day's work stacked down its column, tinted with its class's
   colour (on a phone the columns scroll sideways, starting at today). **Day** shows one day with more
   about each item; **Month** shows the month, and a day opens that day. Each kind
-  of work has its own colour, icon and name — exams (a solid red badge), quizzes,
+  of work has its own colour, icon and name — exams (a solid red badge; an exam
+  that's only on the class calendar counts, at the time it starts), quizzes,
   projects, assignments and readings — with a count of each for the range shown.
   The colours were checked for colour-blind separation in light and dark.
 - **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
@@ -154,6 +155,13 @@ common one: Google's "public address" only works for calendars shared with
 everyone, so use the "Secret address in iCal format". Canvas can also label a
 class with an unhelpful code like "All Sections"; SmartScheduler looks for the real code in
 section names, and you can tap any class under its calendar to rename it.
+
+**Due times.** Canvas sends work due at 11:59 PM as a date with no time.
+SmartScheduler reads that as 11:59 PM on that day in your time zone (an earlier
+version read it as the first moment of the day, which put it on the evening
+before for students in the Americas; the first refresh after the fix corrects
+those dates without reporting them as changes). Times always show in your
+browser's time zone.
 
 **What a calendar link can't tell SmartScheduler.** Feeds say when work is due, not whether
 you handed it in. When you first add a school calendar, anything already past due
