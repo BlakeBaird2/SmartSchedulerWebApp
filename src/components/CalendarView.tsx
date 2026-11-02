@@ -415,7 +415,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
                         />
                       );
                     })}
-                    {placed.map(({ item, left, width, z }) => {
+                    {placed.map(({ item, left, leftPx, width, widthPx, z }) => {
                       const top = y(item.start, c.from) + 3;
                       const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
                       // 5px in from the column's edges (where a dragged block lands too, see slotRect); where
@@ -425,8 +425,8 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
                       const style: React.CSSProperties = {
                         top,
                         height: h,
-                        left: `calc(${left * 100}% + ${inL}px)`,
-                        width: `calc(${width * 100}% - ${inL + inR}px)`,
+                        left: `calc(${left * 100}% + ${leftPx + inL}px)`,
+                        width: `calc(${width * 100}% + ${widthPx - inL - inR}px)`,
                         zIndex: z,
                       };
                       if (item.kind === "event")

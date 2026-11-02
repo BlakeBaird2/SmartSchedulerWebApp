@@ -73,8 +73,9 @@ prefix on every class.
     first free time.
   - Tap a free time to see what fits there, with **Put it here**.
   - Overlapping events stack as in Google Calendar: ones that start together sit
-    side by side, and one that starts later goes on top of the longer one, set in
-    a little so the one underneath still shows its title and edge.
+    side by side, and one that starts later goes on top of the longer one, just as
+    wide but nudged in a few pixels, so the one underneath still shows its title
+    and a sliver of its edge.
   - Phones: the planner and one day side by side, or three days with the planner
     closed. Swipe left or right for the next or previous days, and tap the small
     calendar with today's date to come back to today.
