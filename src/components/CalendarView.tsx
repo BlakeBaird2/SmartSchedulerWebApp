@@ -305,7 +305,6 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   // While a task is dragged, everything after it is due greys out, with a red line at the deadline.
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
   const deadline = draggedTask?.dueAt ? new Date(draggedTask.dueAt) : null;
-  const placing = Boolean(drag && drag.kind !== "resize");
   // Anything that has ended is faded.
   const nowMs = now.getTime();
 
@@ -362,7 +361,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
             return (
               <div
                 key={c.from}
-                className={`ss-day-column ${placing ? "ss-drop-ready" : ""}`}
+                className="ss-day-column"
                 // How the drag works out the time under the pointer (see planDrag.ts).
                 data-drop-day={c.from}
                 data-drop-min={startHour * 60}
@@ -400,7 +399,19 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                         left: `calc(${(col / cols) * 100}% + 5px)`,
                         width: `calc(${100 / cols}% - 10px)`,
                       };
-                      if (item.kind === "event") return <GridEvent key={item.id} event={item.event} style={style} h={h} passThrough={Boolean(drag)} past={item.end <= nowMs} />;
+                      if (item.kind === "event")
+                        return (
+                          <GridEvent
+                            key={item.id}
+                            event={item.event}
+                            style={style}
+                            h={h}
+                            ppm={ppm}
+                            dragging={drag?.eventId === item.id}
+                            passThrough={Boolean(drag) && drag?.eventId !== item.id}
+                            past={item.end <= nowMs}
+                          />
+                        );
                       return (
                         <PlannedBlock
                           key={item.id}
@@ -446,44 +457,151 @@ function useEventLook(e: CalEvent): { kind: Kind; custom: string | null } {
   return { kind: eventKind(e, model.feedById), custom: ws.eventColors[seriesKey(e.id)] ?? null };
 }
 
-function GridEvent({ event: e, style, h, passThrough, past }: { event: CalEvent; style: React.CSSProperties; h: number; passThrough: boolean; past: boolean }) {
-  const { select } = useApp();
+/**
+ * An event from a calendar, or a weekly time. Drag it to move it, or its bottom
+ * edge to change how long it is, as with scheduled work; with a keyboard, arrows
+ * move it and Shift and arrows change its length. Calendars can't be changed from
+ * here, so the move is Schedule Smart's own (see eventMoves.ts). All-day events
+ * stay put.
+ */
+function GridEvent({
+  event: e,
+  style,
+  h,
+  ppm,
+  dragging,
+  passThrough,
+  past,
+}: {
+  event: CalEvent;
+  style: React.CSSProperties;
+  h: number;
+  ppm: number;
+  dragging: boolean;
+  passThrough: boolean;
+  past: boolean;
+}) {
+  const { select, moveEvent, resizeEvent } = useApp();
   const { kind, custom } = useEventLook(e);
   const start = new Date(e.start);
   const end = new Date(e.end);
+  const minutes = Math.round((end.getTime() - start.getTime()) / MIN);
+  const open = () => select({ kind: "event", id: e.id });
+  const payload = { taskId: null, blockId: null, eventId: e.id, title: e.title, minutes, start: start.getTime(), color: custom ?? `var(--ss-${kind})` };
   return (
-    <button
-      className={`ss-event ss-${kind} ${e.busy ? "" : "ss-free"}`}
+    <div
+      role="button"
+      tabIndex={0}
+      ref={dragSourceRef}
+      className={`ss-event ss-${kind} ss-movable ${e.busy ? "" : "ss-free"}`}
       data-custom={custom ? true : undefined}
       data-compact={h < 40 || undefined}
       data-past={past || undefined}
+      data-picked={dragging || undefined}
+      data-moved={e.original ? true : undefined}
       style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
-      onClick={() => select({ kind: "event", id: e.id })}
-      title={`${e.title} · ${shortRange(start, end)}`}
+      onClick={open}
+      onPointerDown={(ev) => {
+        if ((ev.target as HTMLElement).closest("[data-resize]")) return;
+        const box = ev.currentTarget.getBoundingClientRect();
+        const grab = Math.round((ev.clientY - box.top) / ppm);
+        const source = { width: box.width, height: box.height, grabX: ev.clientX - box.left, grabY: ev.clientY - box.top };
+        beginPlanDrag(ev, { kind: "move", grab, source, ...payload }, (target) => {
+          if (target.kind === "grid") moveEvent(e.id, targetStart(target));
+          // Onto a day in the month: the same time, that day.
+          else if (target.kind === "date") moveEvent(e.id, new Date(target.dayStart + (start.getTime() - startOfDay(start).getTime())));
+        });
+      }}
+      onKeyDown={(ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          open();
+          return;
+        }
+        const stepBy = ev.key === "ArrowUp" ? -15 : ev.key === "ArrowDown" ? 15 : 0;
+        if (!stepBy) return;
+        ev.preventDefault();
+        if (ev.shiftKey) resizeEvent(e.id, new Date(end.getTime() + stepBy * MIN));
+        else moveEvent(e.id, new Date(start.getTime() + stepBy * MIN));
+      }}
+      aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown"
+      aria-label={`${e.title}, ${shortRange(start, end)}${e.original ? ", moved here in Schedule Smart" : ""}. Open details, or drag to move it`}
+      title={`${e.title} · ${shortRange(start, end)}. Drag to move it, or drag the bottom edge to change its length.`}
     >
       <strong>{e.title}</strong>
       {h >= 22 ? <span>{h < 40 ? format(start, "h:mm") : shortRange(start, end)}</span> : null}
-    </button>
+      <span
+        data-resize
+        aria-hidden
+        className="ss-resize"
+        onPointerDown={(ev) => {
+          ev.stopPropagation();
+          const top = ev.currentTarget.closest(".ss-event")!.getBoundingClientRect().top;
+          beginPlanDrag(
+            ev,
+            { kind: "resize", grab: (ev.clientY - top) / ppm, ...payload },
+            (target) => {
+              if (target.kind === "grid") resizeEvent(e.id, new Date(targetStart(target).getTime() + (target.endMinute - target.startMinute) * MIN));
+            },
+            { immediate: true },
+          );
+        }}
+      />
+    </div>
   );
 }
 
 function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
-  const { select } = useApp();
+  const { select, moveEvent } = useApp();
   const { kind, custom } = useEventLook(e);
+  const start = new Date(e.start);
   return (
     <button
+      ref={e.allDay ? undefined : dragSourceRef}
       className={`ss-month-event ss-${kind}`}
       data-custom={custom ? true : undefined}
       data-past={past || undefined}
+      data-all-day={e.allDay || undefined}
       style={custom ? ({ "--ev": custom } as React.CSSProperties) : undefined}
       onClick={(ev) => {
         ev.stopPropagation();
         select({ kind: "event", id: e.id });
       }}
+      // In the month, a timed event can be dragged to another day, at the same time.
+      onPointerDown={
+        e.allDay
+          ? undefined
+          : (ev) => {
+              const box = ev.currentTarget.getBoundingClientRect();
+              const minutes = Math.round((Date.parse(e.end) - start.getTime()) / MIN);
+              beginPlanDrag(
+                ev,
+                {
+                  kind: "move",
+                  taskId: null,
+                  blockId: null,
+                  eventId: e.id,
+                  title: e.title,
+                  minutes,
+                  grab: 0,
+                  start: start.getTime(),
+                  color: custom ?? `var(--ss-${kind})`,
+                  source: { width: box.width, height: box.height, grabX: ev.clientX - box.left, grabY: ev.clientY - box.top },
+                },
+                (target) => {
+                  if (target.kind === "date") moveEvent(e.id, new Date(target.dayStart + (start.getTime() - startOfDay(start).getTime())));
+                },
+              );
+            }
+      }
       title={e.title}
     >
       <i />
-      <span>{e.title}</span>
+      {/* Timed events show their start, as in Google's month view: "7am", "9:30am". */}
+      <span>
+        {e.allDay ? null : <time>{format(start, start.getMinutes() ? "h:mmaaa" : "haaa")} </time>}
+        {e.title}
+      </span>
     </button>
   );
 }
@@ -531,7 +649,7 @@ function PlannedBlock({
   const { task, start, end, minutes, title } = cal;
   const done = Boolean(task?.done);
   const open = () => (task ? select({ kind: "task", id: task.id }) : undefined);
-  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: "var(--ss-accent)" };
+  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: "var(--ss-planned)" };
 
   return (
     <div
@@ -624,7 +742,6 @@ function MonthGrid({ data }: { data: CalData }) {
   const { calCursor, setCalCursor, setCalMode, select, now } = useApp();
   const drag = usePlanDrag();
   const nowMs = now.getTime();
-  const placing = Boolean(drag && drag.kind !== "resize");
   // The prototype's month starts on Sunday.
   const days = useMemo(
     () => eachDayOfInterval({ start: startOfWeek(startOfMonth(calCursor)), end: endOfWeek(endOfMonth(calCursor)) }),
@@ -661,10 +778,9 @@ function MonthGrid({ data }: { data: CalData }) {
               key={k}
               role="button"
               tabIndex={0}
-              className={`ss-month-cell ${inMonth ? "" : "ss-outside"} ${placing ? "ss-drop-ready" : ""} ${deadline !== null && from > deadline ? "ss-past-deadline" : ""}`}
+              className={`ss-month-cell ${inMonth ? "" : "ss-outside"} ${deadline !== null && from > deadline ? "ss-past-deadline" : ""}`}
               data-today={isToday(d) || undefined}
               data-drop-date={inMonth ? from : undefined}
-              data-drop-over={(drag?.target?.kind === "date" && drag.target.dayStart === from) || undefined}
               onClick={() => {
                 setCalCursor(d);
                 setCalMode("day");
@@ -685,7 +801,7 @@ function MonthGrid({ data }: { data: CalData }) {
                   ) : (
                     <button
                       key={en.key}
-                      className="ss-month-event"
+                      className="ss-month-event ss-planned"
                       data-past={en.block!.end.getTime() <= nowMs || undefined}
                       onClick={(ev) => {
                         ev.stopPropagation();

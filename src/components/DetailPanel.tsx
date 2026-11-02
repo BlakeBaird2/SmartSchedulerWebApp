@@ -395,7 +395,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, ws, now, setView, update, openClassTimes } = useApp();
+  const { model, ws, now, setView, update, openClassTimes, resetEventTime } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
@@ -454,6 +454,16 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
             {event.allDay ? format(start, "EEEE, MMMM d") : `${format(start, "EEEE, MMMM d")} · ${clockRange(start, end)}`}
           </div>
           {event.allDay ? <div className="text-xs text-muted mt-0.5">All day</div> : null}
+          {event.original ? (
+            // Moved by dragging: only here, since calendars can't be changed from Schedule Smart.
+            <p className="mt-1.5 text-xs text-muted">
+              Moved here in Schedule Smart. {feed ? `${feed.name} still has it` : "It usually is"}{" "}
+              {format(new Date(event.original.start), "EEE")} {clockRange(new Date(event.original.start), new Date(event.original.end))}.{" "}
+              <TextButton onClick={() => resetEventTime(event.id)}>Put it back</TextButton>
+            </p>
+          ) : !event.allDay ? (
+            <p className="mt-1.5 text-xs text-muted">Drag it on the calendar to move it.{feed ? ` ${feed.name} keeps its own time.` : ""}</p>
+          ) : null}
         </div>
         {event.location ? (
           <div>

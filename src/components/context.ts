@@ -49,6 +49,11 @@ export interface AppContextValue {
   scheduleOnDay: (task: Task, day: Date) => void;
   /** Move scheduled time to a new start, keeping its length. */
   moveScheduled: (blockId: string, start: Date) => void;
+  /** Move an event from a calendar, or a weekly time, in Schedule Smart only (its calendar keeps its time). */
+  moveEvent: (eventId: string, start: Date) => void;
+  resizeEvent: (eventId: string, end: Date) => void;
+  /** Put a moved event back where its calendar has it. */
+  resetEventTime: (eventId: string) => void;
   /** Change when scheduled time ends. */
   resizeScheduled: (blockId: string, end: Date) => void;
   /** Take scheduled time off the calendar; its work goes back on the to-do list. */

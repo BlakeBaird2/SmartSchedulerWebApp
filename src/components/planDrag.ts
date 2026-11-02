@@ -29,10 +29,12 @@ import { MIN_BLOCK_MINUTES, snapMinutes } from "@/lib/blocks";
 export type DragKind = "new" | "move" | "resize";
 
 export interface DragPayload {
-  /** new: a task from the list. move / resize: a block already on the calendar. */
+  /** new: a task from the list. move / resize: a block already on the calendar, or an event. */
   kind: DragKind;
   taskId: string | null;
   blockId: string | null;
+  /** Set when an event from a calendar (or a weekly time) is being moved rather than scheduled work. */
+  eventId?: string;
   title: string;
   /** How long the block is (or will be). */
   minutes: number;
@@ -98,7 +100,8 @@ function targetAt(x: number, y: number, d: DragPayload): DropTarget | null {
         : null;
   if (!col) {
     if (hit?.dataset.dropDate !== undefined && d.kind !== "resize") return { kind: "date", dayStart: Number(hit.dataset.dropDate) };
-    return hit?.dataset.dropList !== undefined && d.kind === "move" ? { kind: "list" } : null;
+    // Only scheduled work can go back on the to-do list; an event has nowhere to go there.
+    return hit?.dataset.dropList !== undefined && d.kind === "move" && d.blockId ? { kind: "list" } : null;
   }
 
   const dayStart = Number(col.dataset.dropDay);
