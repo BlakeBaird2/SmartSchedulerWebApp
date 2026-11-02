@@ -17,7 +17,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { seriesKey } from "@/lib/eventColors";
-import { layoutColumns } from "@/lib/layout";
+import { layoutStack } from "@/lib/layout";
 import type { CalEvent, FeedConfig, ScheduledBlock, Task } from "@/lib/types";
 import { clock, dayKey } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
@@ -228,6 +228,8 @@ type GridItem =
 
 /** How tall an hour is, at least: room for a half-hour block's title and time. */
 const HOUR_PX = 64;
+/** Events starting closer together than this (px) sit side by side, since the first one's title wouldn't show above the second. */
+const SIDE_BY_SIDE_PX = 26;
 const HOUR_PX_PHONE = 56;
 
 function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayView: boolean }) {
@@ -352,7 +354,8 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
               : null}
           </div>
           {columns.map((c) => {
-            const placed = layoutColumns(c.items, (i) => i.start, (i) => i.end);
+            // Overlaps stack as in Google Calendar: side by side when they start together, otherwise the later one on top.
+            const placed = layoutStack(c.items, (i) => i.start, (i) => i.end, Math.ceil(SIDE_BY_SIDE_PX / ppm) * MIN);
             const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
             const dayEnd = addDays(c.day, 1).getTime();
             const shadeFrom =
@@ -389,14 +392,19 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                         />
                       );
                     })}
-                    {placed.map(({ item, col, cols }) => {
+                    {placed.map(({ item, left, width, z }) => {
                       const top = y(item.start, c.from) + 3;
                       const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
+                      // 5px in from the column's edges (where a dragged block lands too, see slotRect); where
+                      // items meet, their page-coloured borders keep them apart.
+                      const inL = left < 0.001 ? 5 : 0;
+                      const inR = left + width > 0.999 ? 5 : 0;
                       const style: React.CSSProperties = {
                         top,
                         height: h,
-                        left: `calc(${(col / cols) * 100}% + 5px)`,
-                        width: `calc(${100 / cols}% - 10px)`,
+                        left: `calc(${left * 100}% + ${inL}px)`,
+                        width: `calc(${width * 100}% - ${inL + inR}px)`,
+                        zIndex: z,
                       };
                       if (item.kind === "event")
                         return (

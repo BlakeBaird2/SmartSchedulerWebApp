@@ -974,6 +974,8 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--ss-surface);
+  /* Its layers (stacked events, the now line, drag hints) stay below menus, dialogs and the drag ghost. */
+  isolation: isolate;
 }
 .ss-week.ss-day-view {
   --ss-gutter: 72px;
@@ -1124,9 +1126,10 @@ button.ss-day-head:hover {
 .ss-gap:hover {
   background: color-mix(in oklab, var(--ss-accent) 6%, transparent);
 }
+/* Above the events, which stack from 1 up as they overlap (see layoutStack). */
 .ss-deadline-shade {
   position: absolute;
-  z-index: 4;
+  z-index: 104;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1136,7 +1139,7 @@ button.ss-day-head:hover {
 }
 .ss-deadline-line {
   position: absolute;
-  z-index: 5;
+  z-index: 105;
   left: 0;
   right: 0;
   height: 2px;
@@ -1217,12 +1220,14 @@ button.ss-day-head:hover {
   padding-top: 3px;
   padding-bottom: 3px;
 }
+/* When it's narrow (stacked on another, say), the time gives way before the title. */
 .ss-event[data-compact] strong {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: none;
+  max-width: 100%;
 }
 .ss-event[data-compact] > span {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   margin-top: 0;
 }
 .ss-event.ss-school {
@@ -1321,7 +1326,7 @@ button.ss-day-head:hover {
   position: absolute;
   left: 5px;
   right: 5px;
-  z-index: 6;
+  z-index: 106;
   padding: 5px 8px;
   border: 1.5px dashed var(--ss-accent);
   border-left: 3px solid var(--ss-accent);
@@ -1342,7 +1347,7 @@ button.ss-day-head:hover {
 }
 .ss-now-line {
   position: absolute;
-  z-index: 3;
+  z-index: 103;
   left: 0;
   right: 0;
   height: 2px;
