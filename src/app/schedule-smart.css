@@ -900,6 +900,34 @@
   font-weight: 600;
   font-size: 14px;
 }
+/* Phones only (see below): a small calendar showing today's date, as in Google Calendar's app. */
+.ss-today-mini {
+  display: none;
+}
+.ss-controls .ss-today-mini {
+  width: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ss-text-3);
+}
+.ss-controls .ss-today-mini:hover,
+.ss-controls .ss-today-mini:active {
+  background: var(--ss-chip);
+}
+.ss-today-mini span {
+  width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+  padding-top: 2px;
+  border: 1.75px solid currentColor;
+  border-top-width: 4.5px;
+  border-radius: 5px;
+  font: 800 10.5px/1 "Manrope Variable", "Manrope", sans-serif;
+}
 .ss-arrows {
   display: flex;
 }
@@ -979,6 +1007,19 @@
 }
 .ss-week.ss-day-view {
   --ss-gutter: 72px;
+}
+/* Swiping between days on a phone (daySwipe.ts): the days follow the finger and the hours stay put. */
+.ss-week[data-swiping] .ss-day-head:not(.ss-time-head),
+.ss-week[data-swiping] .ss-allday,
+.ss-week[data-swiping] .ss-day-column {
+  transform: translateX(var(--ss-swipe, 0px));
+  transition: transform var(--ss-swipe-ms, 0ms) cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.ss-week[data-swiping] .ss-time-head,
+.ss-week[data-swiping] .ss-allday-gutter,
+.ss-week[data-swiping] .ss-time-column {
+  position: relative;
+  z-index: 200;
 }
 .ss-week-row {
   flex: none;
@@ -2991,6 +3032,14 @@ section.ss-due-page {
   }
   .ss-controls .ss-today {
     display: none;
+  }
+  .ss-controls .ss-today-mini {
+    display: grid;
+  }
+  /* Sideways moves belong to the day swipe (daySwipe.ts); up and down still scroll. */
+  .ss-week-row,
+  .ss-week-scroll {
+    touch-action: pan-y pinch-zoom;
   }
   .ss-controls select {
     width: 78px;

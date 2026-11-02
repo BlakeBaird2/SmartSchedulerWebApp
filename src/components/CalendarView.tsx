@@ -21,6 +21,7 @@ import { layoutStack } from "@/lib/layout";
 import type { CalEvent, FeedConfig, ScheduledBlock, Task } from "@/lib/types";
 import { clock, dayKey } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
+import { useDaySwipe } from "./daySwipe";
 import { DragGhost } from "./DragGhost";
 import { PlannerPanel } from "./PlannerPanel";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
@@ -108,6 +109,8 @@ export function CalendarView() {
     else setCalCursor(addDays(calCursor, dir));
   };
   const unit = calMode === "month" ? "month" : calMode === "week" && !phone ? "week" : "day";
+  // Phones: swiping turns to the next or previous days, as many as are showing (as in Google Calendar's app).
+  const swipe = (dir: 1 | -1) => setCalCursor(addDays(calCursor, dir * days.length));
 
   const eyebrow = calMode === "month" ? "MONTH VIEW" : format(calCursor, "MMMM yyyy").toUpperCase();
   const title =
@@ -166,6 +169,15 @@ export function CalendarView() {
             <button className="ss-today" onClick={() => setCalCursor(new Date())} aria-current={isSameDay(calCursor, today) ? "date" : undefined}>
               Today
             </button>
+            {/* Phones: Google Calendar's small calendar with today's date, instead of the Today button. */}
+            <button
+              className="ss-today-mini"
+              onClick={() => setCalCursor(new Date())}
+              aria-label={`Go to today, ${format(today, "EEEE, MMMM d")}`}
+              title="Today"
+            >
+              <span aria-hidden>{format(today, "d")}</span>
+            </button>
             <div className="ss-arrows">
               <button aria-label={`Previous ${unit}`} onClick={() => step(-1)}>
                 <SsIcon name="chevronLeft" />
@@ -189,7 +201,7 @@ export function CalendarView() {
             </select>
           </div>
         </div>
-        {calMode === "month" ? <MonthGrid data={data} /> : <TimeGrid days={days} data={data} dayView={calMode === "day"} />}
+        {calMode === "month" ? <MonthGrid data={data} /> : <TimeGrid days={days} data={data} dayView={calMode === "day"} onSwipe={phone ? swipe : null} />}
       </section>
       <DragGhost />
     </div>
@@ -232,10 +244,17 @@ const HOUR_PX = 64;
 const SIDE_BY_SIDE_PX = 26;
 const HOUR_PX_PHONE = 56;
 
-function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayView: boolean }) {
+function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalData; dayView: boolean; onSwipe: ((dir: 1 | -1) => void) | null }) {
   const { ws, now, select, setCalCursor, setCalMode, plan, model } = useApp();
   const drag = usePlanDrag();
   const scroller = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  // Swiping to other days keeps the hours where they were, as Google Calendar does.
+  const keepScroll = useRef(false);
+  useDaySwipe(frameRef, Boolean(onSwipe), (dir) => {
+    keepScroll.current = true;
+    onSwipe?.(dir);
+  });
   const [frame, setFrame] = useState({ height: 0, phone: false });
 
   // The hours scroll inside the frame. Each is at least HOUR_PX tall, and they
@@ -297,6 +316,10 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!el || height === 0) return;
+    if (keepScroll.current) {
+      keepScroll.current = false;
+      return;
+    }
     const minute = showsToday ? now.getHours() * 60 + now.getMinutes() - 60 : startHour * 60;
     el.scrollTop = Math.max(0, (minute - startHour * 60) * ppm);
     // Only when the days shown change or the frame first gets its size, not on every tick of the clock.
@@ -310,7 +333,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   const nowMs = now.getTime();
 
   return (
-    <div className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
+    <div ref={frameRef} className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
       <div className="ss-week-row">
         <div className="ss-day-head ss-time-head">{gmtLabel(now)}</div>
         {columns.map((c) => (

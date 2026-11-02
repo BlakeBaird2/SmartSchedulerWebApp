@@ -72,8 +72,12 @@ prefix on every class.
     DUE line. In the month view, dropping a task on a day puts it in that day's
     first free time.
   - Tap a free time to see what fits there, with **Put it here**.
+  - Overlapping events stack as in Google Calendar: ones that start together sit
+    side by side, and one that starts later goes on top of the longer one, set in
+    a little so the one underneath still shows its title and edge.
   - Phones: the planner and one day side by side, or three days with the planner
-    closed.
+    closed. Swipe left or right for the next or previous days, and tap the small
+    calendar with today's date to come back to today.
 - **Tasks** — the master checklist: a ring for what's due today, and a column
   for each day of the week, Monday to Sunday, as tall as the work due that day (by
   estimate). Each column starts grey and fills with colour as that day's work is

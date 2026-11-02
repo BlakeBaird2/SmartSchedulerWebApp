@@ -70,6 +70,11 @@ let current: PlanDrag | null = null;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
+/** Whether something is being dragged right now, for code outside React. */
+export function planDragActive(): boolean {
+  return current !== null;
+}
+
 export function usePlanDrag(): PlanDrag | null {
   return useSyncExternalStore(
     (l) => {
