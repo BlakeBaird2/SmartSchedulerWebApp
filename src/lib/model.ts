@@ -8,6 +8,7 @@ import { meetingKey } from "./meetings";
 import { seriesKey } from "./eventColors";
 import { autoPriority } from "./todos";
 import { classHidden, classHint } from "./classes";
+import { applyEventMoves } from "./eventMoves";
 
 export const COURSE_COLORS = ["#4f46e5", "#059669", "#d97706", "#e11d48", "#0284c7", "#7c3aed", "#0d9488", "#ea580c", "#2563eb", "#c026d3"];
 export const WEEKLY_COLOR = "#78716c";
@@ -243,18 +244,21 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     events.push({ ...e, title: course.code, color: picked ?? course.color });
   }
 
+  // Events the student dragged somewhere else sit where they put them.
+  const shown = applyEventMoves(events, ws.eventMoves);
+
   tasks.sort((a, b) => {
     const ad = a.dueAt ? Date.parse(a.dueAt) : Infinity;
     const bd = b.dueAt ? Date.parse(b.dueAt) : Infinity;
     return ad - bd || a.title.localeCompare(b.title);
   });
-  events.sort((a, b) => a.start.localeCompare(b.start) || a.title.localeCompare(b.title));
+  shown.sort((a, b) => a.start.localeCompare(b.start) || a.title.localeCompare(b.title));
 
   return {
     courses,
     visibleCourses: courses.filter((c) => !c.hidden),
     tasks,
-    events,
+    events: shown,
     feeds: ws.feeds,
     courseById,
     feedById,

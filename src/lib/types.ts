@@ -8,6 +8,7 @@
  */
 
 import type { ClassHint } from "./classes";
+import type { EventMoves } from "./eventMoves";
 
 export type AssignmentType = "exam" | "quiz" | "reading" | "project" | "assignment";
 
@@ -244,6 +245,8 @@ export interface Workspace {
   classOrder: string[];
   /** Event series (see eventColors.seriesKey) -> the colour the student picked for it. */
   eventColors: Record<string, string>;
+  /** Events the student moved to another time, by event id (see eventMoves.ts). */
+  eventMoves: EventMoves;
   /** taskId -> points and priority the student set. */
   taskMeta: Record<string, TaskMeta>;
   /** What happens to work whose scheduled time passes before it is done. */
@@ -340,4 +343,6 @@ export interface CalEvent {
   url: string | null;
   color: string;
   source: "feed" | "weekly";
+  /** Set when the student moved it in Schedule Smart: when its calendar has it (see eventMoves.ts). */
+  original?: { start: string; end: string };
 }

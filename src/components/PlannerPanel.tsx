@@ -68,7 +68,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
     <aside
       className="ss-suggestions"
       data-drop-list
-      data-drop-target={drag?.kind === "move" || undefined}
+      data-drop-target={(drag?.kind === "move" && Boolean(drag.blockId)) || undefined}
       data-drop-over={drag?.target?.kind === "list" || undefined}
       aria-labelledby="planner-title"
     >
@@ -78,7 +78,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
             <SsIcon name="spark" size={14} /> PERSONALPLANNER
           </span>
           <h1 id="planner-title">Plan your open time</h1>
-          <p>{drag?.kind === "move" ? "Drop it here to take it off the calendar." : "Drag an item into the calendar to schedule it."}</p>
+          <p>{drag?.kind === "move" && drag.blockId ? "Drop it here to take it off the calendar." : "Drag an item into the calendar to schedule it."}</p>
         </div>
         <button className="ss-icon-button" onClick={onClose} aria-label="Collapse suggestions">
           <SsIcon name="x" />
@@ -215,7 +215,7 @@ function PlannerTask({ task }: { task: Task }) {
             minutes: task.estimate,
             // A finger would hide the top of the block, so on touch the block hangs above it.
             grab: e.pointerType === "mouse" ? 0 : Math.min(task.estimate, 60),
-            color: "var(--ss-accent)",
+            color: "var(--ss-planned)",
             source: { width: box.width, height: box.height, grabX: e.clientX - box.left, grabY: e.clientY - box.top },
           },
           (target) => {

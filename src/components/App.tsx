@@ -8,7 +8,7 @@ import { addNewWork, newIds, parseNewWork, seeWork as seeNewWork } from "@/lib/n
 import { fetchFeedFromApi, syncAll } from "@/lib/sync";
 import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
-import { type Change, type EstimateSource, type FeedResult, type FeedRole, type Priority, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
+import { type CalEvent, type Change, type EstimateSource, type FeedResult, type FeedRole, type Priority, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
@@ -23,6 +23,7 @@ import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
+import { withEventAt } from "@/lib/eventMoves";
 import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
 import { DueDatesPage } from "./DueDatesPage";
@@ -651,6 +652,48 @@ export function App() {
     [changeBlock, blockTitle],
   );
 
+  // Events from calendars can't be changed there, so a move lives here (eventMoves.ts).
+  const placeEvent = useCallback(
+    (eventId: string, start: Date, end: Date, message: (e: CalEvent) => string) => {
+      const event = model.events.find((e) => e.id === eventId);
+      if (!event || event.allDay || end.getTime() <= start.getTime()) return;
+      if (Date.parse(event.start) === start.getTime() && Date.parse(event.end) === end.getTime()) return;
+      const before = readWorkspace().eventMoves;
+      update((w) => ({ ...w, eventMoves: withEventAt(w.eventMoves, event, start, end) }));
+      toast(message(event), { undo: () => update((w) => ({ ...w, eventMoves: before })) });
+    },
+    [model.events, update, toast],
+  );
+  const source = useCallback((e: CalEvent) => (e.feedId ? (model.feedById.get(e.feedId)?.name ?? "Its calendar") : null), [model.feedById]);
+
+  const moveEvent = useCallback(
+    (eventId: string, start: Date) => {
+      const event = model.events.find((e) => e.id === eventId);
+      if (!event) return;
+      const end = new Date(start.getTime() + Date.parse(event.end) - Date.parse(event.start));
+      placeEvent(eventId, start, end, (e) => `Moved ${e.title} to ${when(start)}${source(e) ? `, here only. ${source(e)} still has it at ${clock(new Date(e.original?.start ?? e.start))}` : ""}.`);
+    },
+    [model.events, placeEvent, source],
+  );
+
+  const resizeEvent = useCallback(
+    (eventId: string, end: Date) => {
+      const event = model.events.find((e) => e.id === eventId);
+      if (!event) return;
+      placeEvent(eventId, new Date(event.start), end, (e) => `${e.title}: now until ${clock(end)}${source(e) ? ", here only" : ""}.`);
+    },
+    [model.events, placeEvent, source],
+  );
+
+  const resetEventTime = useCallback(
+    (eventId: string) => {
+      const event = model.events.find((e) => e.id === eventId);
+      if (!event?.original) return;
+      placeEvent(eventId, new Date(event.original.start), new Date(event.original.end), (e) => `${e.title} is back at ${when(new Date(e.original!.start))}.`);
+    },
+    [model.events, placeEvent],
+  );
+
   const unschedule = useCallback(
     (blockId: string) => {
       const before = readWorkspace().blocks.find((b) => b.id === blockId);
@@ -733,6 +776,9 @@ export function App() {
     scheduleTask,
     scheduleOnDay,
     moveScheduled,
+    moveEvent,
+    resizeEvent,
+    resetEventTime,
     resizeScheduled,
     unschedule,
     answerUnfinished,

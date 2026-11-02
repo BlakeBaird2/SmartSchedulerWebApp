@@ -8,6 +8,7 @@
 import { DEFAULT_PREFS } from "./planner";
 import { ASSIGNMENT_TYPES, normalizeType, PRIORITIES, UNFINISHED_POLICIES, type CourseEdit, type Priority, type TaskMeta, type UnfinishedAnswer, type UnfinishedPolicy, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
 import { detectProvider, feedIdFor } from "./feeds/url";
+import { sanitizeEventMoves } from "./eventMoves";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
 
@@ -23,6 +24,7 @@ export function defaultWorkspace(): Workspace {
     courseEdits: {},
     classOrder: [],
     eventColors: {},
+    eventMoves: {},
     taskMeta: {},
     unfinished: "ask",
     unfinishedAnswers: {},
@@ -255,6 +257,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     courseEdits,
     classOrder: sanitizeClassOrder(raw.classOrder),
     eventColors: sanitizeEventColors(raw.eventColors),
+    eventMoves: sanitizeEventMoves(raw.eventMoves),
     taskMeta: sanitizeTaskMeta(raw.taskMeta),
     unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
     unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),
