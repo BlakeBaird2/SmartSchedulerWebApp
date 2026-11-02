@@ -15,6 +15,8 @@ import { resetEverything, useTheme } from "./store";
 import { startTour } from "./AppTour";
 import { EventLog } from "./EventLog";
 import { Button, ButtonLink, Card, CardHeader, SegmentedControl, TextButton } from "./ui";
+import { AccountCard } from "./Account";
+import { cloudAvailable } from "./cloud";
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -414,10 +416,19 @@ function BrowserPanel() {
 
   return (
     <div className="space-y-4">
+      {cloudAvailable ? (
+        <Section title="Your account" hint="Optional. Sign in to keep the same setup on your phone and laptop.">
+          <AccountCard />
+        </Section>
+      ) : null}
       {!ws.demo ? (
         <Section
           title="Use Schedule Smart on another device"
-          hint="Copy a setup link and open it on your phone or laptop. It holds your private calendar links, so only send it to yourself. Prototype note: nothing is uploaded to a server account."
+          hint={
+            cloudAvailable
+              ? "Or, without signing in: copy a setup link and open it on your other device. It copies your setup once, and holds your private calendar links, so only send it to yourself."
+              : "Copy a setup link and open it on your phone or laptop. It holds your private calendar links, so only send it to yourself. Nothing is uploaded to a server account."
+          }
         >
           <Button icon={Copy} onClick={copySetup} aria-live="polite">
             {copied ? "Copied to clipboard" : "Copy setup link"}
@@ -443,7 +454,14 @@ function BrowserPanel() {
         />
       </Section>
 
-      <Section title="Start over" hint="Removes your calendars and everything you've set from this browser. Nothing is stored anywhere else.">
+      <Section
+        title="Start over"
+        hint={
+          cloudAvailable
+            ? "Removes your calendars and everything you've set from this browser, and signs you out here. Your account's copy stays until you delete it above."
+            : "Removes your calendars and everything you've set from this browser. Nothing is stored anywhere else."
+        }
+      >
         <Button
           variant="danger"
           icon={RotateCcw}

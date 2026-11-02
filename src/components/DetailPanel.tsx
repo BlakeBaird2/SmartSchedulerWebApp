@@ -15,6 +15,7 @@ import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
 import { useTodos } from "./PlannerPanel";
 import { Button, buttonClass, ChoicePill, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
+import { cloudAvailable } from "./cloud";
 import { ClassEditForm } from "./ClassSummary";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
@@ -821,7 +822,7 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
           </Button>
           <Button onClick={() => select({ kind: "task", id: task.id })}>Open this task</Button>
         </div>
-        <p className="text-[11px] text-faint">Finished {format(now, "h:mm a")} · stored only in this browser</p>
+        <p className="text-[11px] text-faint">Finished {format(now, "h:mm a")} · {cloudAvailable ? "saved to this device and your account if you're signed in" : "stored only in this browser"}</p>
       </div>
     </>
   );

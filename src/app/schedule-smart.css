@@ -296,6 +296,26 @@
   color: var(--ss-faint);
   font-size: 12.5px;
 }
+/* Who's signed in, and how sync is going. */
+.ss-menu-account {
+  padding: 6px 11px 8px;
+}
+.ss-menu-account strong {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ss-menu-account span {
+  display: block;
+  margin-top: 2px;
+  color: var(--ss-personal-fg);
+  font-size: 12.5px;
+}
+.ss-menu-account span[data-tone="error"] {
+  color: var(--ss-danger);
+}
 .ss-menu button,
 .ss-menu a {
   width: 100%;
@@ -1771,6 +1791,81 @@ button.ss-day-head:hover {
   .ss-ghost[data-slot] {
     transition: none;
   }
+}
+
+/* --------------------------------------------------------- account */
+
+.ss-account-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+}
+.ss-account-card > div:first-child {
+  flex: 1 1 320px;
+}
+.ss-account-card strong {
+  display: block;
+  font-size: 15px;
+}
+.ss-account-card p {
+  margin: 4px 0 0;
+  color: var(--ss-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.ss-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ss-danger-text {
+  color: var(--ss-danger);
+}
+.ss-setup-signin {
+  margin: 0;
+  color: var(--ss-muted);
+  font-size: 14px;
+}
+.ss-setup-signin button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ss-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+/* Two setups to choose between. */
+.ss-choice-cards {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+.ss-choice-cards button {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid var(--ss-line);
+  border-radius: 12px;
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ss-choice-cards button:hover {
+  border-color: var(--ss-accent-ring);
+  background: var(--ss-accent-tint);
+}
+.ss-choice-cards strong {
+  font-size: 15px;
+}
+.ss-choice-cards span {
+  color: var(--ss-muted);
+  font-size: 13.5px;
 }
 
 /* --------------------------------------------------------- due dates */

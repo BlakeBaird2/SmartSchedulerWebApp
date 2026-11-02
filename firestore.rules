@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Schedule Smart keeps one document per account: users/{uid}, holding that
+// person's setup (calendar links, classes, schedule and settings) as JSON.
+// Only the signed-in owner can read, write or delete it, and a write must have
+// exactly the fields the app saves, with a size well under Firestore's limit.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['workspace', 'updatedAt', 'device'])
+        && request.resource.data.workspace is string
+        && request.resource.data.workspace.size() < 900000
+        && request.resource.data.device is string
+        && request.resource.data.updatedAt == request.time;
+    }
+    // Nothing else is readable or writable.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

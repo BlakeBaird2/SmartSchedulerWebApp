@@ -26,6 +26,8 @@ import { AddTaskDialog } from "./AddTaskDialog";
 import { withEventAt } from "@/lib/eventMoves";
 import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
+import { CloudChoiceDialog } from "./Account";
+import { startCloud } from "./cloud";
 import { DueDatesPage } from "./DueDatesPage";
 import { ImportDialog } from "./ImportDialog";
 import { ClassTimesDialog } from "./ClassTimes";
@@ -410,6 +412,16 @@ export function App() {
 
   const sync = useCallback(() => runSync(false), [runSync]);
   const ready = ui.setupDone && ws.feeds.length > 0;
+
+  // Signing in keeps the setup the same on every device (cloud.ts); without Firebase keys this does nothing.
+  useEffect(() => startCloud(), []);
+  // A calendar added on another device arrives without its contents: read it here.
+  const unread = ws.feeds.some((f) => f.enabled && !snapshot.feeds[f.id]);
+  useEffect(() => {
+    if (!ready || !unread) return;
+    const kick = setTimeout(() => void runSync(true), 0);
+    return () => clearTimeout(kick);
+  }, [ready, unread, runSync]);
 
   // Keep calendars fresh without anyone thinking about it: when the page opens,
   // when the tab comes back into view, and every half hour while it is open.
@@ -861,6 +873,7 @@ export function App() {
           <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
         </div>
       )}
+      <CloudChoiceDialog />
       {/* Here rather than in the shell, so setup can open it too. */}
       {pickerFeed !== undefined ? <ClassPicker feedId={pickerFeed} onClose={() => setPickerFeed(undefined)} /> : null}
       {incoming.pending ? (
