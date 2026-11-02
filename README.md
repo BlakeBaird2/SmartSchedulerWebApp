@@ -46,9 +46,9 @@ prefix on every class.
   - It opens on today. The week fits the screen, Monday to Friday (plus a
     weekend day when something is on it), and the month is a click away.
     Coloured like Google Calendar: solid blocks with white titles in Google's
-    event colours (a step deeper so the titles read) — Work blue, School
-    tangerine, Personal green — and work you scheduled in grape with faint
-    stripes; time a calendar marks free is outlined. Today is Google's blue
+    own event colours — Work in Peacock blue, School in Tangerine, Personal in
+    Sage — and work you scheduled in Lavender with faint stripes (the home
+    page's example calendar uses the same colours); time a calendar marks free is outlined. Today is Google's blue
     circle and now is its red line. In the month, timed events are a coloured
     dot, the time and the title; all-day events are filled bars. Anything that
     has ended turns a lighter tint of its colour. The colours were checked for
@@ -61,7 +61,8 @@ prefix on every class.
     message says the calendar still has its time, the event's details say where
     it was with **Put it back**, and the planner plans around the new time. If
     the calendar itself changes that event, its new time wins.
-  - While you drag, everything after the task's deadline greys out, with a red
+  - Nothing on the calendar lights up while you drag; anything can go anywhere.
+    While you drag a task, everything after its deadline greys out, with a red
     DUE line. In the month view, dropping a task on a day puts it in that day's
     first free time.
   - Tap a free time to see what fits there, with **Put it here**.

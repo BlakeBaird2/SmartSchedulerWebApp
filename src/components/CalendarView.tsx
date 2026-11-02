@@ -305,7 +305,6 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   // While a task is dragged, everything after it is due greys out, with a red line at the deadline.
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
   const deadline = draggedTask?.dueAt ? new Date(draggedTask.dueAt) : null;
-  const placing = Boolean(drag && drag.kind !== "resize");
   // Anything that has ended is faded.
   const nowMs = now.getTime();
 
@@ -362,7 +361,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
             return (
               <div
                 key={c.from}
-                className={`ss-day-column ${placing ? "ss-drop-ready" : ""}`}
+                className="ss-day-column"
                 // How the drag works out the time under the pointer (see planDrag.ts).
                 data-drop-day={c.from}
                 data-drop-min={startHour * 60}
@@ -743,7 +742,6 @@ function MonthGrid({ data }: { data: CalData }) {
   const { calCursor, setCalCursor, setCalMode, select, now } = useApp();
   const drag = usePlanDrag();
   const nowMs = now.getTime();
-  const placing = Boolean(drag && drag.kind !== "resize");
   // The prototype's month starts on Sunday.
   const days = useMemo(
     () => eachDayOfInterval({ start: startOfWeek(startOfMonth(calCursor)), end: endOfWeek(endOfMonth(calCursor)) }),
@@ -780,10 +778,9 @@ function MonthGrid({ data }: { data: CalData }) {
               key={k}
               role="button"
               tabIndex={0}
-              className={`ss-month-cell ${inMonth ? "" : "ss-outside"} ${placing ? "ss-drop-ready" : ""} ${deadline !== null && from > deadline ? "ss-past-deadline" : ""}`}
+              className={`ss-month-cell ${inMonth ? "" : "ss-outside"} ${deadline !== null && from > deadline ? "ss-past-deadline" : ""}`}
               data-today={isToday(d) || undefined}
               data-drop-date={inMonth ? from : undefined}
-              data-drop-over={(drag?.target?.kind === "date" && drag.target.dayStart === from) || undefined}
               onClick={() => {
                 setCalCursor(d);
                 setCalMode("day");

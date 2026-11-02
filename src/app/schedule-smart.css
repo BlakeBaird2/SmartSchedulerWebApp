@@ -37,7 +37,7 @@
   /* The calendar's own colours, as in Google Calendar: today's blue, and event fills. */
   --ss-today: #1a73e8;
   --ss-today-fg: #ffffff;
-  --ss-planned: #8e24aa;
+  --ss-planned: #7986cb;
   --ss-amber: #9b6b2e;
   --ss-avatar-bg: #ddf0e4;
   --ss-avatar-fg: #27764d;
@@ -49,13 +49,13 @@
   --ss-assignment: #7066e7;
   --ss-reading: #4c9a3c;
   /* Event kinds: the colour itself, its wash, and its text. */
-  --ss-work: #0277bd;
+  --ss-work: #039be5;
   --ss-work-bg: #eeecff;
   --ss-work-fg: #4e46b4;
-  --ss-school: #d84315;
+  --ss-school: #f4511e;
   --ss-school-bg: #fff0e5;
   --ss-school-fg: #9b562e;
-  --ss-personal: #1b8a5a;
+  --ss-personal: #33b679;
   --ss-personal-bg: #e7f5ed;
   --ss-personal-fg: #27764d;
   --ss-stripe-a: #f3f1ff;
@@ -95,7 +95,7 @@
   --ss-now: #f28b82;
   --ss-today: #8ab4f8;
   --ss-today-fg: #202124;
-  --ss-planned: #8e24aa;
+  --ss-planned: #7986cb;
   --ss-amber: #e0b15e;
   --ss-avatar-bg: #1f3a2b;
   --ss-avatar-fg: #8fd4ad;
@@ -105,13 +105,13 @@
   --ss-project: #2fa898;
   --ss-assignment: #7a73f0;
   --ss-reading: #5ea84b;
-  --ss-work: #0277bd;
+  --ss-work: #039be5;
   --ss-work-bg: #26244a;
   --ss-work-fg: #c9c5ff;
-  --ss-school: #d84315;
+  --ss-school: #f4511e;
   --ss-school-bg: #3a2a1f;
   --ss-school-fg: #f3c7a6;
-  --ss-personal: #1b8a5a;
+  --ss-personal: #2ea36c;
   --ss-personal-bg: #1c3328;
   --ss-personal-fg: #a9e0c4;
   --ss-stripe-a: #23214a;
@@ -1083,10 +1083,6 @@ button.ss-day-head:hover {
   background: var(--ss-surface);
   border-color: color-mix(in oklab, var(--ev) 35%, var(--ss-surface));
 }
-.ss-day-column.ss-drop-ready {
-  background: var(--ss-accent-tint);
-  box-shadow: inset 0 0 0 1px var(--ss-accent-ring);
-}
 .ss-hour-line {
   position: absolute;
   left: 0;
@@ -1411,12 +1407,6 @@ button.ss-day-head:hover {
   color: var(--ss-today-fg);
   border-radius: 50%;
   background: var(--ss-today);
-}
-.ss-month-cell.ss-drop-ready:not(.ss-outside) {
-  background: var(--ss-accent-tint);
-}
-.ss-month-cell[data-drop-over] {
-  box-shadow: inset 0 0 0 2px var(--ss-accent);
 }
 .ss-month-cell.ss-past-deadline {
   background: #e8e8e4;
@@ -2930,13 +2920,6 @@ section.ss-due-page {
     padding-right: 6px;
     font-size: 10px;
   }
-  .ss-day-column.ss-drop-ready {
-    background: #f1efff;
-    box-shadow: inset 0 0 0 2px var(--ss-accent);
-  }
-  :root[data-theme="dark"] .ss-day-column.ss-drop-ready {
-    background: var(--ss-accent-tint);
-  }
   .ss-month {
     border-radius: 10px;
   }
@@ -3371,7 +3354,7 @@ section.ss-due-page {
   letter-spacing: 0;
 }
 .ss-home-week-head span[data-today] {
-  color: var(--ss-accent);
+  color: var(--ss-today);
 }
 .ss-home-week-head span[data-today] b {
   width: 28px;
@@ -3379,8 +3362,8 @@ section.ss-due-page {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--ss-accent);
-  color: #fff;
+  background: var(--ss-today);
+  color: var(--ss-today-fg);
 }
 .ss-home-week-body {
   position: relative;
