@@ -12,8 +12,8 @@ import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
 import { CapabilityHero, PrototypeBadge } from "./Prototype";
-import { SetupSignIn } from "./Account";
-import { cloudAvailable } from "./cloud";
+import { AccountStep, SetupSignIn } from "./Account";
+import { cloudAvailable, useCloud } from "./cloud";
 import { Button, Card, Wordmark } from "./ui";
 import { trackEvent } from "./smartEvents";
 
@@ -54,7 +54,15 @@ export function startDemo() {
 
 export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const { ws, model, toast } = useApp();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const cloud = useCloud();
+  // With sign-in available, setup opens by asking whether to use a Google account (step 0).
+  const asksAccount = cloudAvailable;
+  const [chosenStep, setStep] = useState<0 | 1 | 2 | 3>(asksAccount ? 0 : 1);
+  // Signed in, here or by coming back from Google: on to calendars. (An account that
+  // already has a setup brings it across, and setup closes on its own.)
+  const step = chosenStep === 0 && (cloud.user || !asksAccount) ? 1 : chosenStep;
+  const total = asksAccount ? 4 : 3;
+  const shown = asksAccount ? step + 1 : step;
   const hasSchool = ws.feeds.some((f) => f.role === "school");
   const hasClasses = model.visibleCourses.length > 0;
 
@@ -89,14 +97,20 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           </p>
         </CapabilityHero>
 
-        <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${step} of 3`}>
-          {[1, 2, 3].map((n) => (
-            <span key={n} className={`h-1.5 w-10 rounded-full ${step >= n ? "bg-accent" : "bg-line-strong/50"}`} />
+        <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${shown} of ${total}`}>
+          {Array.from({ length: total }, (_, i) => i + 1).map((n) => (
+            <span key={n} className={`h-1.5 w-10 rounded-full ${shown >= n ? "bg-accent" : "bg-line-strong/50"}`} />
           ))}
-          <span className="ml-1">Step {step} of 3</span>
+          <span className="ml-1">
+            Step {shown} of {total}
+          </span>
         </div>
 
-        {step === 1 ? (
+        {step === 0 ? (
+          <Card padding="lg" className="mt-3">
+            <AccountStep onNext={() => setStep(1)} />
+          </Card>
+        ) : step === 1 ? (
           <Card padding="lg" className="mt-3 space-y-5">
             <div>
               <h2 className="text-xl font-semibold">Add your calendars</h2>

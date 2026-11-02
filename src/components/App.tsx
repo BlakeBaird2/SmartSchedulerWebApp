@@ -26,7 +26,7 @@ import { AddTaskDialog } from "./AddTaskDialog";
 import { withEventAt } from "@/lib/eventMoves";
 import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
-import { CloudChoiceDialog } from "./Account";
+import { CloudChoiceDialog, SignInPrompt } from "./Account";
 import { startCloud } from "./cloud";
 import { DueDatesPage } from "./DueDatesPage";
 import { ImportDialog } from "./ImportDialog";
@@ -871,6 +871,7 @@ export function App() {
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
           <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
           <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
+          <SignInPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
         </div>
       )}
       <CloudChoiceDialog />

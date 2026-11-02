@@ -204,6 +204,9 @@ them.
   Firebase set up), the same setup is also kept in your account so it stays the
   same on every device you sign in on; only you can read it, and **Delete my
   account data** removes it. Calendar contents are never stored there.
+  Setup opens by asking whether to sign in, and someone who uses the app
+  without signing in is asked again now and then (**Not now** waits a week,
+  **Don't ask again** stops it; the profile menu and Settings always offer it).
   Details: [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md).
 - The server has one job: fetch a calendar link you send it, turn it into
   classes, work and busy time, and send that back. It stores nothing and logs
@@ -258,6 +261,7 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 | `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
 | `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
+| `prio:signin-ask` | When the "keep your schedule on all your devices?" pop-up may ask again, or `never`. |
 | `prio:device`, `prio:cloud` | Only when signed in: this device's id, and the account plus the setup it last agreed on with it (see `FIREBASE_SETUP.md`). |
 
 **Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
@@ -271,7 +275,7 @@ in development (`NODE_ENV=development`) and is not in production builds.
 | First visit: welcome pop-up | New private window → `/` (or `/about`, `/app`, `/app#demo`) | One pop-up says it is an early prototype and gives the 45-minute goal. In the app it offers **Show me around** (the walkthrough) and **Start**. It doesn't return on refresh; the **Prototype** tag, **Goal** tag (wide screens) and Help reopen it. |
 | Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
 | About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
-| New user `/app` | Private window → `/app` | Onboarding: capability first; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |
+| New user `/app` | Private window → `/app` | Onboarding: capability first, then (when sign-in is set up) sign in with Google or **Not now**; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |
 | Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
 | Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary; goal/prototype do not auto-interrupt. |
 
@@ -348,6 +352,7 @@ src/lib/todos.ts            the to-do list: what's on it, its order, priority an
 src/lib/blocks.ts           scheduled time: snapping, moving and resizing
 src/lib/newWork.ts          work that's new since you last looked
 src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
+src/lib/cancelled.ts        single events the student cancelled
 src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
 src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```

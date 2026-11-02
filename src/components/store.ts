@@ -30,6 +30,8 @@ export const KEYS = {
   device: "prio:device",
   /** The account this device syncs with, and the setup it last agreed with it on. */
   cloud: "prio:cloud",
+  /** When the "sign in to sync your devices?" pop-up may ask again ("never" once declined for good). */
+  signInAsk: "prio:signin-ask",
 } as const;
 
 function notify() {
