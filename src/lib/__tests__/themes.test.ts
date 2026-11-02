@@ -28,16 +28,16 @@ test("text goes dark on light colours and white on dark ones", () => {
 
 test("Classic leaves the stylesheet's colours alone; other themes set them", () => {
   assert.deepEqual(themeVars({ theme: "classic", custom: null, calendars: {} }), {});
-  const vars = themeVars({ theme: "cotton", custom: null, calendars: {} });
-  assert.equal(vars["--ss-school"], "#f9a8d4");
+  const vars = themeVars({ theme: "sherbet", custom: null, calendars: {} });
+  assert.equal(vars["--ss-school"], "#ff70a6");
   assert.equal(vars["--ss-school-ink"], DARK_INK);
-  assert.equal(vars["--ss-planned"], "#fde68a");
+  assert.equal(vars["--ss-planned"], "#ff9770");
 });
 
 test("a theme of your own is used when picked, and kept when another is", () => {
   const custom = { school: "#111111", work: "#222222", personal: "#333333", tasks: "#444444" };
   assert.equal(themeColors({ theme: CUSTOM_THEME, custom, calendars: {} }).work, "#222222");
-  assert.equal(themeColors({ theme: "berry", custom, calendars: {} }).work, THEMES.find((t) => t.id === "berry")!.colors.work);
+  assert.equal(themeColors({ theme: "tropical", custom, calendars: {} }).work, THEMES.find((t) => t.id === "tropical")!.colors.work);
 });
 
 test("odd stored choices fall back safely", () => {

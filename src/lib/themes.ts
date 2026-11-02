@@ -5,9 +5,10 @@
  * colour a single calendar, a class, or one event (in that order, the most
  * specific wins).
  *
- * Every theme here keeps text on its colours readable (at least 4.5:1, the
- * WCAG AA level for normal text, with white or near-black text, whichever reads
- * better) and its four colours clearly apart. Classic is Google Calendar's own
+ * The themes are popular palettes from coolors.co, vivid and clearly apart.
+ * Every one keeps text on its colours readable (at least 4.5:1, the WCAG AA
+ * level for normal text, with white or near-black text, whichever reads better)
+ * and its four colours easy to tell apart. Classic is Google Calendar's own
  * colours with white text, as before.
  */
 
@@ -29,15 +30,25 @@ export interface ThemePreset {
 
 export const THEMES: ThemePreset[] = [
   { id: "classic", name: "Classic", blurb: "Google Calendar's colours", colors: { school: "#f4511e", work: "#039be5", personal: "#33b679", tasks: "#7986cb" }, ink: "#ffffff" },
-  { id: "sorbet", name: "Sorbet", blurb: "Raspberry, mango, lagoon", colors: { school: "#d6336c", work: "#fd7e14", personal: "#0b7285", tasks: "#7048e8" } },
-  { id: "cotton", name: "Cotton Candy", blurb: "Soft pastels", colors: { school: "#f9a8d4", work: "#93c5fd", personal: "#86efac", tasks: "#fde68a" } },
-  { id: "matcha", name: "Matcha Latte", blurb: "Strawberry, mocha, matcha", colors: { school: "#c2255c", work: "#8b5e3c", personal: "#5c7f3a", tasks: "#4c6a92" } },
-  { id: "lavender", name: "Lavender Haze", blurb: "Rose, periwinkle, sage", colors: { school: "#c2255c", work: "#3b5bdb", personal: "#4a7c59", tasks: "#8e44ad" } },
-  { id: "seaglass", name: "Sea Glass", blurb: "Coral, ocean, kelp", colors: { school: "#c92a2a", work: "#1f5fae", personal: "#0f766e", tasks: "#9c36b5" } },
-  { id: "sunset", name: "Golden Hour", blurb: "Ember, dusk, honey", colors: { school: "#c2410c", work: "#4338ca", personal: "#b5179e", tasks: "#e8a33d" } },
-  { id: "berry", name: "Berry Bramble", blurb: "Raspberry, blueberry, leaf", colors: { school: "#be185d", work: "#2563eb", personal: "#3f7d3a", tasks: "#6d28d9" } },
-  { id: "forest", name: "Forest Cabin", blurb: "Rust, lake, pine", colors: { school: "#b45309", work: "#2b6cb0", personal: "#2f6b4f", tasks: "#9d174d" } },
-  { id: "neon", name: "Night Market", blurb: "Bright and bold", colors: { school: "#f472b6", work: "#22d3ee", personal: "#a3e635", tasks: "#c084fc" } },
+  // The rest are popular palettes from coolors.co, used as they are (the address is each palette's colours).
+  // coolors.co/palette/ff595e-ffca3a-8ac926-1982c4-6a4c93
+  { id: "spark", name: "Bright Spark", blurb: "Cherry, cobalt, lime, sunshine", colors: { school: "#ff595e", work: "#1982c4", personal: "#8ac926", tasks: "#ffca3a" } },
+  // coolors.co/palette/ffbe0b-fb5607-ff006e-8338ec-3a86ff
+  { id: "neon", name: "Neon Pop", blurb: "Hot pink, azure, marigold, violet", colors: { school: "#ff006e", work: "#3a86ff", personal: "#ffbe0b", tasks: "#8338ec" } },
+  // coolors.co/palette/9b5de5-f15bb5-fee440-00bbf9-00f5d4
+  { id: "electric", name: "Electric", blurb: "Bubblegum, sky, aqua, amethyst", colors: { school: "#f15bb5", work: "#00bbf9", personal: "#00f5d4", tasks: "#9b5de5" } },
+  // coolors.co/palette/ef476f-ffd166-06d6a0-118ab2-073b4c
+  { id: "tropical", name: "Tropical", blurb: "Watermelon, lagoon, mint, mango", colors: { school: "#ef476f", work: "#118ab2", personal: "#06d6a0", tasks: "#ffd166" } },
+  // coolors.co/palette/70d6ff-ff70a6-ff9770-ffd670-e9ff70
+  { id: "sherbet", name: "Sherbet", blurb: "Bright pastels", colors: { school: "#ff70a6", work: "#70d6ff", personal: "#ffd670", tasks: "#ff9770" } },
+  // coolors.co/palette/f72585-7209b7-3a0ca3-4361ee-4cc9f0
+  { id: "ultraviolet", name: "Ultraviolet", blurb: "Magenta, royal blue, cyan, grape", colors: { school: "#f72585", work: "#4361ee", personal: "#4cc9f0", tasks: "#7209b7" } },
+  // coolors.co/palette/f94144-f3722c-f8961e-f9c74f-90be6d-43aa8b-577590
+  { id: "rainbow", name: "Rainbow", blurb: "Red, slate, jade, gold", colors: { school: "#f94144", work: "#577590", personal: "#43aa8b", tasks: "#f9c74f" } },
+  // coolors.co/palette/003049-d62828-f77f00-fcbf49-eae2b7
+  { id: "retro", name: "Retro Diner", blurb: "Ketchup, navy, tangerine, mustard", colors: { school: "#d62828", work: "#003049", personal: "#f77f00", tasks: "#fcbf49" } },
+  // coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51
+  { id: "coastal", name: "Coastal", blurb: "Terracotta, deep sea, teal, saffron", colors: { school: "#e76f51", work: "#264653", personal: "#2a9d8f", tasks: "#e9c46a" } },
 ];
 
 export const DEFAULT_THEME = "classic";
@@ -90,7 +101,7 @@ export function contrast(a: string, b: string): number {
 }
 
 export const LIGHT_INK = "#ffffff";
-export const DARK_INK = "#1f1f1f";
+export const DARK_INK = "#111111";
 
 /** The text colour that reads better on `hex`: white, or near-black. */
 export function inkFor(hex: string): string {

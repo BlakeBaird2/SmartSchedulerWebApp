@@ -61,8 +61,9 @@ prefix on every class.
     colour-blind separation, light and dark.
   - **Colour themes** (Settings → *Colours & themes*, or click the Work /
     School / Personal key above the calendar): Classic (Google's colours, as
-    above) and nine more — Sorbet, Cotton Candy, Matcha Latte, Lavender Haze,
-    Sea Glass, Golden Hour, Berry Bramble, Forest Cabin and Night Market. Each
+    above) and nine vivid palettes from coolors.co — Bright Spark, Neon Pop,
+    Electric, Tropical, Sherbet, Ultraviolet, Rainbow, Retro Diner and Coastal,
+    each used with its exact Coolors colours. Each
     gives School, Work, Personal and scheduled tasks their own colour; every
     one keeps text at 4.5:1 or better (WCAG AA) and its four colours clearly
     apart (`src/lib/themes.ts`, checked by its tests). Text on any colour is
