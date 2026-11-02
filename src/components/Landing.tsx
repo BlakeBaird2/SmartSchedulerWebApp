@@ -13,6 +13,9 @@ import { SsIcon, type SsIconName } from "./SsIcon";
 
 export type LandingVariant = "home" | "about";
 
+/** Whether this deployment offers signing in to sync devices (see cloud.ts). */
+const SYNCABLE = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+
 export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
   return (
     <div className="ss-home">
@@ -42,7 +45,7 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
               Try it with sample data
             </a>
           </div>
-          <p className="ss-home-note">Free · No account · Saved only in your browser</p>
+          <p className="ss-home-note">{SYNCABLE ? "Free · No account needed · Sign in to sync your phone and laptop" : "Free · No account · Saved only in your browser"}</p>
         </section>
 
         <Preview />

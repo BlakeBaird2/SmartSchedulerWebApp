@@ -15,6 +15,7 @@ import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
 import { useTodos } from "./PlannerPanel";
 import { Button, buttonClass, ChoicePill, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
+import { cloudAvailable } from "./cloud";
 import { ClassEditForm } from "./ClassSummary";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
@@ -477,6 +478,12 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         <p className="text-sm text-muted">
           {event.busy ? "You're busy then, so it isn't offered as free time." : "This doesn't block your time, so it still counts as free time."}
         </p>
+        {course && course.title === course.code && !editingClass ? (
+          // Canvas names a class only by its code; the full name makes the calendar easier to read.
+          <p className="text-sm text-muted">
+            {course.code} has no full name yet. <TextButton onClick={() => setEditingClass(true)}>Add its full name</TextButton>
+          </p>
+        ) : null}
         {editingClass && course ? (
           <div>
             <Label>Edit {course.code}</Label>
@@ -815,7 +822,7 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
           </Button>
           <Button onClick={() => select({ kind: "task", id: task.id })}>Open this task</Button>
         </div>
-        <p className="text-[11px] text-faint">Finished {format(now, "h:mm a")} · stored only in this browser</p>
+        <p className="text-[11px] text-faint">Finished {format(now, "h:mm a")} · {cloudAvailable ? "saved to this device and your account if you're signed in" : "stored only in this browser"}</p>
       </div>
     </>
   );

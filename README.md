@@ -7,8 +7,10 @@ Paste in calendar links from Canvas, Learning Suite, Google, Outlook or Apple.
 SmartScheduler finds your classes and assignments on its own, works out when you are free,
 and fills that time with the work that is due soonest.
 
-No accounts, no database, no API keys, no environment variables. Anyone can open
-it and start.
+No account needed: anyone can open it and start. Signing in with Google is
+optional and keeps the same setup on your phone and laptop (Firebase; see
+[`FIREBASE_SETUP.md`](FIREBASE_SETUP.md)). Without the Firebase keys the app
+needs no environment variables at all.
 
 > **Submitting the Low-Fidelity Prototype?** The paste-ready submission text and a rubric checklist are in [`SUBMISSION.md`](SUBMISSION.md).
 
@@ -43,8 +45,12 @@ prefix on every class.
   The task is picked up at its card's size; over the calendar it glides into
   the slot it would drop into, at its real length, so letting go leaves it there.
   Scheduled work leaves the list and the next task moves up.
-  - It opens on today. The week fits the screen, Monday to Friday (plus a
-    weekend day when something is on it), and the month is a click away.
+  - It opens on today. The week shows all seven days, Monday to Sunday, and
+    the month is a click away. A class's events say which class they're for by
+    its full name ("Lecture · ACC 200 · Principles of Accounting"), with as much
+    as fits; the month adds the class code to events with a generic name.
+    Canvas only gives a class's code, so its full name can be typed in **Which
+    classes are yours?** or added from any of its events (**Add its full name**).
     Coloured like Google Calendar: solid blocks with white titles in Google's
     own event colours — Work in Peacock blue, School in Tangerine, Personal in
     Sage — and work you scheduled in Lavender with faint stripes (the home
@@ -183,7 +189,11 @@ them.
 ## Your data
 
 - Calendar links, classes, done marks and settings are stored **in your browser**
-  (localStorage). There are no accounts and no database.
+  (localStorage). If you sign in with Google (optional, when the deployment has
+  Firebase set up), the same setup is also kept in your account so it stays the
+  same on every device you sign in on; only you can read it, and **Delete my
+  account data** removes it. Calendar contents are never stored there.
+  Details: [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md).
 - The server has one job: fetch a calendar link you send it, turn it into
   classes, work and busy time, and send that back. It stores nothing and logs
   nothing about the calendar.
@@ -237,6 +247,7 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 | `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
 | `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
+| `prio:device`, `prio:cloud` | Only when signed in: this device's id, and the account plus the setup it last agreed on with it (see `FIREBASE_SETUP.md`). |
 
 **Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
 bottom-left corner with one-click shortcuts to each state below. It only exists
@@ -292,7 +303,9 @@ First Impressions five-second results are in [`FIVE_SECOND_TEST.md`](FIVE_SECOND
 
 **Vercel (primary):** push `main` to GitHub, then at [vercel.com/new](https://vercel.com/new)
 import the repo and Deploy. Framework preset: Next.js. Build command:
-`npm run build`. There are **no** environment variables. After deploy, open the
+`npm run build`. No environment variables are needed; to turn on signing in and
+syncing between devices, add the four Firebase ones in
+[`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) and redeploy. After deploy, open the
 public URL in an **incognito** window on a phone and a laptop (no login).
 
 Step-by-step checklist (including where to paste the URL): [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.md).

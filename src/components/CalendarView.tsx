@@ -98,10 +98,9 @@ export function CalendarView() {
   const days = useMemo(() => {
     if (calMode === "day") return [startOfDay(calCursor)];
     if (phone) return Array.from({ length: panelOpen ? 1 : 3 }, (_, i) => addDays(startOfDay(calCursor), i));
-    const week = eachDayOfInterval({ start: startOfWeek(calCursor, WEEK), end: endOfWeek(calCursor, WEEK) });
-    // Monday to Friday, as in the prototype; a weekend day joins in when something is on it.
-    return week.filter((d, i) => i < 5 || data.blocksByDay.has(dayKey(d)) || data.events.some((e) => !e.allDay && isSameDay(new Date(e.start), d)));
-  }, [calMode, calCursor, phone, panelOpen, data]);
+    // The whole week, Monday to Sunday.
+    return eachDayOfInterval({ start: startOfWeek(calCursor, WEEK), end: endOfWeek(calCursor, WEEK) });
+  }, [calMode, calCursor, phone, panelOpen]);
 
   const step = (dir: number) => {
     if (calMode === "month") setCalCursor(addMonths(calCursor, dir));
@@ -451,6 +450,20 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   );
 }
 
+/**
+ * What to call an event: its own title, and which class it's for, by full name
+ * when Schedule Smart knows it ("CS 142 · Intro to Programming"). An event named
+ * just for its class ("CS 142") keeps that as its title, with the full name below.
+ */
+function useEventNames(e: CalEvent): { title: string; classLine: string | null } {
+  const { model } = useApp();
+  const course = e.courseId ? model.courseById.get(e.courseId) : undefined;
+  if (!course) return { title: e.title, classLine: null };
+  const full = course.title && course.title !== course.code ? course.title : null;
+  if (e.title === course.code) return { title: e.title, classLine: full };
+  return { title: e.title, classLine: full ? `${course.code} · ${full}` : course.code };
+}
+
 /** The colour of an event: its kind's, or one the student picked for it. */
 function useEventLook(e: CalEvent): { kind: Kind; custom: string | null } {
   const { model, ws } = useApp();
@@ -483,9 +496,15 @@ function GridEvent({
 }) {
   const { select, moveEvent, resizeEvent } = useApp();
   const { kind, custom } = useEventLook(e);
+  const { title, classLine } = useEventNames(e);
   const start = new Date(e.start);
   const end = new Date(e.end);
   const minutes = Math.round((end.getTime() - start.getTime()) / MIN);
+  // Lines of text that fit: the title, then the class (as many lines as are left), then the time if there's room.
+  const fit = Math.floor((h - 8) / 15);
+  const compact = fit < 2;
+  const showTime = fit >= 3 || !classLine;
+  const classLines = Math.max(1, fit - 1 - (showTime ? 1 : 0));
   const open = () => select({ kind: "event", id: e.id });
   const payload = { taskId: null, blockId: null, eventId: e.id, title: e.title, minutes, start: start.getTime(), color: custom ?? `var(--ss-${kind})` };
   return (
@@ -525,11 +544,22 @@ function GridEvent({
         else moveEvent(e.id, new Date(start.getTime() + stepBy * MIN));
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown"
-      aria-label={`${e.title}, ${shortRange(start, end)}${e.original ? ", moved here in Schedule Smart" : ""}. Open details, or drag to move it`}
-      title={`${e.title} · ${shortRange(start, end)}. Drag to move it, or drag the bottom edge to change its length.`}
+      aria-label={`${title}${classLine ? `, ${classLine}` : ""}, ${shortRange(start, end)}${e.original ? ", moved here in Schedule Smart" : ""}. Open details, or drag to move it`}
+      title={`${title}${classLine ? ` · ${classLine}` : ""} · ${shortRange(start, end)}. Drag to move it, or drag the bottom edge to change its length.`}
     >
-      <strong>{e.title}</strong>
-      {h >= 22 ? <span>{h < 40 ? format(start, "h:mm") : shortRange(start, end)}</span> : null}
+      <strong>{title}</strong>
+      {compact ? (
+        h >= 22 ? <span>{classLine ?? format(start, "h:mm")}</span> : null
+      ) : (
+        <>
+          {classLine ? (
+            <span className="ss-event-class" style={{ WebkitLineClamp: classLines }}>
+              {classLine}
+            </span>
+          ) : null}
+          {showTime ? <span>{shortRange(start, end)}</span> : null}
+        </>
+      )}
       <span
         data-resize
         aria-hidden
@@ -552,7 +582,8 @@ function GridEvent({
 }
 
 function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
-  const { select, moveEvent } = useApp();
+  const { select, moveEvent, model } = useApp();
+  const course = e.courseId ? model.courseById.get(e.courseId) : undefined;
   const { kind, custom } = useEventLook(e);
   const start = new Date(e.start);
   return (
@@ -594,13 +625,14 @@ function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
               );
             }
       }
-      title={e.title}
+      title={course ? `${e.title} · ${course.code}${course.title !== course.code ? ` ${course.title}` : ""}` : e.title}
     >
       <i />
       {/* Timed events show their start, as in Google's month view: "7am", "9:30am". */}
       <span>
         {e.allDay ? null : <time>{format(start, start.getMinutes() ? "h:mmaaa" : "haaa")} </time>}
         {e.title}
+        {course && e.title !== course.code ? <span className="ss-month-class"> · {course.code}</span> : null}
       </span>
     </button>
   );

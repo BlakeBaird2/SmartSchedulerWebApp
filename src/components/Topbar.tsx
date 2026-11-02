@@ -8,6 +8,8 @@ import { ChangesDialog, useUnseenChanges } from "./ChangesDialog";
 import { openGoalNotice } from "./Prototype";
 import { resetEverything } from "./store";
 import { SsIcon } from "./SsIcon";
+import { AccountMenuSection } from "./Account";
+import { useCloud } from "./cloud";
 
 /**
  * The bar across the top, as in the Figma prototype: the name on the left, the
@@ -44,8 +46,15 @@ export function Topbar() {
   );
 }
 
+/** "Blake Baird" → "BB". */
+function initials(name: string | null | undefined): string | null {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  return parts.length ? (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() : null;
+}
+
 function ProfileMenu() {
   const { ws, snapshot, now, syncing, sync, setView } = useApp();
+  const cloud = useCloud();
   const [open, setOpen] = useState(false);
   const [changesOpen, setChangesOpen] = useState(false);
   const unseen = useUnseenChanges();
@@ -82,7 +91,7 @@ function ProfileMenu() {
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        {ws.demo ? "SS" : "ME"}
+        {ws.demo ? "SS" : (initials(cloud.user?.name) ?? "ME")}
         {unseen > 0 ? <span className="ss-avatar-dot">{unseen > 9 ? "9+" : unseen}</span> : null}
       </button>
       {open ? (
@@ -91,6 +100,7 @@ function ProfileMenu() {
             <strong>{ws.demo ? "Sample data" : "Your calendars"}</strong>
             <span aria-live="polite">{status}</span>
           </div>
+          <AccountMenuSection onDone={() => setOpen(false)} />
           <button role="menuitem" onClick={() => void sync()} disabled={syncing}>
             <SsIcon name="refresh" size={16} /> {syncing ? "Refreshing…" : "Refresh calendars"}
           </button>

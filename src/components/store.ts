@@ -26,6 +26,10 @@ export const KEYS = {
   goalNotice: "prio:goal-notice",
   /** When the quick tour of the Plan screen was finished or skipped. */
   tour: "prio:tour",
+  /** This device's name for itself when syncing, so it can tell its own changes from another device's. */
+  device: "prio:device",
+  /** The account this device syncs with, and the setup it last agreed with it on. */
+  cloud: "prio:cloud",
 } as const;
 
 function notify() {
@@ -39,6 +43,17 @@ function subscribe(cb: () => void): () => void {
     listeners.delete(cb);
     window.removeEventListener("storage", cb);
   };
+}
+
+/** Call `cb` whenever the stored value for `key` changes, in this tab or another. */
+export function onStoredChange(key: string, cb: (value: string | null) => void): () => void {
+  let last = readStored(key);
+  return subscribe(() => {
+    const now = readStored(key);
+    if (now === last) return;
+    last = now;
+    cb(now);
+  });
 }
 
 export function readStored(key: string): string | null {

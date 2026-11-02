@@ -12,6 +12,8 @@ import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
 import { CapabilityHero, PrototypeBadge } from "./Prototype";
+import { SetupSignIn } from "./Account";
+import { cloudAvailable } from "./cloud";
 import { Button, Card, Wordmark } from "./ui";
 import { trackEvent } from "./smartEvents";
 
@@ -105,6 +107,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             </div>
             {/* Until a calendar is added, Add calendar is the main action; after that, Continue is. */}
             <FeedAdder autoFocus primary={ws.feeds.length === 0} />
+            <SetupSignIn />
             <FeedList />
             <ProviderHelp />
             <div className="flex items-center gap-3 flex-wrap pt-1">
@@ -172,8 +175,10 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         <p className="mt-5 text-xs text-muted leading-relaxed flex gap-2">
           <Lock size={14} className="shrink-0 mt-0.5" />
           <span>
-            No account needed. Your calendar links and everything you set here stay in this browser. The server reads a calendar only to hand it back to you,
-            and keeps nothing. Setup is optional: Skip opens the app with sample data if you haven&apos;t added a calendar yet.
+            No account needed. Your calendar links and everything you set here stay in this browser
+            {cloudAvailable ? ", unless you sign in with Google to sync your devices; then they're also kept in your account, which only you can read" : ""}. The
+            server reads a calendar only to hand it back to you, and keeps nothing. Setup is optional: Skip opens the app with sample data if you haven&apos;t
+            added a calendar yet.
           </span>
         </p>
       </div>
