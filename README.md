@@ -67,11 +67,13 @@ prefix on every class.
     message says the calendar still has its time, the event's details say where
     it was with **Put it back**, and the planner plans around the new time. If
     the calendar itself changes that event, its new time wins.
-  - A single class or event that isn't happening (a cancelled class) can be
-    cancelled from its details: **Cancel just this one** takes that one
-    meeting off the calendar, and the planner can fill its time. The calendar it
-    came from isn't changed; Undo, or Settings → Calendars → *Cancelled events*,
-    puts it back. If the calendar moves that event, it shows again.
+  - Any event or task can be deleted from its details, including ones from
+    your calendars (a cancelled class, an assignment that doesn't apply). A
+    repeating event asks: **Just this one** or **Every one of them**. Its time is
+    free for the planner. Calendars aren't changed; Undo, or Settings →
+    Calendars → *Deleted*, puts it back. A single deleted event its calendar
+    later moves shows again. Deleting every one of a class time you entered
+    removes that class time.
   - Nothing on the calendar lights up while you drag; anything can go anywhere.
     While you drag a task, everything after its deadline greys out, with a red
     DUE line. In the month view, dropping a task on a day puts it in that day's
@@ -352,8 +354,8 @@ src/lib/todos.ts            the to-do list: what's on it, its order, priority an
 src/lib/blocks.ts           scheduled time: snapping, moving and resizing
 src/lib/newWork.ts          work that's new since you last looked
 src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
-src/lib/cancelled.ts        single events the student cancelled
+src/lib/deleted.ts          events and work the student deleted
 src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
 src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```
-src/lib/cancelled.ts        single events the student cancelled
+src/lib/deleted.ts          events and work the student deleted

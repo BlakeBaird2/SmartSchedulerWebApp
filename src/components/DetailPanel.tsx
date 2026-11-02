@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { addDays, format, startOfDay } from "date-fns";
-import { ArrowLeft, ArrowRight, CalendarClock, CalendarX, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
@@ -10,7 +10,7 @@ import { PRIORITIES, type CalEvent, type Task } from "@/lib/types";
 import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { PRIORITY_LABEL, todoState, urgencyColor } from "@/lib/todos";
 import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
-import { cancelEvent } from "@/lib/cancelled";
+import { deleteEvent } from "@/lib/deleted";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
@@ -373,24 +373,32 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </a>
         ) : null}
 
-        {task.manual ? (
+        <div>
           <Button
             variant="danger"
             block
             icon={Trash}
             onClick={() => {
+              // Its time on the calendar goes with it; Undo brings both back.
+              const before = { manualTasks: ws.manualTasks, deletedTasks: ws.deletedTasks, blocks: ws.blocks };
               const id = task.id.replace(/^manual:/, "");
-              const removed = ws.manualTasks.find((m) => m.id === id);
-              update((w) => ({ ...w, manualTasks: w.manualTasks.filter((m) => m.id !== id) }));
+              update((w) => ({
+                ...w,
+                blocks: w.blocks.filter((b) => b.taskId !== task.id),
+                ...(task.manual ? { manualTasks: w.manualTasks.filter((m) => m.id !== id) } : { deletedTasks: { ...w.deletedTasks, [task.id]: new Date().toISOString() } }),
+              }));
               onClose();
-              if (removed) toast(`Deleted: ${task.title}`, { undo: () => update((w) => ({ ...w, manualTasks: [...w.manualTasks, removed] })) });
+              toast(`Deleted ${task.title}`, { undo: () => update((w) => ({ ...w, ...before })) });
             }}
           >
             Delete this task
           </Button>
-        ) : null}
-
-        <p className="text-xs text-muted">{task.manual ? "Added by you." : `From ${feed?.name ?? "a calendar"}.`}</p>
+          <p className="mt-1.5 text-xs text-muted">
+            {task.manual
+              ? "Added by you."
+              : `From ${feed?.name ?? "a calendar"}, which isn't changed. Put it back any time from Settings → Calendars.`}
+          </p>
+        </div>
       </div>
     </>
   );
@@ -427,19 +435,21 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
   const editable = Boolean(block || pattern);
   const kind = event.kind === "class" ? "Class" : event.kind === "exam" ? "Exam" : event.source === "weekly" ? "Every week" : "Event";
 
-  // One meeting that isn't happening, like a cancelled class: it leaves the calendar
-  // here and its time is free for the plan. The calendar it came from isn't changed.
-  const oneOfMany = Boolean(weekly) || repeats(event.id);
-  const cancelThis = () => {
-    update((w) => ({ ...w, cancelled: cancelEvent(w.cancelled, event) }));
+  // Deleting takes it off the calendar here and frees its time for the plan; the
+  // calendar it came from isn't changed. A repeating event asks: this one, or all?
+  const many = repeats(event.id);
+  const [askingDelete, setAskingDelete] = useState(false);
+  const remove = (scope: "one" | "all") => {
+    const before = { deletedEvents: ws.deletedEvents, weekly: ws.weekly };
+    update((w) =>
+      scope === "all" && weekly
+        ? // A weekly time entered here goes for good (Undo aside), so it leaves Class times too.
+          { ...w, weekly: w.weekly.filter((b) => b.id !== weekly.blockId) }
+        : { ...w, deletedEvents: deleteEvent(w.deletedEvents, event, scope) },
+    );
     onClose();
-    toast(`Cancelled ${event.title} on ${format(start, "EEE, MMM d")}. That time is free to plan now.`, {
-      undo: () =>
-        update((w) => {
-          const cancelled = { ...w.cancelled };
-          delete cancelled[event.id];
-          return { ...w, cancelled };
-        }),
+    toast(scope === "all" && many ? `Deleted every ${event.title}` : `Deleted ${event.title} on ${format(start, "EEE, MMM d")}`, {
+      undo: () => update((w) => ({ ...w, ...before })),
     });
   };
 
@@ -473,16 +483,6 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
           ) : !event.allDay ? (
             <p className="mt-1.5 text-xs text-muted">Drag it on the calendar to move it.{feed ? ` ${feed.name} keeps its own time.` : ""}</p>
           ) : null}
-        </div>
-        <div>
-          <Button block icon={CalendarX} onClick={cancelThis}>
-            {oneOfMany ? `Cancel just this one, ${format(start, "EEE MMM d")}` : "Cancel this event"}
-          </Button>
-          <p className="mt-1.5 text-xs text-muted">
-            {oneOfMany ? "Not meeting this time? " : "Not happening? "}
-            Take it off your calendar here and Schedule Smart can plan work in that time.
-            {feed ? ` ${feed.name} isn't changed.` : ""}
-          </p>
         </div>
         {event.location ? (
           <div>
@@ -565,6 +565,30 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
             <ExternalLink size={14} />
           </a>
         ) : null}
+        {askingDelete ? (
+          <div className="rounded-xl border border-line p-3 space-y-2" role="group" aria-label={`Delete ${event.title}`}>
+            <div className="text-sm font-semibold">Delete which?</div>
+            <Button variant="danger" block data-autofocus onClick={() => remove("one")}>
+              Just this one, {format(start, "EEE, MMM d")}
+            </Button>
+            <Button variant="danger" block onClick={() => remove("all")}>
+              Every one of them
+            </Button>
+            <Button block onClick={() => setAskingDelete(false)}>
+              Keep it
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button variant="danger" block icon={Trash} onClick={() => (many ? setAskingDelete(true) : remove("one"))}>
+              Delete event
+            </Button>
+            <p className="mt-1.5 text-xs text-muted">
+              Its time is free to plan.{" "}
+              {feed ? `${feed.name} isn't changed; put it back any time from Settings → Calendars.` : weekly ? "" : "Put it back any time from Settings → Calendars."}
+            </p>
+          </div>
+        )}
       </div>
     </>
   );

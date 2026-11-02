@@ -223,41 +223,50 @@ function CalendarsPanel() {
       <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Schedule Smart plans around it.">
         <ClassTimesEditor />
       </Section>
-      <CancelledEvents />
+      <DeletedItems />
     </div>
   );
 }
 
-/** Upcoming events the student cancelled, each with a way to put it back. Hidden when there are none. */
-function CancelledEvents() {
+/** What the student deleted (upcoming events, whole series, and work), each with a way to put it back. Hidden when there's nothing. */
+function DeletedItems() {
   const { model, now, update } = useApp();
   const today = startOfDay(now).getTime();
-  const upcoming = model.cancelled.filter((e) => Date.parse(e.end) >= today);
-  if (upcoming.length === 0) return null;
-  const restore = (id: string) =>
-    update((w) => {
-      const cancelled = { ...w.cancelled };
-      delete cancelled[id];
-      return { ...w, cancelled };
-    });
+  const events = model.deleted.events.filter((d) => d.all || Date.parse(d.event.end) >= today);
+  const tasks = model.deleted.tasks;
+  if (events.length === 0 && tasks.length === 0) return null;
+  const without = (rec: Record<string, string>, key: string) => {
+    const next = { ...rec };
+    delete next[key];
+    return next;
+  };
+  const row = (key: string, title: string, when: string, onRestore: () => void) => (
+    <li key={key} className="flex items-center gap-3 py-2 text-sm">
+      <span className="min-w-0 flex-1">
+        <span className="font-medium">{title}</span>
+        <span className="text-muted"> · {when}</span>
+      </span>
+      <Button size="sm" icon={RotateCcw} onClick={onRestore}>
+        Put back
+      </Button>
+    </li>
+  );
   return (
-    <Section title="Cancelled events" hint="Events you cancelled in Schedule Smart. Their calendars still have them.">
+    <Section title="Deleted" hint="Events and work you deleted in Schedule Smart. Their calendars still have them.">
       <ul className="divide-y divide-line">
-        {upcoming.map((e) => (
-          <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
-            <span className="min-w-0 flex-1">
-              <span className="font-medium">{e.title}</span>
-              <span className="text-muted">
-                {" "}
-                · {format(new Date(e.start), "EEE, MMM d")}
-                {e.allDay ? "" : `, ${clockRange(new Date(e.start), new Date(e.end))}`}
-              </span>
-            </span>
-            <Button size="sm" icon={RotateCcw} onClick={() => restore(e.id)}>
-              Put back
-            </Button>
-          </li>
-        ))}
+        {events.map(({ event: e, key, all }) =>
+          row(
+            key,
+            e.title,
+            all ? "every one" : `${format(new Date(e.start), "EEE, MMM d")}${e.allDay ? "" : `, ${clockRange(new Date(e.start), new Date(e.end))}`}`,
+            () => update((w) => ({ ...w, deletedEvents: without(w.deletedEvents, key) })),
+          ),
+        )}
+        {tasks.map((t) =>
+          row(t.id, t.title, t.dueAt ? `due ${format(new Date(t.dueAt), "EEE, MMM d")}` : "task", () =>
+            update((w) => ({ ...w, deletedTasks: without(w.deletedTasks, t.id) })),
+          ),
+        )}
       </ul>
     </Section>
   );

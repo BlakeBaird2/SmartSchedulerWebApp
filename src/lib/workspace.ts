@@ -9,7 +9,7 @@ import { DEFAULT_PREFS } from "./planner";
 import { ASSIGNMENT_TYPES, normalizeType, PRIORITIES, UNFINISHED_POLICIES, type CourseEdit, type Priority, type TaskMeta, type UnfinishedAnswer, type UnfinishedPolicy, type Estimate, type FeedConfig, type FeedRole, type ManualTask, type PlanPrefs, type Provider, type ScheduledBlock, type WeeklyBlock, type Workspace } from "./types";
 import { detectProvider, feedIdFor } from "./feeds/url";
 import { sanitizeEventMoves } from "./eventMoves";
-import { sanitizeCancelled } from "./cancelled";
+import { sanitizeDeletedEvents, sanitizeDeletedTasks } from "./deleted";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
 
@@ -26,7 +26,8 @@ export function defaultWorkspace(): Workspace {
     classOrder: [],
     eventColors: {},
     eventMoves: {},
-    cancelled: {},
+    deletedEvents: {},
+    deletedTasks: {},
     taskMeta: {},
     unfinished: "ask",
     unfinishedAnswers: {},
@@ -260,7 +261,8 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     classOrder: sanitizeClassOrder(raw.classOrder),
     eventColors: sanitizeEventColors(raw.eventColors),
     eventMoves: sanitizeEventMoves(raw.eventMoves),
-    cancelled: sanitizeCancelled(raw.cancelled),
+    deletedEvents: sanitizeDeletedEvents(raw.deletedEvents),
+    deletedTasks: sanitizeDeletedTasks(raw.deletedTasks),
     taskMeta: sanitizeTaskMeta(raw.taskMeta),
     unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
     unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),

@@ -9,7 +9,7 @@ import { seriesKey } from "./eventColors";
 import { autoPriority } from "./todos";
 import { classHidden, classHint } from "./classes";
 import { applyEventMoves } from "./eventMoves";
-import { withoutCancelled } from "./cancelled";
+import { deletedOnes, withoutDeleted } from "./deleted";
 
 export const COURSE_COLORS = ["#4f46e5", "#059669", "#d97706", "#e11d48", "#0284c7", "#7c3aed", "#0d9488", "#ea580c", "#2563eb", "#c026d3"];
 export const WEEKLY_COLOR = "#78716c";
@@ -98,8 +98,8 @@ export interface Model {
   visibleCourses: Course[];
   tasks: Task[];
   events: CalEvent[];
-  /** Events the student cancelled, at their calendar times, so one can be put back. */
-  cancelled: CalEvent[];
+  /** What the student deleted, so it can be put back: events at their calendar times (one standing for a whole series), and work. */
+  deleted: { events: { event: CalEvent; key: string; all: boolean }[]; tasks: Task[] };
   feeds: FeedConfig[];
   courseById: Map<string, Course>;
   feedById: Map<string, FeedConfig>;
@@ -163,7 +163,7 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     };
   };
 
-  const tasks: Task[] = [];
+  let tasks: Task[] = [];
   const events: CalEvent[] = [];
   for (const feed of feeds) {
     const result = snapshot.feeds[feed.id]?.result;
@@ -247,8 +247,11 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     events.push({ ...e, title: course.code, color: picked ?? course.color });
   }
 
-  // Events the student cancelled are gone, and their time is free; ones they dragged somewhere else sit where they put them.
-  const shown = applyEventMoves(withoutCancelled(events, ws.cancelled), ws.eventMoves);
+  // Events the student deleted are gone, and their time is free; ones they dragged somewhere else sit where they put them.
+  events.sort((a, b) => a.start.localeCompare(b.start));
+  const shown = applyEventMoves(withoutDeleted(events, ws.deletedEvents), ws.eventMoves);
+  const deletedTasks = tasks.filter((t) => ws.deletedTasks[t.id]);
+  if (deletedTasks.length) tasks = tasks.filter((t) => !ws.deletedTasks[t.id]);
 
   tasks.sort((a, b) => {
     const ad = a.dueAt ? Date.parse(a.dueAt) : Infinity;
@@ -262,7 +265,7 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     visibleCourses: courses.filter((c) => !c.hidden),
     tasks,
     events: shown,
-    cancelled: events.filter((e) => ws.cancelled[e.id] === e.start).sort((a, b) => a.start.localeCompare(b.start)),
+    deleted: { events: deletedOnes(events, ws.deletedEvents), tasks: deletedTasks },
     feeds: ws.feeds,
     courseById,
     feedById,
