@@ -1178,6 +1178,17 @@ button.ss-day-head:hover {
   font-size: 11.5px;
   opacity: 0.92;
 }
+/*
+ * The class an event is for, by full name, under its title. It takes the lines
+ * the event has room for (set on the element) and ends in an ellipsis; the time
+ * comes after it when there's a line to spare.
+ */
+.ss-event > .ss-event-class {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  font-weight: 500;
+}
 /* Short events: the time sits beside the title, on one line. */
 .ss-event[data-compact] {
   display: flex;
@@ -1469,6 +1480,13 @@ button.ss-day-head:hover {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.ss-month-class {
+  color: var(--ss-muted);
+}
+.ss-month-event[data-all-day] .ss-month-class {
+  color: inherit;
+  opacity: 0.85;
+}
 .ss-month-event time {
   color: var(--ss-muted);
   font-weight: 600;
@@ -1619,6 +1637,22 @@ button.ss-day-head:hover {
 .ss-picker-row em[data-reason="teaching"] {
   background: var(--ss-school-bg);
   color: var(--ss-school-fg);
+}
+.ss-modal .ss-picker-name {
+  grid-column: 2;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--ss-line);
+  border-radius: 8px;
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  font: inherit;
+  font-size: 13.5px;
+}
+.ss-modal .ss-picker-name:focus {
+  outline: 0;
+  border-color: var(--ss-accent);
+  box-shadow: 0 0 0 3px var(--ss-accent-soft);
 }
 .ss-picker-row[data-off] strong {
   color: var(--ss-muted);

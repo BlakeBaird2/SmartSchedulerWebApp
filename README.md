@@ -43,8 +43,12 @@ prefix on every class.
   The task is picked up at its card's size; over the calendar it glides into
   the slot it would drop into, at its real length, so letting go leaves it there.
   Scheduled work leaves the list and the next task moves up.
-  - It opens on today. The week fits the screen, Monday to Friday (plus a
-    weekend day when something is on it), and the month is a click away.
+  - It opens on today. The week shows all seven days, Monday to Sunday, and
+    the month is a click away. A class's events say which class they're for by
+    its full name ("Lecture · ACC 200 · Principles of Accounting"), with as much
+    as fits; the month adds the class code to events with a generic name.
+    Canvas only gives a class's code, so its full name can be typed in **Which
+    classes are yours?** or added from any of its events (**Add its full name**).
     Coloured like Google Calendar: solid blocks with white titles in Google's
     own event colours — Work in Peacock blue, School in Tangerine, Personal in
     Sage — and work you scheduled in Lavender with faint stripes (the home

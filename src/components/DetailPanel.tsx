@@ -477,6 +477,12 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         <p className="text-sm text-muted">
           {event.busy ? "You're busy then, so it isn't offered as free time." : "This doesn't block your time, so it still counts as free time."}
         </p>
+        {course && course.title === course.code && !editingClass ? (
+          // Canvas names a class only by its code; the full name makes the calendar easier to read.
+          <p className="text-sm text-muted">
+            {course.code} has no full name yet. <TextButton onClick={() => setEditingClass(true)}>Add its full name</TextButton>
+          </p>
+        ) : null}
         {editingClass && course ? (
           <div>
             <Label>Edit {course.code}</Label>
