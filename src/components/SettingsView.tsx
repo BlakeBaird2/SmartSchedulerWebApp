@@ -5,7 +5,8 @@ import { ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compas
 import { encodeSetup } from "@/lib/workspace";
 import { classRank } from "@/lib/todos";
 import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
-import { duration, typeIconClass, typeMeta } from "@/lib/ui";
+import { clockRange, duration, typeIconClass, typeMeta } from "@/lib/ui";
+import { format, startOfDay } from "date-fns";
 import { courseStyle, useApp, type SettingsPanel } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
@@ -222,7 +223,43 @@ function CalendarsPanel() {
       <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Schedule Smart plans around it.">
         <ClassTimesEditor />
       </Section>
+      <CancelledEvents />
     </div>
+  );
+}
+
+/** Upcoming events the student cancelled, each with a way to put it back. Hidden when there are none. */
+function CancelledEvents() {
+  const { model, now, update } = useApp();
+  const today = startOfDay(now).getTime();
+  const upcoming = model.cancelled.filter((e) => Date.parse(e.end) >= today);
+  if (upcoming.length === 0) return null;
+  const restore = (id: string) =>
+    update((w) => {
+      const cancelled = { ...w.cancelled };
+      delete cancelled[id];
+      return { ...w, cancelled };
+    });
+  return (
+    <Section title="Cancelled events" hint="Events you cancelled in Schedule Smart. Their calendars still have them.">
+      <ul className="divide-y divide-line">
+        {upcoming.map((e) => (
+          <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+            <span className="min-w-0 flex-1">
+              <span className="font-medium">{e.title}</span>
+              <span className="text-muted">
+                {" "}
+                · {format(new Date(e.start), "EEE, MMM d")}
+                {e.allDay ? "" : `, ${clockRange(new Date(e.start), new Date(e.end))}`}
+              </span>
+            </span>
+            <Button size="sm" icon={RotateCcw} onClick={() => restore(e.id)}>
+              Put back
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </Section>
   );
 }
 

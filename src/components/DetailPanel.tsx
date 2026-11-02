@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { addDays, format, startOfDay } from "date-fns";
-import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, CalendarX, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
@@ -10,6 +10,7 @@ import { PRIORITIES, type CalEvent, type Task } from "@/lib/types";
 import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { PRIORITY_LABEL, todoState, urgencyColor } from "@/lib/todos";
 import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
+import { cancelEvent } from "@/lib/cancelled";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
@@ -396,7 +397,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, ws, now, setView, update, openClassTimes, resetEventTime } = useApp();
+  const { model, ws, now, setView, update, openClassTimes, resetEventTime, toast } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
@@ -426,13 +427,20 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
   const editable = Boolean(block || pattern);
   const kind = event.kind === "class" ? "Class" : event.kind === "exam" ? "Exam" : event.source === "weekly" ? "Every week" : "Event";
 
-  const skipDay = () => {
-    if (!weekly) return;
-    update((w) => ({
-      ...w,
-      weekly: w.weekly.map((b) => (b.id === weekly.blockId ? { ...b, skip: [...new Set([...(b.skip ?? []), weekly.date])].sort() } : b)),
-    }));
+  // One meeting that isn't happening, like a cancelled class: it leaves the calendar
+  // here and its time is free for the plan. The calendar it came from isn't changed.
+  const oneOfMany = Boolean(weekly) || repeats(event.id);
+  const cancelThis = () => {
+    update((w) => ({ ...w, cancelled: cancelEvent(w.cancelled, event) }));
     onClose();
+    toast(`Cancelled ${event.title} on ${format(start, "EEE, MMM d")}. That time is free to plan now.`, {
+      undo: () =>
+        update((w) => {
+          const cancelled = { ...w.cancelled };
+          delete cancelled[event.id];
+          return { ...w, cancelled };
+        }),
+    });
   };
 
   return (
@@ -465,6 +473,16 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
           ) : !event.allDay ? (
             <p className="mt-1.5 text-xs text-muted">Drag it on the calendar to move it.{feed ? ` ${feed.name} keeps its own time.` : ""}</p>
           ) : null}
+        </div>
+        <div>
+          <Button block icon={CalendarX} onClick={cancelThis}>
+            {oneOfMany ? `Cancel just this one, ${format(start, "EEE MMM d")}` : "Cancel this event"}
+          </Button>
+          <p className="mt-1.5 text-xs text-muted">
+            {oneOfMany ? "Not meeting this time? " : "Not happening? "}
+            Take it off your calendar here and Schedule Smart can plan work in that time.
+            {feed ? ` ${feed.name} isn't changed.` : ""}
+          </p>
         </div>
         {event.location ? (
           <div>
@@ -529,9 +547,6 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         ) : null}
         {weekly ? (
           <div className="space-y-2">
-            <Button block onClick={skipDay}>
-              Not happening on {format(start, "EEE, MMM d")}
-            </Button>
             <Button
               block
               onClick={() => {

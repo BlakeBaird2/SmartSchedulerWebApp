@@ -9,6 +9,7 @@ import { seriesKey } from "./eventColors";
 import { autoPriority } from "./todos";
 import { classHidden, classHint } from "./classes";
 import { applyEventMoves } from "./eventMoves";
+import { withoutCancelled } from "./cancelled";
 
 export const COURSE_COLORS = ["#4f46e5", "#059669", "#d97706", "#e11d48", "#0284c7", "#7c3aed", "#0d9488", "#ea580c", "#2563eb", "#c026d3"];
 export const WEEKLY_COLOR = "#78716c";
@@ -97,6 +98,8 @@ export interface Model {
   visibleCourses: Course[];
   tasks: Task[];
   events: CalEvent[];
+  /** Events the student cancelled, at their calendar times, so one can be put back. */
+  cancelled: CalEvent[];
   feeds: FeedConfig[];
   courseById: Map<string, Course>;
   feedById: Map<string, FeedConfig>;
@@ -244,8 +247,8 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     events.push({ ...e, title: course.code, color: picked ?? course.color });
   }
 
-  // Events the student dragged somewhere else sit where they put them.
-  const shown = applyEventMoves(events, ws.eventMoves);
+  // Events the student cancelled are gone, and their time is free; ones they dragged somewhere else sit where they put them.
+  const shown = applyEventMoves(withoutCancelled(events, ws.cancelled), ws.eventMoves);
 
   tasks.sort((a, b) => {
     const ad = a.dueAt ? Date.parse(a.dueAt) : Infinity;
@@ -259,6 +262,7 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
     visibleCourses: courses.filter((c) => !c.hidden),
     tasks,
     events: shown,
+    cancelled: events.filter((e) => ws.cancelled[e.id] === e.start).sort((a, b) => a.start.localeCompare(b.start)),
     feeds: ws.feeds,
     courseById,
     feedById,

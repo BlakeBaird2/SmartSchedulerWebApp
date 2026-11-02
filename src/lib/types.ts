@@ -9,6 +9,7 @@
 
 import type { ClassHint } from "./classes";
 import type { EventMoves } from "./eventMoves";
+import type { CancelledEvents } from "./cancelled";
 
 export type AssignmentType = "exam" | "quiz" | "reading" | "project" | "assignment";
 
@@ -247,6 +248,8 @@ export interface Workspace {
   eventColors: Record<string, string>;
   /** Events the student moved to another time, by event id (see eventMoves.ts). */
   eventMoves: EventMoves;
+  /** Single events the student cancelled, such as a class that isn't meeting one day (see cancelled.ts). */
+  cancelled: CancelledEvents;
   /** taskId -> points and priority the student set. */
   taskMeta: Record<string, TaskMeta>;
   /** What happens to work whose scheduled time passes before it is done. */

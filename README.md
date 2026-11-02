@@ -67,6 +67,11 @@ prefix on every class.
     message says the calendar still has its time, the event's details say where
     it was with **Put it back**, and the planner plans around the new time. If
     the calendar itself changes that event, its new time wins.
+  - A single class or event that isn't happening (a cancelled class) can be
+    cancelled from its details: **Cancel just this one** takes that one
+    meeting off the calendar, and the planner can fill its time. The calendar it
+    came from isn't changed; Undo, or Settings → Calendars → *Cancelled events*,
+    puts it back. If the calendar moves that event, it shows again.
   - Nothing on the calendar lights up while you drag; anything can go anywhere.
     While you drag a task, everything after its deadline greys out, with a red
     DUE line. In the month view, dropping a task on a day puts it in that day's
@@ -346,3 +351,4 @@ src/lib/eventColors.ts      Google Calendar's event colours, and which events sh
 src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
 src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```
+src/lib/cancelled.ts        single events the student cancelled
