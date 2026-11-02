@@ -240,8 +240,11 @@ type GridItem =
 
 /** How tall an hour is, at least: room for a half-hour block's title and time. */
 const HOUR_PX = 64;
-/** Events starting closer together than this (px) sit side by side, since the first one's title wouldn't show above the second. */
-const SIDE_BY_SIDE_PX = 26;
+/**
+ * Events starting closer together than this (px) share columns, as in Google
+ * Calendar: otherwise the later one would cover the earlier one's title and time.
+ */
+const SIDE_BY_SIDE_PX = 44;
 const HOUR_PX_PHONE = 56;
 
 function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalData; dayView: boolean; onSwipe: ((dir: 1 | -1) => void) | null }) {
@@ -377,7 +380,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
               : null}
           </div>
           {columns.map((c) => {
-            // Overlaps stack as in Google Calendar: side by side when they start together, otherwise the later one on top.
+            // Overlaps as in Google Calendar: columns when they start close together, otherwise the later one on top.
             const placed = layoutStack(c.items, (i) => i.start, (i) => i.end, Math.ceil(SIDE_BY_SIDE_PX / ppm) * MIN);
             const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
             const dayEnd = addDays(c.day, 1).getTime();

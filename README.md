@@ -72,10 +72,11 @@ prefix on every class.
     DUE line. In the month view, dropping a task on a day puts it in that day's
     first free time.
   - Tap a free time to see what fits there, with **Put it here**.
-  - Overlapping events stack as in Google Calendar: ones that start together sit
-    side by side, and one that starts later goes on top of the longer one, just as
-    wide but nudged in a few pixels, so the one underneath still shows its title
-    and a sliver of its edge.
+  - Overlapping events are laid out as in Google Calendar: ones that start close
+    together share columns, each reaching partway under the next; one that starts
+    later, inside another, goes on top of it, nudged in a few pixels and running to
+    the right edge, so the one underneath still shows its title and a sliver of
+    its side.
   - Phones: the planner and one day side by side, or three days with the planner
     closed. Swipe left or right for the next or previous days, and tap the small
     calendar with today's date to come back to today.
