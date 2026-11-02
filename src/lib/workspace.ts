@@ -10,6 +10,7 @@ import { ASSIGNMENT_TYPES, normalizeType, PRIORITIES, UNFINISHED_POLICIES, type 
 import { detectProvider, feedIdFor } from "./feeds/url";
 import { sanitizeEventMoves } from "./eventMoves";
 import { sanitizeDeletedEvents, sanitizeDeletedTasks } from "./deleted";
+import { defaultColorPrefs, sanitizeColorPrefs } from "./themes";
 
 export const PERSONAL_COLORS = ["#64748b", "#0f766e", "#b45309", "#9333ea", "#be185d", "#4d7c0f"];
 
@@ -28,6 +29,7 @@ export function defaultWorkspace(): Workspace {
     eventMoves: {},
     deletedEvents: {},
     deletedTasks: {},
+    colors: defaultColorPrefs(),
     taskMeta: {},
     unfinished: "ask",
     unfinishedAnswers: {},
@@ -263,6 +265,7 @@ export function sanitizeWorkspace(raw: unknown): Workspace {
     eventMoves: sanitizeEventMoves(raw.eventMoves),
     deletedEvents: sanitizeDeletedEvents(raw.deletedEvents),
     deletedTasks: sanitizeDeletedTasks(raw.deletedTasks),
+    colors: sanitizeColorPrefs(raw.colors),
     taskMeta: sanitizeTaskMeta(raw.taskMeta),
     unfinished: UNFINISHED_POLICIES.includes(raw.unfinished as UnfinishedPolicy) ? (raw.unfinished as UnfinishedPolicy) : "ask",
     unfinishedAnswers: sanitizeAnswers(raw.unfinishedAnswers),

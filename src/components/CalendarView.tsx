@@ -17,6 +17,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { seriesKey } from "@/lib/eventColors";
+import { inkFor } from "@/lib/themes";
 import { layoutStack } from "@/lib/layout";
 import type { CalEvent, FeedConfig, ScheduledBlock, Task } from "@/lib/types";
 import { clock, dayKey } from "@/lib/ui";
@@ -93,7 +94,7 @@ type CalData = ReturnType<typeof useCalendarData>;
 
 /** The calendar page: the planner on the left, the calendar on the right. */
 export function CalendarView() {
-  const { calMode, setCalMode, calCursor, setCalCursor, calSidebar: panelOpen, setCalSidebar: setPanelOpen } = useApp();
+  const { calMode, setCalMode, calCursor, setCalCursor, calSidebar: panelOpen, setCalSidebar: setPanelOpen, setSettingsPanel } = useApp();
   const phone = useNarrow();
   const data = useCalendarData();
   const today = new Date();
@@ -154,7 +155,8 @@ export function CalendarView() {
               <h1 aria-live="polite">{title}</h1>
             </div>
           </div>
-          <div className="ss-key">
+          {/* The key opens the colour settings, where the theme and each calendar's colour are chosen. */}
+          <button type="button" className="ss-key" onClick={() => setSettingsPanel("colors")} title="Change colours" aria-label="Colour key: Work, School, Personal. Change colours">
             <span>
               <i className="ss-key-work" />
               Work
@@ -167,7 +169,7 @@ export function CalendarView() {
               <i className="ss-key-personal" />
               Personal
             </span>
-          </div>
+          </button>
           <div className="ss-controls">
             <button className="ss-today" onClick={() => setCalCursor(new Date())} aria-current={isSameDay(calCursor, today) ? "date" : undefined}>
               Today
@@ -532,9 +534,20 @@ function useEventNames(e: CalEvent): { title: string; classLine: string | null }
 }
 
 /** The colour of an event: its kind's, or one the student picked for it. */
+/**
+ * An event's colour: its own, if the student picked one; else its class's, or
+ * its calendar's, if they picked those; else its kind's colour in the theme.
+ */
 function useEventLook(e: CalEvent): { kind: Kind; custom: string | null } {
   const { model, ws } = useApp();
-  return { kind: eventKind(e, model.feedById), custom: ws.eventColors[seriesKey(e.id)] ?? null };
+  const custom =
+    ws.eventColors[seriesKey(e.id)] ?? (e.courseId ? ws.courseEdits[e.courseId]?.color : undefined) ?? (e.feedId ? ws.colors.calendars[e.feedId] : undefined) ?? null;
+  return { kind: eventKind(e, model.feedById), custom };
+}
+
+/** A colour of the student's own on an event, with text that reads on it. */
+function evVars(custom: string | null): React.CSSProperties {
+  return custom ? ({ "--ev": custom, "--ev-ink": inkFor(custom) } as React.CSSProperties) : {};
 }
 
 /**
@@ -585,7 +598,7 @@ function GridEvent({
       data-past={past || undefined}
       data-picked={dragging || undefined}
       data-moved={e.original ? true : undefined}
-      style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
+      style={{ ...style, ...evVars(custom), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       onClick={open}
       onPointerDown={(ev) => {
         if ((ev.target as HTMLElement).closest("[data-resize]")) return;
@@ -660,7 +673,7 @@ function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
       data-custom={custom ? true : undefined}
       data-past={past || undefined}
       data-all-day={e.allDay || undefined}
-      style={custom ? ({ "--ev": custom } as React.CSSProperties) : undefined}
+      style={custom ? evVars(custom) : undefined}
       onClick={(ev) => {
         ev.stopPropagation();
         select({ kind: "event", id: e.id });
@@ -796,7 +809,7 @@ function PlannedBlock({
       data-picked={dragging || undefined}
       data-compact={h < 40 || undefined}
       data-past={past || undefined}
-      style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
+      style={{ ...style, ...evVars(custom), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       title={`${title} · ${minutes} min. Drag to move, or drag the bottom edge to change its length.`}
       aria-label={`${own ? "Event" : "Scheduled"}: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
     >
@@ -907,7 +920,7 @@ function MonthGrid({ data }: { data: CalData }) {
                       className={`ss-month-event ${en.block!.task ? "ss-planned" : "ss-personal"}`}
                       data-past={en.block!.end.getTime() <= nowMs || undefined}
                       data-custom={!en.block!.task && en.block!.block.color ? true : undefined}
-                      style={!en.block!.task && en.block!.block.color ? ({ "--ev": en.block!.block.color } as React.CSSProperties) : undefined}
+                      style={!en.block!.task && en.block!.block.color ? evVars(en.block!.block.color) : undefined}
                       onClick={(ev) => {
                         ev.stopPropagation();
                         select(en.block!.task ? { kind: "task", id: en.block!.task.id } : { kind: "block", id: en.block!.id });

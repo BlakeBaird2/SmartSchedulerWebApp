@@ -412,7 +412,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, ws, now, setView, update, openClassTimes, resetEventTime, toast } = useApp();
+  const { model, ws, now, setView, update, openClassTimes, resetEventTime, toast, setSettingsPanel } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
@@ -524,6 +524,14 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
                 <TextButton onClick={() => setColor(null)}>{course ? `Back to ${course.code}'s colour` : "Back to its calendar's colour"}</TextButton>
               ) : null}
               {course ? <TextButton onClick={() => setEditingClass(true)}>Change {course.code}&apos;s colour everywhere</TextButton> : null}
+              <TextButton
+                onClick={() => {
+                  onClose();
+                  setSettingsPanel("colors");
+                }}
+              >
+                {feed ? `${feed.name}'s colour and themes` : "Colour themes"}
+              </TextButton>
             </p>
           </div>
         )}

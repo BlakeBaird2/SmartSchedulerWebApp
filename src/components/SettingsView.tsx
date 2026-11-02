@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
+import { Palette, ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { classRank } from "@/lib/todos";
 import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
@@ -18,6 +18,7 @@ import { EventLog } from "./EventLog";
 import { Button, ButtonLink, Card, CardHeader, SegmentedControl, TextButton } from "./ui";
 import { AccountCard } from "./Account";
 import { cloudAvailable } from "./cloud";
+import { ColorsPanel } from "./ColorSettings";
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -33,6 +34,7 @@ const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 
 /** Each section has its own icon, so the menu can be scanned by shape as well as by name. */
 export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
   { id: "calendars", label: "Calendars & class times", hint: "Links Schedule Smart reads, and when classes meet", icon: CalendarDays },
+  { id: "colors", label: "Colours & themes", hint: "A colour theme, your own, and colours for each calendar", icon: Palette },
   { id: "classes", label: "Class priority", hint: "Which class comes first when work is due at the same time", icon: ListOrdered },
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
@@ -72,6 +74,7 @@ export function SettingsView() {
             {desktopPanel === "classes" ? <ClassesPanel /> : null}
             {desktopPanel === "schedule" ? <SchedulePanel /> : null}
             {desktopPanel === "estimates" ? <EstimatesPanel /> : null}
+            {desktopPanel === "colors" ? <ColorsPanel /> : null}
             {desktopPanel === "browser" ? <BrowserPanel /> : null}
             {desktopPanel === "about" ? <AboutPanel /> : null}
           </div>

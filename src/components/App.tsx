@@ -24,6 +24,7 @@ import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { withEventAt } from "@/lib/eventMoves";
+import { themeVars } from "@/lib/themes";
 import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
 import { CloudChoiceDialog, SignInPrompt } from "./Account";
@@ -74,7 +75,7 @@ function viewFrom(v: unknown): View | null {
   if (v === "due") return "calendar";
   return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
 }
-const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "classes", "schedule", "estimates", "browser", "about"];
+const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "colors", "classes", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
   view: "calendar",
   calMode: "day",
@@ -417,6 +418,17 @@ export function App() {
 
   // Signing in keeps the setup the same on every device (cloud.ts); without Firebase keys this does nothing.
   useEffect(() => startCloud(), []);
+
+  // The colour theme sets the calendar's colours on the page (Classic sets none: it's the stylesheet's own).
+  const themeCss = JSON.stringify(themeVars(ws.colors));
+  useEffect(() => {
+    const vars = JSON.parse(themeCss) as Record<string, string>;
+    const root = document.documentElement.style;
+    for (const [k, v] of Object.entries(vars)) root.setProperty(k, v);
+    return () => {
+      for (const k of Object.keys(vars)) root.removeProperty(k);
+    };
+  }, [themeCss]);
   // A calendar added on another device arrives without its contents: read it here.
   const unread = ws.feeds.some((f) => f.enabled && !snapshot.feeds[f.id]);
   useEffect(() => {

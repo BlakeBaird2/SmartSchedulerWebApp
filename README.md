@@ -59,6 +59,18 @@ prefix on every class.
     dot, the time and the title; all-day events are filled bars. Anything that
     has ended turns a lighter tint of its colour. The colours were checked for
     colour-blind separation, light and dark.
+  - **Colour themes** (Settings → *Colours & themes*, or click the Work /
+    School / Personal key above the calendar): Classic (Google's colours, as
+    above) and nine more — Sorbet, Cotton Candy, Matcha Latte, Lavender Haze,
+    Sea Glass, Golden Hour, Berry Bramble, Forest Cabin and Night Market. Each
+    gives School, Work, Personal and scheduled tasks their own colour; every
+    one keeps text at 4.5:1 or better (WCAG AA) and its four colours clearly
+    apart (`src/lib/themes.ts`, checked by its tests). Text on any colour is
+    white or near-black, whichever reads better. **Make your own** changes any
+    of the four colours, and warns when text on one would be hard to read.
+    A single calendar or class can have its own colour too, and one event can
+    be coloured from its details; the most specific choice wins (event, then
+    class, then calendar, then theme). Colours sync with your account.
   - Drag scheduled work to move it, drag its bottom edge to change its length,
     or drag it back onto the planner to take it off. Every change has Undo.
   - Events from your calendars (classes, shifts, personal plans, your weekly
@@ -356,7 +368,9 @@ src/lib/blocks.ts           scheduled time: snapping, moving and resizing
 src/lib/newWork.ts          work that's new since you last looked
 src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
 src/lib/deleted.ts          events and work the student deleted
+src/lib/themes.ts           colour themes, contrast checks, and your own colours
 src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
 src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```
 src/lib/deleted.ts          events and work the student deleted
+src/lib/themes.ts           colour themes, contrast checks, and your own colours
