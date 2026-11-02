@@ -63,13 +63,15 @@ interface UiPrefs {
   todoSort: TodoSort;
 }
 
-const VIEWS: View[] = ["calendar", "tasks", "due", "settings", "help"];
+// The Due dates page is off for now (DueDatesPage.tsx is kept for when it comes back).
+const VIEWS: View[] = ["calendar", "tasks", "settings", "help"];
 const CAL_MODES: CalMode[] = ["month", "week", "day"];
 
 /** Screens from before the redesign: Plan became the calendar, Upcoming and Classes the task list. */
 function viewFrom(v: unknown): View | null {
   if (v === "plan") return "calendar";
   if (v === "upcoming" || v === "classes") return "tasks";
+  if (v === "due") return "calendar";
   return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
 }
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "classes", "schedule", "estimates", "browser", "about"];

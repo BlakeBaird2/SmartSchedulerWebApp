@@ -92,16 +92,13 @@ prefix on every class.
   estimate). Each column starts grey and fills with colour as that day's work is
   ticked off, so a finished week is seven full columns. Then every task in one
   table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
-- **Due dates** — every deadline from every class (and everything added by hand)
-  by the day it's due. It opens on the week: seven columns side by side, Monday
-  to Sunday, with each day's work stacked down its column, tinted with its class's
-  colour (on a phone the columns scroll sideways, starting at today). **Day** shows one day with more
-  about each item; **Month** shows the month, and a day opens that day. Each kind
-  of work has its own colour, icon and name — exams (a solid red badge; an exam
-  that's only on the class calendar counts, at the time it starts), quizzes,
-  projects, assignments and readings — with a count of each for the range shown.
-  The colours were checked for colour-blind separation in light and dark.
-- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
+- **Due dates** — off for now (not in the navigation; `src/components/DueDatesPage.tsx`
+  is kept for when it comes back, and an old link to it opens the calendar).
+- **Add** (in the planner, or on Tasks) — an **Event** or a **Task**, as in Google
+  Calendar. An event is a name and a time (date, start, end): it takes that time
+  on the calendar, the planner plans around it, and opening it lets you rename,
+  recolour or delete it. A task is a name, class or area, due, due time,
+  estimate (up to 8 hours) and priority, and goes on the to-do list.
 - **Points and priority** — calendar feeds don't carry either. Points are for
   assignments from a class calendar (what they're worth in the class), so you add
   them in an assignment's details; work you add by hand has none. Priority follows
