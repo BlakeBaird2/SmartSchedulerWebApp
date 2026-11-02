@@ -78,7 +78,11 @@ prefix on every class.
     While you drag a task, everything after its deadline greys out, with a red
     DUE line. In the month view, dropping a task on a day puts it in that day's
     first free time.
-  - Tap a free time to see what fits there, with **Put it here**.
+  - Click or tap any empty time to add something there, as in Google Calendar:
+    it starts on the half hour clicked, an hour long, with a placeholder on the
+    grid. Pick **Event** (a name and how long) or **Task** (due date, class,
+    estimate and priority; it's scheduled right there), or put a task from your
+    to-do list there with **Put it here**.
   - Overlapping events are laid out as in Google Calendar: ones that start close
     together share columns, each reaching partway under the next; one that starts
     later, inside another, goes on top of it, nudged in a few pixels and running to

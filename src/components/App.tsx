@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
 import type { TodoScope, TodoSort } from "@/lib/todos";
-import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
+import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Notices, Topbar } from "./Topbar";
 import { Onboarding, startDemo } from "./Onboarding";
@@ -624,6 +624,50 @@ export function App() {
     [changeBlock, toast, seeWork],
   );
 
+  const addTask = useCallback(
+    (input: NewTask, at?: Date) => {
+      const id = randomId();
+      const taskId = `manual:${id}`;
+      const now = new Date();
+      const block = at ? makeBlock(randomId(), { id: taskId, title: input.title }, at, input.minutes, now) : null;
+      if (block && Date.parse(block.end) <= now.getTime()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      update((w) => ({
+        ...w,
+        manualTasks: [...w.manualTasks, { id, title: input.title, courseId: input.courseId, type: "assignment", dueAt: input.dueAt }],
+        estimates: { ...w.estimates, [taskId]: { minutes: input.minutes, source: "user", at: now.toISOString() } },
+        taskMeta: { ...w.taskMeta, [taskId]: { priority: input.priority } },
+        blocks: block ? putBlock(w.blocks, block) : w.blocks,
+      }));
+      trackEvent("task_added", { title: input.title, courseId: input.courseId, type: "assignment", hasDueDate: Boolean(input.dueAt), minutes: input.minutes });
+      toast(at ? `Added ${when(at)}: ${input.title}` : `Added to Schedule Smart: ${input.title}`, {
+        undo: () =>
+          update((w) => ({ ...w, manualTasks: w.manualTasks.filter((m) => m.id !== id), blocks: block ? dropBlock(w.blocks, block.id) : w.blocks })),
+      });
+    },
+    [update, toast],
+  );
+
+  // An event of the student's own is scheduled time with no task behind it (see ScheduledBlock).
+  const addEvent = useCallback(
+    (title: string, start: Date, end: Date) => {
+      const block: ScheduledBlock = {
+        id: randomId(),
+        taskId: null,
+        title,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        color: null,
+        externalId: null,
+        updatedAt: new Date().toISOString(),
+      };
+      changeBlock(null, block, `Added ${when(start)}: ${title}`);
+    },
+    [changeBlock],
+  );
+
   const scheduleOnDay = useCallback(
     (task: Task, day: Date) => {
       const dayStart = new Date(day).setHours(0, 0, 0, 0);
@@ -788,6 +832,8 @@ export function App() {
     setTaskMeta,
     setEstimate,
     scheduleTask,
+    addTask,
+    addEvent,
     scheduleOnDay,
     moveScheduled,
     moveEvent,

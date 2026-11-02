@@ -14,11 +14,24 @@ export type View = "calendar" | "tasks" | "due" | "settings" | "help";
 export type CalMode = "month" | "week" | "day";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
 export type SettingsPanel = "main" | "calendars" | "classes" | "schedule" | "estimates" | "browser" | "about";
+/** What the student fills in to add a task. */
+export interface NewTask {
+  title: string;
+  courseId: string | null;
+  dueAt: string | null;
+  minutes: number;
+  priority: Priority;
+}
+
 export type Selection =
   | { kind: "task"; id: string }
   | { kind: "event"; id: string }
   /** Free-time gap on the plan, identified by a time inside the gap. */
   | { kind: "gap"; startMs: number }
+  /** An empty time on the calendar the student clicked, to add something there. */
+  | { kind: "slot"; startMs: number; minutes: number }
+  /** An event the student added in Schedule Smart (time on the calendar not tied to a task). */
+  | { kind: "block"; id: string }
   /** Why this task was planned into free time. */
   | { kind: "why"; id: string }
   /** Short success state after marking a task done toward the prototype goal. */
@@ -45,6 +58,10 @@ export interface AppContextValue {
   setEstimate: (taskId: string, minutes: number | null, source?: EstimateSource) => void;
   /** Put a task on the calendar at `start`, for as long as it's expected to take. */
   scheduleTask: (task: Task, start: Date) => void;
+  /** Add a task of the student's own; with `at`, it's also scheduled then for its length. */
+  addTask: (task: NewTask, at?: Date) => void;
+  /** Add an event of the student's own: time taken on the calendar, with no due date or work behind it. */
+  addEvent: (title: string, start: Date, end: Date) => void;
   /** Put a task into a day's first free time that fits it (noon if none does): a drop on the month. */
   scheduleOnDay: (task: Task, day: Date) => void;
   /** Move scheduled time to a new start, keeping its length. */

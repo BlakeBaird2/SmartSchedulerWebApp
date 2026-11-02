@@ -62,6 +62,9 @@ function eventKind(e: CalEvent, feedById: Map<string, FeedConfig>): Kind {
   return WORKISH.test(e.title) || (feed && WORKISH.test(feed.name)) ? "work" : "personal";
 }
 
+/** Clicking empty time on the calendar starts something on the half hour, as Google Calendar does. */
+const SLOT_MIN = 30;
+
 /** "9:00 – 10:00", the prototype's way of writing a time range. */
 function shortRange(start: Date, end: Date): string {
   return `${format(start, "h:mm")} – ${format(end, "h:mm")}`;
@@ -248,7 +251,7 @@ const SIDE_BY_SIDE_PX = 44;
 const HOUR_PX_PHONE = 56;
 
 function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalData; dayView: boolean; onSwipe: ((dir: 1 | -1) => void) | null }) {
-  const { ws, now, select, setCalCursor, setCalMode, plan, model } = useApp();
+  const { ws, now, select, selected, setCalCursor, setCalMode, plan, model } = useApp();
   const drag = usePlanDrag();
   const scroller = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -386,10 +389,29 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
             const dayEnd = addDays(c.day, 1).getTime();
             const shadeFrom =
               deadline && deadline.getTime() < dayEnd ? (deadline.getTime() <= c.from ? 0 : Math.max(0, Math.min(bodyHeight, y(deadline.getTime(), c.from)))) : null;
+            const slot = selected?.kind === "slot" && selected.startMs >= c.from && selected.startMs < dayEnd ? selected : null;
             return (
               <div
                 key={c.from}
                 className="ss-day-column"
+                // Clicking empty time adds something there, as in Google Calendar: on the half
+                // hour clicked, an hour long. Events and scheduled work handle their own clicks.
+                onClick={(ev) => {
+                  const target = ev.target as HTMLElement;
+                  const hit = target.closest("button, [role='button'], a");
+                  if (hit && !hit.classList.contains("ss-gap")) return;
+                  // From the keyboard, a free-time button starts at its own start.
+                  const keyed = ev.detail === 0 && hit?.getAttribute("data-start");
+                  let startMs: number;
+                  if (keyed) startMs = Number(keyed);
+                  else {
+                    const top = ev.currentTarget.getBoundingClientRect().top;
+                    const minute = startHour * 60 + (ev.clientY - top) / ppm;
+                    const snapped = Math.min(endHour * 60 - SLOT_MIN, Math.max(startHour * 60, Math.floor(minute / SLOT_MIN) * SLOT_MIN));
+                    startMs = c.from + snapped * MIN;
+                  }
+                  select({ kind: "slot", startMs, minutes: slot?.minutes ?? 60 });
+                }}
                 // How the drag works out the time under the pointer (see planDrag.ts).
                 data-drop-day={c.from}
                 data-drop-min={startHour * 60}
@@ -412,9 +434,9 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
                           key={g.start.getTime()}
                           className="ss-gap"
                           style={{ top, height: h }}
-                          onClick={() => select({ kind: "gap", startMs: g.start.getTime() })}
-                          aria-label={`Free time, ${g.minutes} minutes. Open to put something from your list here.`}
-                          title="Free time. Open to put something here"
+                          data-start={g.start.getTime()}
+                          aria-label={`Free time, ${g.minutes} minutes. Open to add something here.`}
+                          title="Free time. Click to add something here"
                         />
                       );
                     })}
@@ -467,6 +489,17 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
                     ) : null}
                     {/* Moving work, the ghost itself settles into the slot (DragGhost.tsx); resizing draws it here. */}
                     {preview && drag?.kind === "resize" ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
+                    {slot ? (
+                      // The new item, before it has a name, as Google Calendar draws one.
+                      <div
+                        className="ss-draft"
+                        aria-hidden
+                        style={{ top: y(slot.startMs, c.from) + 3, height: Math.max(16, slot.minutes * ppm - 6) }}
+                      >
+                        <b>(No title)</b>
+                        <span>{shortRange(new Date(slot.startMs), new Date(slot.startMs + slot.minutes * MIN))}</span>
+                      </div>
+                    ) : null}
                     {isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour ? (
                       <div className="ss-now-line" style={{ top: y(now.getTime(), c.from) }}>
                         <i />
@@ -714,8 +747,11 @@ function PlannedBlock({
   const { select, moveScheduled, resizeScheduled, unschedule } = useApp();
   const { task, start, end, minutes, title } = cal;
   const done = Boolean(task?.done);
-  const open = () => (task ? select({ kind: "task", id: task.id }) : undefined);
-  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: "var(--ss-planned)" };
+  // Time with no task behind it is an event the student added: it looks and opens like an event.
+  const own = !task;
+  const custom = own ? cal.block.color : null;
+  const open = () => select(task ? { kind: "task", id: task.id } : { kind: "block", id: cal.id });
+  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: own ? (custom ?? "var(--ss-personal)") : "var(--ss-planned)" };
 
   return (
     <div
@@ -754,14 +790,15 @@ function PlannedBlock({
         else moveScheduled(cal.id, new Date(start.getTime() + stepBy * MIN));
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
-      className="ss-event ss-planned ss-movable"
+      className={`ss-event ${own ? "ss-personal" : "ss-planned"} ss-movable`}
+      data-custom={custom ? true : undefined}
       data-done={done || undefined}
       data-picked={dragging || undefined}
       data-compact={h < 40 || undefined}
       data-past={past || undefined}
-      style={{ ...style, pointerEvents: passThrough ? "none" : undefined }}
+      style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       title={`${title} · ${minutes} min. Drag to move, or drag the bottom edge to change its length.`}
-      aria-label={`Scheduled: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
+      aria-label={`${own ? "Event" : "Scheduled"}: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
     >
       <strong>
         {done ? (
@@ -867,11 +904,13 @@ function MonthGrid({ data }: { data: CalData }) {
                   ) : (
                     <button
                       key={en.key}
-                      className="ss-month-event ss-planned"
+                      className={`ss-month-event ${en.block!.task ? "ss-planned" : "ss-personal"}`}
                       data-past={en.block!.end.getTime() <= nowMs || undefined}
+                      data-custom={!en.block!.task && en.block!.block.color ? true : undefined}
+                      style={!en.block!.task && en.block!.block.color ? ({ "--ev": en.block!.block.color } as React.CSSProperties) : undefined}
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        if (en.block?.task) select({ kind: "task", id: en.block.task.id });
+                        select(en.block!.task ? { kind: "task", id: en.block!.task.id } : { kind: "block", id: en.block!.id });
                       }}
                       title={en.block!.title}
                     >
