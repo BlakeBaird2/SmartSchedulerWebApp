@@ -45,11 +45,22 @@ prefix on every class.
   Scheduled work leaves the list and the next task moves up.
   - It opens on today. The week fits the screen, Monday to Friday (plus a
     weekend day when something is on it), and the month is a click away.
-    Events and scheduled work that have ended keep their colour but fade, as in
-    Google Calendar. Events are coloured Work, School or Personal, and work
-    you scheduled is striped.
+    Coloured like Google Calendar: solid blocks with white titles in Google's
+    event colours (a step deeper so the titles read) — Work blue, School
+    tangerine, Personal green — and work you scheduled in grape with faint
+    stripes; time a calendar marks free is outlined. Today is Google's blue
+    circle and now is its red line. In the month, timed events are a coloured
+    dot, the time and the title; all-day events are filled bars. Anything that
+    has ended turns a lighter tint of its colour. The colours were checked for
+    colour-blind separation, light and dark.
   - Drag scheduled work to move it, drag its bottom edge to change its length,
     or drag it back onto the planner to take it off. Every change has Undo.
+  - Events from your calendars (classes, shifts, personal plans, your weekly
+    times) can be dragged and resized too, and in the month moved to another
+    day. Calendar links are read-only, so the move is Schedule Smart's own: the
+    message says the calendar still has its time, the event's details say where
+    it was with **Put it back**, and the planner plans around the new time. If
+    the calendar itself changes that event, its new time wins.
   - While you drag, everything after the task's deadline greys out, with a red
     DUE line. In the month view, dropping a task on a day puts it in that day's
     first free time.

@@ -49,7 +49,14 @@ export function DragGhost() {
   }
 
   return createPortal(
-    <div className="ss-ghost" style={style} data-slot={slot ? true : undefined} data-compact={(slot && slot.height < 40) || undefined} aria-hidden>
+    <div
+      className="ss-ghost"
+      style={{ ...style, "--gc": drag.color } as React.CSSProperties}
+      data-slot={slot ? true : undefined}
+      data-event={drag.eventId ? true : undefined}
+      data-compact={(slot && slot.height < 40) || undefined}
+      aria-hidden
+    >
       <strong>{drag.title}</strong>
       <span>{note}</span>
     </div>,
