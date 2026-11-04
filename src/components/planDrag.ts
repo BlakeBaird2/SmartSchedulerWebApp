@@ -188,9 +188,29 @@ export function dragSourceRef(el: HTMLElement | null) {
  * somewhere it can land; a press that never becomes a drag is left to act as a
  * click.
  */
-export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragPayload, onDrop: (target: DropTarget) => void, opts: { immediate?: boolean; holdMs?: number } = {}) {
+export function beginPlanDrag(
+  e: React.PointerEvent<HTMLElement>,
+  payload: DragPayload,
+  onDrop: (target: DropTarget) => void,
+  opts: {
+    /** Start on the first move, without the long press, even by touch. */
+    immediate?: boolean;
+    /** How long a finger holds still before it picks the item up. */
+    holdMs?: number;
+    /**
+     * By touch, a move that's mostly sideways picks it up at once, no hold
+     * needed: for the planner's cards, whose list only scrolls up and down, with
+     * the calendar beside it. Up and down still scrolls. (Pair with
+     * `touch-action: pan-y` on the element, so the browser leaves sideways moves alone.)
+     */
+    sideways?: boolean;
+  } = {},
+) {
   if (current || (e.pointerType === "mouse" && e.button !== 0)) return;
   const touch = e.pointerType !== "mouse";
+  // While a finger holds it, before it's picked up, the item can show it's being pressed.
+  const pressed = touch && !opts.immediate ? e.currentTarget : null;
+  pressed?.setAttribute("data-pressing", "");
   const pointerId = e.pointerId;
   const startX = e.clientX;
   const startY = e.clientY;
@@ -231,6 +251,7 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
   };
 
   const activate = () => {
+    pressed?.removeAttribute("data-pressing");
     active = true;
     current = { ...payload, x, y, target: null, touch };
     current = { ...current, target: targetAt(x, y, current) };
@@ -246,6 +267,7 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
     if (ev.pointerId !== pointerId && !active) finish(false);
   };
   const finish = (drop: boolean) => {
+    pressed?.removeAttribute("data-pressing");
     if (pressTimer) clearTimeout(pressTimer);
     window.removeEventListener("pointerdown", onOtherDown, true);
     cancelAnimationFrame(frame);
@@ -280,6 +302,14 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
     const moved = Math.hypot(x - startX, y - startY);
     if (!active) {
       if (touch && !opts.immediate) {
+        const dx = Math.abs(x - startX);
+        const dy = Math.abs(y - startY);
+        // Sideways, toward the calendar (anything flatter than about 45°): pick it up now.
+        if (opts.sideways && dx > TOUCH_SLOP && dx >= dy) {
+          activate();
+          update();
+          return;
+        }
         // Moving before the long press completes means the finger is scrolling.
         if (moved > TOUCH_SLOP) finish(false);
         return;

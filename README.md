@@ -47,8 +47,11 @@ text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy te
 
 - **Calendar** — "Plan your open time" on the left: every task still to schedule,
   ordered by due date, length or points, narrowed to one class (or school only,
-  or personal), five at a time or fifteen. **Drag a task onto the calendar** to
-  schedule it for as long as its estimate. On a phone, press and hold first.
+  or personal), five at a time or fifteen. Each card is striped in its class's
+  colour. **Drag a task onto the calendar** (grab the card anywhere) to schedule
+  it for as long as its estimate. On a phone, swipe the card sideways toward the
+  calendar and it lifts at once, or hold it for a moment; swiping up and down
+  still scrolls the list.
   The task is picked up at its card's size; over the calendar it glides into
   the slot it would drop into, at its real length, so letting go leaves it there.
   Scheduled work leaves the list and the next task moves up.

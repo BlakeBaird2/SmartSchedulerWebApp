@@ -656,35 +656,52 @@
 }
 
 /*
- * Each task is a card you can pick up: raised off the panel, with a grip on its
- * left edge. It lifts a little under the pointer, and leaves a dashed outline
- * behind while it is being dragged.
+ * Each task is a card you can pick up anywhere: raised off the panel, with a
+ * stripe of its class's colour (--task) down its left edge. It lifts under the
+ * pointer, sinks a little while a finger presses it, and leaves a dashed
+ * outline behind while it is being dragged.
  */
 .ss-mini-task {
+  --task: var(--ss-personal);
   position: relative;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 4px 10px;
-  margin-bottom: 8px;
-  padding: 10px 10px 10px 6px;
-  border: 1px solid var(--ss-line);
-  border-radius: 12px;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+  padding: 12px 12px 12px 16px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--ss-line) 80%, transparent);
+  border-radius: 14px;
   background: var(--ss-surface);
   box-shadow:
-    0 1px 2px rgba(30, 30, 27, 0.05),
-    0 4px 12px rgba(30, 30, 27, 0.04);
+    0 1px 2px rgba(30, 30, 27, 0.06),
+    0 6px 18px -8px rgba(30, 30, 27, 0.16);
   outline-offset: 2px;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
     transform 0.15s ease;
 }
-.ss-mini-task:hover {
-  border-color: var(--ss-accent-ring);
+.ss-mini-task::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: var(--task);
+}
+:root[data-theme="dark"] .ss-mini-task {
   box-shadow:
-    0 2px 4px rgba(30, 30, 27, 0.06),
-    0 10px 24px rgba(30, 30, 27, 0.08);
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 20px -10px rgba(0, 0, 0, 0.7);
+}
+.ss-mini-task:hover {
+  border-color: color-mix(in oklab, var(--task) 45%, var(--ss-line));
+  box-shadow:
+    0 2px 4px rgba(30, 30, 27, 0.07),
+    0 14px 28px -10px rgba(30, 30, 27, 0.22);
   transform: translateY(-1px);
 }
 .ss-mini-task.ss-draggable {
@@ -692,9 +709,17 @@
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  /* Up and down scrolls the list; sideways is the planner's to pick the card up (planDrag.ts). */
+  touch-action: pan-y;
 }
 .ss-mini-task.ss-draggable:active {
   cursor: grabbing;
+}
+/* A finger is holding it: it sinks a little, then lifts off when picked up. */
+.ss-mini-task[data-pressing] {
+  border-color: color-mix(in oklab, var(--task) 55%, var(--ss-line));
+  transform: scale(0.97);
+  transition-duration: 0.25s;
 }
 /* Being dragged: the card's place stays, outlined, until it lands. */
 .ss-mini-task[data-picked] {
@@ -704,9 +729,13 @@
   box-shadow: none;
   transform: none;
 }
+.ss-mini-task[data-picked]::before {
+  opacity: 0.35;
+}
 .ss-mini-task[data-picked] > * {
   opacity: 0.45;
 }
+/* The grip in a header ("Drag to schedule"). */
 .ss-grip {
   align-self: stretch;
   display: grid;
@@ -715,13 +744,6 @@
   border-radius: 7px;
   color: var(--ss-muted);
   background: var(--ss-chip);
-  transition:
-    color 0.15s ease,
-    background 0.15s ease;
-}
-.ss-mini-task:hover .ss-grip {
-  color: var(--ss-accent);
-  background: var(--ss-accent-soft);
 }
 .ss-check {
   width: 22px;
@@ -753,8 +775,10 @@
 }
 .ss-mini-task h3 {
   margin: 0 0 3px;
+  color: var(--ss-ink);
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
@@ -769,6 +793,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.ss-mini-task p b {
+  /* The class's name in plain ink: its colour is the stripe, and red stays for "late". */
+  color: var(--ss-text);
+  font-weight: 650;
+}
 .ss-mini-task p .ss-late {
   color: var(--ss-danger);
   font-weight: 700;
@@ -779,7 +808,7 @@
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  border: 1px solid var(--ss-line);
+  border: 1px solid transparent;
   border-radius: 999px;
   background: var(--ss-chip);
   color: var(--ss-text-3);
@@ -3123,21 +3152,20 @@ section.ss-due-page {
     font-size: 10.5px;
   }
   .ss-mini-task {
-    grid-template-columns: 12px minmax(0, 1fr);
-    gap: 6px 8px;
-    margin-bottom: 7px;
-    padding: 9px 9px 9px 5px;
-    border-radius: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    margin-bottom: 9px;
+    padding: 11px 10px 11px 14px;
+    border-radius: 12px;
+  }
+  .ss-mini-task::before {
+    width: 4px;
   }
   /* Phones: the time goes under the title, where there is room for it. */
   .ss-mini-task .ss-minutes {
-    grid-column: 2;
     justify-self: start;
     padding: 3px 8px;
     font-size: 11.5px;
-  }
-  .ss-mini-task .ss-grip {
-    grid-row: span 2;
   }
   .ss-grip svg {
     width: 13px;
@@ -3826,12 +3854,30 @@ section.ss-due-page {
   letter-spacing: -0.03em;
 }
 .ss-iphone-task {
-  margin-bottom: 8px;
-  padding: 9px 10px;
-  border: 1px solid var(--ss-line);
-  border-radius: 10px;
+  position: relative;
+  margin-bottom: 9px;
+  padding: 10px 10px 10px 14px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--ss-line) 80%, transparent);
+  border-radius: 12px;
   background: var(--ss-surface);
-  box-shadow: 0 1px 2px rgba(30, 30, 27, 0.05);
+  box-shadow:
+    0 1px 2px rgba(30, 30, 27, 0.06),
+    0 6px 18px -8px rgba(30, 30, 27, 0.16);
+}
+.ss-iphone-task::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--task);
+}
+.ss-iphone-task p b {
+  /* The class's name in plain ink: its colour is the stripe, and red stays for "late". */
+  color: var(--ss-text);
+  font-weight: 650;
 }
 .ss-iphone-task h3 {
   margin: 0 0 2px;
@@ -3923,24 +3969,19 @@ section.ss-due-page {
 
 /* The screen is always a computer's, so the planner cards keep their computer look on a phone too. */
 .ss-laptop .ss-mini-task {
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  gap: 4px 10px;
-  margin-bottom: 8px;
-  padding: 10px 10px 10px 6px;
-  border-radius: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+  padding: 12px 12px 12px 16px;
+  border-radius: 14px;
+}
+.ss-laptop .ss-mini-task::before {
+  width: 5px;
 }
 .ss-laptop .ss-mini-task .ss-minutes {
-  grid-column: auto;
   justify-self: auto;
   padding: 5px 10px;
   font-size: 12.5px;
-}
-.ss-laptop .ss-mini-task .ss-grip {
-  grid-row: auto;
-}
-.ss-laptop .ss-grip svg {
-  width: 16px;
-  height: 16px;
 }
 .ss-laptop .ss-mini-task h3 {
   font-size: 14.5px;
