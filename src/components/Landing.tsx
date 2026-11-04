@@ -93,6 +93,7 @@ const PLANNER = [
   { title: "Read Chapter 5", meta: "ACC 200 · Today", minutes: "30 min" },
   { title: "Problem Set 4", meta: "MATH 112 · Tomorrow", minutes: "1 hr" },
   { title: "Essay outline", meta: "WRTG 150 · Fri", minutes: "45 min" },
+  { title: "Lab report draft", meta: "CS 142 · Mon", minutes: "1 hr" },
 ];
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
@@ -106,7 +107,16 @@ const EVENTS: { day: number; at: number; hours: number; kind: "school" | "work" 
   { day: 0, at: 3, hours: 1, kind: "planned", title: "Lab 5", time: "11:00 · 1 hr" },
   { day: 2, at: 3.5, hours: 1, kind: "planned", title: "Quiz 3 prep", time: "11:30 · 1 hr" },
   { day: 4, at: 2, hours: 1.5, kind: "personal", title: "Gym", time: "10:00 – 11:30" },
+  { day: 0, at: 5, hours: 1.25, kind: "school", title: "ACC 200", time: "1:00 – 2:15" },
+  { day: 2, at: 5, hours: 1.25, kind: "school", title: "ACC 200", time: "1:00 – 2:15" },
+  { day: 1, at: 5, hours: 1.5, kind: "planned", title: "Homework", time: "1:00 · 1.5 hr" },
+  { day: 3, at: 5.5, hours: 1, kind: "planned", title: "Reading", time: "1:30 · 1 hr" },
+  { day: 4, at: 4.5, hours: 3.5, kind: "work", title: "Work", time: "12:30 – 4:00" },
+  { day: 1, at: 7, hours: 1, kind: "personal", title: "Study group", time: "3:00 – 4:00" },
 ];
+
+/** The hours down the side: 8 AM to 4 PM, a working day as it would show on a laptop. */
+const HOURS = ["8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM"];
 
 const HOUR = 46;
 
@@ -184,9 +194,9 @@ function Still() {
             </span>
           ))}
         </div>
-        <div className="ss-home-week-body" style={{ height: HOUR * 5 }}>
+        <div className="ss-home-week-body" style={{ height: HOUR * HOURS.length }}>
           <div className="ss-home-hours">
-            {["8 AM", "9 AM", "10 AM", "11 AM", "12 PM"].map((h, i) => (
+            {HOURS.map((h, i) => (
               <span key={h} style={{ top: i * HOUR }}>
                 {h}
               </span>
