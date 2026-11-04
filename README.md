@@ -18,7 +18,9 @@ needs no environment variables at all.
 
 - **`/`** — the home page for newcomers, in the app's design: one line on what
   SmartScheduler does, **Get started** and **Try it with sample data**, a still
-  of the calendar page, and three steps. Where to find each calendar link is
+  of the calendar page shown on a drawn laptop (so it's plainly a picture, not
+  something to click; it keeps the computer layout, scaled down, on a phone),
+  and three steps. Where to find each calendar link is
   explained during setup. It is rendered on the server, so it shows up at once
   and search engines can read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.

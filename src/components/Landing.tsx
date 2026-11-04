@@ -84,7 +84,9 @@ function Step({ icon, title, children }: { icon: SsIconName; title: string; chil
 }
 
 // ---------------------------------------------------------------------------
-// A still of the calendar page, drawn with the app's own pieces.
+// A still of the calendar page, drawn with the app's own pieces and shown on a
+// laptop, so it's plainly a picture of the website rather than something to
+// click. The caption points to the sample data for that.
 // ---------------------------------------------------------------------------
 
 const PLANNER = [
@@ -110,7 +112,47 @@ const HOUR = 46;
 
 function Preview() {
   return (
-    <div className="ss-home-preview" aria-hidden>
+    <figure className="ss-laptop">
+      <div className="ss-laptop-lid">
+        <span className="ss-laptop-camera" aria-hidden />
+        <div
+          className="ss-laptop-screen"
+          role="img"
+          aria-label="Schedule Smart on a laptop: a week of classes, work and the gym, with tasks dragged into the free time between them."
+        >
+          <div className="ss-laptop-canvas" aria-hidden>
+            <div className="ss-laptop-appbar">
+              <span>Schedule Smart</span>
+              <nav>
+                <b>
+                  <SsIcon name="calendar" size={12} /> Calendar
+                </b>
+                <span>
+                  <SsIcon name="list" size={12} /> Tasks
+                </span>
+              </nav>
+              <i>SS</i>
+            </div>
+            <Still />
+          </div>
+        </div>
+      </div>
+      <div className="ss-laptop-base" aria-hidden />
+      <figcaption>
+        A preview of the app.{" "}
+        <a href="/app#demo" data-smart-event="sample_data_started">
+          Try it with sample data
+        </a>{" "}
+        to click around.
+      </figcaption>
+    </figure>
+  );
+}
+
+/** What's on the laptop's screen: the planner beside a week. */
+function Still() {
+  return (
+    <div className="ss-home-preview">
       <div className="ss-home-planner">
         <span className="ss-eyebrow">
           <SsIcon name="spark" size={12} /> PERSONAL PLANNER
