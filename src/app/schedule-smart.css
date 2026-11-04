@@ -26,12 +26,14 @@
   --ss-fainter: #aaa9a3;
   --ss-ghost: #d3d3cd;
   --ss-check: #d5d5ce;
-  --ss-accent: #7066e7;
-  --ss-accent-soft: #eeecff;
-  --ss-accent-tint: #faf9ff;
-  --ss-accent-ring: #c9c4ff;
-  --ss-dark: #282826;
-  --ss-on-dark: #ffffff;
+  /* The brand blue (see globals.css): buttons, switches, ticks and accents. */
+  --ss-accent: #1b6ce0;
+  --ss-accent-soft: #e6f0ff;
+  --ss-accent-tint: #f5f9ff;
+  --ss-accent-ring: #a9cbff;
+  --ss-brand: #1b6ce0;
+  --ss-brand-hover: #155bc2;
+  --ss-on-brand: #ffffff;
   --ss-danger: #b44949;
   --ss-now: #ea4335;
   /* The calendar's own colours, as in Google Calendar: today's blue, and event fills. */
@@ -50,16 +52,16 @@
   --ss-reading: #4c9a3c;
   /* Event kinds: the colour itself, its wash, and its text. */
   --ss-work: #039be5;
-  --ss-work-bg: #eeecff;
-  --ss-work-fg: #4e46b4;
+  --ss-work-bg: #e3f3fc;
+  --ss-work-fg: #0b6aa0;
   --ss-school: #f4511e;
   --ss-school-bg: #fff0e5;
   --ss-school-fg: #9b562e;
   --ss-personal: #33b679;
   --ss-personal-bg: #e7f5ed;
   --ss-personal-fg: #27764d;
-  --ss-stripe-a: #f3f1ff;
-  --ss-stripe-b: #e8e5ff;
+  --ss-stripe-a: #f0f6ff;
+  --ss-stripe-b: #e3eeff;
   --ss-focus-a: #fff4ea;
   --ss-focus-b: #ffead8;
 }
@@ -85,12 +87,13 @@
   --ss-fainter: #7a7872;
   --ss-ghost: #4a4a4e;
   --ss-check: #4a4a4e;
-  --ss-accent: #8b85ff;
-  --ss-accent-soft: #27254a;
-  --ss-accent-tint: #1d1c2b;
-  --ss-accent-ring: #4b46a0;
-  --ss-dark: #ecebe6;
-  --ss-on-dark: #141414;
+  --ss-accent: #6aa9ff;
+  --ss-accent-soft: #1a2a44;
+  --ss-accent-tint: #141c2a;
+  --ss-accent-ring: #2f5590;
+  --ss-brand: #6aa9ff;
+  --ss-brand-hover: #8dbdff;
+  --ss-on-brand: #0b1d3a;
   --ss-danger: #f08a8a;
   --ss-now: #f28b82;
   --ss-today: #8ab4f8;
@@ -106,16 +109,16 @@
   --ss-assignment: #7a73f0;
   --ss-reading: #5ea84b;
   --ss-work: #039be5;
-  --ss-work-bg: #26244a;
-  --ss-work-fg: #c9c5ff;
+  --ss-work-bg: #13283a;
+  --ss-work-fg: #9fd3f5;
   --ss-school: #f4511e;
   --ss-school-bg: #3a2a1f;
   --ss-school-fg: #f3c7a6;
   --ss-personal: #2ea36c;
   --ss-personal-bg: #1c3328;
   --ss-personal-fg: #a9e0c4;
-  --ss-stripe-a: #23214a;
-  --ss-stripe-b: #2c2959;
+  --ss-stripe-a: #172338;
+  --ss-stripe-b: #1c2b45;
   --ss-focus-a: #34271d;
   --ss-focus-b: #3d2d21;
 }
@@ -231,15 +234,16 @@
   border: 0;
   border-radius: 10px;
   padding: 11px 18px;
-  color: var(--ss-on-dark);
-  background: var(--ss-dark);
+  color: var(--ss-on-brand);
+  background: var(--ss-brand);
   font-size: 14.5px;
   font-weight: 600;
   white-space: nowrap;
-  transition: opacity 0.15s ease;
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ss-brand) 35%, transparent);
+  transition: background-color 0.15s ease;
 }
 .ss-primary:hover {
-  opacity: 0.88;
+  background: var(--ss-brand-hover);
 }
 .ss-avatar {
   position: relative;
@@ -2569,7 +2573,7 @@ section.ss-due-page {
   min-width: 18px;
   padding: 0 5px;
   border-radius: 999px;
-  color: var(--ss-on-dark);
+  color: var(--ss-on-brand);
   background: var(--ss-accent);
   font-size: 11px;
   line-height: 18px;
