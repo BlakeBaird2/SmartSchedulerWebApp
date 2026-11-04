@@ -1403,8 +1403,10 @@ button.ss-day-head:hover {
   opacity: 0.35;
 }
 @media (pointer: coarse) {
+  /* A finger holds the edge to resize (planDrag.ts); until then it scrolls and swipes like the rest. */
   .ss-resize {
     height: 14px;
+    touch-action: pan-y;
   }
   .ss-resize::after {
     opacity: 0.3;

@@ -74,6 +74,11 @@ prefix on every class.
     class, then calendar, then theme). Colours sync with your account.
   - Drag scheduled work to move it, drag its bottom edge to change its length,
     or drag it back onto the planner to take it off. Every change has Undo.
+  - On a phone, press and hold an event to move it, and hold its bottom edge a
+    little longer (0.6 s) to change its length, so a swipe or scroll that starts
+    on an event never grabs it. Picking something up gives a short buzz on
+    Android and, on iPhone (iOS 18 and later), Safari's haptic tick
+    (`src/components/haptics.ts`).
   - Events from your calendars (classes, shifts, personal plans, your weekly
     times) can be dragged and resized too, and in the month moved to another
     day. Calendar links are read-only, so the move is Schedule Smart's own: the

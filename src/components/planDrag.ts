@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { MIN_BLOCK_MINUTES, snapMinutes } from "@/lib/blocks";
 import { pinching } from "./pinchZoom";
+import { haptic } from "./haptics";
 
 /**
  * Dragging work onto the calendar, moving it, and resizing it: with a mouse, a
@@ -65,6 +66,8 @@ export interface PlanDrag extends DragPayload {
 const MOUSE_SLOP = 5;
 /** How long a finger holds still before a press becomes a drag, and how far it may wander meanwhile. */
 const LONG_PRESS_MS = 350;
+/** Resizing from an event's bottom edge takes a longer, deliberate hold on a phone, so a swipe or scroll that starts there never catches it. */
+export const RESIZE_HOLD_MS = 600;
 const TOUCH_SLOP = 10;
 
 let current: PlanDrag | null = null;
@@ -185,7 +188,7 @@ export function dragSourceRef(el: HTMLElement | null) {
  * somewhere it can land; a press that never becomes a drag is left to act as a
  * click.
  */
-export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragPayload, onDrop: (target: DropTarget) => void, opts: { immediate?: boolean } = {}) {
+export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragPayload, onDrop: (target: DropTarget) => void, opts: { immediate?: boolean; holdMs?: number } = {}) {
   if (current || (e.pointerType === "mouse" && e.button !== 0)) return;
   const touch = e.pointerType !== "mouse";
   const pointerId = e.pointerId;
@@ -232,7 +235,8 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
     current = { ...payload, x, y, target: null, touch };
     current = { ...current, target: targetAt(x, y, current) };
     document.documentElement.classList.add("plan-dragging");
-    if (touch) navigator.vibrate?.(12);
+    // Felt as well as seen: a buzz on Android, a tick on iPhone (haptics.ts).
+    if (touch) haptic(12);
     emit();
     frame = requestAnimationFrame(tick);
   };
@@ -309,7 +313,7 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
     pressTimer = setTimeout(() => {
       if (pinching()) finish(false);
       else activate();
-    }, LONG_PRESS_MS);
+    }, opts.holdMs ?? LONG_PRESS_MS);
   }
 }
 
