@@ -2507,6 +2507,17 @@ section.ss-due-page {
   max-width: 600px;
   font-size: 15.5px;
 }
+/* All three tabs' headings in one spot, only the current one seen (TasksPage.tsx). */
+.ss-tasks-intro {
+  display: grid;
+}
+.ss-tasks-intro > div {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+.ss-tasks-intro > div[data-current] {
+  visibility: visible;
+}
 /*
  * Tasks: the island, a floating bar of what to show (Planned, Not planned,
  * Everything), which class, search and Done; then the plan, a day at a time.
@@ -2760,6 +2771,11 @@ section.ss-due-page {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  /*
+   * At least a screen tall, so a shorter tab doesn't pull the page back down
+   * when you've scrolled: the island stays where it is, pinned at the top.
+   */
+  min-height: calc(100dvh - 160px);
 }
 .ss-plan-group h2 {
   margin: 0 0 8px 4px;

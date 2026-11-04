@@ -21,6 +21,17 @@ import { SsIcon } from "./SsIcon";
 type View = "planned" | "unplanned" | "all";
 
 const DAY = 86_400_000;
+
+/** Each tab's heading and the line under it. */
+const INTROS: { view: View; title: string; line: string }[] = [
+  { view: "planned", title: "What you've planned.", line: "Everything you've put on your calendar, in the order you'll do it. Tick it off as you go." },
+  {
+    view: "unplanned",
+    title: "Not planned yet.",
+    line: "Work that doesn't have a time yet, most urgent first. Open one to give it a time, or drag it onto the calendar.",
+  },
+  { view: "all", title: "All your work.", line: "Planned or not, most urgent first." },
+];
 /** Late work older than this has gone quiet; done work shows for a week. */
 const LATE_WINDOW = 14 * DAY;
 const DONE_WINDOW = 7 * DAY;
@@ -139,14 +150,19 @@ export function TasksPage() {
       <div className="ss-tasks-header">
         <div>
           <span className="ss-eyebrow">YOUR PLAN</span>
-          <h1>{view === "planned" ? "What you've planned." : view === "unplanned" ? "Not planned yet." : "All your work."}</h1>
-          <p>
-            {view === "planned"
-              ? "Everything you've put on your calendar, in the order you'll do it. Tick it off as you go."
-              : view === "unplanned"
-                ? "Work that doesn't have a time yet, most urgent first. Open one to give it a time, or drag it onto the calendar."
-                : "Planned or not, most urgent first."}
-          </p>
+          {/*
+           * Each tab's heading and line, stacked in the same place with only the
+           * current one shown: the header is always as tall as the longest, so the
+           * island below stays put when switching tabs.
+           */}
+          <div className="ss-tasks-intro">
+            {INTROS.map((intro) => (
+              <div key={intro.view} aria-hidden={intro.view !== view} data-current={intro.view === view || undefined}>
+                <h1>{intro.title}</h1>
+                <p>{intro.line}</p>
+              </div>
+            ))}
+          </div>
         </div>
         <button className="ss-primary" onClick={openAddTask} data-smart-event="add_task_opened">
           <SsIcon name="plus" /> Add
