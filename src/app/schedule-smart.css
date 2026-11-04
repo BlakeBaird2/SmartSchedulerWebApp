@@ -3560,7 +3560,7 @@ section.ss-due-page {
  */
 .ss-laptop {
   margin: 0 auto;
-  max-width: 1040px;
+  max-width: 900px;
   pointer-events: none;
   user-select: none;
 }
@@ -3592,13 +3592,21 @@ section.ss-due-page {
   container-type: inline-size;
 }
 /*
- * The screen always shows the computer layout, drawn 860px wide and scaled to
- * fit (about full size on a computer, smaller on a phone), so it looks like a
- * laptop at every size. tan(atan2()) turns the width ratio into a plain number.
+ * The screen always shows the computer layout, drawn 860 × 538 (a laptop's
+ * 16:10) and scaled to fit, so it looks like a laptop at every size.
+ * tan(atan2()) turns the width ratio into a plain number.
  */
 .ss-laptop-canvas {
   width: 860px;
+  height: 538px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   zoom: tan(atan2(100cqw, 860px));
+}
+.ss-laptop-canvas .ss-home-preview {
+  flex: 1;
+  min-height: 0;
 }
 .ss-laptop-appbar {
   height: 38px;
