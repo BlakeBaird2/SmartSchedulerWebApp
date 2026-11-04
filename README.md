@@ -104,11 +104,13 @@ prefix on every class.
   - Phones: the planner and one day side by side, or three days with the planner
     closed. Swipe left or right for the next or previous days, and tap the small
     calendar with today's date to come back to today.
-- **Tasks** — the master checklist: a ring for what's due today, and a column
-  for each day of the week, Monday to Sunday, as tall as the work due that day (by
-  estimate). Each column starts grey and fills with colour as that day's work is
-  ticked off, so a finished week is seven full columns. Then every task in one
-  table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
+- **Tasks** — your plan as a checklist. It lists what you've put on your
+  calendar, in the order you'll do it, a day at a time (time that passed
+  without it being ticked off shows first, as **Missed**). Tick something off
+  and it slides down to **Done** at the bottom; untick it and it goes back.
+  A floating bar at the top switches between **Planned**, **Not planned**
+  (work with no time yet, most urgent first) and **Everything**, narrows it to
+  one class, searches, and shows or hides what's done.
 - **Due dates** — off for now (not in the navigation; `src/components/DueDatesPage.tsx`
   is kept for when it comes back, and an old link to it opens the calendar).
 - **Add** (in the planner, or on Tasks) — an **Event** or a **Task**, as in Google

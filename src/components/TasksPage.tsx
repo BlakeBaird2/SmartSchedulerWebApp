@@ -1,232 +1,292 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format, isSameDay, startOfWeek } from "date-fns";
-import { byUrgency, classRank, isSchoolWork, PRIORITY_LABEL, weekLoad, type DayLoad } from "@/lib/todos";
-import type { Task } from "@/lib/types";
-import { approxDuration, dueLabel, plural } from "@/lib/ui";
+import { flushSync } from "react-dom";
+import { differenceInCalendarDays, format, startOfDay } from "date-fns";
+import { byUrgency, classRank, isSchoolWork } from "@/lib/todos";
+import type { ScheduledBlock, Task } from "@/lib/types";
+import { clockRange, dueLabel, duration, plural } from "@/lib/ui";
 import { useApp } from "./context";
 import { SsIcon } from "./SsIcon";
 
-type TaskSort = "due" | "length";
+/*
+ * Tasks: what you've planned, as a checklist. By default it lists the work you
+ * put on your calendar, in the order you'll do it, a day at a time. Tick
+ * something off and it moves down to Done at the bottom. The bar at the top
+ * switches to work that isn't planned yet (or everything), narrows it to one
+ * class, searches, and shows or hides what's done.
+ */
+
+type View = "planned" | "unplanned" | "all";
 
 const DAY = 86_400_000;
 /** Late work older than this has gone quiet; done work shows for a week. */
 const LATE_WINDOW = 14 * DAY;
 const DONE_WINDOW = 7 * DAY;
-const COMPLETED_WINDOW = 30 * DAY;
 
-/**
- * Tasks, the prototype's "master checklist": how the week is going, then every
- * piece of work in one table to search, sort and filter. Synced assignments and
- * your own tasks sit side by side.
- */
+interface Row {
+  task: Task;
+  /** The time set aside for it that matters now: the next one, or the last if they've all passed. */
+  block: ScheduledBlock | null;
+  /** How many times are set aside for it. */
+  blocks: number;
+}
+
+/** A stable name for an element's view transition (ids hold characters CSS names can't). */
+function vtName(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) | 0;
+  return `ss-task-${(h >>> 0).toString(36)}`;
+}
+
+function dayTitle(d: Date, now: Date): string {
+  const days = differenceInCalendarDays(d, now);
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  if (days > 1 && days < 7) return format(d, "EEEE");
+  return format(d, "EEE, MMM d");
+}
+
 export function TasksPage() {
-  const { model, ws, now, openAddTask, select, toggleDone } = useApp();
+  const { model, ws, now, openAddTask, select, toggleDone, setView: goTo } = useApp();
+  const [view, setView] = useState<View>("planned");
+  const [area, setArea] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<TaskSort>("due");
-  const [filter, setFilter] = useState("All");
-
+  const [showDone, setShowDone] = useState(true);
   const nowMs = now.getTime();
+  const rank = classRank(ws.classOrder);
+
   const doneAt = (t: Task) => {
     const at = ws.done[t.id];
     // "auto:" marks work assumed done because it was already past due when its calendar was added.
     return at && !at.startsWith("auto:") ? Date.parse(at) : null;
   };
 
-  const pool = useMemo(
-    () =>
-      model.tasks.filter((t) => {
-        if (t.done) {
-          const at = doneAt(t);
-          return at !== null && at >= nowMs - COMPLETED_WINDOW;
-        }
-        return !t.dueAt || Date.parse(t.dueAt) >= nowMs - LATE_WINDOW;
-      }),
-    // doneAt reads ws.done, listed here.
+  // Every piece of work worth listing, with the time set aside for it.
+  const rows = useMemo(() => {
+    const byTask = new Map<string, ScheduledBlock[]>();
+    for (const b of ws.blocks) if (b.taskId) byTask.set(b.taskId, [...(byTask.get(b.taskId) ?? []), b]);
+    const out: Row[] = [];
+    for (const task of model.tasks) {
+      if (task.done) {
+        const at = doneAt(task);
+        if (at === null || at < nowMs - DONE_WINDOW) continue;
+      } else if (task.dueAt && Date.parse(task.dueAt) < nowMs - LATE_WINDOW && !byTask.has(task.id)) continue;
+      const mine = [...(byTask.get(task.id) ?? [])].sort((a, b) => a.start.localeCompare(b.start));
+      const next = mine.find((b) => Date.parse(b.end) > nowMs) ?? mine[mine.length - 1] ?? null;
+      out.push({ task, block: next, blocks: mine.length });
+    }
+    return out;
+    // doneAt reads ws.done.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [model.tasks, ws.done, nowMs],
-  );
+  }, [model.tasks, ws.blocks, ws.done, nowMs]);
 
-  // Today's work, and the week's day by day, done or not.
-  const today = pool.filter((t) => t.dueAt && isSameDay(new Date(t.dueAt), now));
-  const todayDone = today.filter((t) => t.done).length;
-  const percent = today.length ? Math.round((todayDone / today.length) * 100) : 0;
-  const week = useMemo(() => weekLoad(pool, startOfWeek(now, { weekStartsOn: 1 })), [pool, now]);
+  const code = (t: Task) => (t.courseId ? model.courseById.get(t.courseId)?.code : undefined);
+  const q = search.trim().toLowerCase();
+  const shown = rows.filter(({ task, block }) => {
+    if (view === "planned" && !block) return false;
+    if (view === "unplanned" && block) return false;
+    if (area === "personal" ? isSchoolWork(task) : area !== "all" && task.courseId !== area) return false;
+    if (q && !`${task.title} ${code(task) ?? "Personal"}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const open = shown.filter((r) => !r.task.done);
+  const done = shown.filter((r) => r.task.done).sort((a, b) => (doneAt(b.task) ?? 0) - (doneAt(a.task) ?? 0));
 
-  const filters = ["All", "Today", ...model.visibleCourses.map((c) => c.code), "Personal", "Completed"];
-  const rank = classRank(ws.classOrder);
-
-  const visible = useMemo(() => {
-    const code = (t: Task) => (t.courseId ? model.courseById.get(t.courseId)?.code : undefined);
-    let items = pool.filter((t) => {
-      if (filter === "Completed") return t.done;
-      // Done work shows for a week after it's ticked off, then only under Completed.
-      if (t.done && (doneAt(t) ?? 0) < nowMs - DONE_WINDOW) return false;
-      if (filter === "All") return true;
-      if (filter === "Today") return Boolean(t.dueAt && isSameDay(new Date(t.dueAt), now));
-      if (filter === "Personal") return !isSchoolWork(t);
-      return code(t) === filter;
-    });
-    const q = search.trim().toLowerCase();
-    if (q) items = items.filter((t) => `${t.title} ${code(t) ?? "Personal"}`.toLowerCase().includes(q));
+  // Planned work in the order it's planned, a day at a time; missed time first.
+  // The rest by what's most urgent.
+  const groups = (() => {
     const urgency = byUrgency(rank);
-    return [...items].sort((a, b) => (sort === "length" ? a.estimate - b.estimate || urgency(a, b) : urgency(a, b)));
-    // doneAt reads ws.done, which pool already follows.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pool, filter, search, sort, model.courseById, rank, nowMs]);
+    if (view !== "planned") return [{ key: "open", title: null as string | null, sub: null as string | null, rows: [...open].sort((a, b) => urgency(a.task, b.task)) }];
+    const sorted = [...open].sort((a, b) => a.block!.start.localeCompare(b.block!.start));
+    const out: { key: string; title: string | null; sub: string | null; rows: Row[] }[] = [];
+    for (const r of sorted) {
+      const start = new Date(r.block!.start);
+      const missed = Date.parse(r.block!.end) <= nowMs;
+      const key = missed ? "missed" : String(startOfDay(start).getTime());
+      let g = out.find((x) => x.key === key);
+      if (!g) {
+        g = missed
+          ? { key, title: "Missed", sub: "Its time passed. Tick it off, or open it to plan it again.", rows: [] }
+          : { key, title: dayTitle(start, now), sub: differenceInCalendarDays(start, now) < 7 && differenceInCalendarDays(start, now) > 1 ? format(start, "MMMM d") : null, rows: [] };
+        out.push(g);
+      }
+      g.rows.push(r);
+    }
+    return out;
+  })();
+
+  // Ticking off slides the row down to Done, and back (where the browser can animate it).
+  const tick = (task: Task) => {
+    const go = () => flushSync(() => toggleDone(task));
+    const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    if (doc.startViewTransition && !reduce) doc.startViewTransition(go);
+    else go();
+  };
+
+  const plannedCount = rows.filter((r) => r.block && !r.task.done).length;
+  const unplannedCount = rows.filter((r) => !r.block && !r.task.done).length;
+  const areas = [
+    { id: "all", label: "All", color: null as string | null },
+    ...model.visibleCourses.map((c) => ({ id: c.id, label: c.code, color: c.color })),
+    { id: "personal", label: "Personal", color: null },
+  ];
 
   return (
     <section className="ss-tasks-page fade-in">
       <div className="ss-tasks-header">
         <div>
-          <span className="ss-eyebrow">MASTER CHECKLIST</span>
-          <h1>Everything, in one place.</h1>
-          <p>Capture tasks from every part of your life, then let Schedule Smart find the right moment.</p>
+          <span className="ss-eyebrow">YOUR PLAN</span>
+          <h1>{view === "planned" ? "What you've planned." : view === "unplanned" ? "Not planned yet." : "All your work."}</h1>
+          <p>
+            {view === "planned"
+              ? "Everything you've put on your calendar, in the order you'll do it. Tick it off as you go."
+              : view === "unplanned"
+                ? "Work that doesn't have a time yet, most urgent first. Open one to give it a time, or drag it onto the calendar."
+                : "Planned or not, most urgent first."}
+          </p>
         </div>
         <button className="ss-primary" onClick={openAddTask} data-smart-event="add_task_opened">
-          <SsIcon name="plus" /> Add new task
+          <SsIcon name="plus" /> Add
         </button>
       </div>
 
-      <div className="ss-summary">
-        <div className="ss-summary-card ss-completion">
-          <div className="ss-ring">
-            <svg viewBox="0 0 58 58" aria-hidden>
-              <circle className="ss-ring-track" cx="29" cy="29" r="24" />
-              <circle className="ss-ring-progress" cx="29" cy="29" r="24" strokeDasharray="151" strokeDashoffset={151 - (151 * percent) / 100} />
-            </svg>
-            <strong>
-              {percent}
-              <small>%</small>
-            </strong>
-          </div>
-          <div className="ss-summary-copy">
-            <span>DUE TODAY</span>
-            <h2>
-              {todayDone} of {today.length} done
-            </h2>
-            <p>{today.length === 0 ? "Nothing due today" : today.length === todayDone ? "All done for today" : `${plural(today.length - todayDone, "item")} still to do`}</p>
-          </div>
+      {/* The island: what to list, which class, search, and whether to show what's done. */}
+      <div className="ss-island" role="toolbar" aria-label="What to show">
+        <div className="ss-island-seg" role="group" aria-label="Show">
+          {(
+            [
+              ["planned", "Planned", plannedCount],
+              ["unplanned", "Not planned", unplannedCount],
+              ["all", "Everything", null],
+            ] as const
+          ).map(([id, label, n]) => (
+            <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)}>
+              {label}
+              {n ? <span className="ss-island-count">{n}</span> : null}
+            </button>
+          ))}
         </div>
-        <WeekChart days={week} now={now} />
+        <span className="ss-island-divider" aria-hidden />
+        <div className="ss-island-pills" role="group" aria-label="Class">
+          {areas.map((a) => (
+            <button key={a.id} type="button" aria-pressed={area === a.id} onClick={() => setArea(a.id)}>
+              {a.color ? <i style={{ background: a.color }} aria-hidden /> : null}
+              {a.label}
+            </button>
+          ))}
+        </div>
+        <div className="ss-island-end">
+          <label className="ss-island-search">
+            <SsIcon name="search" size={16} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" aria-label="Search tasks" />
+          </label>
+          <button type="button" role="switch" aria-checked={showDone} className="ss-island-toggle" onClick={() => setShowDone((v) => !v)}>
+            <span className="ss-island-switch" aria-hidden />
+            Done
+          </button>
+        </div>
       </div>
 
-      <div className="ss-task-tools">
-        <label className="ss-search">
-          <SsIcon name="search" size={17} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tasks or classes" aria-label="Search tasks" />
-        </label>
-        <label className="ss-sort">
-          <span>Sort by</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value as TaskSort)}>
-            <option value="due">Due date</option>
-            <option value="length">Shortest first</option>
-          </select>
-        </label>
-      </div>
-      <div className="ss-filter-row" role="group" aria-label="Show">
-        {filters.map((f) => (
-          <button key={f} aria-pressed={filter === f} onClick={() => setFilter(f)}>
-            {f}
-          </button>
-        ))}
-      </div>
-      <div className="ss-table">
-        <div className="ss-table-head" aria-hidden>
-          <span>TASK</span>
-          <span>AREA</span>
-          <span>DUE</span>
-          <span>ESTIMATE</span>
-          <span>PRIORITY</span>
-        </div>
-        {visible.length === 0 ? <p className="ss-table-empty">{search ? "Nothing matches that search." : "Nothing here. Nice work."}</p> : null}
-        {visible.map((task) => {
-          const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
-          const due = dueLabel(task.dueAt ? new Date(task.dueAt) : null, now);
-          return (
-            <div
-              key={task.id}
-              role="button"
-              tabIndex={0}
-              className={`ss-task-row ${task.done ? "ss-done" : ""}`}
-              onClick={() => select({ kind: "task", id: task.id })}
-              onKeyDown={(e) => {
-                if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
-                  e.preventDefault();
-                  select({ kind: "task", id: task.id });
-                }
-              }}
-              aria-label={`${task.title}, ${course?.code ?? "Personal"}, ${due.text}, ${task.estimate} min, ${PRIORITY_LABEL[task.priority]} priority${task.done ? ", done" : ""}. Open details`}
-            >
-              <div className="ss-task-name">
-                <button
-                  className="ss-check"
-                  role="checkbox"
-                  aria-checked={task.done}
-                  aria-label={task.done ? `Mark ${task.title} as not done` : `Complete ${task.title}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleDone(task);
-                  }}
-                >
-                  <SsIcon name="check" size={14} />
-                </button>
-                <strong>{task.title}</strong>
-              </div>
-              <span className="ss-area">{course?.code ?? "Personal"}</span>
-              <span className={due.late && !task.done ? "text-[var(--ss-danger)] font-semibold" : ""}>{due.text}</span>
-              <span>{task.estimate} min</span>
-              <span className={`ss-priority ss-${task.priority}`}>{PRIORITY_LABEL[task.priority]}</span>
-            </div>
-          );
-        })}
+      <div className="ss-plan-list">
+        {open.length === 0 ? (
+          <div className="ss-plan-empty">
+            {q || area !== "all" ? (
+              <p>Nothing here matches.</p>
+            ) : view === "planned" ? (
+              <>
+                <strong>{rows.some((r) => r.block) ? "All of your plan is done." : "Nothing planned yet."}</strong>
+                <p>Drag work from the planner onto your calendar, or click a free time on it to add something there.</p>
+                <div className="ss-plan-empty-actions">
+                  <button className="ss-primary" onClick={() => goTo("calendar")}>
+                    Open the calendar
+                  </button>
+                  {unplannedCount ? (
+                    <button className="ss-quiet-button" onClick={() => setView("unplanned")}>
+                      See {plural(unplannedCount, "task")} not planned
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            ) : view === "unplanned" ? (
+              <strong>Everything has a time. Nice.</strong>
+            ) : (
+              <strong>Nothing to do. Nice work.</strong>
+            )}
+          </div>
+        ) : null}
+
+        {groups.map((g) =>
+          g.rows.length ? (
+            <section key={g.key} className="ss-plan-group" data-missed={g.key === "missed" || undefined}>
+              {g.title ? (
+                <h2>
+                  {g.title}
+                  {g.sub ? <span>{g.sub}</span> : null}
+                </h2>
+              ) : null}
+              <ul>
+                {g.rows.map((r) => (
+                  <TaskLine key={r.task.id} row={r} view={view} onTick={tick} onOpen={() => select({ kind: "task", id: r.task.id })} />
+                ))}
+              </ul>
+            </section>
+          ) : null,
+        )}
+
+        {showDone && done.length ? (
+          <section className="ss-plan-group ss-plan-done">
+            <h2>
+              Done<span>{plural(done.length, "task")} this week</span>
+            </h2>
+            <ul>
+              {done.map((r) => (
+                <TaskLine key={r.task.id} row={r} view={view} onTick={tick} onOpen={() => select({ kind: "task", id: r.task.id })} />
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
     </section>
   );
 }
 
-/**
- * The week at a glance: a column for each day, Monday to Sunday, as tall as the
- * work due that day (by estimate). It starts grey and fills with colour from the
- * bottom as that day's work is ticked off, so a finished week is seven full
- * columns.
- */
-function WeekChart({ days, now }: { days: DayLoad[]; now: Date }) {
-  const most = Math.max(...days.map((d) => d.minutes), 1);
-  const items = days.reduce((n, d) => n + d.items, 0);
-  const done = days.reduce((n, d) => n + d.done, 0);
+function TaskLine({ row, view, onTick, onOpen }: { row: Row; view: View; onTick: (t: Task) => void; onOpen: () => void }) {
+  const { model, now } = useApp();
+  const { task, block, blocks } = row;
+  const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
+  const due = dueLabel(task.dueAt ? new Date(task.dueAt) : null, now);
+  const start = block ? new Date(block.start) : null;
+  const end = block ? new Date(block.end) : null;
+  // Planned: when it's planned, then when it's due. Otherwise: when it's due, then how long it takes.
+  const when = start && end ? `${view === "planned" ? "" : `${format(start, "EEE")} `}${clockRange(start, end)}` : null;
+  const late = due.late && !task.done;
+
   return (
-    <div className="ss-summary-card ss-week-chart">
-      <div className="ss-summary-copy">
-        <span>THIS WEEK</span>
-        <h2>
-          {done} of {items} done
-        </h2>
-        <p>Taller days have more work due. Each fills in as you finish it.</p>
-      </div>
-      <ol className="ss-week-bars" aria-label="Work due each day this week">
-        {days.map((d) => {
-          const label = format(d.date, "EEEE");
-          const summary = d.items
-            ? `${label}: ${d.done} of ${plural(d.items, "item")} done, about ${approxDuration(d.minutes).replace("~", "")} of work`
-            : `${label}: nothing due`;
-          return (
-            <li key={d.date.getTime()} tabIndex={0} aria-label={summary} data-today={isSameDay(d.date, now) || undefined}>
-              <span className="ss-week-plot">
-                <span className="ss-week-bar" style={{ height: `${d.minutes ? Math.max(6, (d.minutes / most) * 100) : 0}%` }} data-empty={!d.items || undefined}>
-                  <i style={{ height: `${d.minutes ? (d.doneMinutes / d.minutes) * 100 : 0}%` }} />
-                </span>
-              </span>
-              <b>{format(d.date, "EEEEE")}</b>
-              <span className="ss-week-tip" role="tooltip">
-                <strong>{format(d.date, "EEE, MMM d")}</strong>
-                {d.items ? `${d.done} of ${d.items} done · ${approxDuration(d.minutes)}` : "Nothing due"}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
+    <li className="ss-plan-row" data-done={task.done || undefined} style={{ viewTransitionName: vtName(task.id) } as React.CSSProperties}>
+      <button
+        className="ss-check"
+        role="checkbox"
+        aria-checked={task.done}
+        aria-label={task.done ? `Mark ${task.title} as not done` : `Complete ${task.title}`}
+        onClick={() => onTick(task)}
+      >
+        <SsIcon name="check" size={14} />
+      </button>
+      <button type="button" className="ss-plan-main" onClick={onOpen} aria-label={`${task.title}. Open details`}>
+        <strong>{task.title}</strong>
+        <span className="ss-plan-meta">
+          <span className="ss-plan-class">
+            {course ? <i style={{ background: course.color }} aria-hidden /> : null}
+            {course?.code ?? "Personal"}
+          </span>
+          <span className={late ? "ss-plan-late" : undefined}>{!task.dueAt ? "No due date" : late ? due.text : `Due ${due.text}`}</span>
+          {blocks > 1 ? <span>{plural(blocks, "time")} planned</span> : null}
+          {!block ? <span>{duration(task.estimate)}</span> : null}
+        </span>
+      </button>
+      {when ? <span className="ss-plan-when">{when}</span> : <span className="ss-plan-when ss-plan-when-none">Not planned</span>}
+    </li>
   );
 }

@@ -743,8 +743,7 @@
   border-color: var(--ss-accent);
   background: var(--ss-accent);
 }
-.ss-done h3,
-.ss-task-row.ss-done .ss-task-name strong {
+.ss-done h3 {
   text-decoration: line-through;
   color: #999994;
 }
@@ -2504,339 +2503,324 @@ section.ss-due-page {
   max-width: 600px;
   font-size: 15.5px;
 }
-.ss-summary {
-  margin: 36px 0 30px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: 14px;
-}
-.ss-summary-card {
-  min-height: 140px;
-  padding: 22px 24px;
+/*
+ * Tasks: the island, a floating bar of what to show (Planned, Not planned,
+ * Everything), which class, search and Done; then the plan, a day at a time.
+ */
+.ss-island {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  margin: 28px 0 22px;
+  padding: 8px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   border: 1px solid var(--ss-line);
-  border-radius: 14px;
-  background: var(--ss-surface);
-  box-shadow: 0 3px 12px rgba(30, 30, 27, 0.025);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--ss-surface) 88%, transparent);
+  box-shadow: 0 10px 30px rgba(20, 20, 18, 0.08), 0 1px 2px rgba(20, 20, 18, 0.05);
+  backdrop-filter: blur(10px);
 }
-.ss-ring {
-  position: relative;
-  width: 88px;
-  height: 88px;
-  flex: 0 0 auto;
+.ss-island-seg {
+  flex: none;
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--ss-chip);
 }
-.ss-ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-.ss-ring circle {
-  fill: none;
-  stroke-width: 6;
-}
-.ss-ring-track {
-  stroke: #ecece7;
-}
-:root[data-theme="dark"] .ss-ring-track {
-  stroke: #2e2e31;
-}
-.ss-ring-progress {
-  stroke: var(--ss-accent);
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.35s ease;
-}
-.ss-ring > strong {
-  position: absolute;
-  inset: 0;
+.ss-island-seg button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font: 700 22px "Manrope Variable", "Manrope", sans-serif;
-}
-.ss-ring small {
-  margin-left: 1px;
-  font-size: 11px;
-}
-.ss-summary-copy {
-  min-width: 0;
-}
-.ss-summary-copy > span {
-  color: var(--ss-faint);
-  font-size: 11px;
-  letter-spacing: 0.11em;
+  gap: 6px;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--ss-muted);
+  background: transparent;
+  font-size: 13.5px;
   font-weight: 700;
-}
-.ss-summary-copy h2 {
-  margin: 6px 0 3px;
-  font: 700 19px "Manrope Variable", "Manrope", sans-serif;
   white-space: nowrap;
 }
-.ss-summary-copy p {
-  margin: 0;
-  color: var(--ss-muted);
-  font-size: 13.5px;
+.ss-island-seg button:hover {
+  color: var(--ss-ink);
 }
-/*
- * The week at a glance. One column per day, as tall as the work due that day; the
- * grey track fills with the accent from the bottom as the work is done. Bars stay
- * thin (22px) with a rounded top and a square foot on one baseline.
- */
-.ss-week-chart {
-  align-items: stretch;
-  gap: 28px;
+.ss-island-seg button[aria-pressed="true"] {
+  color: var(--ss-ink);
+  background: var(--ss-surface);
+  box-shadow: 0 1px 3px rgba(20, 20, 18, 0.12);
 }
-.ss-week-chart .ss-summary-copy {
-  flex: 0 1 220px;
-  align-self: center;
-}
-.ss-week-bars {
-  flex: 1;
-  min-width: 0;
-  min-height: 120px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-}
-.ss-week-bars li {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  outline: none;
-}
-/* The plot: bars grow up from one baseline, above the day letters; the busiest day fills it. */
-.ss-week-plot {
-  align-self: stretch;
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  border-bottom: 1px solid var(--ss-line);
-}
-.ss-week-bar {
-  position: relative;
-  width: min(22px, 70%);
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  border-radius: 4px 4px 0 0;
-  background: var(--ss-track);
-  transition: height 0.35s ease;
-}
-.ss-week-bar i {
-  width: 100%;
+.ss-island-count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: var(--ss-on-dark);
   background: var(--ss-accent);
-  transition: height 0.35s ease;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
 }
-/* A day with nothing due: a short stub on the baseline, so the day still reads as counted. */
-.ss-week-bar[data-empty] {
-  height: 3px !important;
-  border-radius: 2px;
+.ss-island-divider {
+  flex: none;
+  width: 1px;
+  height: 26px;
   background: var(--ss-line);
 }
-.ss-week-bars b {
-  height: 15px;
-  color: var(--ss-faint);
-  font-size: 11.5px;
-  font-weight: 700;
-  line-height: 15px;
-}
-.ss-week-bars li[data-today] b {
-  color: var(--ss-accent);
-}
-.ss-week-tip {
-  position: absolute;
-  bottom: calc(100% - 14px);
-  left: 50%;
-  z-index: 5;
-  padding: 7px 10px;
-  display: none;
-  border-radius: 8px;
-  background: var(--ss-dark);
-  color: var(--ss-on-dark);
-  font-size: 12px;
-  white-space: nowrap;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.ss-week-tip strong {
-  display: block;
-  margin-bottom: 1px;
-  font-weight: 700;
-}
-.ss-week-bars li:hover .ss-week-tip,
-.ss-week-bars li:focus-visible .ss-week-tip {
-  display: block;
-}
-.ss-week-bars li:focus-visible .ss-week-bar {
-  box-shadow: 0 0 0 2px var(--ss-surface), 0 0 0 4px var(--ss-accent-ring);
-}
-.ss-filter-row {
+.ss-island-pills {
+  min-width: 0;
+  flex: 1;
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.ss-filter-row button {
-  padding: 8px 15px;
-  border: 1px solid var(--ss-line);
-  border-radius: 999px;
-  color: var(--ss-muted);
-  background: var(--ss-surface);
-  font-size: 13.5px;
-  font-weight: 600;
+.ss-island-pills::-webkit-scrollbar {
+  display: none;
 }
-.ss-filter-row button:hover {
-  color: var(--ss-ink);
-  border-color: var(--ss-line-2);
-}
-.ss-filter-row button[aria-pressed="true"] {
-  color: var(--ss-on-dark);
-  border-color: var(--ss-dark);
-  background: var(--ss-dark);
-}
-.ss-table {
-  border: 1px solid var(--ss-line);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--ss-surface);
-}
-.ss-table-head,
-.ss-task-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 0.9fr 0.7fr 0.7fr;
-  gap: 16px;
+.ss-island-pills button {
+  flex: none;
+  display: flex;
   align-items: center;
-}
-.ss-table-head {
-  padding: 13px 20px;
-  color: var(--ss-faint);
-  background: var(--ss-panel);
-  font-size: 11.5px;
-  letter-spacing: 0.09em;
-  font-weight: 700;
-}
-.ss-task-row {
-  width: 100%;
-  min-height: 66px;
-  padding: 0 20px;
-  border: 0;
-  border-top: 1px solid var(--ss-line-soft);
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   color: var(--ss-text-4);
   background: transparent;
-  font-size: 14.5px;
-  text-align: left;
-  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.ss-task-row:hover {
-  background: color-mix(in oklab, var(--ss-chip) 55%, transparent);
-}
-.ss-task-name {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--ss-dark);
-}
-:root[data-theme="dark"] .ss-task-name {
+.ss-island-pills button:hover {
+  background: var(--ss-chip);
   color: var(--ss-ink);
 }
-.ss-task-name strong {
-  min-width: 0;
-  font-weight: 700;
+.ss-island-pills button[aria-pressed="true"] {
+  color: var(--ss-accent);
+  border-color: var(--ss-accent-ring);
+  background: var(--ss-accent-soft);
 }
-.ss-area {
-  justify-self: start;
-  max-width: 100%;
-  padding: 4px 9px;
-  border-radius: 6px;
-  background: var(--ss-chip-2);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 13px;
+.ss-island-pills i,
+.ss-plan-class i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
 }
-.ss-priority {
-  justify-self: start;
-  font-size: 13px;
-  font-weight: 700;
-}
-.ss-priority.ss-high {
-  color: var(--ss-danger);
-}
-.ss-priority.ss-medium {
-  color: var(--ss-amber);
-}
-.ss-priority.ss-low {
-  color: var(--ss-muted);
-}
-.ss-task-tools {
-  margin-bottom: 14px;
+.ss-island-end {
+  flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
-.ss-search {
-  min-width: 260px;
-  max-width: 440px;
-  height: 46px;
-  padding: 0 14px;
+.ss-island-search {
+  width: 170px;
+  height: 36px;
+  padding: 0 11px;
   display: flex;
-  flex: 1;
   align-items: center;
-  gap: 9px;
-  border: 1px solid var(--ss-line);
+  gap: 7px;
   border-radius: 10px;
   color: var(--ss-faint);
-  background: var(--ss-surface);
+  background: var(--ss-chip);
 }
-.ss-search:focus-within {
-  border-color: var(--ss-accent);
-  box-shadow: 0 0 0 3px var(--ss-accent-soft);
+.ss-island-search:focus-within {
+  box-shadow: 0 0 0 2px var(--ss-accent-ring);
 }
-.ss-search input {
+.ss-island-search input {
   width: 100%;
-  border: 0;
-  outline: 0;
-  color: var(--ss-text);
-  background: transparent;
-  font-size: 15px;
-}
-.ss-sort {
-  height: 46px;
-  padding-left: 13px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  border: 1px solid var(--ss-line);
-  border-radius: 10px;
-  color: var(--ss-faint);
-  background: var(--ss-surface);
-  font-size: 13px;
-}
-.ss-sort select {
-  height: 100%;
-  padding: 0 30px 0 0;
+  min-width: 0;
   border: 0;
   outline: 0;
   color: var(--ss-text);
   background: transparent;
   font-size: 14px;
+}
+.ss-island-toggle {
+  height: 36px;
+  padding: 0 10px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ss-text-4);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+.ss-island-toggle:hover {
+  background: var(--ss-chip);
+}
+.ss-island-switch {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--ss-track);
+  transition: background 0.15s ease;
+}
+.ss-island-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease;
+}
+.ss-island-toggle[aria-checked="true"] .ss-island-switch {
+  background: var(--ss-accent);
+}
+.ss-island-toggle[aria-checked="true"] .ss-island-switch::after {
+  transform: translateX(12px);
+}
+
+.ss-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.ss-plan-group h2 {
+  margin: 0 0 8px 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--ss-ink);
+  font: 700 17px "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.02em;
+}
+.ss-plan-group h2 span {
+  color: var(--ss-faint);
+  font: 500 13px "DM Sans Variable", "DM Sans", sans-serif;
+  letter-spacing: 0;
+}
+.ss-plan-group[data-missed] h2 {
+  color: var(--ss-danger);
+}
+.ss-plan-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--ss-line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--ss-surface);
+}
+.ss-plan-row {
+  min-height: 62px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--ss-line-soft);
+  background: var(--ss-surface);
+}
+.ss-plan-row:first-child {
+  border-top: 0;
+}
+.ss-plan-row:hover {
+  background: color-mix(in oklab, var(--ss-chip) 55%, var(--ss-surface));
+}
+.ss-plan-row .ss-check {
+  flex: none;
+}
+.ss-plan-main {
+  min-width: 0;
+  flex: 1;
+  padding: 11px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 0;
+  color: var(--ss-ink);
+  background: transparent;
+  text-align: left;
+}
+.ss-plan-main strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ss-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  color: var(--ss-muted);
+  font-size: 12.5px;
+}
+.ss-plan-class {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ss-text-4);
   font-weight: 600;
 }
-.ss-table-empty {
-  padding: 36px 20px;
-  border-top: 1px solid var(--ss-line-soft);
+.ss-plan-late {
+  color: var(--ss-danger);
+  font-weight: 700;
+}
+.ss-plan-when {
+  flex: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  color: var(--ss-ink);
+  background: var(--ss-chip);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ss-plan-when-none {
+  color: var(--ss-faint);
+  background: transparent;
+  font-weight: 600;
+}
+.ss-plan-row[data-done] .ss-plan-main strong {
+  color: var(--ss-faint);
+  text-decoration: line-through;
+}
+.ss-plan-row[data-done] .ss-plan-when,
+.ss-plan-row[data-done] .ss-plan-meta {
+  opacity: 0.6;
+}
+.ss-plan-done h2 {
   color: var(--ss-muted);
-  font-size: 14.5px;
+}
+.ss-plan-empty {
+  padding: 40px 20px;
+  border: 1px dashed var(--ss-line-2);
+  border-radius: 14px;
+  color: var(--ss-muted);
   text-align: center;
+}
+.ss-plan-empty strong {
+  display: block;
+  color: var(--ss-ink);
+  font-size: 16px;
+}
+.ss-plan-empty p {
+  margin: 6px auto 0;
+  max-width: 440px;
+  font-size: 14px;
+}
+.ss-plan-empty-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* A ticked-off task slides down to Done. */
+::view-transition-group(*) {
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
 /* --------------------------------------------------------------- modal */
@@ -3221,90 +3205,42 @@ section.ss-due-page {
     min-height: 48px;
     justify-content: center;
   }
-  .ss-summary {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+  .ss-island {
+    top: 8px;
+    margin: 20px 0 18px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
-  .ss-summary-card {
-    min-height: 120px;
-    padding: 16px;
+  .ss-island-seg {
+    flex: 1;
   }
-  .ss-completion,
-  .ss-week-chart {
-    grid-column: 1 / -1;
+  .ss-island-seg button {
+    flex: 1;
+    justify-content: center;
+    padding: 7px 6px;
   }
-  /* Phones: the words above the columns, which get the card's full width. */
-  .ss-week-chart {
-    flex-direction: column;
-    gap: 14px;
-  }
-  .ss-week-chart .ss-summary-copy {
-    flex: none;
-    align-self: stretch;
-  }
-  .ss-ring {
-    width: 76px;
-    height: 76px;
-  }
-  .ss-summary-copy h2 {
-    font-size: 17px;
-  }
-  .ss-filter-row {
-    gap: 7px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-  }
-  .ss-filter-row::-webkit-scrollbar {
+  .ss-island-divider {
     display: none;
   }
-  .ss-filter-row button {
-    min-height: 38px;
-    flex: 0 0 auto;
+  .ss-island-pills {
+    order: 3;
+    flex-basis: 100%;
   }
-  .ss-task-tools {
-    align-items: stretch;
-    flex-direction: column;
+  .ss-island-end {
+    flex: 1 1 100%;
+    order: 2;
   }
-  .ss-search {
-    width: 100%;
-    max-width: none;
-    min-width: 0;
+  .ss-island-search {
+    flex: 1;
+    width: auto;
   }
-  .ss-sort {
-    justify-content: space-between;
+  .ss-plan-row {
+    padding: 0 12px;
+    gap: 12px;
   }
-  .ss-table {
-    border-radius: 12px;
-  }
-  .ss-table-head {
-    display: none;
-  }
-  .ss-task-row {
-    min-height: 80px;
-    grid-template-columns: 1fr auto;
-    gap: 8px 10px;
-    padding: 14px 16px;
-  }
-  .ss-task-name {
-    grid-column: 1 / -1;
-  }
-  .ss-task-name strong {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .ss-task-row > span:nth-of-type(n + 3) {
-    display: none;
-  }
-  .ss-area {
-    font-size: 12.5px;
-  }
-  .ss-task-row > span:nth-of-type(2) {
-    justify-self: end;
-    color: var(--ss-muted);
-    font-size: 13px;
+  .ss-plan-when {
+    padding: 4px 8px;
+    font-size: 12px;
   }
 }
 
@@ -3387,25 +3323,6 @@ section.ss-due-page {
   .ss-tasks-header p {
     font-size: 14px;
   }
-  .ss-summary {
-    margin: 26px 0 22px;
-  }
-  .ss-summary-card {
-    padding: 14px;
-  }
-  .ss-completion {
-    gap: 14px;
-  }
-  .ss-summary-copy h2 {
-    font-size: 15.5px;
-  }
-  .ss-summary-copy p {
-    font-size: 12.5px;
-  }
-  .ss-filter-row {
-    margin-right: -14px;
-    padding-right: 14px;
-  }
   .ss-backdrop {
     padding: 10px;
     align-items: end;
@@ -3435,15 +3352,6 @@ section.ss-due-page {
     display: block;
     width: 19px;
     height: 19px;
-  }
-  .ss-summary {
-    grid-template-columns: 1fr;
-  }
-  .ss-completion {
-    grid-column: auto;
-  }
-  .ss-summary-card {
-    min-height: 100px;
   }
 }
 
