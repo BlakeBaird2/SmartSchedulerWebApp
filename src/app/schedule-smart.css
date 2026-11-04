@@ -1048,6 +1048,8 @@ button.ss-key:hover {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--ss-line-2) transparent;
+  /* Two fingers pinch the hours (pinchZoom.ts) rather than zooming the page. */
+  touch-action: pan-x pan-y;
 }
 .ss-week-body {
   display: grid;
@@ -3083,10 +3085,11 @@ section.ss-due-page {
   .ss-controls .ss-today-mini {
     display: grid;
   }
-  /* Sideways moves belong to the day swipe (daySwipe.ts); up and down still scroll. */
+  /* Sideways moves belong to the day swipe (daySwipe.ts) and two-finger pinches to
+     the hours' zoom (pinchZoom.ts); up and down still scroll. */
   .ss-week-row,
   .ss-week-scroll {
-    touch-action: pan-y pinch-zoom;
+    touch-action: pan-y;
   }
   .ss-controls select {
     width: 78px;

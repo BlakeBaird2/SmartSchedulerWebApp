@@ -34,6 +34,8 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
     if (!el || !enabled) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    /** Stops the swipe in progress, when a second finger turns it into a pinch (pinchZoom.ts). */
+    let cancel: (() => void) | null = null;
 
     const set = (px: number, ms: number) => {
       el.style.setProperty("--ss-swipe", `${px}px`);
@@ -46,7 +48,11 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
     };
 
     const onDown = (e: PointerEvent) => {
-      if (e.pointerType === "mouse" || !e.isPrimary || timer) return;
+      if (e.pointerType !== "mouse" && !e.isPrimary) {
+        cancel?.();
+        return;
+      }
+      if (e.pointerType === "mouse" || timer) return;
       const id = e.pointerId;
       const x0 = e.clientX;
       const y0 = e.clientY;
@@ -57,6 +63,7 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
       let speed = 0;
 
       const done = () => {
+        cancel = null;
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("pointercancel", onCancel);
@@ -138,6 +145,12 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onCancel);
+      cancel = () => {
+        const was = state;
+        state = "off";
+        done();
+        if (was === "swiping") back();
+      };
     };
 
     el.addEventListener("pointerdown", onDown);

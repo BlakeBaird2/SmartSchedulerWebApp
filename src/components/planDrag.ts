@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { MIN_BLOCK_MINUTES, snapMinutes } from "@/lib/blocks";
+import { pinching } from "./pinchZoom";
 
 /**
  * Dragging work onto the calendar, moving it, and resizing it: with a mouse, a
@@ -236,8 +237,13 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
     frame = requestAnimationFrame(tick);
   };
 
+  // A second finger before the long press completes makes it a pinch (pinchZoom.ts), not a drag.
+  const onOtherDown = (ev: PointerEvent) => {
+    if (ev.pointerId !== pointerId && !active) finish(false);
+  };
   const finish = (drop: boolean) => {
     if (pressTimer) clearTimeout(pressTimer);
+    window.removeEventListener("pointerdown", onOtherDown, true);
     cancelAnimationFrame(frame);
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
@@ -298,7 +304,13 @@ export function beginPlanDrag(e: React.PointerEvent<HTMLElement>, payload: DragP
   window.addEventListener("pointercancel", onCancel);
   window.addEventListener("keydown", onKey);
   window.addEventListener("contextmenu", onContextMenu, true);
-  if (touch && !opts.immediate) pressTimer = setTimeout(activate, LONG_PRESS_MS);
+  if (touch && !opts.immediate) {
+    window.addEventListener("pointerdown", onOtherDown, true);
+    pressTimer = setTimeout(() => {
+      if (pinching()) finish(false);
+      else activate();
+    }, LONG_PRESS_MS);
+  }
 }
 
 /** The time a drop target starts, as a date. */
