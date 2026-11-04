@@ -101,18 +101,8 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
         lastT = ev.timeStamp;
         set(dx, 0);
       };
-      const onUp = (ev: PointerEvent) => {
-        if (ev.pointerId !== id) return;
-        done();
-        if (state !== "swiping") return;
-        // The lift that ends a swipe isn't a tap on whatever it ended over.
-        const swallow = (c: MouseEvent) => {
-          c.stopPropagation();
-          c.preventDefault();
-        };
-        window.addEventListener("click", swallow, { capture: true, once: true });
-        setTimeout(() => window.removeEventListener("click", swallow, true), 50);
-
+      /** The finger lifted, or the browser took the touch away: turn the page if the swipe went far or fast enough. */
+      const release = () => {
         const width = el.clientWidth || 1;
         const far = Math.abs(dx) > width * TURN_SHARE;
         const flick = Math.abs(speed) > FLICK_PX_PER_MS && Math.sign(speed) === Math.sign(dx);
@@ -137,10 +127,25 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
           }, IN_MS);
         }, OUT_MS);
       };
+      const onUp = (ev: PointerEvent) => {
+        if (ev.pointerId !== id) return;
+        done();
+        if (state !== "swiping") return;
+        // The lift that ends a swipe isn't a tap on whatever it ended over.
+        const swallow = (c: MouseEvent) => {
+          c.stopPropagation();
+          c.preventDefault();
+        };
+        window.addEventListener("click", swallow, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener("click", swallow, true), 50);
+        release();
+      };
+      // A browser can still take a touch over partway (Safari does for some
+      // gestures). A swipe that had already gone far enough still turns the page.
       const onCancel = (ev: PointerEvent) => {
         if (ev.pointerId !== id) return;
         done();
-        if (state === "swiping") back();
+        if (state === "swiping") release();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);

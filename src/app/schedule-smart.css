@@ -1044,6 +1044,12 @@ button.ss-key:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /*
+   * Never sideways. A swipe to the previous days moves the columns right, past
+   * the edge; if that could scroll, Safari on iPhone takes the gesture over as a
+   * sideways scroll and cancels the swipe, so it snaps back (daySwipe.ts).
+   */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
