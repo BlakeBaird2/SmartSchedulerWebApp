@@ -17,7 +17,7 @@ export function EventLog() {
   }, []);
   if (log.length === 0) return <p className="text-sm text-muted">No events yet in this tab. Finish a task or add one and it shows up here.</p>;
   return (
-    <ol className="max-h-56 overflow-y-auto scrollbar-thin space-y-1 text-xs font-mono">
+    <ol className="max-h-56 overflow-y-auto space-y-1 text-xs font-mono">
       {log.map((e, i) => (
         <li key={`${e.at}-${i}`} className="flex gap-2">
           <span className="text-muted tabular-nums shrink-0">{format(new Date(e.at), "h:mm:ss a")}</span>

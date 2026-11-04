@@ -1038,7 +1038,6 @@ button.ss-key:hover {
   overflow: hidden;
   /* The same room as the hours' scroll bar below, so the columns line up. */
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
 }
 .ss-week-scroll {
   flex: 1;
@@ -1052,8 +1051,6 @@ button.ss-key:hover {
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--ss-line-2) transparent;
   /* Two fingers pinch the hours (pinchZoom.ts) rather than zooming the page. */
   touch-action: pan-x pan-y;
 }
@@ -1481,7 +1478,6 @@ button.ss-day-head:hover {
   border-bottom: 1px solid var(--ss-line);
   background: var(--ss-panel);
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
   overflow: hidden;
 }
 .ss-month-weekdays span {
@@ -1500,7 +1496,6 @@ button.ss-day-head:hover {
   grid-auto-rows: minmax(118px, 1fr);
   overflow-y: auto;
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
 }
 .ss-month-cell {
   min-width: 0;
@@ -2245,7 +2240,6 @@ section.ss-due-page {
   gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
   padding: 2px 2px 6px;
 }
 .ss-due-col {
@@ -2513,6 +2507,17 @@ section.ss-due-page {
   max-width: 600px;
   font-size: 15.5px;
 }
+/* All three tabs' headings in one spot, only the current one seen (TasksPage.tsx). */
+.ss-tasks-intro {
+  display: grid;
+}
+.ss-tasks-intro > div {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+.ss-tasks-intro > div[data-current] {
+  visibility: visible;
+}
 /*
  * Tasks: the island, a floating bar of what to show (Planned, Not planned,
  * Everything), which class, search and Done; then the plan, a day at a time.
@@ -2766,6 +2771,11 @@ section.ss-due-page {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  /*
+   * At least a screen tall, so a shorter tab doesn't pull the page back down
+   * when you've scrolled: the island stays where it is, pinned at the top.
+   */
+  min-height: calc(100dvh - 160px);
 }
 .ss-plan-group h2 {
   margin: 0 0 8px 4px;
