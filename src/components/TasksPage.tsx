@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { flushSync } from "react-dom";
 import { differenceInCalendarDays, format, startOfDay } from "date-fns";
 import { byUrgency, classRank, isSchoolWork } from "@/lib/todos";
@@ -50,7 +51,8 @@ function dayTitle(d: Date, now: Date): string {
 export function TasksPage() {
   const { model, ws, now, openAddTask, select, toggleDone, setView: goTo } = useApp();
   const [view, setView] = useState<View>("planned");
-  const [area, setArea] = useState<string>("all");
+  // Which classes show: null is all of them, otherwise the ids picked ("personal" for work that isn't a class's).
+  const [shownAreas, setShownAreas] = useState<string[] | null>(null);
   const [search, setSearch] = useState("");
   const [showDone, setShowDone] = useState(true);
   const nowMs = now.getTime();
@@ -86,7 +88,7 @@ export function TasksPage() {
   const shown = rows.filter(({ task, block }) => {
     if (view === "planned" && !block) return false;
     if (view === "unplanned" && block) return false;
-    if (area === "personal" ? isSchoolWork(task) : area !== "all" && task.courseId !== area) return false;
+    if (shownAreas && !shownAreas.includes(isSchoolWork(task) && task.courseId ? task.courseId : "personal")) return false;
     if (q && !`${task.title} ${code(task) ?? "Personal"}`.toLowerCase().includes(q)) return false;
     return true;
   });
@@ -128,8 +130,7 @@ export function TasksPage() {
   const plannedCount = rows.filter((r) => r.block && !r.task.done).length;
   const unplannedCount = rows.filter((r) => !r.block && !r.task.done).length;
   const areas = [
-    { id: "all", label: "All", color: null as string | null },
-    ...model.visibleCourses.map((c) => ({ id: c.id, label: c.code, color: c.color })),
+    ...model.visibleCourses.map((c) => ({ id: c.id, label: c.code, color: c.color as string | null })),
     { id: "personal", label: "Personal", color: null },
   ];
 
@@ -169,14 +170,7 @@ export function TasksPage() {
           ))}
         </div>
         <span className="ss-island-divider" aria-hidden />
-        <div className="ss-island-pills" role="group" aria-label="Class">
-          {areas.map((a) => (
-            <button key={a.id} type="button" aria-pressed={area === a.id} onClick={() => setArea(a.id)}>
-              {a.color ? <i style={{ background: a.color }} aria-hidden /> : null}
-              {a.label}
-            </button>
-          ))}
-        </div>
+        <ClassFilter areas={areas} shown={shownAreas} onChange={setShownAreas} />
         <div className="ss-island-end">
           <label className="ss-island-search">
             <SsIcon name="search" size={16} />
@@ -192,7 +186,7 @@ export function TasksPage() {
       <div className="ss-plan-list">
         {open.length === 0 ? (
           <div className="ss-plan-empty">
-            {q || area !== "all" ? (
+            {q || shownAreas ? (
               <p>Nothing here matches.</p>
             ) : view === "planned" ? (
               <>
@@ -249,6 +243,85 @@ export function TasksPage() {
         ) : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * Which classes the list shows, as a dropdown: "All classes" until some are
+ * picked, then their names (or how many). Each class, and Personal, has a tick
+ * box: tick the ones to see. "All classes" at the top shows everything again.
+ */
+function ClassFilter({
+  areas,
+  shown,
+  onChange,
+}: {
+  areas: { id: string; label: string; color: string | null }[];
+  shown: string[] | null;
+  onChange: (ids: string[] | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+
+  const picked = shown ? areas.filter((a) => shown.includes(a.id)) : [];
+  const label = !shown ? "All classes" : picked.length === 1 ? picked[0].label : picked.length === 2 ? `${picked[0].label}, ${picked[1].label}` : `${picked.length} classes`;
+  // From All, ticking a class shows just that one; ticking more adds them. Unticking the last, or ticking every one, is All again.
+  const toggle = (id: string) => {
+    const now = shown ?? [];
+    const next = now.includes(id) ? now.filter((x) => x !== id) : [...now, id];
+    onChange(next.length === 0 || next.length === areas.length ? null : next);
+  };
+
+  return (
+    <div className="ss-filter" ref={box}>
+      <button type="button" className="ss-filter-button" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen((o) => !o)} data-active={shown ? true : undefined}>
+        <span className="ss-filter-dots" aria-hidden>
+          {(shown ? picked : areas)
+            .filter((a) => a.color)
+            .slice(0, 3)
+            .map((a) => (
+              <i key={a.id} style={{ background: a.color! }} />
+            ))}
+        </span>
+        <span className="ss-filter-label">{label}</span>
+        <ChevronDown size={16} aria-hidden className="ss-filter-chevron" />
+      </button>
+      {open ? (
+        <div className="ss-filter-menu" role="group" aria-label="Classes to show">
+          <button type="button" role="menuitemcheckbox" aria-checked={!shown} onClick={() => onChange(null)} className="ss-filter-all">
+            <span className="ss-filter-tick">{!shown ? <Check size={13} strokeWidth={3} /> : null}</span>
+            All classes
+          </button>
+          <hr />
+          {areas.map((a) => {
+            const on = Boolean(shown?.includes(a.id));
+            return (
+              <button key={a.id} type="button" role="menuitemcheckbox" aria-checked={on} onClick={() => toggle(a.id)}>
+                <span className="ss-filter-tick" style={a.color ? ({ "--tick": a.color } as React.CSSProperties) : undefined}>
+                  {on ? <Check size={13} strokeWidth={3} /> : null}
+                </span>
+                {a.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
