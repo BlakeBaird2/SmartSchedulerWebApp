@@ -3582,34 +3582,33 @@ section.ss-due-page {
 }
 
 /*
- * "Too many places to check?": the calendars in an arch, lines flowing from each
- * into one blue point that leads on to the laptop and phone (CalendarFunnel.tsx).
- * The art is 800 × 370; the tiles and hub sit on it by percentage.
+ * "Too many places to check?": hand-drawn calendar icons in a low arch, and
+ * hand-drawn arrows curving down from each into the laptop and phone, which
+ * follow straight on (CalendarFunnel.tsx). The art is 1000 × 330, as wide as the
+ * devices, so the arrows land on the laptop; the icons sit on it by percentage.
  */
 .ss-funnel {
-  margin: 8px auto 36px;
-  max-width: 860px;
+  margin: 8px auto 0;
   text-align: center;
 }
-.ss-funnel > h2 {
+.ss-funnel h2 {
   margin: 0;
   font: 800 clamp(24px, 4.4vw + 8px, 40px)/1.1 "Manrope Variable", "Manrope", sans-serif;
   letter-spacing: -0.04em;
 }
-.ss-funnel > p {
-  max-width: 560px;
+.ss-funnel > p,
+.ss-funnel-payoff p {
+  max-width: 580px;
   margin: 10px auto 0;
   color: var(--ss-muted);
   font-size: 16px;
   line-height: 1.55;
 }
 .ss-funnel-art {
-  /* How big each app tile is: 76px on a computer, smaller on a phone. */
-  --tile: clamp(36px, 9.5vw + 6px, 76px);
   position: relative;
-  margin: 26px auto 0;
-  max-width: 800px;
-  aspect-ratio: 800 / 370;
+  max-width: 1000px;
+  margin: 18px auto 0;
+  aspect-ratio: 1000 / 330;
 }
 .ss-funnel-art > svg {
   position: absolute;
@@ -3618,147 +3617,85 @@ section.ss-due-page {
   height: 100%;
   overflow: visible;
 }
-.ss-funnel-arch {
+.ss-funnel-arrow path {
   fill: none;
-  stroke: var(--ss-line);
-  stroke-width: 1.5;
-  stroke-dasharray: 3 7;
+  stroke: var(--ss-ink);
+  stroke-width: 3;
   stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
-.ss-funnel-line {
-  fill: none;
-  stroke-width: 2.5;
-  opacity: 0.22;
-}
-/* Dots running down each line into the hub. */
-.ss-funnel-dots {
-  fill: none;
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  stroke-dasharray: 0.1 14;
-  animation: ss-funnel-flow 1.1s linear infinite;
-}
-@keyframes ss-funnel-flow {
-  to {
-    stroke-dashoffset: -14.1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-funnel-dots {
-    animation: none;
-  }
-}
-.ss-funnel-source {
-  position: absolute;
-  width: 0;
-  height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-/* An app icon: a white rounded square, the same in light and dark. */
-.ss-funnel-tile {
-  flex: none;
-  width: var(--tile);
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(20, 20, 18, 0.08);
-  border-radius: 24%;
-  background: #fff;
-  box-shadow:
-    0 1px 2px rgba(20, 20, 18, 0.08),
-    0 12px 28px -12px rgba(20, 20, 18, 0.35);
-  transform: translateY(-50%);
-}
-.ss-funnel-mark {
-  width: 56%;
-  height: 56%;
-}
-.ss-funnel-monogram {
-  width: 64%;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border-radius: 22%;
-  color: #fff;
-  font: 800 clamp(13px, 2.4vw, 20px) / 1 "Manrope Variable", "Manrope", sans-serif;
-  letter-spacing: -0.02em;
-}
-/* Apple's kind of calendar page: the weekday in red over the date. */
-.ss-funnel-page {
-  display: grid;
-  justify-items: center;
-  color: #1d1d1f;
-  line-height: 1;
-}
-.ss-funnel-page b {
-  color: #ff3b30;
-  font-size: clamp(7px, 1.25vw, 11px);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.ss-funnel-page span {
-  margin-top: 2px;
-  font: 300 clamp(20px, 3.8vw, 34px) / 1 var(--font-sans);
-  letter-spacing: -0.04em;
-}
-.ss-funnel-name {
-  margin-top: calc(var(--tile) * -0.5 + 8px);
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--ss-paper);
-  color: var(--ss-text);
-  font-size: clamp(10px, 1.6vw + 4px, 13px);
-  font-weight: 650;
-  white-space: nowrap;
-}
-.ss-funnel-hub {
-  position: absolute;
-  width: clamp(46px, 8vw, 64px);
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--ss-on-brand);
-  background: var(--ss-brand);
-  box-shadow:
-    0 0 0 8px color-mix(in oklab, var(--ss-brand) 14%, transparent),
-    0 0 0 18px color-mix(in oklab, var(--ss-brand) 7%, transparent),
-    0 14px 30px -10px color-mix(in oklab, var(--ss-brand) 70%, transparent);
-  transform: translate(-50%, -50%);
-}
-/* On a phone the names go on two short lines, so neighbours don't run into each other. */
 @media (max-width: 560px) {
-  .ss-funnel-name {
-    width: min-content;
-    min-width: 0;
-    padding: 2px 5px;
-    border-radius: 6px;
-    line-height: 1.15;
-    text-align: center;
-    white-space: normal;
+  .ss-funnel-arrow path {
+    stroke-width: 2;
   }
 }
-/* From the hub on down to the words and the laptop: a short line ending in an arrowhead. */
-.ss-funnel-arrow {
-  position: relative;
-  display: block;
-  width: 2px;
-  height: 46px;
-  margin: 26px auto 22px;
-  background: linear-gradient(color-mix(in oklab, var(--ss-brand) 15%, transparent), var(--ss-brand));
-}
-.ss-funnel-arrow::after {
-  content: "";
+.ss-funnel-icon {
   position: absolute;
-  left: 50%;
-  bottom: -2px;
-  width: 11px;
-  height: 11px;
-  border-right: 2px solid var(--ss-brand);
-  border-bottom: 2px solid var(--ss-brand);
-  transform: translateX(-50%) rotate(45deg);
+  width: 17%;
+  height: auto;
+  translate: -50% -50%;
+  filter: drop-shadow(0 10px 16px rgba(20, 20, 18, 0.14));
+  user-select: none;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .ss-funnel-icon {
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+}
+/* As the section scrolls into view: the icons settle in and each arrow draws itself down to the laptop. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .ss-funnel-arrow > path:first-child {
+      stroke-dasharray: 1;
+      animation: ss-funnel-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 45%;
+    }
+    .ss-funnel-head {
+      animation: ss-funnel-show linear both;
+      animation-timeline: view();
+      animation-range: cover 40% cover 47%;
+    }
+    .ss-funnel-icon {
+      animation: ss-funnel-settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}
+@keyframes ss-funnel-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ss-funnel-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ss-funnel-settle {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+/* The screens inside keep their own alignment. */
+.ss-funnel .ss-devices-stage {
+  text-align: left;
+}
+/* After the laptop and phone: the answer. */
+.ss-funnel-payoff {
+  margin: 40px auto 0;
 }
 
 /*

@@ -49,9 +49,9 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
           <p className="ss-home-note">{SYNCABLE ? "Free · No account needed · Sign in to sync your phone and laptop" : "Free · No account · Saved only in your browser"}</p>
         </section>
 
-        <CalendarFunnel />
-
-        <Preview />
+        <CalendarFunnel>
+          <Preview />
+        </CalendarFunnel>
 
         <ol className="ss-home-steps">
           <Step icon="calendar" title="Paste your calendar links">
