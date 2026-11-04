@@ -104,6 +104,10 @@ prefix on every class.
   - Phones: the planner and one day side by side, or three days with the planner
     closed. Swipe left or right for the next or previous days, and tap the small
     calendar with today's date to come back to today.
+    Pinch with two fingers, as in Google Calendar's app: spread them to make
+    the hours (and every event) taller, or bring them together to shrink the
+    hours until the whole day fits. The time between your fingers stays under
+    them, and the size is remembered on that device (`prio:cal-zoom`).
 - **Tasks** — your plan as a checklist. It lists what you've put on your
   calendar, in the order you'll do it, a day at a time (time that passed
   without it being ticked off shows first, as **Missed**). Tick something off

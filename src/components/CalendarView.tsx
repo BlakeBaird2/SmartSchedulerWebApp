@@ -23,6 +23,7 @@ import type { CalEvent, FeedConfig, ScheduledBlock, Task } from "@/lib/types";
 import { clock, dayKey } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
 import { useDaySwipe } from "./daySwipe";
+import { readHourPx, usePinchZoom } from "./pinchZoom";
 import { DragGhost } from "./DragGhost";
 import { PlannerPanel } from "./PlannerPanel";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
@@ -264,6 +265,10 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
     onSwipe?.(dir);
   });
   const [frame, setFrame] = useState({ height: 0, phone: false });
+  // How tall an hour is after pinching it (pinchZoom.ts); until then, the default.
+  const [pinchedHourPx, setPinchedHourPx] = useState<number | null>(readHourPx);
+  // Where the pinch is, so the time under the fingers stays there as the hours resize.
+  const pinchAnchor = useRef<{ minute: number; clientY: number } | null>(null);
 
   // The hours scroll inside the frame. Each is at least HOUR_PX tall, and they
   // stretch to fill the frame when the whole day fits.
@@ -314,7 +319,27 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   endHour = Math.min(24, Math.max(endHour, startHour + 1));
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
   const height = frame.height;
-  const ppm = Math.max((frame.phone ? HOUR_PX_PHONE : HOUR_PX) / 60, height > 0 ? height / (hours.length * 60) : 0);
+  // Hours fill the frame when the whole day fits; pinching makes them taller, down to that.
+  const fitPpm = height > 0 ? height / (hours.length * 60) : 0;
+  const ppm = Math.max((pinchedHourPx ?? (frame.phone ? HOUR_PX_PHONE : HOUR_PX)) / 60, fitPpm);
+  usePinchZoom(scroller, {
+    hourPx: () => ppm * 60,
+    minHourPx: () => fitPpm * 60,
+    zoom: (hourPx, anchor) => {
+      pinchAnchor.current = anchor;
+      setPinchedHourPx(hourPx);
+    },
+  });
+  // After a pinch redraws the hours, scroll so the pinched time is back under the fingers.
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    const a = pinchAnchor.current;
+    if (!el || !a) return;
+    pinchAnchor.current = null;
+    const col = el.querySelector(".ss-day-column") as HTMLElement | null;
+    if (!col) return;
+    el.scrollTop += col.getBoundingClientRect().top + a.minute * ppm - a.clientY;
+  }, [ppm]);
   const bodyHeight = hours.length * 60 * ppm;
   const y = (ms: number, from: number) => ((ms - from) / MIN - startHour * 60) * ppm;
 
