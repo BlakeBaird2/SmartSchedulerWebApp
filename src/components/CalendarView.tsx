@@ -26,7 +26,7 @@ import { useDaySwipe } from "./daySwipe";
 import { readHourPx, usePinchZoom } from "./pinchZoom";
 import { DragGhost } from "./DragGhost";
 import { PlannerPanel } from "./PlannerPanel";
-import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
+import { beginPlanDrag, dragSourceRef, RESIZE_HOLD_MS, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
 const WEEK = { weekStartsOn: 1 } as const;
@@ -678,7 +678,9 @@ function GridEvent({
             (target) => {
               if (target.kind === "grid") resizeEvent(e.id, new Date(targetStart(target).getTime() + (target.endMinute - target.startMinute) * MIN));
             },
-            { immediate: true },
+            // With a mouse the edge resizes at once. A finger has to hold it a moment first,
+            // so a swipe or scroll that starts on the edge never catches it.
+            { immediate: ev.pointerType === "mouse", holdMs: RESIZE_HOLD_MS },
           );
         }}
       />
@@ -867,7 +869,7 @@ function PlannedBlock({
             (target) => {
               if (target.kind === "grid") resizeScheduled(cal.id, new Date(targetStart(target).getTime() + (target.endMinute - target.startMinute) * MIN));
             },
-            { immediate: true },
+            { immediate: e.pointerType === "mouse", holdMs: RESIZE_HOLD_MS },
           );
         }}
       />
