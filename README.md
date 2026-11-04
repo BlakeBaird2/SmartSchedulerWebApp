@@ -18,14 +18,13 @@ needs no environment variables at all.
 
 - **`/`** — the home page for newcomers, in the app's design: one line on what
   SmartScheduler does, **Get started** and **Try it with sample data**, then "Too many places to
-  check?": Canvas, Learning Suite, Google Calendar and Apple Calendar in an arch,
-  their lines flowing into one point that leads to "Take control. Plan with
-  confidence." (the Canvas and Google Calendar marks are from Simple Icons, CC0),
-  then a still
+  check?": hand-drawn Google Calendar, Canvas, Apple Calendar and Learning Suite
+  icons (`public/landing/`) in an arch, with hand-drawn arrows curving down from
+  each into a still
   of the calendar page shown on a drawn laptop, with an iPhone beside it showing
   the phone layout (so it's plainly a picture, not something to click; both
   keep their layouts, scaled down, on a phone),
-  and three steps. Where to find each calendar link is
+  then "Take control. Plan with confidence." and three steps. Where to find each calendar link is
   explained during setup. It is rendered on the server, so it shows up at once
   and search engines can read it. Anyone who already has calendars in their browser skips it and goes
   straight to their plan.
