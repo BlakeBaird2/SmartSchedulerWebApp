@@ -85,8 +85,9 @@ function Step({ icon, title, children }: { icon: SsIconName; title: string; chil
 
 // ---------------------------------------------------------------------------
 // A still of the calendar page, drawn with the app's own pieces and shown on a
-// laptop, so it's plainly a picture of the website rather than something to
-// click. The caption points to the sample data for that.
+// laptop, with an iPhone beside it showing the phone layout, so it's plainly a
+// picture of the website rather than something to click. The caption points to
+// the sample data for that.
 // ---------------------------------------------------------------------------
 
 const PLANNER = [
@@ -122,40 +123,117 @@ const HOUR = 46;
 
 function Preview() {
   return (
-    <figure className="ss-laptop">
-      <div className="ss-laptop-lid">
-        <span className="ss-laptop-camera" aria-hidden />
-        <div
-          className="ss-laptop-screen"
-          role="img"
-          aria-label="Schedule Smart on a laptop: a week of classes, work and the gym, with tasks dragged into the free time between them."
-        >
-          <div className="ss-laptop-canvas" aria-hidden>
-            <div className="ss-laptop-appbar">
-              <span>Schedule Smart</span>
-              <nav>
-                <b>
-                  <SsIcon name="calendar" size={12} /> Calendar
-                </b>
-                <span>
-                  <SsIcon name="list" size={12} /> Tasks
-                </span>
-              </nav>
-              <i>SS</i>
+    <figure className="ss-devices">
+      <div
+        className="ss-devices-stage"
+        role="img"
+        aria-label="Schedule Smart on a laptop and an iPhone: a week of classes, work and the gym, with tasks dragged into the free time between them."
+      >
+        <div className="ss-laptop" aria-hidden>
+          <div className="ss-laptop-lid">
+            <span className="ss-laptop-camera" />
+            <div className="ss-laptop-screen">
+              <div className="ss-laptop-canvas">
+                <AppBar />
+                <Still />
+              </div>
             </div>
-            <Still />
+          </div>
+          <div className="ss-laptop-base" />
+        </div>
+        <div className="ss-iphone" aria-hidden>
+          <div className="ss-iphone-screen">
+            <div className="ss-iphone-canvas">
+              <span className="ss-iphone-island" />
+              <div className="ss-iphone-status">
+                <b>9:41</b>
+                <span>
+                  <i className="ss-iphone-signal" />
+                  <i className="ss-iphone-battery" />
+                </span>
+              </div>
+              <AppBar />
+              <PhoneStill />
+              <span className="ss-iphone-home" />
+            </div>
           </div>
         </div>
       </div>
-      <div className="ss-laptop-base" aria-hidden />
       <figcaption>
-        A preview of the app.{" "}
+        A preview of the app on a computer and a phone.{" "}
         <a href="/app#demo" data-smart-event="sample_data_started">
           Try it with sample data
         </a>{" "}
         to click around.
       </figcaption>
     </figure>
+  );
+}
+
+/** The app's top bar, as on both screens. */
+function AppBar() {
+  return (
+    <div className="ss-laptop-appbar">
+      <span>Schedule Smart</span>
+      <nav>
+        <b>
+          <SsIcon name="calendar" size={12} /> Calendar
+        </b>
+        <span>
+          <SsIcon name="list" size={12} /> Tasks
+        </span>
+      </nav>
+      <i>SS</i>
+    </div>
+  );
+}
+
+/** The phone's hours: the same working day, taller, as the app shows it on a phone. */
+const PHONE_HOUR = 66;
+
+/** What's on the iPhone's screen: the planner beside today, as the app is on a phone. */
+function PhoneStill() {
+  const today = EVENTS.filter((e) => e.day === 2);
+  return (
+    <div className="ss-iphone-app">
+      <div className="ss-iphone-planner">
+        <span className="ss-eyebrow">
+          <SsIcon name="spark" size={12} /> PLANNER
+        </span>
+        <strong>Plan your open time</strong>
+        {PLANNER.map((t) => (
+          <div key={t.title} className="ss-iphone-task">
+            <h3>{t.title}</h3>
+            <p>{t.meta}</p>
+            <span className="ss-minutes">
+              <SsIcon name="clock" size={12} /> {t.minutes}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="ss-iphone-day">
+        <div className="ss-iphone-day-head">
+          WED <b>14</b>
+        </div>
+        <div className="ss-iphone-day-body" style={{ height: PHONE_HOUR * HOURS.length }}>
+          {HOURS.map((h, i) => (
+            <span key={h} className="ss-iphone-hour" style={{ top: i * PHONE_HOUR }}>
+              {h}
+            </span>
+          ))}
+          {today.map((e) => (
+            <div
+              key={e.title + e.at}
+              className={`ss-event ss-${e.kind}`}
+              style={{ top: e.at * PHONE_HOUR + 2, height: e.hours * PHONE_HOUR - 4, left: 40, right: 4 }}
+            >
+              <strong>{e.title}</strong>
+              <span>{e.time}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
