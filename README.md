@@ -118,8 +118,9 @@ prefix on every class.
   without it being ticked off shows first, as **Missed**). Tick something off
   and it slides down to **Done** at the bottom; untick it and it goes back.
   A floating bar at the top switches between **Planned**, **Not planned**
-  (work with no time yet, most urgent first) and **Everything**, narrows it to
-  one class, searches, and shows or hides what's done.
+  (work with no time yet, most urgent first) and **Everything**, has a
+  **classes** dropdown (All classes until you tick the ones to show), searches,
+  and shows or hides what's done.
 - **Due dates** — off for now (not in the navigation; `src/components/DueDatesPage.tsx`
   is kept for when it comes back, and an old link to it opens the calendar).
 - **Add** (in the planner, or on Tasks) — an **Event** or a **Task**, as in Google
