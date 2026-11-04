@@ -203,7 +203,8 @@ function PlannerTask({ task }: { task: Task }) {
         }
       }}
       onPointerDown={(e) => {
-        if ((e.target as HTMLElement).closest("button, input")) return;
+        // The card's time chip picks it up too (a tap still changes the time); the choices it opens don't.
+        if ((e.target as HTMLElement).closest(".ss-choices, input")) return;
         const box = e.currentTarget.getBoundingClientRect();
         beginPlanDrag(
           e,
@@ -222,6 +223,7 @@ function PlannerTask({ task }: { task: Task }) {
             if (target.kind === "grid") scheduleTask(task, targetStart(target));
             else if (target.kind === "date") scheduleOnDay(task, new Date(target.dayStart));
           },
+          { sideways: true, holdMs: 250 },
         );
       }}
     >

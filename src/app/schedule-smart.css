@@ -692,9 +692,17 @@
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  /* Up and down scrolls the list; sideways is the planner's to pick the card up (planDrag.ts). */
+  touch-action: pan-y;
 }
 .ss-mini-task.ss-draggable:active {
   cursor: grabbing;
+}
+/* A finger is holding it: it sinks a little, then lifts off when picked up. */
+.ss-mini-task[data-pressing] {
+  border-color: var(--ss-accent-ring);
+  transform: scale(0.97);
+  transition-duration: 0.25s;
 }
 /* Being dragged: the card's place stays, outlined, until it lands. */
 .ss-mini-task[data-picked] {
