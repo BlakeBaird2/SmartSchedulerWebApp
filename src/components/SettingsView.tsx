@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
+import { Palette, ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { classRank } from "@/lib/todos";
 import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
-import { duration, typeIconClass, typeMeta } from "@/lib/ui";
+import { clockRange, duration, typeIconClass, typeMeta } from "@/lib/ui";
+import { format, startOfDay } from "date-fns";
 import { courseStyle, useApp, type SettingsPanel } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
@@ -17,6 +18,7 @@ import { EventLog } from "./EventLog";
 import { Button, ButtonLink, Card, CardHeader, SegmentedControl, TextButton } from "./ui";
 import { AccountCard } from "./Account";
 import { cloudAvailable } from "./cloud";
+import { ColorsPanel } from "./ColorSettings";
 
 function Section({ title, hint, children }: { title: string; hint?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -32,6 +34,7 @@ const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 
 /** Each section has its own icon, so the menu can be scanned by shape as well as by name. */
 export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
   { id: "calendars", label: "Calendars & class times", hint: "Links Schedule Smart reads, and when classes meet", icon: CalendarDays },
+  { id: "colors", label: "Colours & themes", hint: "A colour theme, your own, and colours for each calendar", icon: Palette },
   { id: "classes", label: "Class priority", hint: "Which class comes first when work is due at the same time", icon: ListOrdered },
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
@@ -71,6 +74,7 @@ export function SettingsView() {
             {desktopPanel === "classes" ? <ClassesPanel /> : null}
             {desktopPanel === "schedule" ? <SchedulePanel /> : null}
             {desktopPanel === "estimates" ? <EstimatesPanel /> : null}
+            {desktopPanel === "colors" ? <ColorsPanel /> : null}
             {desktopPanel === "browser" ? <BrowserPanel /> : null}
             {desktopPanel === "about" ? <AboutPanel /> : null}
           </div>
@@ -222,7 +226,52 @@ function CalendarsPanel() {
       <Section title="Class times" hint="When each class meets. Class calendars rarely include this, so add it here and Schedule Smart plans around it.">
         <ClassTimesEditor />
       </Section>
+      <DeletedItems />
     </div>
+  );
+}
+
+/** What the student deleted (upcoming events, whole series, and work), each with a way to put it back. Hidden when there's nothing. */
+function DeletedItems() {
+  const { model, now, update } = useApp();
+  const today = startOfDay(now).getTime();
+  const events = model.deleted.events.filter((d) => d.all || Date.parse(d.event.end) >= today);
+  const tasks = model.deleted.tasks;
+  if (events.length === 0 && tasks.length === 0) return null;
+  const without = (rec: Record<string, string>, key: string) => {
+    const next = { ...rec };
+    delete next[key];
+    return next;
+  };
+  const row = (key: string, title: string, when: string, onRestore: () => void) => (
+    <li key={key} className="flex items-center gap-3 py-2 text-sm">
+      <span className="min-w-0 flex-1">
+        <span className="font-medium">{title}</span>
+        <span className="text-muted"> · {when}</span>
+      </span>
+      <Button size="sm" icon={RotateCcw} onClick={onRestore}>
+        Put back
+      </Button>
+    </li>
+  );
+  return (
+    <Section title="Deleted" hint="Events and work you deleted in Schedule Smart. Their calendars still have them.">
+      <ul className="divide-y divide-line">
+        {events.map(({ event: e, key, all }) =>
+          row(
+            key,
+            e.title,
+            all ? "every one" : `${format(new Date(e.start), "EEE, MMM d")}${e.allDay ? "" : `, ${clockRange(new Date(e.start), new Date(e.end))}`}`,
+            () => update((w) => ({ ...w, deletedEvents: without(w.deletedEvents, key) })),
+          ),
+        )}
+        {tasks.map((t) =>
+          row(t.id, t.title, t.dueAt ? `due ${format(new Date(t.dueAt), "EEE, MMM d")}` : "task", () =>
+            update((w) => ({ ...w, deletedTasks: without(w.deletedTasks, t.id) })),
+          ),
+        )}
+      </ul>
+    </Section>
   );
 }
 

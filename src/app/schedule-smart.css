@@ -900,6 +900,34 @@
   font-weight: 600;
   font-size: 14px;
 }
+/* Phones only (see below): a small calendar showing today's date, as in Google Calendar's app. */
+.ss-today-mini {
+  display: none;
+}
+.ss-controls .ss-today-mini {
+  width: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ss-text-3);
+}
+.ss-controls .ss-today-mini:hover,
+.ss-controls .ss-today-mini:active {
+  background: var(--ss-chip);
+}
+.ss-today-mini span {
+  width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+  padding-top: 2px;
+  border: 1.75px solid currentColor;
+  border-top-width: 4.5px;
+  border-radius: 5px;
+  font: 800 10.5px/1 "Manrope Variable", "Manrope", sans-serif;
+}
 .ss-arrows {
   display: flex;
 }
@@ -932,6 +960,17 @@
   gap: 16px;
   color: var(--ss-muted);
   font-size: 12.5px;
+}
+button.ss-key {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+button.ss-key:hover {
+  background: var(--ss-chip);
+  color: var(--ss-ink);
 }
 .ss-key span {
   display: flex;
@@ -974,9 +1013,24 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--ss-surface);
+  /* Its layers (stacked events, the now line, drag hints) stay below menus, dialogs and the drag ghost. */
+  isolation: isolate;
 }
 .ss-week.ss-day-view {
   --ss-gutter: 72px;
+}
+/* Swiping between days on a phone (daySwipe.ts): the days follow the finger and the hours stay put. */
+.ss-week[data-swiping] .ss-day-head:not(.ss-time-head),
+.ss-week[data-swiping] .ss-allday,
+.ss-week[data-swiping] .ss-day-column {
+  transform: translateX(var(--ss-swipe, 0px));
+  transition: transform var(--ss-swipe-ms, 0ms) cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.ss-week[data-swiping] .ss-time-head,
+.ss-week[data-swiping] .ss-allday-gutter,
+.ss-week[data-swiping] .ss-time-column {
+  position: relative;
+  z-index: 200;
 }
 .ss-week-row {
   flex: none;
@@ -1124,9 +1178,35 @@ button.ss-day-head:hover {
 .ss-gap:hover {
   background: color-mix(in oklab, var(--ss-accent) 6%, transparent);
 }
+/* Something new being added where the student clicked; drawn above the events. */
+.ss-draft {
+  position: absolute;
+  z-index: 102;
+  left: 5px;
+  right: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: var(--ss-accent);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.25;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+.ss-draft b {
+  font-weight: 700;
+}
+.ss-draft span {
+  opacity: 0.9;
+}
+/* Above the events, which stack from 1 up as they overlap (see layoutStack). */
 .ss-deadline-shade {
   position: absolute;
-  z-index: 4;
+  z-index: 104;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1136,7 +1216,7 @@ button.ss-day-head:hover {
 }
 .ss-deadline-line {
   position: absolute;
-  z-index: 5;
+  z-index: 105;
   left: 0;
   right: 0;
   height: 2px;
@@ -1164,13 +1244,15 @@ button.ss-day-head:hover {
  */
 .ss-event {
   --ev: var(--ss-work);
+  /* Text in white or near-black, whichever reads better on the colour (see themes.ts). */
+  --ev-ink: var(--ss-work-ink, #fff);
   position: absolute;
   z-index: 1;
   padding: 4px 8px;
   border: 1px solid var(--ss-surface);
   border-radius: 6px;
   overflow: hidden;
-  color: #fff;
+  color: var(--ev-ink);
   background: var(--ev);
   text-align: left;
   transition: filter 0.12s ease;
@@ -1217,19 +1299,23 @@ button.ss-day-head:hover {
   padding-top: 3px;
   padding-bottom: 3px;
 }
+/* When it's narrow (stacked on another, say), the time gives way before the title. */
 .ss-event[data-compact] strong {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: none;
+  max-width: 100%;
 }
 .ss-event[data-compact] > span {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   margin-top: 0;
 }
 .ss-event.ss-school {
   --ev: var(--ss-school);
+  --ev-ink: var(--ss-school-ink, #fff);
 }
 .ss-event.ss-personal {
   --ev: var(--ss-personal);
+  --ev-ink: var(--ss-personal-ink, #fff);
 }
 /* (A colour the student picked arrives as --ev on the event itself.) */
 /* Time marked free on its calendar: outlined, as Google draws events you haven't said yes to. */
@@ -1241,6 +1327,7 @@ button.ss-day-head:hover {
 /* Work you scheduled: its own colour, with faint stripes, so it never reads as a calendar's event. */
 .ss-event.ss-planned {
   --ev: var(--ss-planned);
+  --ev-ink: var(--ss-planned-ink, #fff);
   background:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0 6px, transparent 6px 12px),
     var(--ev);
@@ -1321,7 +1408,7 @@ button.ss-day-head:hover {
   position: absolute;
   left: 5px;
   right: 5px;
-  z-index: 6;
+  z-index: 106;
   padding: 5px 8px;
   border: 1.5px dashed var(--ss-accent);
   border-left: 3px solid var(--ss-accent);
@@ -1342,7 +1429,7 @@ button.ss-day-head:hover {
 }
 .ss-now-line {
   position: absolute;
-  z-index: 3;
+  z-index: 103;
   left: 0;
   right: 0;
   height: 2px;
@@ -1454,6 +1541,7 @@ button.ss-day-head:hover {
 }
 .ss-month-event {
   --ev: var(--ss-work);
+  --ev-ink: var(--ss-work-ink, #fff);
   min-width: 0;
   padding: 2px 6px;
   display: flex;
@@ -1478,7 +1566,7 @@ button.ss-day-head:hover {
   background: var(--ev);
 }
 .ss-month-event[data-all-day] {
-  color: #fff;
+  color: var(--ev-ink);
   background: var(--ev);
   font-weight: 600;
 }
@@ -1513,12 +1601,15 @@ button.ss-day-head:hover {
 }
 .ss-month-event.ss-school {
   --ev: var(--ss-school);
+  --ev-ink: var(--ss-school-ink, #fff);
 }
 .ss-month-event.ss-personal {
   --ev: var(--ss-personal);
+  --ev-ink: var(--ss-personal-ink, #fff);
 }
 .ss-month-event.ss-planned {
   --ev: var(--ss-planned);
+  --ev-ink: var(--ss-planned-ink, #fff);
 }
 .ss-more-events {
   padding-left: 5px;
@@ -2781,26 +2872,28 @@ section.ss-due-page {
   font: 700 26px "Manrope Variable", "Manrope", sans-serif;
   letter-spacing: -0.03em;
 }
-.ss-modal form {
-  margin-top: 24px;
+.ss-add-form {
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-.ss-modal form label {
+.ss-add-form label {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 7px;
   min-width: 0;
 }
-.ss-modal form label > span {
+.ss-add-form label > span {
   color: var(--ss-text-4);
   font-size: 13px;
   font-weight: 700;
 }
 .ss-modal input,
-.ss-modal select {
+.ss-modal select,
+.ss-add-form input,
+.ss-add-form select {
   width: 100%;
   height: 46px;
   padding: 0 12px;
@@ -2812,7 +2905,9 @@ section.ss-due-page {
   font-size: 15px;
 }
 .ss-modal input:focus,
-.ss-modal select:focus {
+.ss-modal select:focus,
+.ss-add-form input:focus,
+.ss-add-form select:focus {
   border-color: var(--ss-accent);
   box-shadow: 0 0 0 3px var(--ss-accent-soft);
 }
@@ -2820,11 +2915,25 @@ section.ss-due-page {
   display: flex;
   gap: 14px;
 }
-.ss-modal form > .ss-primary {
+.ss-add-form > .ss-primary {
   min-height: 48px;
   margin-top: 4px;
   justify-content: center;
   font-size: 15px;
+}
+.ss-add-form > .ss-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ss-add-error,
+.ss-add-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ss-text-4);
+}
+.ss-add-error {
+  color: var(--ss-danger);
+  font-weight: 600;
 }
 
 /* Other screens (Settings, Help) sit in the same column as the Tasks page. */
@@ -2986,6 +3095,14 @@ section.ss-due-page {
   }
   .ss-controls .ss-today {
     display: none;
+  }
+  .ss-controls .ss-today-mini {
+    display: grid;
+  }
+  /* Sideways moves belong to the day swipe (daySwipe.ts); up and down still scroll. */
+  .ss-week-row,
+  .ss-week-scroll {
+    touch-action: pan-y pinch-zoom;
   }
   .ss-controls select {
     width: 78px;

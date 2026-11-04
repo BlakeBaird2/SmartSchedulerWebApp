@@ -64,6 +64,16 @@ export function dueDate(t: { dueAt: string | null }): Date | null {
 }
 
 /** "45m", "1h", "2h 30m" */
+/** Lengths offered when adding work or time, up to a full working day. */
+export const LENGTH_CHOICES = [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480];
+
+/** A length as words for a menu: "30 min", "1 hour", "2.5 hours". */
+export function lengthLabel(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const h = minutes / 60;
+  return `${h} ${h === 1 ? "hour" : "hours"}`;
+}
+
 export function duration(minutes: number): string {
   const m = Math.max(0, Math.round(minutes));
   if (m < 60) return `${m}m`;

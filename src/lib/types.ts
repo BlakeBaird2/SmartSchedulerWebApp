@@ -9,6 +9,8 @@
 
 import type { ClassHint } from "./classes";
 import type { EventMoves } from "./eventMoves";
+import type { DeletedEvents, DeletedTasks } from "./deleted";
+import type { ColorPrefs } from "./themes";
 
 export type AssignmentType = "exam" | "quiz" | "reading" | "project" | "assignment";
 
@@ -247,6 +249,12 @@ export interface Workspace {
   eventColors: Record<string, string>;
   /** Events the student moved to another time, by event id (see eventMoves.ts). */
   eventMoves: EventMoves;
+  /** Events the student deleted: single ones, or every one of a series (see deleted.ts). */
+  deletedEvents: DeletedEvents;
+  /** Work from calendars the student deleted, by task id (see deleted.ts). */
+  deletedTasks: DeletedTasks;
+  /** The colour theme, a theme of their own, and colours for single calendars (see themes.ts). */
+  colors: ColorPrefs;
   /** taskId -> points and priority the student set. */
   taskMeta: Record<string, TaskMeta>;
   /** What happens to work whose scheduled time passes before it is done. */

@@ -6,10 +6,11 @@ import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, Exter
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
-import { PRIORITIES, type CalEvent, type Task } from "@/lib/types";
+import { PRIORITIES, type CalEvent, type ScheduledBlock, type Task } from "@/lib/types";
 import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
 import { PRIORITY_LABEL, todoState, urgencyColor } from "@/lib/todos";
 import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
+import { deleteEvent } from "@/lib/deleted";
 import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
@@ -17,6 +18,7 @@ import { useTodos } from "./PlannerPanel";
 import { Button, buttonClass, ChoicePill, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
 import { cloudAvailable } from "./cloud";
 import { ClassEditForm } from "./ClassSummary";
+import { AddItemForm, AddKindToggle, type AddKind } from "./AddItem";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
@@ -34,6 +36,12 @@ export function DetailPanel({ selection, onClose }: { selection: NonNullable<Sel
   if (selection.kind === "gap") {
     body = <GapDetail startMs={selection.startMs} onClose={onClose} />;
     label = "Free time";
+  } else if (selection.kind === "slot") {
+    body = <SlotDetail startMs={selection.startMs} minutes={selection.minutes} onClose={onClose} />;
+    label = "Add something";
+  } else if (selection.kind === "block") {
+    body = <BlockDetail blockId={selection.id} onClose={onClose} />;
+    label = "Your event";
   } else if (selection.kind === "why" && task) {
     body = <WhyDetail task={task} onClose={onClose} />;
     label = `Why: ${task.title}`;
@@ -372,31 +380,39 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </a>
         ) : null}
 
-        {task.manual ? (
+        <div>
           <Button
             variant="danger"
             block
             icon={Trash}
             onClick={() => {
+              // Its time on the calendar goes with it; Undo brings both back.
+              const before = { manualTasks: ws.manualTasks, deletedTasks: ws.deletedTasks, blocks: ws.blocks };
               const id = task.id.replace(/^manual:/, "");
-              const removed = ws.manualTasks.find((m) => m.id === id);
-              update((w) => ({ ...w, manualTasks: w.manualTasks.filter((m) => m.id !== id) }));
+              update((w) => ({
+                ...w,
+                blocks: w.blocks.filter((b) => b.taskId !== task.id),
+                ...(task.manual ? { manualTasks: w.manualTasks.filter((m) => m.id !== id) } : { deletedTasks: { ...w.deletedTasks, [task.id]: new Date().toISOString() } }),
+              }));
               onClose();
-              if (removed) toast(`Deleted: ${task.title}`, { undo: () => update((w) => ({ ...w, manualTasks: [...w.manualTasks, removed] })) });
+              toast(`Deleted ${task.title}`, { undo: () => update((w) => ({ ...w, ...before })) });
             }}
           >
             Delete this task
           </Button>
-        ) : null}
-
-        <p className="text-xs text-muted">{task.manual ? "Added by you." : `From ${feed?.name ?? "a calendar"}.`}</p>
+          <p className="mt-1.5 text-xs text-muted">
+            {task.manual
+              ? "Added by you."
+              : `From ${feed?.name ?? "a calendar"}, which isn't changed. Put it back any time from Settings → Calendars.`}
+          </p>
+        </div>
       </div>
     </>
   );
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, ws, now, setView, update, openClassTimes, resetEventTime } = useApp();
+  const { model, ws, now, setView, update, openClassTimes, resetEventTime, toast, setSettingsPanel } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
@@ -426,13 +442,22 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
   const editable = Boolean(block || pattern);
   const kind = event.kind === "class" ? "Class" : event.kind === "exam" ? "Exam" : event.source === "weekly" ? "Every week" : "Event";
 
-  const skipDay = () => {
-    if (!weekly) return;
-    update((w) => ({
-      ...w,
-      weekly: w.weekly.map((b) => (b.id === weekly.blockId ? { ...b, skip: [...new Set([...(b.skip ?? []), weekly.date])].sort() } : b)),
-    }));
+  // Deleting takes it off the calendar here and frees its time for the plan; the
+  // calendar it came from isn't changed. A repeating event asks: this one, or all?
+  const many = repeats(event.id);
+  const [askingDelete, setAskingDelete] = useState(false);
+  const remove = (scope: "one" | "all") => {
+    const before = { deletedEvents: ws.deletedEvents, weekly: ws.weekly };
+    update((w) =>
+      scope === "all" && weekly
+        ? // A weekly time entered here goes for good (Undo aside), so it leaves Class times too.
+          { ...w, weekly: w.weekly.filter((b) => b.id !== weekly.blockId) }
+        : { ...w, deletedEvents: deleteEvent(w.deletedEvents, event, scope) },
+    );
     onClose();
+    toast(scope === "all" && many ? `Deleted every ${event.title}` : `Deleted ${event.title} on ${format(start, "EEE, MMM d")}`, {
+      undo: () => update((w) => ({ ...w, ...before })),
+    });
   };
 
   return (
@@ -499,6 +524,14 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
                 <TextButton onClick={() => setColor(null)}>{course ? `Back to ${course.code}'s colour` : "Back to its calendar's colour"}</TextButton>
               ) : null}
               {course ? <TextButton onClick={() => setEditingClass(true)}>Change {course.code}&apos;s colour everywhere</TextButton> : null}
+              <TextButton
+                onClick={() => {
+                  onClose();
+                  setSettingsPanel("colors");
+                }}
+              >
+                {feed ? `${feed.name}'s colour and themes` : "Colour themes"}
+              </TextButton>
             </p>
           </div>
         )}
@@ -529,9 +562,6 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         ) : null}
         {weekly ? (
           <div className="space-y-2">
-            <Button block onClick={skipDay}>
-              Not happening on {format(start, "EEE, MMM d")}
-            </Button>
             <Button
               block
               onClick={() => {
@@ -550,6 +580,30 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
             <ExternalLink size={14} />
           </a>
         ) : null}
+        {askingDelete ? (
+          <div className="rounded-xl border border-line p-3 space-y-2" role="group" aria-label={`Delete ${event.title}`}>
+            <div className="text-sm font-semibold">Delete which?</div>
+            <Button variant="danger" block data-autofocus onClick={() => remove("one")}>
+              Just this one, {format(start, "EEE, MMM d")}
+            </Button>
+            <Button variant="danger" block onClick={() => remove("all")}>
+              Every one of them
+            </Button>
+            <Button block onClick={() => setAskingDelete(false)}>
+              Keep it
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button variant="danger" block icon={Trash} onClick={() => (many ? setAskingDelete(true) : remove("one"))}>
+              Delete event
+            </Button>
+            <p className="mt-1.5 text-xs text-muted">
+              Its time is free to plan.{" "}
+              {feed ? `${feed.name} isn't changed; put it back any time from Settings → Calendars.` : weekly ? "" : "Put it back any time from Settings → Calendars."}
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
@@ -661,6 +715,153 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
             View all tasks
           </Button>
         </div>
+      </div>
+    </>
+  );
+}
+
+/** How many tasks from the to-do list a clicked time offers. */
+const SLOT_SUGGESTIONS = 5;
+
+/**
+ * Empty time the student clicked on the calendar: add an event or a task there,
+ * as in Google Calendar, or put the next task from the to-do list there instead.
+ */
+function SlotDetail({ startMs, minutes, onClose }: { startMs: number; minutes: number; onClose: () => void }) {
+  const { model, now, select, scheduleTask } = useApp();
+  const todos = useTodos();
+  const [kind, setKind] = useState<AddKind>("event");
+  const start = new Date(startMs);
+  const end = new Date(startMs + minutes * 60_000);
+  const past = end.getTime() <= now.getTime();
+  const shown = todos.slice(0, SLOT_SUGGESTIONS);
+
+  return (
+    <>
+      <header className="flex items-start gap-3 p-4 border-b border-line">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold">{kind === "event" ? "New event" : "New task"}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {format(start, "EEEE, MMMM d")} · {clockRange(start, end)}
+          </p>
+        </div>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
+      </header>
+      <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+        <div>
+          <AddKindToggle kind={kind} onKind={setKind} />
+          <AddItemForm
+            kind={kind}
+            picked={{ start, minutes, onMinutes: (m) => select({ kind: "slot", startMs, minutes: m }) }}
+            onDone={onClose}
+          />
+        </div>
+
+        {kind === "task" && shown.length > 0 && !past ? (
+          <div>
+            <Label>Or put a task from your list here</Label>
+            <ul className="space-y-2">
+              {shown.map((t) => {
+                const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+                return (
+                  <li key={t.id} className="urgency-card rounded-xl border border-line p-3 flex items-center gap-3" style={{ "--u": urgencyColor(t.dueAt, now) } as React.CSSProperties}>
+                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => select({ kind: "task", id: t.id })}>
+                      <div className="font-semibold leading-snug line-clamp-2">{t.title}</div>
+                      <div className="mt-1 text-xs text-muted flex flex-wrap gap-x-2">
+                        <span>{approxDuration(t.estimate)}</span>
+                        {course ? <ClassChip code={course.code} color={course.color} /> : <span>Personal</span>}
+                        {t.dueAt ? <span>{relativeDue(new Date(t.dueAt), now)}</span> : null}
+                      </div>
+                    </button>
+                    <Button
+                      size="sm"
+                      icon={CalendarClock}
+                      data-smart-event="task_planned"
+                      onClick={() => {
+                        scheduleTask(t, start);
+                        onClose();
+                      }}
+                    >
+                      Put it here
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+/**
+ * An event the student added in Schedule Smart: rename it, recolour it, or
+ * delete it. Drag it on the calendar to move it or change its length.
+ */
+function BlockDetail({ blockId, onClose }: { blockId: string; onClose: () => void }) {
+  const { ws, update, toast } = useApp();
+  const block = ws.blocks.find((b) => b.id === blockId);
+  const [title, setTitle] = useState(block?.title ?? "");
+  if (!block) return null;
+  const start = new Date(block.start);
+  const end = new Date(block.end);
+  const change = (patch: Partial<ScheduledBlock>) =>
+    update((w) => ({ ...w, blocks: w.blocks.map((b) => (b.id === blockId ? { ...b, ...patch, updatedAt: new Date().toISOString() } : b)) }));
+  const rename = () => {
+    const name = title.trim().slice(0, 200);
+    if (name && name !== block.title) change({ title: name });
+    else setTitle(block.title);
+  };
+
+  return (
+    <>
+      <header className="flex items-start gap-3 p-4 border-b border-line">
+        <span className="course-dot mt-2" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold leading-snug">{block.title}</h2>
+          <div className="mt-1 text-xs text-muted">Your event</div>
+        </div>
+        <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
+      </header>
+      <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+        <div>
+          <Label>Name</Label>
+          <input
+            className="input"
+            value={title}
+            maxLength={200}
+            aria-label="Event name"
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={rename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+          />
+        </div>
+        <div>
+          <Label>When</Label>
+          <div className="text-[0.9375rem] font-medium">
+            {format(start, "EEEE, MMMM d")} · {clockRange(start, end)}
+          </div>
+          <p className="mt-1.5 text-xs text-muted">Drag it on the calendar to move it, or drag its bottom edge to change its length.</p>
+        </div>
+        <div>
+          <Label>Colour</Label>
+          <ColorSwatches colors={EVENT_COLORS} value={block.color} onChange={(hex) => change({ color: hex })} label={`Colour for ${block.title}`} />
+        </div>
+        <Button
+          variant="danger"
+          block
+          icon={Trash}
+          onClick={() => {
+            update((w) => ({ ...w, blocks: w.blocks.filter((b) => b.id !== blockId) }));
+            onClose();
+            toast(`Deleted ${block.title}`, { undo: () => update((w) => ({ ...w, blocks: [...w.blocks, block] })) });
+          }}
+        >
+          Delete event
+        </Button>
       </div>
     </>
   );

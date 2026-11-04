@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
 import type { TodoScope, TodoSort } from "@/lib/todos";
-import { AppContext, type AppContextValue, type CalMode, type Selection, type SettingsPanel, type View } from "./context";
+import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Notices, Topbar } from "./Topbar";
 import { Onboarding, startDemo } from "./Onboarding";
@@ -24,9 +24,10 @@ import { HelpView } from "./HelpView";
 import { DetailPanel } from "./DetailPanel";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { withEventAt } from "@/lib/eventMoves";
+import { themeVars } from "@/lib/themes";
 import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
-import { CloudChoiceDialog } from "./Account";
+import { CloudChoiceDialog, SignInPrompt } from "./Account";
 import { startCloud } from "./cloud";
 import { DueDatesPage } from "./DueDatesPage";
 import { ImportDialog } from "./ImportDialog";
@@ -63,16 +64,18 @@ interface UiPrefs {
   todoSort: TodoSort;
 }
 
-const VIEWS: View[] = ["calendar", "tasks", "due", "settings", "help"];
+// The Due dates page is off for now (DueDatesPage.tsx is kept for when it comes back).
+const VIEWS: View[] = ["calendar", "tasks", "settings", "help"];
 const CAL_MODES: CalMode[] = ["month", "week", "day"];
 
 /** Screens from before the redesign: Plan became the calendar, Upcoming and Classes the task list. */
 function viewFrom(v: unknown): View | null {
   if (v === "plan") return "calendar";
   if (v === "upcoming" || v === "classes") return "tasks";
+  if (v === "due") return "calendar";
   return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
 }
-const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "classes", "schedule", "estimates", "browser", "about"];
+const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "colors", "classes", "schedule", "estimates", "browser", "about"];
 const DEFAULT_UI: UiPrefs = {
   view: "calendar",
   calMode: "day",
@@ -415,6 +418,17 @@ export function App() {
 
   // Signing in keeps the setup the same on every device (cloud.ts); without Firebase keys this does nothing.
   useEffect(() => startCloud(), []);
+
+  // The colour theme sets the calendar's colours on the page (Classic sets none: it's the stylesheet's own).
+  const themeCss = JSON.stringify(themeVars(ws.colors));
+  useEffect(() => {
+    const vars = JSON.parse(themeCss) as Record<string, string>;
+    const root = document.documentElement.style;
+    for (const [k, v] of Object.entries(vars)) root.setProperty(k, v);
+    return () => {
+      for (const k of Object.keys(vars)) root.removeProperty(k);
+    };
+  }, [themeCss]);
   // A calendar added on another device arrives without its contents: read it here.
   const unread = ws.feeds.some((f) => f.enabled && !snapshot.feeds[f.id]);
   useEffect(() => {
@@ -622,6 +636,50 @@ export function App() {
     [changeBlock, toast, seeWork],
   );
 
+  const addTask = useCallback(
+    (input: NewTask, at?: Date) => {
+      const id = randomId();
+      const taskId = `manual:${id}`;
+      const now = new Date();
+      const block = at ? makeBlock(randomId(), { id: taskId, title: input.title }, at, input.minutes, now) : null;
+      if (block && Date.parse(block.end) <= now.getTime()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      update((w) => ({
+        ...w,
+        manualTasks: [...w.manualTasks, { id, title: input.title, courseId: input.courseId, type: "assignment", dueAt: input.dueAt }],
+        estimates: { ...w.estimates, [taskId]: { minutes: input.minutes, source: "user", at: now.toISOString() } },
+        taskMeta: { ...w.taskMeta, [taskId]: { priority: input.priority } },
+        blocks: block ? putBlock(w.blocks, block) : w.blocks,
+      }));
+      trackEvent("task_added", { title: input.title, courseId: input.courseId, type: "assignment", hasDueDate: Boolean(input.dueAt), minutes: input.minutes });
+      toast(at ? `Added ${when(at)}: ${input.title}` : `Added to Schedule Smart: ${input.title}`, {
+        undo: () =>
+          update((w) => ({ ...w, manualTasks: w.manualTasks.filter((m) => m.id !== id), blocks: block ? dropBlock(w.blocks, block.id) : w.blocks })),
+      });
+    },
+    [update, toast],
+  );
+
+  // An event of the student's own is scheduled time with no task behind it (see ScheduledBlock).
+  const addEvent = useCallback(
+    (title: string, start: Date, end: Date) => {
+      const block: ScheduledBlock = {
+        id: randomId(),
+        taskId: null,
+        title,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        color: null,
+        externalId: null,
+        updatedAt: new Date().toISOString(),
+      };
+      changeBlock(null, block, `Added ${when(start)}: ${title}`);
+    },
+    [changeBlock],
+  );
+
   const scheduleOnDay = useCallback(
     (task: Task, day: Date) => {
       const dayStart = new Date(day).setHours(0, 0, 0, 0);
@@ -786,6 +844,8 @@ export function App() {
     setTaskMeta,
     setEstimate,
     scheduleTask,
+    addTask,
+    addEvent,
     scheduleOnDay,
     moveScheduled,
     moveEvent,
@@ -871,6 +931,7 @@ export function App() {
           {classTimesOpen ? <ClassTimesDialog onClose={() => setClassTimesOpen(false)} /> : null}
           <AppTour blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
           <UnfinishedPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
+          <SignInPrompt blocked={Boolean(selected || addOpen || classTimesOpen || incoming.pending || pickerFeed !== undefined)} />
         </div>
       )}
       <CloudChoiceDialog />

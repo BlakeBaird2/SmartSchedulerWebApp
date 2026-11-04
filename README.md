@@ -59,6 +59,19 @@ prefix on every class.
     dot, the time and the title; all-day events are filled bars. Anything that
     has ended turns a lighter tint of its colour. The colours were checked for
     colour-blind separation, light and dark.
+  - **Colour themes** (Settings → *Colours & themes*, or click the Work /
+    School / Personal key above the calendar): Classic (Google's colours, as
+    above) and nine vivid palettes from coolors.co — Bright Spark, Neon Pop,
+    Electric, Tropical, Sherbet, Ultraviolet, Rainbow, Retro Diner and Coastal,
+    each used with its exact Coolors colours. Each
+    gives School, Work, Personal and scheduled tasks their own colour; every
+    one keeps text at 4.5:1 or better (WCAG AA) and its four colours clearly
+    apart (`src/lib/themes.ts`, checked by its tests). Text on any colour is
+    white or near-black, whichever reads better. **Make your own** changes any
+    of the four colours, and warns when text on one would be hard to read.
+    A single calendar or class can have its own colour too, and one event can
+    be coloured from its details; the most specific choice wins (event, then
+    class, then calendar, then theme). Colours sync with your account.
   - Drag scheduled work to move it, drag its bottom edge to change its length,
     or drag it back onto the planner to take it off. Every change has Undo.
   - Events from your calendars (classes, shifts, personal plans, your weekly
@@ -67,28 +80,42 @@ prefix on every class.
     message says the calendar still has its time, the event's details say where
     it was with **Put it back**, and the planner plans around the new time. If
     the calendar itself changes that event, its new time wins.
+  - Any event or task can be deleted from its details, including ones from
+    your calendars (a cancelled class, an assignment that doesn't apply). A
+    repeating event asks: **Just this one** or **Every one of them**. Its time is
+    free for the planner. Calendars aren't changed; Undo, or Settings →
+    Calendars → *Deleted*, puts it back. A single deleted event its calendar
+    later moves shows again. Deleting every one of a class time you entered
+    removes that class time.
   - Nothing on the calendar lights up while you drag; anything can go anywhere.
     While you drag a task, everything after its deadline greys out, with a red
     DUE line. In the month view, dropping a task on a day puts it in that day's
     first free time.
-  - Tap a free time to see what fits there, with **Put it here**.
+  - Click or tap any empty time to add something there, as in Google Calendar:
+    it starts on the half hour clicked, an hour long, with a placeholder on the
+    grid. Pick **Event** (a name and how long) or **Task** (due date, class,
+    estimate and priority; it's scheduled right there), or put a task from your
+    to-do list there with **Put it here**.
+  - Overlapping events are laid out as in Google Calendar: ones that start close
+    together share columns, each reaching partway under the next; one that starts
+    later, inside another, goes on top of it, nudged in a few pixels and running to
+    the right edge, so the one underneath still shows its title and a sliver of
+    its side.
   - Phones: the planner and one day side by side, or three days with the planner
-    closed.
+    closed. Swipe left or right for the next or previous days, and tap the small
+    calendar with today's date to come back to today.
 - **Tasks** — the master checklist: a ring for what's due today, and a column
   for each day of the week, Monday to Sunday, as tall as the work due that day (by
   estimate). Each column starts grey and fills with colour as that day's work is
   ticked off, so a finished week is seven full columns. Then every task in one
   table to search, sort (due date, shortest first) and filter (today, a class, personal, completed).
-- **Due dates** — every deadline from every class (and everything added by hand)
-  by the day it's due. It opens on the week: seven columns side by side, Monday
-  to Sunday, with each day's work stacked down its column, tinted with its class's
-  colour (on a phone the columns scroll sideways, starting at today). **Day** shows one day with more
-  about each item; **Month** shows the month, and a day opens that day. Each kind
-  of work has its own colour, icon and name — exams (a solid red badge; an exam
-  that's only on the class calendar counts, at the time it starts), quizzes,
-  projects, assignments and readings — with a count of each for the range shown.
-  The colours were checked for colour-blind separation in light and dark.
-- **Add task** (in the planner, or on Tasks) — name, class or area, due, due time, estimate, priority.
+- **Due dates** — off for now (not in the navigation; `src/components/DueDatesPage.tsx`
+  is kept for when it comes back, and an old link to it opens the calendar).
+- **Add** (in the planner, or on Tasks) — an **Event** or a **Task**, as in Google
+  Calendar. An event is a name and a time (date, start, end): it takes that time
+  on the calendar, the planner plans around it, and opening it lets you rename,
+  recolour or delete it. A task is a name, class or area, due, due time,
+  estimate (up to 8 hours) and priority, and goes on the to-do list.
 - **Points and priority** — calendar feeds don't carry either. Points are for
   assignments from a class calendar (what they're worth in the class), so you add
   them in an assignment's details; work you add by hand has none. Priority follows
@@ -193,6 +220,9 @@ them.
   Firebase set up), the same setup is also kept in your account so it stays the
   same on every device you sign in on; only you can read it, and **Delete my
   account data** removes it. Calendar contents are never stored there.
+  Setup opens by asking whether to sign in, and someone who uses the app
+  without signing in is asked again now and then (**Not now** waits a week,
+  **Don't ask again** stops it; the profile menu and Settings always offer it).
   Details: [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md).
 - The server has one job: fetch a calendar link you send it, turn it into
   classes, work and busy time, and send that back. It stores nothing and logs
@@ -247,6 +277,7 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 | `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
 | `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
+| `prio:signin-ask` | When the "keep your schedule on all your devices?" pop-up may ask again, or `never`. |
 | `prio:device`, `prio:cloud` | Only when signed in: this device's id, and the account plus the setup it last agreed on with it (see `FIREBASE_SETUP.md`). |
 
 **Quickest way:** run `npm run dev`. A small **Dev: entry states** box sits in the
@@ -260,7 +291,7 @@ in development (`NODE_ENV=development`) and is not in production builds.
 | First visit: welcome pop-up | New private window → `/` (or `/about`, `/app`, `/app#demo`) | One pop-up says it is an early prototype and gives the 45-minute goal. In the app it offers **Show me around** (the walkthrough) and **Start**. It doesn't return on refresh; the **Prototype** tag, **Goal** tag (wide screens) and Help reopen it. |
 | Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
 | About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
-| New user `/app` | Private window → `/app` | Onboarding: capability first; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |
+| New user `/app` | Private window → `/app` | Onboarding: capability first, then (when sign-in is set up) sign in with Google or **Not now**; **Skip** on every step enters a usable Plan (sample data if no calendars yet). |
 | Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
 | Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary; goal/prototype do not auto-interrupt. |
 
@@ -337,6 +368,10 @@ src/lib/todos.ts            the to-do list: what's on it, its order, priority an
 src/lib/blocks.ts           scheduled time: snapping, moving and resizing
 src/lib/newWork.ts          work that's new since you last looked
 src/lib/eventColors.ts      Google Calendar's event colours, and which events share one
+src/lib/deleted.ts          events and work the student deleted
+src/lib/themes.ts           colour themes, contrast checks, and your own colours
 src/app/schedule-smart.css  the Figma prototype's look (ss- classes)
 src/components/             the interface: Topbar, CalendarView, PlannerPanel, TasksPage, AddTaskDialog
 ```
+src/lib/deleted.ts          events and work the student deleted
+src/lib/themes.ts           colour themes, contrast checks, and your own colours

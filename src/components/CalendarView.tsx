@@ -17,10 +17,12 @@ import {
   startOfWeek,
 } from "date-fns";
 import { seriesKey } from "@/lib/eventColors";
-import { layoutColumns } from "@/lib/layout";
+import { inkFor } from "@/lib/themes";
+import { layoutStack } from "@/lib/layout";
 import type { CalEvent, FeedConfig, ScheduledBlock, Task } from "@/lib/types";
 import { clock, dayKey } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
+import { useDaySwipe } from "./daySwipe";
 import { DragGhost } from "./DragGhost";
 import { PlannerPanel } from "./PlannerPanel";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
@@ -61,6 +63,9 @@ function eventKind(e: CalEvent, feedById: Map<string, FeedConfig>): Kind {
   return WORKISH.test(e.title) || (feed && WORKISH.test(feed.name)) ? "work" : "personal";
 }
 
+/** Clicking empty time on the calendar starts something on the half hour, as Google Calendar does. */
+const SLOT_MIN = 30;
+
 /** "9:00 – 10:00", the prototype's way of writing a time range. */
 function shortRange(start: Date, end: Date): string {
   return `${format(start, "h:mm")} – ${format(end, "h:mm")}`;
@@ -89,7 +94,7 @@ type CalData = ReturnType<typeof useCalendarData>;
 
 /** The calendar page: the planner on the left, the calendar on the right. */
 export function CalendarView() {
-  const { calMode, setCalMode, calCursor, setCalCursor, calSidebar: panelOpen, setCalSidebar: setPanelOpen } = useApp();
+  const { calMode, setCalMode, calCursor, setCalCursor, calSidebar: panelOpen, setCalSidebar: setPanelOpen, setSettingsPanel } = useApp();
   const phone = useNarrow();
   const data = useCalendarData();
   const today = new Date();
@@ -108,6 +113,8 @@ export function CalendarView() {
     else setCalCursor(addDays(calCursor, dir));
   };
   const unit = calMode === "month" ? "month" : calMode === "week" && !phone ? "week" : "day";
+  // Phones: swiping turns to the next or previous days, as many as are showing (as in Google Calendar's app).
+  const swipe = (dir: 1 | -1) => setCalCursor(addDays(calCursor, dir * days.length));
 
   const eyebrow = calMode === "month" ? "MONTH VIEW" : format(calCursor, "MMMM yyyy").toUpperCase();
   const title =
@@ -148,7 +155,8 @@ export function CalendarView() {
               <h1 aria-live="polite">{title}</h1>
             </div>
           </div>
-          <div className="ss-key">
+          {/* The key opens the colour settings, where the theme and each calendar's colour are chosen. */}
+          <button type="button" className="ss-key" onClick={() => setSettingsPanel("colors")} title="Change colours" aria-label="Colour key: Work, School, Personal. Change colours">
             <span>
               <i className="ss-key-work" />
               Work
@@ -161,10 +169,19 @@ export function CalendarView() {
               <i className="ss-key-personal" />
               Personal
             </span>
-          </div>
+          </button>
           <div className="ss-controls">
             <button className="ss-today" onClick={() => setCalCursor(new Date())} aria-current={isSameDay(calCursor, today) ? "date" : undefined}>
               Today
+            </button>
+            {/* Phones: Google Calendar's small calendar with today's date, instead of the Today button. */}
+            <button
+              className="ss-today-mini"
+              onClick={() => setCalCursor(new Date())}
+              aria-label={`Go to today, ${format(today, "EEEE, MMMM d")}`}
+              title="Today"
+            >
+              <span aria-hidden>{format(today, "d")}</span>
             </button>
             <div className="ss-arrows">
               <button aria-label={`Previous ${unit}`} onClick={() => step(-1)}>
@@ -189,7 +206,7 @@ export function CalendarView() {
             </select>
           </div>
         </div>
-        {calMode === "month" ? <MonthGrid data={data} /> : <TimeGrid days={days} data={data} dayView={calMode === "day"} />}
+        {calMode === "month" ? <MonthGrid data={data} /> : <TimeGrid days={days} data={data} dayView={calMode === "day"} onSwipe={phone ? swipe : null} />}
       </section>
       <DragGhost />
     </div>
@@ -228,12 +245,24 @@ type GridItem =
 
 /** How tall an hour is, at least: room for a half-hour block's title and time. */
 const HOUR_PX = 64;
+/**
+ * Events starting closer together than this (px) share columns, as in Google
+ * Calendar: otherwise the later one would cover the earlier one's title and time.
+ */
+const SIDE_BY_SIDE_PX = 44;
 const HOUR_PX_PHONE = 56;
 
-function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayView: boolean }) {
-  const { ws, now, select, setCalCursor, setCalMode, plan, model } = useApp();
+function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalData; dayView: boolean; onSwipe: ((dir: 1 | -1) => void) | null }) {
+  const { ws, now, select, selected, setCalCursor, setCalMode, plan, model } = useApp();
   const drag = usePlanDrag();
   const scroller = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  // Swiping to other days keeps the hours where they were, as Google Calendar does.
+  const keepScroll = useRef(false);
+  useDaySwipe(frameRef, Boolean(onSwipe), (dir) => {
+    keepScroll.current = true;
+    onSwipe?.(dir);
+  });
   const [frame, setFrame] = useState({ height: 0, phone: false });
 
   // The hours scroll inside the frame. Each is at least HOUR_PX tall, and they
@@ -295,6 +324,10 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!el || height === 0) return;
+    if (keepScroll.current) {
+      keepScroll.current = false;
+      return;
+    }
     const minute = showsToday ? now.getHours() * 60 + now.getMinutes() - 60 : startHour * 60;
     el.scrollTop = Math.max(0, (minute - startHour * 60) * ppm);
     // Only when the days shown change or the frame first gets its size, not on every tick of the clock.
@@ -308,7 +341,7 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
   const nowMs = now.getTime();
 
   return (
-    <div className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
+    <div ref={frameRef} className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
       <div className="ss-week-row">
         <div className="ss-day-head ss-time-head">{gmtLabel(now)}</div>
         {columns.map((c) => (
@@ -352,15 +385,35 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
               : null}
           </div>
           {columns.map((c) => {
-            const placed = layoutColumns(c.items, (i) => i.start, (i) => i.end);
+            // Overlaps as in Google Calendar: columns when they start close together, otherwise the later one on top.
+            const placed = layoutStack(c.items, (i) => i.start, (i) => i.end, Math.ceil(SIDE_BY_SIDE_PX / ppm) * MIN);
             const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
             const dayEnd = addDays(c.day, 1).getTime();
             const shadeFrom =
               deadline && deadline.getTime() < dayEnd ? (deadline.getTime() <= c.from ? 0 : Math.max(0, Math.min(bodyHeight, y(deadline.getTime(), c.from)))) : null;
+            const slot = selected?.kind === "slot" && selected.startMs >= c.from && selected.startMs < dayEnd ? selected : null;
             return (
               <div
                 key={c.from}
                 className="ss-day-column"
+                // Clicking empty time adds something there, as in Google Calendar: on the half
+                // hour clicked, an hour long. Events and scheduled work handle their own clicks.
+                onClick={(ev) => {
+                  const target = ev.target as HTMLElement;
+                  const hit = target.closest("button, [role='button'], a");
+                  if (hit && !hit.classList.contains("ss-gap")) return;
+                  // From the keyboard, a free-time button starts at its own start.
+                  const keyed = ev.detail === 0 && hit?.getAttribute("data-start");
+                  let startMs: number;
+                  if (keyed) startMs = Number(keyed);
+                  else {
+                    const top = ev.currentTarget.getBoundingClientRect().top;
+                    const minute = startHour * 60 + (ev.clientY - top) / ppm;
+                    const snapped = Math.min(endHour * 60 - SLOT_MIN, Math.max(startHour * 60, Math.floor(minute / SLOT_MIN) * SLOT_MIN));
+                    startMs = c.from + snapped * MIN;
+                  }
+                  select({ kind: "slot", startMs, minutes: slot?.minutes ?? 60 });
+                }}
                 // How the drag works out the time under the pointer (see planDrag.ts).
                 data-drop-day={c.from}
                 data-drop-min={startHour * 60}
@@ -383,20 +436,25 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                           key={g.start.getTime()}
                           className="ss-gap"
                           style={{ top, height: h }}
-                          onClick={() => select({ kind: "gap", startMs: g.start.getTime() })}
-                          aria-label={`Free time, ${g.minutes} minutes. Open to put something from your list here.`}
-                          title="Free time. Open to put something here"
+                          data-start={g.start.getTime()}
+                          aria-label={`Free time, ${g.minutes} minutes. Open to add something here.`}
+                          title="Free time. Click to add something here"
                         />
                       );
                     })}
-                    {placed.map(({ item, col, cols }) => {
+                    {placed.map(({ item, left, leftPx, width, widthPx, z }) => {
                       const top = y(item.start, c.from) + 3;
                       const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
+                      // 5px in from the column's edges (where a dragged block lands too, see slotRect); where
+                      // items meet, their page-coloured borders keep them apart.
+                      const inL = left < 0.001 ? 5 : 0;
+                      const inR = left + width > 0.999 ? 5 : 0;
                       const style: React.CSSProperties = {
                         top,
                         height: h,
-                        left: `calc(${(col / cols) * 100}% + 5px)`,
-                        width: `calc(${100 / cols}% - 10px)`,
+                        left: `calc(${left * 100}% + ${leftPx + inL}px)`,
+                        width: `calc(${width * 100}% + ${widthPx - inL - inR}px)`,
+                        zIndex: z,
                       };
                       if (item.kind === "event")
                         return (
@@ -433,6 +491,17 @@ function TimeGrid({ days, data, dayView }: { days: Date[]; data: CalData; dayVie
                     ) : null}
                     {/* Moving work, the ghost itself settles into the slot (DragGhost.tsx); resizing draws it here. */}
                     {preview && drag?.kind === "resize" ? <DropPreview target={preview} title={drag.title} y={(m) => y(c.from + m * MIN, c.from)} /> : null}
+                    {slot ? (
+                      // The new item, before it has a name, as Google Calendar draws one.
+                      <div
+                        className="ss-draft"
+                        aria-hidden
+                        style={{ top: y(slot.startMs, c.from) + 3, height: Math.max(16, slot.minutes * ppm - 6) }}
+                      >
+                        <b>(No title)</b>
+                        <span>{shortRange(new Date(slot.startMs), new Date(slot.startMs + slot.minutes * MIN))}</span>
+                      </div>
+                    ) : null}
                     {isSameDay(c.day, now) && now.getHours() >= startHour && now.getHours() < endHour ? (
                       <div className="ss-now-line" style={{ top: y(now.getTime(), c.from) }}>
                         <i />
@@ -465,9 +534,20 @@ function useEventNames(e: CalEvent): { title: string; classLine: string | null }
 }
 
 /** The colour of an event: its kind's, or one the student picked for it. */
+/**
+ * An event's colour: its own, if the student picked one; else its class's, or
+ * its calendar's, if they picked those; else its kind's colour in the theme.
+ */
 function useEventLook(e: CalEvent): { kind: Kind; custom: string | null } {
   const { model, ws } = useApp();
-  return { kind: eventKind(e, model.feedById), custom: ws.eventColors[seriesKey(e.id)] ?? null };
+  const custom =
+    ws.eventColors[seriesKey(e.id)] ?? (e.courseId ? ws.courseEdits[e.courseId]?.color : undefined) ?? (e.feedId ? ws.colors.calendars[e.feedId] : undefined) ?? null;
+  return { kind: eventKind(e, model.feedById), custom };
+}
+
+/** A colour of the student's own on an event, with text that reads on it. */
+function evVars(custom: string | null): React.CSSProperties {
+  return custom ? ({ "--ev": custom, "--ev-ink": inkFor(custom) } as React.CSSProperties) : {};
 }
 
 /**
@@ -518,7 +598,7 @@ function GridEvent({
       data-past={past || undefined}
       data-picked={dragging || undefined}
       data-moved={e.original ? true : undefined}
-      style={{ ...style, ...(custom ? { "--ev": custom } : {}), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
+      style={{ ...style, ...evVars(custom), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       onClick={open}
       onPointerDown={(ev) => {
         if ((ev.target as HTMLElement).closest("[data-resize]")) return;
@@ -593,7 +673,7 @@ function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
       data-custom={custom ? true : undefined}
       data-past={past || undefined}
       data-all-day={e.allDay || undefined}
-      style={custom ? ({ "--ev": custom } as React.CSSProperties) : undefined}
+      style={custom ? evVars(custom) : undefined}
       onClick={(ev) => {
         ev.stopPropagation();
         select({ kind: "event", id: e.id });
@@ -680,8 +760,11 @@ function PlannedBlock({
   const { select, moveScheduled, resizeScheduled, unschedule } = useApp();
   const { task, start, end, minutes, title } = cal;
   const done = Boolean(task?.done);
-  const open = () => (task ? select({ kind: "task", id: task.id }) : undefined);
-  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: "var(--ss-planned)" };
+  // Time with no task behind it is an event the student added: it looks and opens like an event.
+  const own = !task;
+  const custom = own ? cal.block.color : null;
+  const open = () => select(task ? { kind: "task", id: task.id } : { kind: "block", id: cal.id });
+  const payload = { taskId: task?.id ?? null, blockId: cal.id, title, minutes, start: start.getTime(), color: own ? (custom ?? "var(--ss-personal)") : "var(--ss-planned)" };
 
   return (
     <div
@@ -720,14 +803,15 @@ function PlannedBlock({
         else moveScheduled(cal.id, new Date(start.getTime() + stepBy * MIN));
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
-      className="ss-event ss-planned ss-movable"
+      className={`ss-event ${own ? "ss-personal" : "ss-planned"} ss-movable`}
+      data-custom={custom ? true : undefined}
       data-done={done || undefined}
       data-picked={dragging || undefined}
       data-compact={h < 40 || undefined}
       data-past={past || undefined}
-      style={{ ...style, pointerEvents: passThrough ? "none" : undefined }}
+      style={{ ...style, ...evVars(custom), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       title={`${title} · ${minutes} min. Drag to move, or drag the bottom edge to change its length.`}
-      aria-label={`Scheduled: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
+      aria-label={`${own ? "Event" : "Scheduled"}: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}
     >
       <strong>
         {done ? (
@@ -833,11 +917,13 @@ function MonthGrid({ data }: { data: CalData }) {
                   ) : (
                     <button
                       key={en.key}
-                      className="ss-month-event ss-planned"
+                      className={`ss-month-event ${en.block!.task ? "ss-planned" : "ss-personal"}`}
                       data-past={en.block!.end.getTime() <= nowMs || undefined}
+                      data-custom={!en.block!.task && en.block!.block.color ? true : undefined}
+                      style={!en.block!.task && en.block!.block.color ? evVars(en.block!.block.color) : undefined}
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        if (en.block?.task) select({ kind: "task", id: en.block.task.id });
+                        select(en.block!.task ? { kind: "task", id: en.block!.task.id } : { kind: "block", id: en.block!.id });
                       }}
                       title={en.block!.title}
                     >
