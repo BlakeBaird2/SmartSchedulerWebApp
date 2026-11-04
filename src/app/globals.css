@@ -5,7 +5,9 @@
 :root {
   /*
    * Schedule Smart palette, from the Figma prototype: a warm off-white page, white
-   * surfaces, hairline warm-grey lines, near-black ink and one purple accent.
+   * surfaces, hairline warm-grey lines and near-black ink, with one brand colour:
+   * a bright azure blue for buttons, switches, ticks and accents (white text on
+   * it reads at 4.9:1; in dark mode it turns sky blue with navy text).
    * Green, amber and red still only mean done, soon and late.
    */
   --bg: #f7f7f4;
@@ -16,8 +18,11 @@
   --fg: #20201f;
   --muted: #777772;
   --faint: #92928c;
-  --accent: #7066e7;
-  --accent-soft: #eeecff;
+  --accent: #1b6ce0;
+  --accent-soft: #e6f0ff;
+  --brand: #1b6ce0;
+  --brand-hover: #155bc2;
+  --on-brand: #ffffff;
   --danger: #b44949;
   --warn: #c27a35;
   --ok: #27764d;
@@ -38,8 +43,11 @@
   --fg: #ecebe6;
   --muted: #a3a09a;
   --faint: #6b6963;
-  --accent: #8b85ff;
-  --accent-soft: #27254a;
+  --accent: #6aa9ff;
+  --accent-soft: #1a2a44;
+  --brand: #6aa9ff;
+  --brand-hover: #8dbdff;
+  --on-brand: #0b1d3a;
   --danger: #f87171;
   --warn: #fbbf24;
   --ok: #34d399;
@@ -759,18 +767,18 @@
     width: 1.25rem;
     height: 1.25rem;
   }
-  /* Ticked work: filled black box with a white tick. */
+  /* Ticked work: a filled blue box with a white tick. */
   .check[aria-checked="true"] {
-    background: var(--fg);
-    border-color: var(--fg);
-    color: var(--bg);
+    background: var(--brand);
+    border-color: var(--brand);
+    color: var(--on-brand);
   }
   .check:hover {
     border-color: var(--fg);
     color: var(--muted);
   }
   .switch[aria-checked="true"] {
-    background: var(--fg);
+    background: var(--brand);
   }
   .switch::after {
     background: var(--surface);
@@ -1875,8 +1883,8 @@
   top: -0.75rem;
   right: 1.25rem;
   border-radius: 9999px;
-  background: var(--fg);
-  color: var(--bg);
+  background: var(--brand);
+  color: var(--on-brand);
   padding: 0.2rem 0.7rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1910,17 +1918,19 @@ h2 {
 .wordmark {
   font-weight: 700;
 }
-.btn-primary,
-.btn-primary:hover {
-  background: #282826;
-  border-color: #282826;
-  color: #fff;
+.btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
 }
-:root[data-theme="dark"] .btn-primary,
+.btn-primary:hover,
 :root[data-theme="dark"] .btn-primary:hover {
-  background: #ecebe6;
-  border-color: #ecebe6;
-  color: #141414;
+  filter: none;
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
+:root[data-theme="dark"] .btn-primary {
+  color: var(--on-brand);
 }
 .btn,
 .input,

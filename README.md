@@ -38,6 +38,10 @@ Prototype"** (its layout, fonts, colours, icons and phone breakpoints). The styl
 live in [`src/app/schedule-smart.css`](src/app/schedule-smart.css), with an `ss-`
 prefix on every class.
 
+The brand colour is a bright azure blue (`#1b6ce0`, the `--brand` / `--ss-brand`
+tokens): buttons, switches, ticks, focus rings and accent labels use it, with white
+text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy text.
+
 - **Calendar** — "Plan your open time" on the left: every task still to schedule,
   ordered by due date, length or points, narrowed to one class (or school only,
   or personal), five at a time or fifteen. **Drag a task onto the calendar** to
