@@ -170,9 +170,10 @@ function minutesLabel(m: number): string {
 }
 
 /**
- * One task to plan: a card to grab and drag onto the calendar (with a mouse
- * straight away; on a touch screen, press and hold first). Tap it to open it, or
- * tap its time to change how long it needs. Ticking work off happens on Tasks and
+ * One task to plan: a card to grab anywhere and drag onto the calendar (with a
+ * mouse straight away; on a touch screen, swipe it sideways toward the calendar,
+ * or press and hold it). Its left edge is its class's colour. Tap it to open it,
+ * or tap its time to change how long it needs. Ticking work off happens on Tasks and
  * in its details: the planner is only for putting work on the calendar.
  */
 function PlannerTask({ task }: { task: Task }) {
@@ -188,6 +189,7 @@ function PlannerTask({ task }: { task: Task }) {
   return (
     <article
       className="ss-mini-task ss-draggable"
+      style={{ "--task": course?.color ?? "var(--ss-personal)" } as React.CSSProperties}
       role="button"
       tabIndex={0}
       ref={dragSourceRef}
@@ -227,16 +229,13 @@ function PlannerTask({ task }: { task: Task }) {
         );
       }}
     >
-      <span className="ss-grip" aria-hidden>
-        <SsIcon name="grip" size={16} />
-      </span>
       <div className="min-w-0">
         <h3>
           {task.title}
           {fresh ? <span className="ss-new">NEW</span> : null}
         </h3>
         <p>
-          {course ? course.code : "Personal"} · <span className={due.late ? "ss-late" : ""}>{due.text}</span>
+          <b>{course ? course.code : "Personal"}</b> · <span className={due.late ? "ss-late" : ""}>{due.text}</span>
           {task.points !== null ? <> · {task.points} pts</> : null}
         </p>
       </div>

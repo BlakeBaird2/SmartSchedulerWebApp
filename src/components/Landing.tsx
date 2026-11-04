@@ -90,12 +90,15 @@ function Step({ icon, title, children }: { icon: SsIconName; title: string; chil
 // the sample data for that.
 // ---------------------------------------------------------------------------
 
+/** The planner's cards, each striped in its class's colour (from the app's class colours). */
 const PLANNER = [
-  { title: "Read Chapter 5", meta: "ACC 200 · Today", minutes: "30 min" },
-  { title: "Problem Set 4", meta: "MATH 112 · Tomorrow", minutes: "1 hr" },
-  { title: "Essay outline", meta: "WRTG 150 · Fri", minutes: "45 min" },
-  { title: "Lab report draft", meta: "CS 142 · Mon", minutes: "1 hr" },
+  { title: "Read Chapter 5", code: "ACC 200", when: "Today", minutes: "30 min", color: "#e11d48" },
+  { title: "Problem Set 4", code: "MATH 112", when: "Tomorrow", minutes: "1 hr", color: "#059669" },
+  { title: "Essay outline", code: "WRTG 150", when: "Fri", minutes: "45 min", color: "#d97706" },
+  { title: "Lab report draft", code: "CS 142", when: "Mon", minutes: "1 hr", color: "#4f46e5" },
 ];
+
+const taskColor = (color: string) => ({ "--task": color }) as React.CSSProperties;
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
 
@@ -202,9 +205,11 @@ function PhoneStill() {
         </span>
         <strong>Plan your open time</strong>
         {PLANNER.map((t) => (
-          <div key={t.title} className="ss-iphone-task">
+          <div key={t.title} className="ss-iphone-task" style={taskColor(t.color)}>
             <h3>{t.title}</h3>
-            <p>{t.meta}</p>
+            <p>
+              <b>{t.code}</b> · {t.when}
+            </p>
             <span className="ss-minutes">
               <SsIcon name="clock" size={12} /> {t.minutes}
             </span>
@@ -248,13 +253,12 @@ function Still() {
         <strong>Plan your open time</strong>
         <div className="ss-home-cards">
           {PLANNER.map((t) => (
-            <div key={t.title} className="ss-mini-task">
-              <span className="ss-grip">
-                <SsIcon name="grip" size={16} />
-              </span>
+            <div key={t.title} className="ss-mini-task" style={taskColor(t.color)}>
               <div className="min-w-0">
                 <h3>{t.title}</h3>
-                <p>{t.meta}</p>
+                <p>
+                  <b>{t.code}</b> · {t.when}
+                </p>
               </div>
               <span className="ss-minutes">
                 <SsIcon name="clock" size={13} /> {t.minutes}
