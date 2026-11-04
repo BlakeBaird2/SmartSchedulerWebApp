@@ -17,7 +17,11 @@ needs no environment variables at all.
 ## Pages
 
 - **`/`** — the home page for newcomers, in the app's design: one line on what
-  SmartScheduler does, **Get started** and **Try it with sample data**, a still
+  SmartScheduler does, **Get started** and **Try it with sample data**, then "Too many places to
+  check?": Canvas, Learning Suite, Google Calendar and Apple Calendar in an arch,
+  their lines flowing into one point that leads to "Take control. Plan with
+  confidence." (the Canvas and Google Calendar marks are from Simple Icons, CC0),
+  then a still
   of the calendar page shown on a drawn laptop, with an iPhone beside it showing
   the phone layout (so it's plainly a picture, not something to click; both
   keep their layouts, scaled down, on a phone),
