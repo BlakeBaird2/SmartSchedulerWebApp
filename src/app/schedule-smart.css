@@ -3553,17 +3553,170 @@ section.ss-due-page {
   font-size: 13.5px;
 }
 
-/* The still of the calendar page. */
+/*
+ * The still of the calendar page, on a laptop: a dark screen bezel with its
+ * camera, a little app bar, and a silver base below, so it reads as a picture
+ * of the website rather than something to click.
+ */
+.ss-laptop {
+  margin: 0 auto;
+  max-width: 1040px;
+  pointer-events: none;
+  user-select: none;
+}
+.ss-laptop-lid {
+  position: relative;
+  margin: 0 7%;
+  padding: 18px 14px 14px;
+  border: 1px solid #3a3a3e;
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(#1f1f22, #18181b);
+  box-shadow: 0 30px 70px -36px rgba(20, 20, 18, 0.55);
+}
+.ss-laptop-camera {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3b3d44;
+  box-shadow: inset 0 0 0 1px #4a4d55;
+  transform: translateX(-50%);
+}
+.ss-laptop-screen {
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--ss-surface);
+  container-type: inline-size;
+}
+/*
+ * The screen always shows the computer layout, drawn 860px wide and scaled to
+ * fit (about full size on a computer, smaller on a phone), so it looks like a
+ * laptop at every size. tan(atan2()) turns the width ratio into a plain number.
+ */
+.ss-laptop-canvas {
+  width: 860px;
+  zoom: tan(atan2(100cqw, 860px));
+}
+.ss-laptop-appbar {
+  height: 38px;
+  padding: 0 14px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--ss-line);
+  background: var(--ss-surface);
+  font-size: 11.5px;
+}
+.ss-laptop-appbar > span {
+  font: 700 13px "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.02em;
+}
+.ss-laptop-appbar nav {
+  display: flex;
+  gap: 18px;
+  color: var(--ss-muted);
+  font-weight: 600;
+}
+.ss-laptop-appbar nav > * {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 2px 10px;
+}
+.ss-laptop-appbar nav b {
+  color: var(--ss-ink);
+  box-shadow: inset 0 -2px var(--ss-accent);
+}
+.ss-laptop-appbar i {
+  justify-self: end;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ss-avatar-bg);
+  color: var(--ss-avatar-fg);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+}
+/* The base: a silver deck, a little wider than the screen, with the notch to open it. */
+.ss-laptop-base {
+  position: relative;
+  height: 16px;
+  border-radius: 2px 2px 14px 14px / 2px 2px 10px 10px;
+  background: linear-gradient(#e4e4e8, #c4c4ca 70%, #a9a9b0);
+  box-shadow: 0 18px 30px -18px rgba(20, 20, 18, 0.5);
+}
+.ss-laptop-base::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 15%;
+  height: 6px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(#b5b5bc, #cfcfd5);
+  transform: translateX(-50%);
+}
+:root[data-theme="dark"] .ss-laptop-lid {
+  border-color: #4a4a50;
+  background: linear-gradient(#0c0c0e, #08080a);
+}
+:root[data-theme="dark"] .ss-laptop-base {
+  background: linear-gradient(#5a5a60, #3e3e44 70%, #2e2e33);
+}
+:root[data-theme="dark"] .ss-laptop-base::before {
+  background: linear-gradient(#2e2e33, #45454b);
+}
+.ss-laptop figcaption {
+  margin-top: 18px;
+  color: var(--ss-faint);
+  font-size: 13.5px;
+  text-align: center;
+  pointer-events: auto;
+}
+.ss-laptop figcaption a {
+  color: var(--ss-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* The screen is always a computer's, so the planner cards keep their computer look on a phone too. */
+.ss-laptop .ss-mini-task {
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+  padding: 10px 10px 10px 6px;
+  border-radius: 12px;
+}
+.ss-laptop .ss-mini-task .ss-minutes {
+  grid-column: auto;
+  justify-self: auto;
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+.ss-laptop .ss-mini-task .ss-grip {
+  grid-row: auto;
+}
+.ss-laptop .ss-grip svg {
+  width: 16px;
+  height: 16px;
+}
+.ss-laptop .ss-mini-task h3 {
+  font-size: 14.5px;
+}
+.ss-laptop .ss-mini-task p {
+  font-size: 12.5px;
+}
 .ss-home-preview {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   overflow: hidden;
-  border: 1px solid var(--ss-line);
-  border-radius: 18px;
   background: var(--ss-surface);
-  box-shadow: 0 24px 60px -30px rgba(32, 32, 31, 0.28);
-  pointer-events: none;
-  user-select: none;
 }
 .ss-home-planner {
   padding: 20px 18px;
@@ -3731,23 +3884,21 @@ section.ss-due-page {
   .ss-home-actions > * {
     justify-content: center;
   }
-  /* On a phone the still shows the planner beside one day, as the app does. */
-  .ss-home-preview {
-    grid-template-columns: 52% 48%;
+  .ss-laptop-lid {
+    margin: 0 4%;
+    padding: 12px 7px 7px;
+    border-radius: 14px 14px 0 0;
   }
-  .ss-home-planner {
-    padding: 14px 10px;
+  .ss-laptop-camera {
+    top: 4px;
+    width: 4px;
+    height: 4px;
   }
-  .ss-home-planner > strong {
-    font-size: 15px;
+  .ss-laptop-screen {
+    border-radius: 4px;
   }
-  .ss-home-week-head,
-  .ss-home-week-body {
-    grid-template-columns: 40px minmax(0, 1fr);
-  }
-  .ss-home-week-head span:nth-child(n + 2):not([data-today]),
-  .ss-home-day:not(:nth-child(4)) {
-    display: none;
+  .ss-laptop-base {
+    height: 11px;
   }
   .ss-home-steps {
     grid-template-columns: 1fr;
