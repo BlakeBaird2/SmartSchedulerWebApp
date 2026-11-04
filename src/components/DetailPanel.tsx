@@ -168,7 +168,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
 
-      <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-5 overflow-y-auto">
         {/* The same main action as the Plan screen's Done button, so finishing work looks the same everywhere. */}
         <div className="flex flex-col gap-2">
           <Button
@@ -473,7 +473,7 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
-      <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-5 overflow-y-auto">
         <div>
           <Label>When</Label>
           <div className="text-[0.9375rem] font-medium">
@@ -657,7 +657,7 @@ function GapDetail({ startMs, onClose }: { startMs: number; onClose: () => void 
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
-      <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-4 overflow-y-auto">
         {shown.length > 0 ? (
           <>
             <p className="text-sm text-muted leading-relaxed">
@@ -747,7 +747,7 @@ function SlotDetail({ startMs, minutes, onClose }: { startMs: number; minutes: n
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
-      <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-5 overflow-y-auto">
         <div>
           <AddKindToggle kind={kind} onKind={setKind} />
           <AddItemForm
@@ -824,7 +824,7 @@ function BlockDetail({ blockId, onClose }: { blockId: string; onClose: () => voi
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
-      <div className="p-4 space-y-5 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-5 overflow-y-auto">
         <div>
           <Label>Name</Label>
           <input
@@ -891,7 +891,7 @@ function WhyDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
-      <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-4 overflow-y-auto">
         <p className="text-sm leading-relaxed">
           Schedule Smart plans unfinished work by <b className="font-semibold">soonest deadline first</b>, into free gaps that are long enough. Quizzes are
           not split; longer work can be.
@@ -989,7 +989,7 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
         </div>
         <Button iconOnly icon={X} label="Close" onClick={onClose} data-dialog-close="true" />
       </header>
-      <div className="p-4 space-y-4 overflow-y-auto scrollbar-thin">
+      <div className="p-4 space-y-4 overflow-y-auto">
         <p className="text-sm text-muted leading-relaxed">
           That counts for the prototype goal. Your plan updates everywhere: Plan, Calendar and Upcoming stay in sync.
         </p>

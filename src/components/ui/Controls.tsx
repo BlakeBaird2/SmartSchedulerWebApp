@@ -48,7 +48,7 @@ export function SegmentedControl<T extends string | number>({
       ))}
     </div>
   );
-  return scroll ? <div className="-mx-1 px-1 overflow-x-auto scrollbar-thin max-w-full">{row}</div> : row;
+  return scroll ? <div className="-mx-1 px-1 overflow-x-auto max-w-full">{row}</div> : row;
 }
 
 /** On / off. The label says what "on" means; the track fills when it is on. */

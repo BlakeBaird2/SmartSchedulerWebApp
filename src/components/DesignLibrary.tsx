@@ -152,7 +152,7 @@ export function DesignLibrary() {
         </section>
 
         <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10">
-          <nav aria-label="Components" className="hidden lg:block sticky top-20 self-start pt-8 max-h-[calc(100dvh-6rem)] overflow-y-auto scrollbar-thin">
+          <nav aria-label="Components" className="hidden lg:block sticky top-20 self-start pt-8 max-h-[calc(100dvh-6rem)] overflow-y-auto">
             {GROUPS.map((g) => (
               <div key={g.id} className="mb-4">
                 <SectionLabel>{g.title}</SectionLabel>

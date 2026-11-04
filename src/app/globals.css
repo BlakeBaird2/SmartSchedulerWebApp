@@ -81,6 +81,35 @@
     font-feature-settings: "cv11", "ss01", "tnum";
   }
 
+  /*
+   * Slim scroll bars everywhere: a 6px rounded thumb on a clear track, so a bar
+   * that's always shown (Windows, or a Mac with a mouse) takes little room.
+   * Chrome, Edge and Safari draw these; Firefox can't, so it gets its own thin
+   * bar. (Chrome ignores these once scrollbar-width or scrollbar-color is set,
+   * so neither is set for it anywhere.)
+   */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--line-strong) transparent;
+    }
+  }
+
   body {
     background: var(--bg);
     color: var(--fg);
@@ -451,10 +480,6 @@
     opacity: 0.6;
   }
 
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
-  }
   /* Sideways rows on phones (filters): swipe, no visible bar. */
   .scrollbar-none {
     scrollbar-width: none;

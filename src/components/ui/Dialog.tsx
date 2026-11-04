@@ -101,7 +101,7 @@ export function Dialog({
   const frame =
     placement === "side"
       ? "panel-enter fixed bg-surface flex flex-col inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl border-t border-line shadow-[var(--shadow-lg)] md:inset-y-0 md:right-0 md:left-auto md:w-[26rem] md:max-h-none md:rounded-none md:border-t-0 md:border-l"
-      : `fixed inset-x-4 top-[8vh] mx-auto ${width} bg-surface rounded-2xl border border-line shadow-[var(--shadow-lg)] p-5 sm:p-6 fade-in max-h-[84dvh] overflow-y-auto scrollbar-thin`;
+      : `fixed inset-x-4 top-[8vh] mx-auto ${width} bg-surface rounded-2xl border border-line shadow-[var(--shadow-lg)] p-5 sm:p-6 fade-in max-h-[84dvh] overflow-y-auto`;
 
   const content = (
     <>
