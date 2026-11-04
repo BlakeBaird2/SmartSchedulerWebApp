@@ -16,18 +16,17 @@ needs no environment variables at all.
 
 ## Pages
 
-- **`/`** — the home page for newcomers, in the app's design: one line on what
-  SmartScheduler does, **Get started** and **Try it with sample data**, then "Too many places to
-  check?": hand-drawn Google Calendar, Canvas, Apple Calendar and Learning Suite
-  icons (`public/landing/`) in an arch, with hand-drawn arrows curving down from
-  each into a still
-  of the calendar page shown on a drawn laptop, with an iPhone beside it showing
-  the phone layout (so it's plainly a picture, not something to click; both
-  keep their layouts, scaled down, on a phone),
-  then "Take control. Plan with confidence." and three steps. Where to find each calendar link is
-  explained during setup. It is rendered on the server, so it shows up at once
-  and search engines can read it. Anyone who already has calendars in their browser skips it and goes
-  straight to their plan.
+- **`/`** — the home page for newcomers, in the app's design. First the tagline,
+  "Too many calendars? Regain control with one tool.", then the picture:
+  hand-drawn Google Calendar, Canvas, Apple Calendar and Learning Suite icons
+  (`public/landing/`) in an arch, with arrows curving down from each into a still
+  of the calendar page on a drawn laptop, with an iPhone beside it showing the
+  phone layout (plainly a picture, not something to click; both keep their
+  layouts, scaled down, on a phone). Below it, what SmartScheduler does, with
+  **Get started** and **Try it with sample data**. Where to find each calendar
+  link is explained during setup. It is rendered on the server, so it shows up at
+  once and search engines can read it. Anyone who already has calendars in their
+  browser skips it and goes straight to their plan.
 - **`/about`** — the same home page, for people who already use SmartScheduler. It never
   skips ahead to the app; Settings → **About SmartScheduler** links to it.
 - **`/design`** — the design library: every component the screens are built

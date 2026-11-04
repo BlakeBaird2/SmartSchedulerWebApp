@@ -1,6 +1,7 @@
 /**
- * The home page, in the app's own design: one line on what Schedule Smart does,
- * a way in, a picture of the calendar, and three steps. It renders on the server
+ * The home page, in the app's own design: a tagline, then the picture (the
+ * calendars a student juggles, arrows into Schedule Smart on a laptop and
+ * phone), then what it does and a way in. It renders on the server
  * so it shows up at once. Anyone who already has calendars set up skips it (see
  * the root layout) and goes straight to the app at /app.
  *
@@ -10,7 +11,7 @@
 import Link from "next/link";
 import { CalendarFunnel } from "./CalendarFunnel";
 import { PrototypeBadge } from "./Prototype";
-import { SsIcon, type SsIconName } from "./SsIcon";
+import { SsIcon } from "./SsIcon";
 
 export type LandingVariant = "home" | "about";
 
@@ -31,11 +32,20 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
       </header>
 
       <main>
+        {/* First thing on the page: the problem, then the picture of it being solved. */}
+        <h1 className="ss-home-tagline">
+          Too many calendars? <span>Regain control with one tool.</span>
+        </h1>
+
+        <CalendarFunnel>
+          <Preview />
+        </CalendarFunnel>
+
         <section className="ss-home-hero" aria-labelledby="home-title">
           <span className="ss-eyebrow">
             <SsIcon name="spark" size={14} /> YOUR PERSONAL PLANNER
           </span>
-          <h1 id="home-title">Plan your open time.</h1>
+          <h2 id="home-title">Plan your open time.</h2>
           <p>Your classes, assignments, work and plans on one calendar. Drag what&apos;s due into the free time you have.</p>
           <div className="ss-home-actions">
             <Link href="/app" className="ss-primary">
@@ -48,22 +58,6 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
           </div>
           <p className="ss-home-note">{SYNCABLE ? "Free · No account needed · Sign in to sync your phone and laptop" : "Free · No account · Saved only in your browser"}</p>
         </section>
-
-        <CalendarFunnel>
-          <Preview />
-        </CalendarFunnel>
-
-        <ol className="ss-home-steps">
-          <Step icon="calendar" title="Paste your calendar links">
-            From Canvas, Learning Suite, Google, Outlook or Apple.
-          </Step>
-          <Step icon="list" title="See everything in one place">
-            Classes, work and plans on one calendar, with what&apos;s due listed beside it.
-          </Step>
-          <Step icon="clock" title="Drag tasks into open time">
-            Drop a task on the calendar and it takes as long as it needs.
-          </Step>
-        </ol>
       </main>
 
       <footer className="ss-home-foot">
@@ -71,18 +65,6 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
         <Link href="/app">Open Schedule Smart</Link>
       </footer>
     </div>
-  );
-}
-
-function Step({ icon, title, children }: { icon: SsIconName; title: string; children: React.ReactNode }) {
-  return (
-    <li>
-      <span className="ss-home-step-icon">
-        <SsIcon name={icon} size={19} />
-      </span>
-      <h2>{title}</h2>
-      <p>{children}</p>
-    </li>
   );
 }
 
@@ -165,13 +147,6 @@ function Preview() {
           </div>
         </div>
       </div>
-      <figcaption>
-        A preview of the app on a computer and a phone.{" "}
-        <a href="/app#demo" data-smart-event="sample_data_started">
-          Try it with sample data
-        </a>{" "}
-        to click around.
-      </figcaption>
     </figure>
   );
 }

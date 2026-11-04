@@ -1,9 +1,8 @@
 /**
- * The home page's "too many places to check" picture: the calendars a student
- * juggles (Google Calendar, Canvas, Apple Calendar, Learning Suite) drawn as
- * hand-sketched icons in an arch, with hand-drawn arrows curving down from each
- * into the laptop and phone below (passed in as children). Then the payoff:
- * take control, plan with confidence.
+ * The home page's picture: the calendars a student juggles (Google Calendar,
+ * Canvas, Apple Calendar, Learning Suite) drawn as hand-sketched icons in an
+ * arch, with arrows curving down from each into the laptop and phone below
+ * (passed in as children).
  *
  * Drawn on the server. Where the browser supports scroll-driven animations, the
  * arrows draw themselves in as the section scrolls into view; otherwise, and for
@@ -62,7 +61,8 @@ const SOURCES: Source[] = [
     id: "learning-suite",
     src: "/landing/learning-suite.webp",
     at: [850, 150],
-    tilt: 0,
+    // Mirrors Google Calendar's tilt on the other side.
+    tilt: 6,
     arrow: [
       [822, 240],
       [800, 300],
@@ -90,31 +90,19 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 
 export function CalendarFunnel({ children }: { children: React.ReactNode }) {
   return (
-    <section className="ss-funnel" aria-labelledby="funnel-title">
-      <h2 id="funnel-title">Too many places to check?</h2>
-      <p>Work in Google Calendar. Assignments in Canvas. Plans in Apple Calendar. Another class in Learning Suite.</p>
-
+    <div className="ss-funnel">
       <div
         className="ss-funnel-art"
         role="img"
         aria-label="Google Calendar, Canvas, Apple Calendar and Learning Suite, with arrows from each pointing down into Schedule Smart on a laptop."
       >
         <svg viewBox={`0 0 ${W} ${H}`} aria-hidden>
-          <defs>
-            {/* A slight wobble, so the lines look drawn by hand. */}
-            <filter id="ss-sketch" x="-5%" y="-5%" width="110%" height="110%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" />
-              <feDisplacementMap in="SourceGraphic" scale="3.2" />
-            </filter>
-          </defs>
-          <g filter="url(#ss-sketch)">
-            {SOURCES.map((s) => (
-              <g key={s.id} className="ss-funnel-arrow">
-                <path d={curve(s.arrow)} pathLength={1} />
-                <path className="ss-funnel-head" d={head(s.arrow)} />
-              </g>
-            ))}
-          </g>
+          {SOURCES.map((s) => (
+            <g key={s.id} className="ss-funnel-arrow">
+              <path d={curve(s.arrow)} pathLength={1} />
+              <path className="ss-funnel-head" d={head(s.arrow)} />
+            </g>
+          ))}
         </svg>
         {SOURCES.map((s) => (
           // Plain <img>: small fixed sketches; nothing for the image optimiser to do.
@@ -133,11 +121,6 @@ export function CalendarFunnel({ children }: { children: React.ReactNode }) {
       </div>
 
       {children}
-
-      <div className="ss-funnel-payoff">
-        <h2>Take control. Plan with confidence.</h2>
-        <p>Schedule Smart brings every calendar into one plan, so you always know what&apos;s next and when you&apos;re free.</p>
-      </div>
-    </section>
+    </div>
   );
 }
