@@ -8,7 +8,6 @@ import { defaultWorkspace, PERSONAL_COLORS } from "@/lib/workspace";
 import type { FeedConfig, Workspace } from "@/lib/types";
 import { useApp } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
-import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
 import { CapabilityHero, PrototypeBadge } from "./Prototype";
@@ -57,12 +56,14 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const cloud = useCloud();
   // With sign-in available, setup opens by asking whether to use a Google account (step 0).
   const asksAccount = cloudAvailable;
-  const [chosenStep, setStep] = useState<0 | 1 | 2 | 3>(asksAccount ? 0 : 1);
+  const [chosenStep, setStep] = useState<0 | 1 | 2>(asksAccount ? 0 : 1);
   const [helpOpen, setHelpOpen] = useState(false);
   // Signed in, here or by coming back from Google: on to calendars. (An account that
   // already has a setup brings it across, and setup closes on its own.)
   const step = chosenStep === 0 && (cloud.user || !asksAccount) ? 1 : chosenStep;
-  const total = asksAccount ? 4 : 3;
+  // Sign-in (when offered), calendars, then class times. Working hours aren't asked here:
+  // nothing fills the calendar on its own, so they live in Settings.
+  const total = asksAccount ? 3 : 2;
   const shown = asksAccount ? step + 1 : step;
   const hasSchool = ws.feeds.some((f) => f.role === "school");
   const hasClasses = model.visibleCourses.length > 0;
@@ -135,9 +136,10 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 className="ml-auto"
                 disabled={ws.feeds.length === 0}
                 title={ws.feeds.length === 0 ? "Add a calendar first, or try sample data" : undefined}
-                onClick={() => setStep(hasClasses ? 2 : 3)}
+                onClick={hasClasses ? () => setStep(2) : onFinish}
+                data-smart-event={hasClasses ? undefined : "setup_finished"}
               >
-                Continue
+                {hasClasses || ws.feeds.length === 0 ? "Continue" : "Open my calendar"}
               </Button>
             </div>
           </Card>
@@ -146,8 +148,8 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <div>
               <h2 className="text-xl font-semibold">When do your classes meet?</h2>
               <p className="mt-1 text-sm text-muted leading-relaxed">
-                Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times once so they show on your calendar and
-                Schedule Smart plans around them. Skip any class that doesn&apos;t meet in person.
+                Class calendars usually list what&apos;s due, not when class is. Add each class&apos;s days and times so they show on your calendar. Skip any
+                class that doesn&apos;t meet in person.
               </p>
             </div>
             <ClassTimesEditor />
@@ -155,35 +157,12 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <Button icon={ArrowLeft} onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={() => setStep(3)}>
-                Continue
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <Card padding="lg" className="mt-3 space-y-5">
-            <div>
-              <h2 className="text-xl font-semibold">When do you like to work?</h2>
-              <p className="mt-1 text-sm text-muted leading-relaxed">
-                Schedule Smart fills the gaps between your events with the work that&apos;s due soonest. Tell it when your day starts and ends.
-              </p>
-            </div>
-            <HoursForm />
-            <div>
-              <h2 className="text-sm font-semibold">Anything else every week?</h2>
-              <p className="mt-0.5 mb-3 text-xs text-muted leading-relaxed">A job, practice, or commute that isn&apos;t on a calendar you added. You can skip this.</p>
-              <WeeklyEditor />
-            </div>
-            <div className="flex items-center gap-2 flex-wrap pt-1">
-              <Button icon={ArrowLeft} onClick={() => setStep(hasClasses ? 2 : 1)}>
-                Back
-              </Button>
               <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish} data-smart-event="setup_finished">
-                Build my plan
+                Open my calendar
               </Button>
             </div>
           </Card>
-        )}
+        ) : null}
 
         <p className="mt-5 text-xs text-muted leading-relaxed flex gap-2">
           <Lock size={14} className="shrink-0 mt-0.5" />
