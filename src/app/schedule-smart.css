@@ -3190,7 +3190,7 @@ section.ss-due-page {
     gap: 8px;
   }
   .ss-date-title h1 {
-    font-size: 16px;
+    font-size: 20px;
   }
   .ss-date-title span {
     font-size: 10px;
@@ -3421,10 +3421,9 @@ section.ss-due-page {
     align-items: center;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-date-title h1 {
-    max-width: 74px;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 14px;
+    font-size: 18px;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-date-title span {
     display: none;
