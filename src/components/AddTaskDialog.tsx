@@ -8,9 +8,7 @@ import { SsIcon } from "./SsIcon";
  * The Add button's pop-up, as in the Figma prototype: add a task (a name, its
  * class or area, when it's due, how long it takes and how much it matters),
  * which goes straight onto the planner's list, or an event (a name and a time),
- * which takes that time on the calendar. Points are left out: they say what an
- * assignment is worth in its class, so they belong to assignments from a class
- * calendar.
+ * which takes that time on the calendar.
  */
 export function AddTaskDialog({ onClose }: { onClose: () => void }) {
   const [kind, setKind] = useState<AddKind>("task");

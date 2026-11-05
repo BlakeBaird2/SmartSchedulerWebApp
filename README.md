@@ -50,8 +50,8 @@ tokens): buttons, switches, ticks, focus rings and accent labels use it, with wh
 text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy text.
 
 - **Calendar** — "Plan your open time" on the left: every task still to schedule,
-  ordered by due date, length or points, narrowed to one class (or school only,
-  or personal), five at a time or fifteen. Each card is striped in its class's
+  ordered by due date or length, narrowed to one class (or school only,
+  or personal), with a search that looks through all of it. Each card is striped in its class's
   colour. **Drag a task onto the calendar** (grab the card anywhere) to schedule
   it for as long as its estimate. On a phone, swipe the card sideways toward the
   calendar and it lifts at once, or hold it for a moment; swiping up and down
@@ -142,10 +142,9 @@ text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy te
   on the calendar, the planner plans around it, and opening it lets you rename,
   recolour or delete it. A task is a name, class or area, due, due time,
   estimate (up to 8 hours) and priority, and goes on the to-do list.
-- **Points and priority** — calendar feeds don't carry either. Points are for
-  assignments from a class calendar (what they're worth in the class), so you add
-  them in an assignment's details; work you add by hand has none. Priority follows
-  the due date until you pick one.
+- **Priority** — calendar feeds don't carry it, so it follows the due date until
+  you pick one in a task's details. (There are no points: an iCal link can't say
+  what an assignment is worth.)
 - Also: ticking work off folds it away with Undo; **New** marks work a class
   calendar added since you last looked; each morning it asks whether to put
   yesterday's unfinished work back; **Class priority** (Settings) breaks ties;

@@ -12,8 +12,8 @@ import type { AssignmentType, Priority, ScheduledBlock, Task, UnfinishedAnswer, 
 export type { UnfinishedAnswer, UnfinishedPolicy };
 /** Everything, school work only, or personal work only. */
 export type TodoScope = "all" | "school" | "personal";
-/** Due date (most urgent first), length (shortest first) or points (worth the most first). */
-export type TodoSort = "due" | "duration" | "points";
+/** Due date (most urgent first) or length (shortest first). */
+export type TodoSort = "due" | "duration";
 
 /** Where a task stands: on the list, on the calendar, waiting to be asked about, or done. */
 export type TodoState = "todo" | "scheduled" | "unfinished" | "done";
@@ -131,8 +131,6 @@ export const PRIORITY_LABEL: Record<Priority, string> = { high: "High", medium: 
 export function sortTodos(tasks: Task[], sort: TodoSort, rank: (courseId: string | null) => number): Task[] {
   const urgency = byUrgency(rank);
   if (sort === "due") return [...tasks].sort(urgency);
-  // Worth the most first; work with no points after, most urgent first.
-  if (sort === "points") return [...tasks].sort((a, b) => (b.points ?? -1) - (a.points ?? -1) || urgency(a, b));
   // Shortest first, to fill a gap of a given size; the most urgent of equal length first.
   return [...tasks].sort((a, b) => a.estimate - b.estimate || urgency(a, b));
 }

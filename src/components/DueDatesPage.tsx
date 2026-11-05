@@ -203,7 +203,6 @@ function DueItem({ task: t, detailed, now }: { task: DueEntry; detailed: boolean
               {course?.code ?? "Personal"}
             </span>
             {detailed && t.estimate ? <span>About {approxDuration(t.estimate).replace("~", "")}</span> : null}
-            {t.points !== null ? <span>{t.points} pts</span> : null}
           </span>
         </span>
         <span className="ss-due-when">

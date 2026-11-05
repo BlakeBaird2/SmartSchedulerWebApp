@@ -236,33 +236,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             </select>
           </dd>
 
-          {/* Points are for real assignments (what they're worth in the class); work added by hand has none. */}
-          {task.manual ? null : (
-            <>
-              <dt className="text-muted">
-                <label htmlFor={`points-${task.id}`}>Points</label>
-              </dt>
-              <dd>
-                <input
-                  id={`points-${task.id}`}
-                  className="input input-sm w-24"
-                  type="number"
-                  min={0}
-                  max={10000}
-                  inputMode="numeric"
-                  placeholder="None"
-                  defaultValue={task.points ?? ""}
-                  key={`${task.id}:${task.points ?? ""}`}
-                  onBlur={(e) => {
-                    const v = e.target.value.trim();
-                    const next = v === "" ? null : Number(v);
-                    if (next === task.points || (next !== null && !Number.isFinite(next))) return;
-                    setTaskMeta(task.id, { points: next });
-                  }}
-                />
-              </dd>
-            </>
-          )}
         </dl>
 
         {!task.done ? (

@@ -54,7 +54,6 @@ function useAllTodos(): Task[] {
 const SORTS: { id: TodoSort; label: string }[] = [
   { id: "due", label: "Due date" },
   { id: "duration", label: "Length" },
-  { id: "points", label: "Points" },
 ];
 
 /**
@@ -305,7 +304,6 @@ function PlannerTask({ task }: { task: Task }) {
         </h3>
         <p>
           <b>{course ? course.code : "Personal"}</b> · <span className={due.late ? "ss-late" : ""}>{due.text}</span>
-          {task.points !== null ? <span className="ss-mini-points"> · {task.points} pts</span> : null}
           {/* Phones: the time as plain text here instead of the chip, so each card is one line shorter. */}
           <span className="ss-mini-time"> · {minutesLabel(task.estimate)}</span>
         </p>

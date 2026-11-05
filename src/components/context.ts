@@ -52,8 +52,8 @@ export interface AppContextValue {
 
   update: (fn: (ws: Workspace) => Workspace) => void;
   toggleDone: (task: Task) => void;
-  /** Set a task's points or priority; undefined leaves that one as it was, null clears it. */
-  setTaskMeta: (taskId: string, patch: { points?: number | null; priority?: Priority | null }) => void;
+  /** Set a task's priority; null goes back to following the due date. */
+  setTaskMeta: (taskId: string, patch: { priority?: Priority | null }) => void;
   /** Set how long a task needs (null goes back to the default for its kind). */
   setEstimate: (taskId: string, minutes: number | null, source?: EstimateSource) => void;
   /** Put a task on the calendar at `start`, for as long as it's expected to take. */
