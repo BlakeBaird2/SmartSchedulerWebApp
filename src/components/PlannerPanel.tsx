@@ -31,6 +31,28 @@ export function useTodos(): Task[] {
   }, [model.tasks, ws.blocks, ws.classOrder, ws.unfinished, ws.unfinishedAnswers, now, filters.courses, todoScope, todoSort]);
 }
 
+/**
+ * Every task still to schedule, from every class, whatever the planner's filters
+ * say: what the planner's search looks through.
+ */
+function useAllTodos(): Task[] {
+  const { model, ws, now, todoSort } = useApp();
+  return useMemo(
+    () =>
+      todoList({
+        tasks: model.tasks,
+        blocks: ws.blocks,
+        now,
+        scope: "all",
+        sort: todoSort,
+        classOrder: ws.classOrder,
+        policy: ws.unfinished,
+        answers: ws.unfinishedAnswers,
+      }),
+    [model.tasks, ws.blocks, ws.classOrder, ws.unfinished, ws.unfinishedAnswers, now, todoSort],
+  );
+}
+
 const SORTS: { id: TodoSort; label: string }[] = [
   { id: "due", label: "Due date" },
   { id: "duration", label: "Length" },
@@ -51,8 +73,26 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
   const plannerFilters = phone ? app.plannerFiltersPhone : app.plannerFilters;
   const setPlannerFilters = phone ? app.setPlannerFiltersPhone : app.setPlannerFilters;
   const todos = useTodos();
+  const allTodos = useAllTodos();
   const drag = usePlanDrag();
-  const shown = todos.slice(0, plannerMore ? MANY : FEW);
+  // Search: typed into `draft`, run on Enter. It looks through everything still to
+  // schedule (every class, past the filters and the 5 or 15 shown), and lists every match.
+  const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const results = useMemo(() => {
+    if (!q) return null;
+    return allTodos.filter((t) => {
+      const course = t.courseId ? model.courseById.get(t.courseId) : undefined;
+      return `${t.title} ${course ? `${course.code} ${course.title ?? ""}` : "Personal"}`.toLowerCase().includes(q);
+    });
+  }, [allTodos, q, model.courseById]);
+  const listed = todos.slice(0, plannerMore ? MANY : FEW);
+  const shown = results ?? listed;
+  const clearSearch = () => {
+    setDraft("");
+    setQuery("");
+  };
   const stack = filters.courses?.[0] ?? (todoScope === "all" ? "all" : todoScope);
   // What the filters are set to, in a few words, for when they are folded away.
   const stackLabel =
@@ -95,6 +135,37 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         <SsIcon name="plus" /> Add task
       </button>
 
+      <form
+        className="ss-planner-search"
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setQuery(draft);
+        }}
+      >
+        <SsIcon name="search" size={16} />
+        <input
+          type="search"
+          enterKeyHint="search"
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            // Emptying the box goes straight back to the list.
+            if (!e.target.value.trim()) setQuery("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") clearSearch();
+          }}
+          placeholder="Search all tasks"
+          aria-label="Search all tasks, then press Enter"
+        />
+        {draft ? (
+          <button type="button" className="ss-planner-search-clear" onClick={clearSearch} aria-label="Clear the search">
+            <SsIcon name="x" size={14} />
+          </button>
+        ) : null}
+      </form>
+
       <div className="ss-filters" data-collapsed={!plannerFilters || undefined}>
         <button
           className="ss-filters-toggle"
@@ -133,7 +204,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
             <div className="ss-density">
               <div>
                 <strong>Show more items</strong>
-                <span>{plannerMore ? `Showing all ${shown.length}` : `Showing ${shown.length} of ${todos.length}`}</span>
+                <span>{plannerMore ? `Showing all ${listed.length}` : `Showing ${listed.length} of ${todos.length}`}</span>
               </div>
               <button
                 className="ss-switch"
@@ -151,12 +222,20 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
 
       <div className="ss-queue-label">
         <span className="inline-flex items-center gap-1.5">
-          <SsIcon name="grip" size={13} /> DRAG TO SCHEDULE
+          <SsIcon name="grip" size={13} /> {results ? "SEARCH RESULTS" : "DRAG TO SCHEDULE"}
         </span>
-        <span>{shown.length} ITEMS</span>
+        <span aria-live="polite">{results ? `${results.length} FOUND` : `${shown.length} ITEMS`}</span>
       </div>
       <div className="ss-task-stack">
-        {shown.length === 0 ? <p className="ss-empty">Nothing left to schedule. Nice work.</p> : null}
+        {results && results.length === 0 ? (
+          <p className="ss-empty">
+            Nothing left to schedule matches &ldquo;{query.trim()}&rdquo;.{" "}
+            <button type="button" className="ss-link-button" onClick={clearSearch}>
+              Clear the search
+            </button>
+          </p>
+        ) : null}
+        {!results && shown.length === 0 ? <p className="ss-empty">Nothing left to schedule. Nice work.</p> : null}
         {shown.map((task) => (
           <PlannerTask key={task.id} task={task} />
         ))}
