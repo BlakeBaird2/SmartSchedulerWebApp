@@ -3621,33 +3621,17 @@ section.ss-due-page {
   justify-content: center;
   gap: 12px;
 }
-/*
- * Bigger, friendlier buttons than the app's, drawn like the doodles: round
- * pills with a marker outline and a little offset shadow, like a sticker,
- * that press in when clicked or tapped.
- */
+/* Bigger, friendlier buttons than the app's: round pills, plain and clean. */
 .ss-home-actions > a {
   min-height: 56px;
   padding: 0 30px;
   justify-content: center;
-  border: 2px solid var(--ss-ink);
   border-radius: 999px;
-  box-shadow: 3px 4px 0 var(--ss-ink);
+  box-shadow: none;
   font-family: var(--ss-home-font);
   font-size: 17.5px;
   font-weight: 750;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    background-color 0.15s ease;
-}
-.ss-home-actions > a:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 5px 0 var(--ss-ink);
-}
-.ss-home-actions > a:active {
-  transform: translate(2px, 3px);
-  box-shadow: 1px 1px 0 var(--ss-ink);
+  transition: background-color 0.15s ease;
 }
 .ss-home-actions .ss-home-quiet {
   background: var(--ss-surface);
@@ -3787,7 +3771,8 @@ section.ss-due-page {
   pointer-events: none;
 }
 :root[data-theme="dark"] .ss-devices-art {
-  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.5));
+  /* A soft light glow behind it, so the drawing's dark outline still shows on a dark page. */
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 26px rgba(150, 185, 255, 0.22));
 }
 
 .ss-home-foot {
