@@ -9,7 +9,6 @@
  * Schedule Smart, where the main button opens the app instead of starting setup.
  */
 import "@fontsource-variable/caveat";
-import "@fontsource-variable/nunito";
 import Link from "next/link";
 import { CalendarFunnel } from "./CalendarFunnel";
 import { PrototypeBadge } from "./Prototype";

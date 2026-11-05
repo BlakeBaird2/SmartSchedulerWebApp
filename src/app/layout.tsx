@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
+// Nunito: the home page's type, also the "Schedule Smart" name in the app's header.
+import "@fontsource-variable/nunito";
 import "./globals.css";
 import "./schedule-smart.css";
 import { DevStateSwitcher } from "@/components/Prototype";

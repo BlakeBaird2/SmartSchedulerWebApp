@@ -137,8 +137,9 @@
 /* Component classes live in the components layer so Tailwind utilities (hidden, flex, ...) still win. */
 @layer components {
   .wordmark {
+    font-family: "Nunito Variable", "Nunito", var(--font-sans, sans-serif);
     font-weight: 800;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.01em;
   }
 
   .card {

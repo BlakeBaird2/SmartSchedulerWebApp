@@ -119,7 +119,6 @@ export function CalendarView() {
   // Phones: swiping turns to the next or previous days, as many as are showing (as in Google Calendar's app).
   const swipe = (dir: 1 | -1) => setCalCursor(addDays(calCursor, dir * days.length));
 
-  const eyebrow = calMode === "month" ? "MONTH VIEW" : format(calCursor, "MMMM yyyy").toUpperCase();
   // Phones: just the month, as Google Calendar's app does (the year too, outside this one),
   // and its short name ("Nov") beside the open planner or on the narrowest phones. The dates
   // already show along the top.
@@ -160,7 +159,6 @@ export function CalendarView() {
               </button>
             ) : null}
             <div className="min-w-0">
-              {phone ? null : <span>{eyebrow}</span>}
               <h1 aria-live="polite" aria-label={fullTitle}>
                 {title}
               </h1>

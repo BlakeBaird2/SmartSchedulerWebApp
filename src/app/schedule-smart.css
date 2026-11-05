@@ -177,8 +177,9 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  font: 700 21px "Manrope Variable", "Manrope", sans-serif;
-  letter-spacing: -0.02em;
+  /* The name in the home page's rounded Nunito, everywhere it appears. */
+  font: 800 21px "Nunito Variable", "Nunito", "Manrope Variable", sans-serif;
+  letter-spacing: -0.01em;
   color: var(--ss-ink-2);
   text-align: left;
 }
@@ -901,14 +902,9 @@
   gap: 12px;
   align-items: center;
 }
-.ss-date-title span {
-  color: var(--ss-faint);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  font-weight: 700;
-}
+/* Just the title, no line above it, so it sits level with the button beside it. */
 .ss-date-title h1 {
-  margin: 2px 0 0;
+  margin: 0;
   font: 700 21px "Manrope Variable", "Manrope", sans-serif;
   letter-spacing: -0.03em;
   white-space: nowrap;
@@ -3253,9 +3249,6 @@ section.ss-due-page {
     padding-left: 6px;
     font-size: 21px;
   }
-  .ss-date-title span {
-    font-size: 10px;
-  }
   .ss-open-panel {
     width: 40px;
     height: 40px;
@@ -3492,9 +3485,6 @@ section.ss-due-page {
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 20px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-date-title span {
-    display: none;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-arrows button,
   .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
