@@ -58,6 +58,8 @@ interface UiPrefs {
   calSidebar: boolean;
   plannerMore: boolean;
   plannerFilters: boolean;
+  /** The planner's filters on a phone, kept apart: folded away there unless opened. */
+  plannerFiltersPhone: boolean;
   /** The to-do list: everything, or school work only. */
   todoScope: TodoScope;
   /** The to-do list's order: most urgent first, or shortest first. */
@@ -88,6 +90,7 @@ const DEFAULT_UI: UiPrefs = {
   calSidebar: true,
   plannerMore: false,
   plannerFilters: true,
+  plannerFiltersPhone: false,
   todoScope: "all",
   todoSort: "due",
 };
@@ -115,6 +118,7 @@ function parseUi(raw: string | null): UiPrefs {
     calSidebar: p.calSidebar !== false,
     plannerMore: p.plannerMore === true,
     plannerFilters: p.plannerFilters !== false,
+    plannerFiltersPhone: p.plannerFiltersPhone === true,
     todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
     todoSort: p.todoSort === "duration" || p.todoSort === "points" ? p.todoSort : "due",
   };
@@ -873,6 +877,8 @@ export function App() {
     setPlannerMore: (more: boolean) => writeUi({ plannerMore: more }),
     plannerFilters: ui.plannerFilters,
     setPlannerFilters: (open: boolean) => writeUi({ plannerFilters: open }),
+    plannerFiltersPhone: ui.plannerFiltersPhone,
+    setPlannerFiltersPhone: (open: boolean) => writeUi({ plannerFiltersPhone: open }),
     todoScope: ui.todoScope,
     setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
     todoSort: ui.todoSort,

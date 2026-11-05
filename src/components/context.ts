@@ -108,6 +108,9 @@ export interface AppContextValue {
   /** Whether the planner's filters (order, class, how many) are open or folded to one line. */
   plannerFilters: boolean;
   setPlannerFilters: (open: boolean) => void;
+  /** The same on a phone, where they start folded to leave room for the work itself. */
+  plannerFiltersPhone: boolean;
+  setPlannerFiltersPhone: (open: boolean) => void;
   /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
   openGoal: () => void;
   /** Mark done and optionally show the completion success panel. */

@@ -822,6 +822,10 @@
   border-color: var(--ss-accent-ring);
   background: var(--ss-accent-soft);
 }
+/* The time written in the card's line, used on phones in place of the chip. */
+.ss-mini-time {
+  display: none;
+}
 .ss-new {
   display: inline-block;
   margin-left: 7px;
@@ -3197,21 +3201,30 @@ section.ss-due-page {
     letter-spacing: 0.06em;
     font-size: 10.5px;
   }
+  /*
+   * Phones: a compact card, so more of the list shows. The title (two lines at
+   * most) and one line under it: class, due, and the time as plain text. The
+   * time chip, the points and the standing hint above the list are left out;
+   * the time can still be changed in the task's details.
+   */
   .ss-mini-task {
     grid-template-columns: minmax(0, 1fr);
-    gap: 7px;
-    margin-bottom: 9px;
-    padding: 11px 10px 11px 14px;
-    border-radius: 12px;
+    gap: 2px;
+    margin-bottom: 7px;
+    padding: 8px 9px 8px 13px;
+    border-radius: 11px;
   }
   .ss-mini-task::before {
     width: 4px;
   }
-  /* Phones: the time goes under the title, where there is room for it. */
-  .ss-mini-task .ss-minutes {
-    justify-self: start;
-    padding: 3px 8px;
-    font-size: 11.5px;
+  .ss-mini-task .ss-minutes,
+  .ss-mini-task .ss-choices,
+  .ss-mini-points,
+  .ss-aside-hint {
+    display: none;
+  }
+  .ss-mini-time {
+    display: inline;
   }
   .ss-grip svg {
     width: 13px;
@@ -3687,6 +3700,7 @@ section.ss-due-page {
   background: var(--ss-chip);
 }
 /* The hand-drawn arrow to Get started, from the left; on a computer only. */
+/* Its tip level with the middle of Get started. */
 .ss-home-pointer {
   position: absolute;
   right: calc(100% + 8px);
@@ -3700,7 +3714,6 @@ section.ss-due-page {
   fill: none;
   stroke: var(--ss-ink);
   stroke-width: 3;
-/* Its tip level with the middle of Get started. */
   stroke-linecap: round;
   stroke-linejoin: round;
 }
