@@ -57,6 +57,18 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
             with confidence.
           </h2>
           <p>Your classes, assignments, work and plans on one calendar. Drag what&apos;s due into the free time you have.</p>
+          {/* How it works, in one picture: drag a task from the planner into a free gap. Then the way in, under it. */}
+          <figure className="ss-home-how">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/landing/drag-to-plan.webp"
+              alt="Dragging a task, Study for exam (1 hour), from the planner into a free hour on the calendar, where it becomes a 10:00 to 11:00 AM block."
+              width={1429}
+              height={923}
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
           <div className="ss-home-actions">
             {/* One more hand-drawn arrow, like the ones above, pointing to where to start. */}
             <svg className="ss-home-pointer" viewBox="0 0 120 70" aria-hidden>
@@ -73,19 +85,6 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
           </div>
           <p className="ss-home-note">{SYNCABLE ? "Free · No account needed · Sign in to sync your phone and laptop" : "Free · No account · Saved only in your browser"}</p>
         </section>
-
-        {/* How it works, in one picture: drag a task from the planner into a free gap. */}
-        <figure className="ss-home-how">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/landing/drag-to-plan.webp"
-            alt="Dragging a task, Study for exam (1 hour), from the planner into a free hour on the calendar, where it becomes a 10:00 to 11:00 AM block."
-            width={1429}
-            height={923}
-            loading="lazy"
-            decoding="async"
-          />
-        </figure>
       </main>
 
       <footer className="ss-home-foot">

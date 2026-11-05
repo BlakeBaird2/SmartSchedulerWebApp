@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { todoList, type TodoSort } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { dueLabel } from "@/lib/ui";
-import { useApp } from "./context";
+import { useApp, useIsPhone } from "./context";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
@@ -44,7 +44,12 @@ const SORTS: { id: TodoSort; label: string }[] = [
  * scheduled work back here takes it off the calendar.
  */
 export function PlannerPanel({ onClose }: { onClose: () => void }) {
-  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore, plannerFilters, setPlannerFilters, openAddTask } = useApp();
+  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore, openAddTask } = useApp();
+  const app = useApp();
+  // On a phone the filters start folded, to leave room for the work; they open and close on their own there.
+  const phone = useIsPhone();
+  const plannerFilters = phone ? app.plannerFiltersPhone : app.plannerFilters;
+  const setPlannerFilters = phone ? app.setPlannerFiltersPhone : app.setPlannerFilters;
   const todos = useTodos();
   const drag = usePlanDrag();
   const shown = todos.slice(0, plannerMore ? MANY : FEW);
@@ -78,7 +83,8 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
             <SsIcon name="spark" size={14} /> PERSONALPLANNER
           </span>
           <h1 id="planner-title">Plan your open time</h1>
-          <p>{drag?.kind === "move" && drag.blockId ? "Drop it here to take it off the calendar." : "Drag an item into the calendar to schedule it."}</p>
+          {/* Phones drop the standing hint for room; "Drag to schedule" over the list says it. */}
+          {drag?.kind === "move" && drag.blockId ? <p>Drop it here to take it off the calendar.</p> : <p className="ss-aside-hint">Drag an item into the calendar to schedule it.</p>}
         </div>
         <button className="ss-icon-button" onClick={onClose} aria-label="Collapse suggestions">
           <SsIcon name="x" />
@@ -236,7 +242,9 @@ function PlannerTask({ task }: { task: Task }) {
         </h3>
         <p>
           <b>{course ? course.code : "Personal"}</b> · <span className={due.late ? "ss-late" : ""}>{due.text}</span>
-          {task.points !== null ? <> · {task.points} pts</> : null}
+          {task.points !== null ? <span className="ss-mini-points"> · {task.points} pts</span> : null}
+          {/* Phones: the time as plain text here instead of the chip, so each card is one line shorter. */}
+          <span className="ss-mini-time"> · {minutesLabel(task.estimate)}</span>
         </p>
       </div>
       <button
