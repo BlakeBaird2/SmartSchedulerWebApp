@@ -3173,8 +3173,9 @@ section.ss-due-page {
   .ss-notice-actions a {
     display: none;
   }
+  /* Phones: the planner takes 38% and the calendar the rest, so the calendar isn't crammed. */
   .ss-calendar-page {
-    grid-template-columns: 50% 50%;
+    grid-template-columns: 38% 62%;
     overflow: hidden;
   }
   .ss-calendar-page.ss-panel-closed {
@@ -3183,6 +3184,21 @@ section.ss-due-page {
   .ss-suggestions {
     min-width: 0;
     padding: 18px 12px;
+  }
+  /*
+   * In the narrower planner: no "Personal planner" line over the title, no item
+   * count, and the folded filters say just "Filters" (open them to see what's set).
+   */
+  .ss-aside-head .ss-eyebrow,
+  .ss-queue-label > span:last-child,
+  .ss-filters-toggle em {
+    display: none;
+  }
+  .ss-filters-toggle {
+    justify-content: space-between;
+  }
+  .ss-planner-search input {
+    text-overflow: ellipsis;
   }
   .ss-aside-head h1 {
     margin-top: 6px;
@@ -3516,7 +3532,7 @@ section.ss-due-page {
     font-size: 11px;
   }
   .ss-calendar-page:not(.ss-panel-closed) {
-    grid-template-columns: 52% 48%;
+    grid-template-columns: 38% 62%;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-suggestions {
     padding: 14px 10px;
