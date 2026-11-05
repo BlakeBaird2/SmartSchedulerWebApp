@@ -17,6 +17,7 @@ export type SmartEventName =
   | "task_completed"
   | "task_uncompleted"
   | "task_added"
+  | "event_added"
   | "task_planned"
   | "task_unplanned"
   | "unfinished_returned"

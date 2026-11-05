@@ -16,6 +16,47 @@ service cloud.firestore {
         && request.resource.data.device is string
         && request.resource.data.updatedAt == request.time;
     }
+
+    // The usability study (/study). Each participant signs in anonymously and can
+    // create and keep updating only their own session, plus add the pieces of its
+    // screen recording. Nobody can read sessions except researchers: anyone signed
+    // in with Google whose email has a document in researchers/{email} (added by
+    // hand in the Firebase console). See USABILITY_TEST.md.
+    function isResearcher() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/researchers/$(request.auth.token.email));
+    }
+    match /studySessions/{sessionId} {
+      allow read: if isResearcher();
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'startedAt', 'record', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.record is string
+        && request.resource.data.record.size() < 500000
+        && request.resource.data.updatedAt == request.time;
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'startedAt', 'record', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.record is string
+        && request.resource.data.record.size() < 500000
+        && request.resource.data.updatedAt == request.time;
+
+      match /chunks/{chunkId} {
+        allow read: if isResearcher();
+        allow create: if request.auth != null
+          && get(/databases/$(database)/documents/studySessions/$(sessionId)).data.uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['n', 'data'])
+          && request.resource.data.n is int
+          && request.resource.data.data is bytes
+          && request.resource.data.data.size() <= 750000;
+      }
+    }
+    match /researchers/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+    }
+
     // Nothing else is readable or writable.
     match /{document=**} {
       allow read, write: if false;

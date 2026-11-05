@@ -11,6 +11,24 @@ import { useSyncExternalStore } from "react";
 const listeners = new Set<() => void>();
 const memory = new Map<string, string>();
 
+/**
+ * True when the app is running inside the usability study (/study), which shows it
+ * in a frame. There it keeps its own copy of everything under a "study:" prefix, so
+ * a participant's real calendars are never touched and every participant starts
+ * from the same fresh sample data.
+ */
+export const inStudy: boolean = (() => {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.top !== window.self && Boolean(window.top?.location.pathname.startsWith("/study"));
+  } catch {
+    return false;
+  }
+})();
+
+/** Prefix for this app's storage keys: "study:" inside the usability study, nothing otherwise. */
+export const STORAGE_PREFIX = inStudy ? "study:" : "";
+
 export const KEYS = {
   workspace: "prio:ws",
   snapshot: "prio:snap",
@@ -58,7 +76,7 @@ export function onStoredChange(key: string, cb: (value: string | null) => void):
 
 export function readStored(key: string): string | null {
   try {
-    const v = localStorage.getItem(key);
+    const v = localStorage.getItem(STORAGE_PREFIX + key);
     if (v !== null) return v;
   } catch {
     /* unavailable */
@@ -72,8 +90,8 @@ export function writeStored(key: string, value: string | null): boolean {
   if (value === null) memory.delete(key);
   else memory.set(key, value);
   try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, value);
+    if (value === null) localStorage.removeItem(STORAGE_PREFIX + key);
+    else localStorage.setItem(STORAGE_PREFIX + key, value);
   } catch {
     saved = false;
   }
