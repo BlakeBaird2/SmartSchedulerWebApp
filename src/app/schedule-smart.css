@@ -14,6 +14,9 @@
   --ss-text-4: #666661;
   --ss-paper: #f7f7f4;
   --ss-panel: #fbfbf9;
+  /* The planner sidebar: a shade darker, with a hint of the brand blue, so it stands apart from the calendar. */
+  --ss-sidebar: #eceff5;
+  --ss-sidebar-line: #d9dee8;
   --ss-surface: #ffffff;
   --ss-line: #e4e4de;
   --ss-line-2: #ddddd7;
@@ -76,6 +79,9 @@
   --ss-paper: #121212;
   --ss-panel: #161617;
   --ss-surface: #1b1b1c;
+  /* In the dark the sidebar sits a little lighter than the calendar instead. */
+  --ss-sidebar: #22252c;
+  --ss-sidebar-line: #343944;
   --ss-line: #2e2e31;
   --ss-line-2: #38383c;
   --ss-line-soft: #252528;
@@ -413,11 +419,18 @@
   grid-template-columns: 1fr;
 }
 .ss-suggestions {
+  position: relative;
+  z-index: 1;
   min-height: 0;
   padding: 28px 24px;
-  border-right: 1px solid var(--ss-line);
-  background: var(--ss-panel);
+  border-right: 1px solid var(--ss-sidebar-line);
+  background: var(--ss-sidebar);
+  /* A soft edge on the calendar side, so the open sidebar reads as a panel on top. */
+  box-shadow: 6px 0 18px -12px rgba(20, 30, 50, 0.28);
   overflow-y: auto;
+}
+:root[data-theme="dark"] .ss-suggestions {
+  box-shadow: 6px 0 20px -12px rgba(0, 0, 0, 0.8);
 }
 .ss-suggestions[data-drop-target] {
   background: var(--ss-accent-tint);
