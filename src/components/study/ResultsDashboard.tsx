@@ -268,7 +268,7 @@ function Summary({ records }: { records: StudyRecord[] }) {
             ))}
           </tbody>
         </table>
-        <p className="text-xs text-muted mt-2">Means of completed sessions. Minutes: lower is better; everything else: higher is better.</p>
+        <p className="text-xs text-muted mt-2">Means of completed sessions, 1 = strongly disagree, 7 = strongly agree.</p>
       </div>
     </section>
   );
@@ -288,7 +288,12 @@ function AnswerRows({ rec, questions }: { rec: StudyRecord; questions: Question[
           <div className="text-sm text-muted">{q.prompt}</div>
           {q.kind === "compare" ? (
             <div>
-              <b>A {answerText(rec, `${q.id}_a`)}</b> · <b>B {answerText(rec, `${q.id}_b`)}</b> — {answerText(rec, `${q.id}_why`)}
+              <b>A {answerText(rec, `${q.id}_a`)}</b> · <b>B {answerText(rec, `${q.id}_b`)}</b>
+              {q.why ? ` — ${answerText(rec, `${q.id}_why`)}` : ""}
+            </div>
+          ) : q.kind === "scale" ? (
+            <div>
+              <b>{answerText(rec, q.id)}</b>
             </div>
           ) : q.kind === "pair" ? (
             <div>

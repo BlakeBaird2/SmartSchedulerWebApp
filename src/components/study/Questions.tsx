@@ -16,7 +16,7 @@ export function isAnswered(q: Question, a: Answers): boolean {
     return typeof v === "string" && v.trim().length > 0;
   };
   if (q.kind === "pair") return filled(q.id) && filled(`${q.id}_why`);
-  if (q.kind === "compare") return filled(`${q.id}_a`) && filled(`${q.id}_b`) && filled(`${q.id}_why`);
+  if (q.kind === "compare") return filled(`${q.id}_a`) && filled(`${q.id}_b`) && (!q.why || filled(`${q.id}_why`));
   return filled(q.id);
 }
 
@@ -68,6 +68,7 @@ export function QuestionField({ q, n, answers, onAnswer, missing }: { q: Questio
           </div>
         ) : null}
         {q.kind === "text" ? <Why id={q.id} label="" answers={answers} onAnswer={onAnswer} placeholder={q.placeholder} /> : null}
+        {q.kind === "scale" ? <ScaleInput id={q.id} scale={q.scale} answers={answers} onAnswer={onAnswer} label={q.prompt} /> : null}
         {q.kind === "pair" ? (
           <>
             <ScaleInput id={q.id} scale={q.scale} answers={answers} onAnswer={onAnswer} label={q.prompt} />
@@ -76,11 +77,11 @@ export function QuestionField({ q, n, answers, onAnswer, missing }: { q: Questio
         ) : null}
         {q.kind === "compare" ? (
           <>
-            <div className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <CompareRow title="Schedule Smart" id={`${q.id}_a`} scale={q.scale} answers={answers} onAnswer={onAnswer} prompt={q.prompt} />
               <CompareRow title="What I use now" id={`${q.id}_b`} scale={q.scale} answers={answers} onAnswer={onAnswer} prompt={q.prompt} />
             </div>
-            <Why id={`${q.id}_why`} label={q.why} answers={answers} onAnswer={onAnswer} />
+            {q.why ? <Why id={`${q.id}_why`} label={q.why} answers={answers} onAnswer={onAnswer} /> : null}
           </>
         ) : null}
       </div>
@@ -89,30 +90,11 @@ export function QuestionField({ q, n, answers, onAnswer, missing }: { q: Questio
   );
 }
 
-function CompareRow({ title, id, scale, answers, onAnswer, prompt }: { title: string; id: string; scale: Scale | "minutes"; answers: Answers; onAnswer: SetAnswer; prompt: string }) {
+function CompareRow({ title, id, scale, answers, onAnswer, prompt }: { title: string; id: string; scale: Scale; answers: Answers; onAnswer: SetAnswer; prompt: string }) {
   return (
     <div className="study-compare">
       <div className="text-sm font-semibold mb-2">{title}</div>
-      {scale === "minutes" ? (
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            className="study-input w-24"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={600}
-            value={typeof answers[id] === "number" ? String(answers[id]) : ""}
-            onChange={(e) => {
-              const v = e.target.value === "" ? "" : Math.max(0, Math.min(600, Math.round(Number(e.target.value))));
-              onAnswer(id, v);
-            }}
-            aria-label={`${title}: ${prompt}`}
-          />
-          minutes
-        </label>
-      ) : (
-        <ScaleInput id={id} scale={scale} answers={answers} onAnswer={onAnswer} label={`${title}: ${prompt}`} />
-      )}
+      <ScaleInput id={id} scale={scale} answers={answers} onAnswer={onAnswer} label={`${title}: ${prompt}`} />
     </div>
   );
 }

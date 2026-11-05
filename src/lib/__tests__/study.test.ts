@@ -20,10 +20,11 @@ function record(overrides: Partial<StudyRecord> = {}): StudyRecord {
       s_student: "Yes, full-time",
       s_commitments: "11–20 hours",
       s_tools: ["Canvas", "Google Calendar"],
-      s_struggle: 4,
-      s_struggle_why: 'I check Canvas, then "guess", then panic',
-      o_minutes_a: 2,
-      o_minutes_b: 12,
+      p_know: 3,
+      p_know_why: 'I check Canvas, then "guess", then panic',
+      p_spread: 6,
+      c_control_a: 6,
+      c_control_b: 3,
       t1_plan_ease_a: 6,
       t1_plan_ease_b: 3,
     },
@@ -37,7 +38,8 @@ function record(overrides: Partial<StudyRecord> = {}): StudyRecord {
 test("the persona needs a student who juggles and struggles", () => {
   assert.ok(matchesPersona(record().answers));
   assert.ok(!matchesPersona({ ...record().answers, s_student: "Not currently a student" }));
-  assert.ok(!matchesPersona({ ...record().answers, s_struggle: 1 }));
+  assert.ok(!matchesPersona({ ...record().answers, p_know: 7, p_spread: 2 }));
+  assert.ok(matchesPersona({ ...record().answers, p_know: 7, p_spread: 5 }), "scattered plans count too");
   assert.ok(!matchesPersona({ ...record().answers, s_commitments: "None", s_tools: ["Canvas"] }));
 });
 
@@ -58,8 +60,9 @@ test("task times line up with the recording", () => {
 });
 
 test("summaries compare A with B", () => {
-  const minutes = comparisons([record()]).find((c) => c.id === "o_minutes")!;
-  assert.deepEqual([minutes.a, minutes.b, minutes.n], [2, 12, 1]);
+  const control = comparisons([record()]).find((c) => c.id === "c_control")!;
+  assert.deepEqual([control.a, control.b, control.n], [6, 3, 1]);
+  assert.ok(csvHeader().includes("c_clear_b") && !csvHeader().includes("c_clear_why"), "a compare without a why has no why column");
   const t1 = taskSummaries([record()])[0];
   assert.deepEqual([t1.doneRate, t1.autoRate, t1.medianSeconds], [1, 1, 60]);
 });

@@ -68,7 +68,7 @@ export function recordingOffset(rec: StudyRecord, at: string | null | undefined)
 /** Columns a question becomes in the export. */
 function questionColumns(q: Question): string[] {
   if (q.kind === "pair") return [q.id, `${q.id}_why`];
-  if (q.kind === "compare") return [`${q.id}_a`, `${q.id}_b`, `${q.id}_why`];
+  if (q.kind === "compare") return q.why ? [`${q.id}_a`, `${q.id}_b`, `${q.id}_why`] : [`${q.id}_a`, `${q.id}_b`];
   return [q.id];
 }
 
@@ -195,7 +195,7 @@ export function comparisons(records: StudyRecord[]): Comparison[] {
   for (const t of TASKS) {
     out.push({
       id: t.id,
-      label: `Task: ${t.title} (ease 1–7)`,
+      label: `Task: ${t.title} (easy to do, 1–7)`,
       a: mean(nums(records, `${t.id}_ease_a`)),
       b: mean(nums(records, `${t.id}_ease_b`)),
       n: nums(records, `${t.id}_ease_a`).length,

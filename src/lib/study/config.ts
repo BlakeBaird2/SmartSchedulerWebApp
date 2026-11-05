@@ -12,7 +12,7 @@
  * is in USABILITY_TEST.md.
  */
 
-export const STUDY_VERSION = 1;
+export const STUDY_VERSION = 2;
 
 /** How many representative participants the class requires. */
 export const TARGET_PARTICIPANTS = 30;
@@ -31,10 +31,8 @@ export interface Scale {
   maxLabel: string;
 }
 
+/** Every rating in the study uses this scale. */
 export const AGREE_7: Scale = { min: 1, max: 7, minLabel: "Strongly disagree", maxLabel: "Strongly agree" };
-export const EASE_7: Scale = { min: 1, max: 7, minLabel: "Very difficult", maxLabel: "Very easy" };
-export const LIKELY_7: Scale = { min: 1, max: 7, minLabel: "Not at all likely", maxLabel: "Extremely likely" };
-export const NPS_11: Scale = { min: 0, max: 10, minLabel: "Not at all likely", maxLabel: "Extremely likely" };
 
 export type Question =
   /** One choice from a list. */
@@ -43,6 +41,8 @@ export type Question =
   | { id: string; kind: "multi"; prompt: string; options: string[]; optional?: boolean }
   /** Written answer. */
   | { id: string; kind: "text"; prompt: string; placeholder?: string; optional?: boolean }
+  /** A rating on its own; follow it with a "text" question to pair it. Exported as `<id>`. */
+  | { id: string; kind: "scale"; prompt: string; scale: Scale; optional?: boolean }
   /**
    * A rating paired with an open-ended "why", answered together. Exported as
    * `<id>` (the number) and `<id>_why` (the words).
@@ -50,10 +50,10 @@ export type Question =
   | { id: string; kind: "pair"; prompt: string; scale: Scale; why: string; optional?: boolean }
   /**
    * The same statement rated twice, for Schedule Smart (A) and for what the
-   * participant uses now (B), then one open-ended "why". Exported as `<id>_a`,
-   * `<id>_b` and `<id>_why`. `minutes` asks for a number of minutes instead of a rating.
+   * participant uses now (B), with an optional open-ended "why". Exported as
+   * `<id>_a`, `<id>_b` and, with a why, `<id>_why`.
    */
-  | { id: string; kind: "compare"; prompt: string; scale: Scale | "minutes"; why: string; optional?: boolean };
+  | { id: string; kind: "compare"; prompt: string; scale: Scale; why?: string; optional?: boolean };
 
 export interface Page {
   id: string;
@@ -91,24 +91,30 @@ export const THINK_ALOUD_EXAMPLE = [
 export const SCREENER: Page = {
   id: "about",
   title: "A little about you",
-  intro: "Four quick questions so we know whose experience we're hearing about.",
+  intro: "A few quick questions so we know whose experience we're hearing about.",
   questions: [
     {
       id: "s_student",
       kind: "choice",
-      prompt: "Are you a college student right now?",
-      options: ["Yes, full-time", "Yes, part-time", "Graduate student", "Not currently a student"],
+      prompt: "Are you a full-time student?",
+      options: ["Yes, full-time", "Part-time student", "Graduate student", "Not currently a student"],
+    },
+    {
+      id: "s_classes",
+      kind: "choice",
+      prompt: "How many classes are you taking this semester?",
+      options: ["None", "1–2", "3–4", "5 or more"],
     },
     {
       id: "s_commitments",
       kind: "choice",
-      prompt: "About how many hours a week do you spend at a job or another regular commitment (team, club, calling, internship)?",
+      prompt: "Do you have a job or other regular weekly commitments (team, club, calling, internship)? About how many hours a week?",
       options: ["None", "1–10 hours", "11–20 hours", "More than 20 hours"],
     },
     {
       id: "s_tools",
       kind: "multi",
-      prompt: "What do you use now to keep track of classes, homework and plans? Pick all that apply.",
+      prompt: "What do you use now to keep track of classes, assignments, work and personal plans? Pick all that apply.",
       options: [
         "Canvas",
         "Learning Suite",
@@ -121,26 +127,35 @@ export const SCREENER: Page = {
       ],
     },
     {
-      id: "s_struggle",
+      id: "p_know",
       kind: "pair",
-      prompt: "How often do you have free time but spend a while deciding what to work on?",
-      scale: { min: 1, max: 5, minLabel: "Never", maxLabel: "Almost every day" },
-      why: "Think of the last time you had a free hour between classes or work. How did you decide what to work on?",
+      prompt: "When I have free time between classes or work, I know exactly what to work on.",
+      scale: AGREE_7,
+      why: "How do you usually decide?",
+    },
+    {
+      id: "p_spread",
+      kind: "pair",
+      prompt: "My classes, assignments, work and personal plans are spread across too many places.",
+      scale: AGREE_7,
+      why: "What part of managing your schedule stresses you out or frustrates you the most?",
     },
   ],
 };
 
 /**
  * Whether someone matches the target persona: a current student juggling school
- * with something else (a job or several tools to check), who at least
- * sometimes loses free time deciding what to do.
+ * with something else (a job or several tools to check), who loses free time
+ * deciding what to do (doesn't agree they know what to work on) or whose plans
+ * are scattered (agrees they're spread across too many places).
  */
 export function matchesPersona(answers: Record<string, unknown>): boolean {
   const student = typeof answers.s_student === "string" && answers.s_student !== "Not currently a student";
   const tools = Array.isArray(answers.s_tools) ? answers.s_tools.filter((t) => t !== "Nothing in particular").length : 0;
   const busy = typeof answers.s_commitments === "string" && answers.s_commitments !== "None";
-  const struggle = typeof answers.s_struggle === "number" && answers.s_struggle >= 3;
-  return student && (busy || tools >= 2) && struggle;
+  const unsure = typeof answers.p_know === "number" && answers.p_know <= 4;
+  const scattered = typeof answers.p_spread === "number" && answers.p_spread >= 5;
+  return student && (busy || tools >= 2) && (unsure || scattered);
 }
 
 // ---------------------------------------------------------------------------
@@ -192,13 +207,14 @@ export const TASKS: StudyTask[] = [
   },
 ];
 
-/** Asked right after each task in Schedule Smart: the Single Ease Question, paired with why. */
-export const TASK_EASE = { prompt: "How easy or difficult was this task in Schedule Smart?", scale: EASE_7, why: "Why did you give it that rating?" };
+/** Asked right after each task in Schedule Smart, paired with why. */
+export const TASK_EASE = { prompt: "This task was easy to do in Schedule Smart.", scale: AGREE_7, why: "Why did you give it that rating?" };
 
 /** Asked for each task about the tools they use now (the B condition). */
 export const ALT_EASE = {
-  prompt: (alt: string) => `Now think about ${alt} with what you use now (Canvas, a calendar app, a planner…). How easy or difficult is that?`,
-  scale: EASE_7,
+  prompt: (alt: string) =>
+    `Now think about ${alt} with the tools you use now (Google Calendar, Canvas, a planner, or nothing at all). Doing that with my current tools is easy.`,
+  scale: AGREE_7,
   why: "What would you do, step by step? What makes it easy or hard?",
 };
 
@@ -209,66 +225,60 @@ export const THINK_ALOUD_REMINDER = "Remember to think out loud: say what you're
 // After the tasks
 // ---------------------------------------------------------------------------
 
+/** Rated for both: the intro on each A/B page says how. */
+const BOTH = "Rate each statement twice: once for Schedule Smart, and once for the tools you use now (Google Calendar, Canvas, a planner, a spreadsheet, or nothing at all).";
+
 export const SURVEY: Page[] = [
   {
-    id: "outcomes",
-    title: "Schedule Smart compared to what you use now",
-    intro: "Rate each statement twice: once for Schedule Smart, once for the tools you use today.",
+    id: "clarity",
+    title: "Clarity and ease",
+    intro: BOTH,
     questions: [
+      { id: "a_purpose", kind: "scale", prompt: "The purpose of Schedule Smart was clear from the beginning.", scale: AGREE_7 },
+      { id: "c_clear", kind: "compare", prompt: "My interactions with it are clear and understandable.", scale: AGREE_7 },
+      { id: "c_find", kind: "compare", prompt: "Finding what I'm looking for is easy.", scale: AGREE_7 },
+      { id: "a_clarity_why", kind: "text", prompt: "Please tell us what most affected your sense of Schedule Smart's purpose, ease, or clarity." },
       {
-        id: "o_know",
+        id: "c_enjoy",
         kind: "compare",
-        prompt: "When I have free time, I know exactly what to work on.",
+        prompt: "I find the experience enjoyable.",
         scale: AGREE_7,
-        why: "What makes the difference between the two?",
-      },
-      {
-        id: "o_minutes",
-        kind: "compare",
-        prompt: "About how many minutes does it take you to decide what to work on when free time comes up?",
-        scale: "minutes",
-        why: "Where does that time go?",
-      },
-      {
-        id: "o_together",
-        kind: "compare",
-        prompt: "I can see my classes, job and personal plans together in one place.",
-        scale: AGREE_7,
-        why: "What would you still have to check somewhere else?",
-      },
-      {
-        id: "o_control",
-        kind: "compare",
-        prompt: "I feel in control of my week.",
-        scale: AGREE_7,
-        why: "Why?",
+        why: "What would make Schedule Smart more enjoyable?",
       },
     ],
   },
   {
-    id: "features",
-    title: "The main features",
+    id: "outcomes",
+    title: "Planning your week",
+    intro: BOTH,
     questions: [
       {
-        id: "f_planner",
-        kind: "pair",
-        prompt: "The \"Plan your open time\" list made it clear what to work on next.",
+        id: "c_useful",
+        kind: "compare",
+        prompt: "Using it would be useful for planning and getting my schoolwork done in my free time.",
         scale: AGREE_7,
-        why: "What, if anything, was confusing or missing?",
+        why: "What would make Schedule Smart more useful?",
       },
       {
-        id: "f_drag",
-        kind: "pair",
-        prompt: "Dragging work onto the calendar was an easy way to set time aside for it.",
+        id: "c_control",
+        kind: "compare",
+        prompt: "Using it, I feel organized and in control of my week.",
         scale: AGREE_7,
-        why: "Why?",
+        why: "What helped or got in the way?",
       },
       {
-        id: "f_combined",
-        kind: "pair",
-        prompt: "Having Canvas, Learning Suite and my own calendar combined in one place would be useful to me.",
+        id: "c_what",
+        kind: "compare",
+        prompt: "It makes it clear what I should work on in my free time.",
         scale: AGREE_7,
-        why: "What would make it more useful?",
+        why: "How did you decide what to do first?",
+      },
+      {
+        id: "c_free",
+        kind: "compare",
+        prompt: "I can easily see when I have free time.",
+        scale: AGREE_7,
+        why: "What made it easy or hard to spot?",
       },
     ],
   },
@@ -277,24 +287,23 @@ export const SURVEY: Page[] = [
     title: "Overall",
     intro: "Last page. Honest answers help us most, even (especially) the critical ones.",
     questions: [
-      { id: "u_easy", kind: "pair", prompt: "Schedule Smart is easy to use.", scale: AGREE_7, why: "Why?" },
-      { id: "u_needs", kind: "pair", prompt: "Schedule Smart's features meet my needs.", scale: AGREE_7, why: "What's missing, if anything?" },
       {
-        id: "u_use",
-        kind: "pair",
-        prompt: "How likely are you to use Schedule Smart for your own classes this semester?",
-        scale: LIKELY_7,
-        why: "What would make you more likely to use it?",
+        id: "c_intend",
+        kind: "compare",
+        prompt:
+          "Mentally compare Schedule Smart to the tools you use now, or to not using anything at all if that's what you do. If I had access to a fully functional version, I would intend to use it.",
+        scale: AGREE_7,
+        why: "What are the biggest reasons why you would or would not intend to use Schedule Smart?",
       },
       {
-        id: "u_recommend",
+        id: "a_more_organized",
         kind: "pair",
-        prompt: "How likely are you to recommend Schedule Smart to a friend?",
-        scale: NPS_11,
-        why: "Why that number?",
+        prompt: "Schedule Smart would make my day-to-day life more organized than the way I organize it now.",
+        scale: AGREE_7,
+        why: "Why or why not?",
       },
-      { id: "u_change", kind: "text", prompt: "If you could change one thing about Schedule Smart, what would it be?" },
-      { id: "u_else", kind: "text", prompt: "Anything else you'd like us to know?", optional: true },
+      { id: "a_change", kind: "text", prompt: "If you could change or add one thing in Schedule Smart, what would it be?" },
+      { id: "a_else", kind: "text", prompt: "Anything else you'd like to share?", optional: true },
     ],
   },
 ];

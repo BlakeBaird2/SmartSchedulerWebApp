@@ -13,7 +13,7 @@ the results page.
 | Step | Time | What happens |
 | --- | --- | --- |
 | 1. Welcome | ~1 min | Who we are, what they'll do, how long it takes. "We're testing the app, not you." Apprenticeship: "You're the expert; teach us." Asks for brutal honesty and says it's an early prototype (fidelity). Explains exactly what's recorded. Consent checkbox (18+). Phones are asked to switch to a computer. |
-| 2. About you | ~1 min | 4 screener questions for the persona (student? job or other commitments? which tools? how often they lose free time deciding), the last one a scale paired with "how did you decide last time?" |
+| 2. About you | ~1.5 min | Full-time student? Number of classes, job/commitment hours, which tools they use. Two 1–7 ratings, each with an open question: "When I have free time… I know exactly what to work on" (+ how do you usually decide?) and "My plans are spread across too many places" (+ what stresses or frustrates you most?). |
 | 3. Think aloud + recording | ~1 min | Explains thinking aloud with a written example, then a practice line while a mic meter shows "We can hear you". Then **Share this tab** (Chrome/Edge offer the current tab, one click). Can continue without recording. |
 | 4. Scenario | ~30 s | The same imaginary context for everyone: a full-time student with four classes and a part-time job whose calendars are already connected (sample data). How tasks work. |
 | 5. Four tasks | ~5 min | The real app opens under a task bar, on fresh sample data kept apart from the participant's own (a `study:` storage prefix; no account sync). Each task: read the goal → **Start task** → do it while thinking aloud (reminder every task) → **I'm done** or **I'm stuck**. Then the paired questions (below). |
@@ -30,27 +30,31 @@ the results page.
 | 4 | A study group meets tomorrow 7–8 PM: add it so your plans work around it. | Adding a commitment and replanning around it | `event_added` |
 
 **A/B design.** A = Schedule Smart. B = the participant's own next-best alternative
-(Canvas, a calendar app, a planner…), recalled for the *same* goal. Each task gets
-the Single Ease Question (1–7) plus "why" for A, and the same rating plus "what
-would you do, step by step?" for B. **Order is counterbalanced**: each participant
-is randomly A-first (do the task, then recall B) or B-first (recall B, then do
-the task); the CSV's `order` column says which.
+(Google Calendar, Canvas, a planner, or nothing at all), recalled for the *same* goal.
+After each task: "This task was easy to do in Schedule Smart" (1–7) + why, and
+"Doing that with my current tools is easy" (1–7) + "what would you do, step by
+step?". **Order is counterbalanced**: each participant is randomly A-first (do the
+task, then recall B) or B-first (recall B, then do the task); the CSV's `order`
+column says which. The survey then rates the same statements for A and B side by side.
 
 ### Survey questions
 
-Every rating is paired with an open-ended question, answered on the same screen.
+Every rating is 1–7, 1 = Strongly disagree, 7 = Strongly agree, and every rating
+is paired with an open-ended question. A/B items ("compare") are rated twice on the
+same screen: Schedule Smart and what I use now.
 
-- **Target outcomes, A vs B** (each rated for Schedule Smart *and* what they use now, then "what makes the difference?"):
-  knowing exactly what to work on in free time; **minutes spent deciding** (a
-  number, the most direct measure of our core problem); seeing classes, job and
-  personal plans in one place; feeling in control of the week.
-- **Core features** (1–7 + why): the "Plan your open time" list, dragging work onto the calendar, combining Canvas/Learning Suite/personal calendars.
-- **Overall**: easy to use and meets my needs (UMUX-Lite), likely to use it this semester, likely to recommend (0–10), each + why; one thing to change; anything else.
-- **Persona fit**: the screener; `matches_persona` = current student, with a job/commitment or 2+ tools, who loses free time deciding at least "sometimes" (3+ of 5).
+**Before the tasks** (persona + baseline): full-time student, number of classes,
+job/commitment hours, tools used; *I know exactly what to work on in free time* +
+how do you decide; *my plans are spread across too many places* + what frustrates you most.
 
-> **Course-required questions:** if the class gave a required list, add them to
-> `SURVEY` in [`src/lib/study/config.ts`](src/lib/study/config.ts) (use `kind: "pair"` to keep
-> each scale paired with an open question) and bump `STUDY_VERSION`.
+**After the tasks**
+1. *Clarity and ease*: purpose was clear from the beginning (A); interactions clear and understandable (A/B); finding what I'm looking for is easy (A/B) → what most affected your sense of purpose, ease or clarity; enjoyable (A/B) + what would make it more enjoyable.
+2. *Planning your week* (the target outcomes, all A/B + why): useful for planning and getting schoolwork done in free time; organized and in control of my week; clear what to work on in free time; easy to see when I have free time.
+3. *Overall*: would intend to use a fully functional version, compared to current tools (A/B) + biggest reasons; Schedule Smart would make my day-to-day life more organized than now + why; one thing to change or add; anything else (optional).
+
+**Persona fit** (`matches_persona`): a current student, with a job/commitment or 2+
+tools, who either doesn't agree they know what to work on (≤ 4) or agrees their plans
+are spread across too many places (≥ 5).
 
 All wording lives in that one file. Change it there and the study page, results page and CSV follow.
 
