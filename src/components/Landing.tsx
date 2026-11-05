@@ -8,6 +8,7 @@
  * The same page is served at /about (`variant="about"`) for people who already use
  * Schedule Smart, where the main button opens the app instead of starting setup.
  */
+import "@fontsource-variable/nunito";
 import Link from "next/link";
 import { CalendarFunnel } from "./CalendarFunnel";
 import { PrototypeBadge } from "./Prototype";
@@ -45,9 +46,22 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
           <span className="ss-eyebrow">
             <SsIcon name="spark" size={14} /> YOUR PERSONAL PLANNER
           </span>
-          <h2 id="home-title">Plan your open time.</h2>
+          <h2 id="home-title">
+            Plan your{" "}
+            <span className="ss-home-scribble">
+              open time.
+              <svg viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden>
+                <path d="M4 15 C 60 6, 120 20, 180 11 S 270 8, 296 13" />
+              </svg>
+            </span>
+          </h2>
           <p>Your classes, assignments, work and plans on one calendar. Drag what&apos;s due into the free time you have.</p>
           <div className="ss-home-actions">
+            {/* One more hand-drawn arrow, like the ones above, pointing to where to start. */}
+            <svg className="ss-home-pointer" viewBox="0 0 120 70" aria-hidden>
+              <path d="M6 8 C 20 50, 60 60, 104 46" />
+              <path d="M90 34 L 105 46 L 88 56" />
+            </svg>
             <Link href="/app" className="ss-primary">
               {variant === "about" ? "Open Schedule Smart" : "Get started"} <SsIcon name="chevronRight" size={17} />
             </Link>
