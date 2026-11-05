@@ -92,8 +92,8 @@ function Preview() {
         className="ss-devices-art"
         src="/landing/laptop.webp"
         alt="Schedule Smart on a laptop: a week of classes, work and the gym, with tasks from the planner dragged into the free time between them."
-        width={1431}
-        height={918}
+        width={1864}
+        height={1196}
         decoding="async"
       />
     </figure>
