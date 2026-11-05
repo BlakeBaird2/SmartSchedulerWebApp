@@ -81,30 +81,30 @@ export function EntryNotices() {
   };
 
   return (
-    <Dialog elevated label="Welcome to Schedule Smart" onClose={close} size="md" className="!p-6">
+    <Dialog elevated label="Welcome to Schedule Smart" onClose={close} size="md" className="!p-5 sm:!p-6 [@media(max-height:640px)]:!top-3 [@media(max-height:640px)]:!max-h-[calc(100dvh-24px)]">
       <span className="proto-badge pointer-events-none" aria-hidden>
         <FlaskConical size={14} />
         Prototype
       </span>
-      <h2 className="mt-3 text-2xl font-bold leading-snug">This is an early prototype.</h2>
-      <p className="mt-1 text-base text-muted leading-relaxed">
+      <h2 className="mt-2.5 sm:mt-3 text-xl sm:text-2xl font-bold leading-snug">This is an early prototype.</h2>
+      <p className="mt-1 text-[15px] sm:text-base text-muted leading-normal sm:leading-relaxed">
         Some things are placeholders and nothing is saved to an account, but it really works: it plans your free time from your calendars or from sample data.
       </p>
 
-      <div className="mt-5 rounded-xl border border-accent/30 bg-accent-soft p-4">
+      <div className="mt-4 sm:mt-5 rounded-xl border border-accent/30 bg-accent-soft p-3.5 sm:p-4">
         <span className="section-title inline-flex items-center gap-1.5">
           <Target size={14} aria-hidden />
           Your goal
         </span>
-        <p className="mt-1.5 text-lg font-semibold leading-snug">{GOAL_EXAMPLE}</p>
+        <p className="mt-1.5 text-base sm:text-lg font-semibold leading-snug">{GOAL_EXAMPLE}</p>
         {/* The goal as three steps, so it can be taken in at a glance. */}
         <ol className="mt-3 grid grid-cols-3 gap-2" aria-label="The goal in three steps">
           {GOAL_STEPS.map((step, i) => (
-            <li key={step.label} className="relative rounded-lg bg-surface border border-line px-2 py-2.5 text-center">
-              <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-accent-soft text-accent">
-                <step.icon size={16} strokeWidth={2.4} aria-hidden />
+            <li key={step.label} className="relative rounded-lg bg-surface border border-line px-1.5 py-2 sm:px-2 sm:py-2.5 text-center">
+              <span className="mx-auto [@media(max-height:640px)]:hidden grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full bg-accent-soft text-accent">
+                <step.icon size={15} strokeWidth={2.4} aria-hidden />
               </span>
-              <span className="mt-1.5 block text-xs font-semibold leading-tight">
+              <span className="mt-1.5 [@media(max-height:640px)]:mt-0 block text-xs font-semibold leading-tight">
                 {i + 1}. {step.label}
               </span>
               {i < GOAL_STEPS.length - 1 ? (
@@ -113,13 +113,14 @@ export function EntryNotices() {
             </li>
           ))}
         </ol>
-        <p className="mt-2.5 text-sm text-muted leading-relaxed">Any route works: Plan, Calendar or Upcoming.</p>
+        <p className="mt-2 sm:mt-2.5 text-[13px] sm:text-sm text-muted leading-snug sm:leading-relaxed">Any route works: Plan, Calendar or Upcoming.</p>
       </div>
 
-      <div className="mt-5 flex items-center gap-2 flex-wrap">
+      <div className="mt-4 sm:mt-5 flex items-center gap-2 flex-wrap">
         {inApp ? (
           <Button
             icon={Compass}
+            className="max-sm:flex-1 max-sm:justify-center"
             onClick={() => {
               close();
               startTour();
@@ -128,11 +129,11 @@ export function EntryNotices() {
             Show me around
           </Button>
         ) : null}
-        <Button variant="primary" className="ml-auto" trailingIcon={ArrowRight} onClick={close} data-autofocus>
+        <Button variant="primary" className="ml-auto max-sm:flex-1 max-sm:justify-center" trailingIcon={ArrowRight} onClick={close} data-autofocus>
           {inApp ? "Start" : "Got it"}
         </Button>
       </div>
-      <p className="mt-3 text-xs text-muted">Reopen this any time from the Prototype tag or Help.</p>
+      <p className="mt-3 text-xs text-muted [@media(max-height:640px)]:hidden">Reopen this any time from the Prototype tag or Help.</p>
     </Dialog>
   );
 }
