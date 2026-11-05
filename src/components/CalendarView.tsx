@@ -899,6 +899,10 @@ function MonthGrid({ data }: { data: CalData }) {
   const { calCursor, setCalCursor, setCalMode, select, now } = useApp();
   const drag = usePlanDrag();
   const nowMs = now.getTime();
+  // How many items a day square has room for: two on a phone, three on a computer. A
+  // busier day shows two and a "+N more" line instead, so nothing is cut in half.
+  const fits = useNarrow() ? 2 : 3;
+  const showing = (count: number) => (count <= fits ? count : 2);
   // The prototype's month starts on Sunday.
   const days = useMemo(
     () => eachDayOfInterval({ start: startOfWeek(startOfMonth(calCursor)), end: endOfWeek(endOfMonth(calCursor)) }),
@@ -952,7 +956,7 @@ function MonthGrid({ data }: { data: CalData }) {
             >
               <strong>{format(d, "d")}</strong>
               <div className="ss-month-events">
-                {entries.slice(0, 3).map((en) =>
+                {entries.slice(0, showing(entries.length)).map((en) =>
                   en.event ? (
                     <EventChip key={en.key} event={en.event} past={Date.parse(en.event.end) <= nowMs} />
                   ) : (
@@ -973,7 +977,7 @@ function MonthGrid({ data }: { data: CalData }) {
                     </button>
                   ),
                 )}
-                {entries.length > 3 ? <span className="ss-more-events">+{entries.length - 3} more</span> : null}
+                {entries.length > fits ? <span className="ss-more-events">+{entries.length - showing(entries.length)} more</span> : null}
               </div>
             </div>
           );
