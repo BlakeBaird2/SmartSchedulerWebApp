@@ -186,6 +186,11 @@
 .ss-brand > span:last-child {
   white-space: nowrap;
 }
+/* In the app's header the name is a little bigger; the bar centres it with the tabs beside it. */
+.ss-topbar .ss-brand {
+  font-size: 24px;
+  line-height: 1;
+}
 .ss-nav {
   height: 100%;
   display: flex;
@@ -3173,6 +3178,9 @@ section.ss-due-page {
   .ss-brand {
     font-size: 17px;
   }
+  .ss-topbar .ss-brand {
+    font-size: 20px;
+  }
   .ss-nav {
     gap: 18px;
   }
@@ -3517,6 +3525,9 @@ section.ss-due-page {
   .ss-brand {
     font-size: 15px;
   }
+  .ss-topbar .ss-brand {
+    font-size: 17px;
+  }
   .ss-nav {
     gap: 12px;
   }
@@ -3628,7 +3639,8 @@ section.ss-due-page {
 }
 
 @media (max-width: 350px) {
-  .ss-brand {
+  .ss-brand,
+  .ss-topbar .ss-brand {
     max-width: 90px;
     overflow: hidden;
     text-overflow: ellipsis;
