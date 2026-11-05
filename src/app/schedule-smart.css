@@ -3626,11 +3626,13 @@ section.ss-due-page {
   text-align: center;
 }
 .ss-home-hero h2 {
+  max-width: 760px;
   margin: 16px 0 0;
-  font: 800 54px/1.08 var(--ss-home-font);
+  font: 800 54px/1.12 var(--ss-home-font);
   letter-spacing: -0.025em;
+  text-wrap: balance;
 }
-/* "open time." with a hand-drawn line under it, in the brand blue. */
+/* "open time" with a hand-drawn line under it, in the brand blue. */
 .ss-home-scribble {
   position: relative;
   white-space: nowrap;
@@ -3638,7 +3640,7 @@ section.ss-due-page {
 .ss-home-scribble svg {
   position: absolute;
   left: -2%;
-  bottom: -0.16em;
+  bottom: -0.1em;
   width: 104%;
   height: 0.3em;
   overflow: visible;
@@ -3705,6 +3707,22 @@ section.ss-due-page {
   margin-top: 16px;
   color: var(--ss-faint);
   font-size: 13.5px;
+}
+/* Under the call to action: the drag-to-plan drawing, in the same sketched style as the laptop above. */
+.ss-home-how {
+  max-width: 760px;
+  margin: -24px auto 96px;
+}
+.ss-home-how img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 28px rgba(20, 20, 18, 0.12));
+  user-select: none;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .ss-home-how img {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 26px rgba(150, 185, 255, 0.22));
 }
 
 /*
@@ -3853,6 +3871,9 @@ section.ss-due-page {
   }
   .ss-home-hero {
     padding: 48px 0 56px;
+  }
+  .ss-home-how {
+    margin: -16px auto 48px;
   }
   .ss-home-hero h2 {
     font-size: 36px;
