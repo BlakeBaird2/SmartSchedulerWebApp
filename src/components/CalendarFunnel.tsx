@@ -1,7 +1,7 @@
 /**
  * The home page's picture: the calendars a student juggles (Google Calendar,
  * Canvas, Apple Calendar, Learning Suite) drawn as hand-sketched icons in an
- * arch, with arrows curving down from each into the laptop and phone below
+ * arch, with arrows curving down from each into the laptop below
  * (passed in as children).
  *
  * Drawn on the server. Where the browser supports scroll-driven animations, the
@@ -12,7 +12,7 @@
  * Schedule Smart reads, not an endorsement by their makers.
  */
 
-/** The picture's coordinates: as wide as the laptop and phone below (1000), 330 tall. */
+/** The picture's coordinates: about as wide as the laptop below (1000), 330 tall. */
 const W = 1000;
 const H = 330;
 

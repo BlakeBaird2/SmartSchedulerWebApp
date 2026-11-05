@@ -23,7 +23,9 @@ needs no environment variables at all.
   of the calendar page on a drawn laptop, with an iPhone beside it showing the
   phone layout (plainly a picture, not something to click; both keep their
   layouts, scaled down, on a phone). Below it, what SmartScheduler does, with
-  **Get started** and **Try it with sample data**. Where to find each calendar
+  big **Get started** and **Try it with sample data** buttons and a hand-drawn
+  arrow to Get started. The page is set in Nunito, rounded to suit the icons
+  (the app, and the screens drawn on the laptop and phone, keep DM Sans). Where to find each calendar
   link is explained during setup. It is rendered on the server, so it shows up at
   once and search engines can read it. Anyone who already has calendars in their
   browser skips it and goes straight to their plan.
