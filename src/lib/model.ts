@@ -148,7 +148,7 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
   const courseById = new Map(courses.map((c) => [c.id, c]));
   const hidden = new Set(courses.filter((c) => c.hidden).map((c) => c.id));
 
-  const makeTask = (partial: Omit<Task, "estimate" | "customEstimate" | "estimateSource" | "done" | "points" | "priority" | "customPriority">): Task => {
+  const makeTask = (partial: Omit<Task, "estimate" | "customEstimate" | "estimateSource" | "done" | "priority" | "customPriority">): Task => {
     const custom = ws.estimates[partial.id];
     const meta = ws.taskMeta[partial.id];
     return {
@@ -157,7 +157,6 @@ export function buildModel(ws: Workspace, snapshot: Snapshot, now: Date): Model 
       customEstimate: custom !== undefined,
       estimateSource: custom?.source ?? "default",
       done: Boolean(ws.done[partial.id]),
-      points: meta?.points ?? null,
       priority: meta?.priority ?? autoPriority(partial.type, partial.dueAt, now),
       customPriority: meta?.priority !== undefined,
     };

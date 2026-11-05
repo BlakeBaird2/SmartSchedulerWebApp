@@ -116,7 +116,8 @@ function parseUi(raw: string | null): UiPrefs {
     plannerFilters: p.plannerFilters !== false,
     plannerFiltersPhone: p.plannerFiltersPhone === true,
     todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
-    todoSort: p.todoSort === "duration" || p.todoSort === "points" ? p.todoSort : "due",
+    // (A sort by points, from older versions, falls back to the due date.)
+    todoSort: p.todoSort === "duration" ? p.todoSort : "due",
   };
 }
 
@@ -570,11 +571,9 @@ export function App() {
   );
 
   const setTaskMeta = useCallback(
-    (taskId: string, patch: { points?: number | null; priority?: Priority | null }) => {
+    (taskId: string, patch: { priority?: Priority | null }) => {
       update((w) => {
         const meta = { ...w.taskMeta[taskId] };
-        if (patch.points === null) delete meta.points;
-        else if (patch.points !== undefined) meta.points = Math.max(0, Math.min(10_000, Math.round(patch.points)));
         if (patch.priority === null) delete meta.priority;
         else if (patch.priority !== undefined) meta.priority = patch.priority;
         const taskMeta = { ...w.taskMeta };

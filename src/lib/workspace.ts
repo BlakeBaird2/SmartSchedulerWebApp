@@ -197,7 +197,7 @@ function sanitizeTaskMeta(raw: unknown): Record<string, TaskMeta> {
   for (const [id, v] of Object.entries(raw)) {
     if (!id || id.length > 400 || !isObj(v)) continue;
     const meta: TaskMeta = {};
-    if (typeof v.points === "number" && Number.isFinite(v.points) && v.points >= 0) meta.points = Math.min(10_000, Math.round(v.points));
+    // (Points, from older versions, are dropped: the app no longer uses them.)
     if (PRIORITIES.includes(v.priority as Priority)) meta.priority = v.priority as Priority;
     if (Object.keys(meta).length) out[id] = meta;
     if (Object.keys(out).length >= MAX_TASK_META) break;

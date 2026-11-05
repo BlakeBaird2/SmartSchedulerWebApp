@@ -25,7 +25,6 @@ function task(id: string, over: Partial<Task> = {}): Task {
     done: false,
     manual: false,
     generated: null,
-    points: null,
     priority: "low",
     customPriority: false,
     ...over,
@@ -165,10 +164,6 @@ test("priority follows the due date unless the student set it", () => {
   assert.equal(autoPriority("assignment", null, NOW), "low", "no due date");
 });
 
-test("sorting by points puts what's worth the most first", () => {
-  const tasks = [task("none"), task("ten", { points: 10 }), task("fifty", { points: 50 }), task("zero", { points: 0 })];
-  assert.deepEqual(sortTodos(tasks, "points", classRank([])).map((t) => t.id), ["fifty", "ten", "zero", "none"]);
-});
 
 test("due dates read the planner's way", () => {
   assert.deepEqual(dueLabel(at(1, 18), NOW), { text: "Today", late: false });

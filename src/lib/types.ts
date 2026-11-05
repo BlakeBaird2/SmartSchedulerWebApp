@@ -218,9 +218,8 @@ export const UNFINISHED_POLICIES: UnfinishedPolicy[] = ["ask", "midnight", "keep
 export type Priority = "high" | "medium" | "low";
 export const PRIORITIES: Priority[] = ["high", "medium", "low"];
 
-/** What the student adds to a task that no calendar knows: what it's worth, and how much it matters. */
+/** What the student adds to a task that no calendar knows: how much it matters. */
 export interface TaskMeta {
-  points?: number;
   priority?: Priority;
 }
 
@@ -255,7 +254,7 @@ export interface Workspace {
   deletedTasks: DeletedTasks;
   /** The colour theme, a theme of their own, and colours for single calendars (see themes.ts). */
   colors: ColorPrefs;
-  /** taskId -> points and priority the student set. */
+  /** taskId -> the priority the student set. */
   taskMeta: Record<string, TaskMeta>;
   /** What happens to work whose scheduled time passes before it is done. */
   unfinished: UnfinishedPolicy;
@@ -330,8 +329,6 @@ export interface Task {
   done: boolean;
   manual: boolean;
   generated: "study" | null;
-  /** What it's worth, when the student said. Calendar feeds don't carry points. */
-  points: number | null;
   priority: Priority;
   /** Whether the student set the priority, rather than it following the due date. */
   customPriority: boolean;

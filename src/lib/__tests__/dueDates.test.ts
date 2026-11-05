@@ -7,7 +7,7 @@ import type { CalEvent, Task } from "../types";
 const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).toISOString();
 const task = (id: string, over: Partial<Task> = {}): Task => ({
   id, feedId: "f", courseId: "f:is531", title: id, type: "assignment", dueAt: at(30, 23, 59), allDay: false, url: null, description: null,
-  estimate: 60, customEstimate: false, estimateSource: "default", done: false, manual: false, generated: null, points: null, priority: "low", customPriority: false, ...over,
+  estimate: 60, customEstimate: false, estimateSource: "default", done: false, manual: false, generated: null, priority: "low", customPriority: false, ...over,
 });
 const event = (id: string, over: Partial<CalEvent> = {}): CalEvent => ({
   id, feedId: "f", courseId: "f:is531", title: id, start: at(31, 10), end: at(31, 11, 15), allDay: false, busy: true, kind: "exam", location: null, url: null, color: "#000", source: "feed", ...over,
