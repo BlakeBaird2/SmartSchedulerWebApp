@@ -1102,8 +1102,8 @@ button.ss-key:hover {
   display: grid;
   grid-template-columns: var(--ss-gutter) repeat(var(--ss-days), minmax(0, 1fr));
   overflow: hidden;
-  /* The same room as the hours' scroll bar below, so the columns line up. */
-  scrollbar-gutter: stable;
+  /* Exactly the room the hours' scroll bar takes below (measured in TimeGrid), so the columns line up. */
+  padding-right: var(--ss-scrollbar, 0px);
 }
 .ss-week-scroll {
   flex: 1;
