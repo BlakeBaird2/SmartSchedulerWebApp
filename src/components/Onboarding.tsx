@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, CircleHelp, Lock, Sparkles } from "lucide-react";
 import { feedIdFor } from "@/lib/feeds/url";
 import { defaultWorkspace, PERSONAL_COLORS } from "@/lib/workspace";
 import type { FeedConfig, Workspace } from "@/lib/types";
@@ -12,7 +12,7 @@ import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
 import { KEYS, writeStored } from "./store";
 import { CapabilityHero, PrototypeBadge } from "./Prototype";
-import { AccountStep, SetupSignIn } from "./Account";
+import { AccountStep } from "./Account";
 import { cloudAvailable, useCloud } from "./cloud";
 import { Button, Card, Wordmark } from "./ui";
 import { trackEvent } from "./smartEvents";
@@ -58,6 +58,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   // With sign-in available, setup opens by asking whether to use a Google account (step 0).
   const asksAccount = cloudAvailable;
   const [chosenStep, setStep] = useState<0 | 1 | 2 | 3>(asksAccount ? 0 : 1);
+  const [helpOpen, setHelpOpen] = useState(false);
   // Signed in, here or by coming back from Google: on to calendars. (An account that
   // already has a setup brings it across, and setup closes on its own.)
   const step = chosenStep === 0 && (cloud.user || !asksAccount) ? 1 : chosenStep;
@@ -66,16 +67,11 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const hasSchool = ws.feeds.some((f) => f.role === "school");
   const hasClasses = model.visibleCourses.length > 0;
 
-  /** Leave setup and open a usable Plan. Keeps calendars already added; otherwise loads sample data. */
-  const skip = () => {
-    const hadFeeds = ws.feeds.length > 0;
-    if (!hadFeeds) startDemo();
+  /** No link handy: leave setup with the sample calendars loaded, so the goal can still be tried. */
+  const trySample = () => {
+    startDemo();
     onFinish();
-    toast(
-      hadFeeds
-        ? "Setup skipped — your calendars are ready on Plan."
-        : "Setup skipped — sample data loaded so you can try the goal.",
-    );
+    toast("Sample data loaded so you can try the goal.");
   };
 
   return (
@@ -86,16 +82,8 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <Wordmark size="lg" />
           </Link>
           <PrototypeBadge />
-          {/* The one way out of setup, in the same place on every step (where onboarding usually puts Skip). */}
-          <Button className="ml-auto" icon={ws.feeds.length === 0 ? Sparkles : undefined} onClick={skip} data-smart-event={ws.feeds.length === 0 ? "sample_data_started" : "setup_finished"}>
-            {ws.feeds.length === 0 ? "Skip: try sample data" : "Skip setup"}
-          </Button>
         </div>
-        <CapabilityHero className="mt-6">
-          <p className="mt-3 text-lg text-muted leading-relaxed">
-            Add your calendars and Schedule Smart puts your classes, work and life in one place, then plans each free gap for you.
-          </p>
-        </CapabilityHero>
+        <CapabilityHero className="mt-6" />
 
         <div className="mt-6 flex items-center gap-2 text-xs font-medium text-muted" aria-label={`Step ${shown} of ${total}`}>
           {Array.from({ length: total }, (_, i) => i + 1).map((n) => (
@@ -111,35 +99,46 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             <AccountStep onNext={() => setStep(1)} />
           </Card>
         ) : step === 1 ? (
-          <Card padding="lg" className="mt-3 space-y-5">
+          <Card padding="lg" className="mt-3 space-y-4">
             <div>
               <h2 className="text-xl font-semibold">Add your calendars</h2>
-              <p className="mt-1 text-sm text-muted leading-relaxed">
-                Start with your school calendar from Canvas, Learning Suite or any course site. Schedule Smart finds your classes and assignments on its own. Then add
-                your work and personal calendars (Google, Outlook, Apple) so it knows when you&apos;re busy.
-              </p>
+              <p className="mt-1 text-sm text-muted leading-relaxed">Paste a calendar link from Canvas, Learning Suite, Google, Outlook or Apple.</p>
             </div>
             {/* Until a calendar is added, Add calendar is the main action; after that, Continue is. */}
             <FeedAdder autoFocus primary={ws.feeds.length === 0} />
-            <SetupSignIn />
+            {/* The help is one obvious button, opened only when wanted, so the step stays short. */}
+            <div>
+              <button type="button" className="ss-link-help" aria-expanded={helpOpen} onClick={() => setHelpOpen((o) => !o)}>
+                <CircleHelp size={18} aria-hidden />
+                <span>Where do I find my link?</span>
+                <ChevronDown size={18} className="ml-auto" aria-hidden />
+              </button>
+              {helpOpen ? (
+                <div className="mt-2">
+                  <ProviderHelp heading={false} />
+                </div>
+              ) : null}
+            </div>
             <FeedList />
-            <ProviderHelp />
-            <div className="flex items-center gap-3 flex-wrap pt-1">
+            {ws.feeds.length > 0 && !hasSchool ? <p className="text-xs text-muted">No school calendar yet. You can still add work by hand.</p> : null}
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              {asksAccount && !cloud.user ? <Button icon={ArrowLeft} iconOnly label="Back" onClick={() => setStep(0)} /> : null}
+              {/* No link handy: the sample route, in a soft yellow so it reads as a side door, not the way forward. */}
+              {ws.feeds.length === 0 ? (
+                <Button icon={Sparkles} className="ss-sample-button" onClick={trySample} data-smart-event="sample_data_started">
+                  Try sample data
+                </Button>
+              ) : null}
               <Button
                 variant={ws.feeds.length === 0 ? "secondary" : "primary"}
                 trailingIcon={ArrowRight}
+                className="ml-auto"
                 disabled={ws.feeds.length === 0}
-                title={ws.feeds.length === 0 ? "Add a calendar first, or skip setup to try sample data" : undefined}
+                title={ws.feeds.length === 0 ? "Add a calendar first, or try sample data" : undefined}
                 onClick={() => setStep(hasClasses ? 2 : 3)}
               >
                 Continue
               </Button>
-              {ws.feeds.length > 0 && !hasSchool ? (
-                <span className="text-xs text-muted">No school calendar yet. You can still add work by hand.</span>
-              ) : null}
-              {ws.feeds.length === 0 ? (
-                <span className="text-sm text-muted">No link handy? Use Skip at the top to try it with sample data.</span>
-              ) : null}
             </div>
           </Card>
         ) : step === 2 ? (
@@ -189,10 +188,8 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         <p className="mt-5 text-xs text-muted leading-relaxed flex gap-2">
           <Lock size={14} className="shrink-0 mt-0.5" />
           <span>
-            No account needed. Your calendar links and everything you set here stay in this browser
-            {cloudAvailable ? ", unless you sign in with Google to sync your devices; then they're also kept in your account, which only you can read" : ""}. The
-            server reads a calendar only to hand it back to you, and keeps nothing. Setup is optional: Skip opens the app with sample data if you haven&apos;t
-            added a calendar yet.
+            Your calendar links stay in this browser{cloudAvailable ? ", and in your account if you sign in" : ""}. The server reads a calendar only to hand it
+            back to you, and keeps nothing.
           </span>
         </p>
       </div>

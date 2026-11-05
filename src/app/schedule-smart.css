@@ -1965,6 +1965,52 @@ button.ss-day-head:hover {
   font-weight: 700;
   cursor: pointer;
 }
+/* Setup's "Where do I find my link?": one clear blue button under the link box, so it isn't missed. */
+.ss-link-help {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.ss-link-help:hover {
+  border-color: var(--accent);
+}
+.ss-link-help[aria-expanded="true"] svg:last-child {
+  rotate: 180deg;
+}
+/* Setup's sample-data route: soft yellow, a side door rather than the way forward. */
+.ss-sample-button.btn {
+  border-color: #ead27a;
+  background: #fdf5d3;
+  color: #4a3b08;
+}
+.ss-sample-button.btn:hover {
+  background: #faedb4;
+}
+.ss-sample-button svg {
+  color: #b58a00;
+}
+:root[data-theme="dark"] .ss-sample-button.btn {
+  border-color: #6b5a1e;
+  background: #2e2812;
+  color: #f6e7ae;
+}
+:root[data-theme="dark"] .ss-sample-button.btn:hover {
+  background: #3a3216;
+}
+:root[data-theme="dark"] .ss-sample-button svg {
+  color: #f0c94a;
+}
 /* Two setups to choose between. */
 .ss-choice-cards {
   margin-top: 18px;

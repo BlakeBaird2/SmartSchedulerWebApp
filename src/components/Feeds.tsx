@@ -240,12 +240,13 @@ function ClassChips({ feedId }: { feedId: string }) {
 // Where to find each link
 // ---------------------------------------------------------------------------
 
-export function ProviderHelp() {
+/** Step-by-step help for finding the calendar link in each app. `heading` off where a button above already says what it is. */
+export function ProviderHelp({ heading = true }: { heading?: boolean }) {
   const [tab, setTab] = useState<Provider>("canvas");
   const current = LINK_HELP.find((h) => h.id === tab)!;
   return (
     <div className="rounded-xl border border-line bg-surface-2 p-3">
-      <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Where do I find my link?</div>
+      {heading ? <div className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Where do I find my link?</div> : null}
       <div className="flex flex-wrap gap-1.5 mb-3">
         {LINK_HELP.map((h) => (
           <button key={h.id} type="button" className="pill" aria-pressed={tab === h.id} onClick={() => setTab(h.id)}>
