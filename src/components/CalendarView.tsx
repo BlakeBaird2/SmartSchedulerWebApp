@@ -11,6 +11,7 @@ import {
   format,
   isSameDay,
   isSameMonth,
+  isSameYear,
   isToday,
   startOfDay,
   startOfMonth,
@@ -97,6 +98,7 @@ type CalData = ReturnType<typeof useCalendarData>;
 export function CalendarView() {
   const { calMode, setCalMode, calCursor, setCalCursor, calSidebar: panelOpen, setCalSidebar: setPanelOpen, setSettingsPanel } = useApp();
   const phone = useNarrow();
+  const tiny = useTiny();
   const data = useCalendarData();
   const today = new Date();
 
@@ -118,7 +120,12 @@ export function CalendarView() {
   const swipe = (dir: 1 | -1) => setCalCursor(addDays(calCursor, dir * days.length));
 
   const eyebrow = calMode === "month" ? "MONTH VIEW" : format(calCursor, "MMMM yyyy").toUpperCase();
-  const title =
+  // Phones: just the month, as Google Calendar's app does (the year too, outside this one),
+  // and its short name ("Nov") beside the open planner or on the narrowest phones. The dates
+  // already show along the top.
+  const month = panelOpen || tiny ? "MMM" : "MMMM";
+  const monthOnly = format(days[0], isSameYear(days[0], today) ? month : `${month} yyyy`);
+  const fullTitle =
     calMode === "month"
       ? format(calCursor, "MMMM yyyy")
       : calMode === "day"
@@ -126,6 +133,7 @@ export function CalendarView() {
         : phone
           ? `${format(days[0], "MMMM d")}–${format(days[days.length - 1], "d")}`
           : `Week of ${format(startOfWeek(calCursor, WEEK), "MMMM d")}`;
+  const title = phone ? monthOnly : fullTitle;
 
   return (
     <div className={`ss-calendar-page ${panelOpen ? "" : "ss-panel-closed"}`}>
@@ -152,8 +160,10 @@ export function CalendarView() {
               </button>
             ) : null}
             <div className="min-w-0">
-              <span>{eyebrow}</span>
-              <h1 aria-live="polite">{title}</h1>
+              {phone ? null : <span>{eyebrow}</span>}
+              <h1 aria-live="polite" aria-label={fullTitle}>
+                {title}
+              </h1>
             </div>
           </div>
           {/* The key opens the colour settings, where the theme and each calendar's colour are chosen. */}
@@ -212,6 +222,19 @@ export function CalendarView() {
       <DragGhost />
     </div>
   );
+}
+
+/** The narrowest phones (an iPhone SE's 320px), where even a month's full name is a squeeze. */
+function useTiny(): boolean {
+  const [tiny, setTiny] = useState(false);
+  useLayoutEffect(() => {
+    const q = window.matchMedia("(max-width: 360px)");
+    const update = () => setTiny(q.matches);
+    update();
+    q.addEventListener("change", update);
+    return () => q.removeEventListener("change", update);
+  }, []);
+  return tiny;
 }
 
 /** Whether the window is phone-sized, by the prototype's own breakpoint. */
