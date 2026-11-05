@@ -8,6 +8,7 @@
  * The same page is served at /about (`variant="about"`) for people who already use
  * Schedule Smart, where the main button opens the app instead of starting setup.
  */
+import "@fontsource-variable/caveat";
 import "@fontsource-variable/nunito";
 import Link from "next/link";
 import { CalendarFunnel } from "./CalendarFunnel";
@@ -69,6 +70,10 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
               decoding="async"
             />
           </figure>
+          {/* The nudge before the buttons, handwritten like the doodles. */}
+          <p className="ss-home-ready">
+            Ready to <span>own your schedule?</span>
+          </p>
           <div className="ss-home-actions">
             {/* One more hand-drawn arrow, like the ones above, pointing to where to start. */}
             <svg className="ss-home-pointer" viewBox="0 0 120 70" aria-hidden>

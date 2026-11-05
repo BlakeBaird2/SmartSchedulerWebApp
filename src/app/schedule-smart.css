@@ -3717,12 +3717,12 @@ section.ss-due-page {
   justify-content: center;
   gap: 12px;
 }
-/* Bigger, friendlier buttons than the app's: round pills, plain and clean. */
+/* Bigger than the app's buttons, with the same rounded corners as every other button on the site. */
 .ss-home-actions > a {
   min-height: 56px;
   padding: 0 30px;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 12px;
   box-shadow: none;
   font-family: var(--ss-home-font);
   font-size: 17.5px;
@@ -3757,6 +3757,22 @@ section.ss-due-page {
   margin-top: 16px;
   color: var(--ss-faint);
   font-size: 13.5px;
+}
+/* "Ready to own your schedule?": big, handwritten (Caveat) like the doodles, the answer in blue, a slight tilt. */
+.ss-home-hero > p.ss-home-ready {
+  max-width: none;
+  margin: 44px 0 0;
+  font: 700 clamp(44px, 4vw + 22px, 76px)/1.05 "Caveat Variable", "Caveat", var(--ss-home-font);
+  color: var(--ss-ink);
+  line-height: 1.05;
+  rotate: -2deg;
+  text-wrap: balance;
+}
+.ss-home-ready span {
+  color: var(--ss-accent);
+}
+.ss-home-hero > .ss-home-ready + .ss-home-actions {
+  margin-top: 40px;
 }
 /* Above the buttons: the drag-to-plan drawing, as big as the laptop at the top and in the same sketched style. */
 .ss-home-how {
