@@ -225,14 +225,14 @@ export const THINK_ALOUD_REMINDER = "Remember to think out loud: say what you're
 // After the tasks
 // ---------------------------------------------------------------------------
 
-/** Rated for both: the intro on each A/B page says how. */
-const BOTH = "Rate each statement twice: once for Schedule Smart, and once for the tools you use now (Google Calendar, Canvas, a planner, a spreadsheet, or nothing at all).";
+/** Shown with every Schedule Smart vs. current tools rating. */
+export const COMPARE_HINT = "Rate it twice: for Schedule Smart, and for the tools you use now (Google Calendar, Canvas, a planner, a spreadsheet, or nothing at all).";
 
 export const SURVEY: Page[] = [
   {
     id: "clarity",
     title: "Clarity and ease",
-    intro: BOTH,
+    intro: COMPARE_HINT,
     questions: [
       { id: "a_purpose", kind: "scale", prompt: "The purpose of Schedule Smart was clear from the beginning.", scale: AGREE_7 },
       { id: "c_clear", kind: "compare", prompt: "My interactions with it are clear and understandable.", scale: AGREE_7 },
@@ -250,7 +250,7 @@ export const SURVEY: Page[] = [
   {
     id: "outcomes",
     title: "Planning your week",
-    intro: BOTH,
+    intro: COMPARE_HINT,
     questions: [
       {
         id: "c_useful",

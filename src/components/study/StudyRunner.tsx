@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Circle, Mic, MonitorUp, RotateCcw, SkipForward } from "lucide-react";
 import {
   ALT_EASE,
+  COMPARE_HINT,
   SCENARIO,
   SCREENER,
   SURVEY,
@@ -19,7 +20,7 @@ import {
 import type { Answer, StudyRecord, TaskResult } from "@/lib/study/results";
 import { SMART_EVENT, type SmartEvent } from "../smartEvents";
 import { backend } from "./backend";
-import { QuestionField, QuestionList, isAnswered } from "./Questions";
+import { QuestionList, QuestionScreen, isAnswered } from "./Questions";
 import { SessionRecorder, askMicrophone, askScreen, canRecordScreen, micLevel, type RecorderStatus } from "./recorder";
 
 /*
@@ -33,7 +34,9 @@ import { SessionRecorder, askMicrophone, askScreen, canRecordScreen, micLevel, t
  */
 
 type Step = "welcome" | "about" | "record" | "scenario" | "tasks" | `survey-${number}` | "finish";
-const STEPS: Step[] = ["welcome", "about", "record", "scenario", "tasks", ...SURVEY.map((_, i) => `survey-${i}` as Step), "finish"];
+/** After the tasks, one question per screen, each knowing the section it's from. */
+const SURVEY_QUESTIONS = SURVEY.flatMap((page) => page.questions.map((q, k) => ({ page, q, firstOfPage: k === 0 })));
+const STEPS: Step[] = ["welcome", "about", "record", "scenario", "tasks", ...SURVEY_QUESTIONS.map((_, i) => `survey-${i}` as Step), "finish"];
 
 function newId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${String(Math.random()).slice(2)}`;
@@ -149,15 +152,18 @@ export function StudyRunner() {
     if (step === "tasks") return null;
     if (step.startsWith("survey-")) {
       const i = Number(step.slice("survey-".length));
-      const page = SURVEY[i];
+      const { page, q, firstOfPage } = SURVEY_QUESTIONS[i];
+      const last = i + 1 >= SURVEY_QUESTIONS.length;
       return (
-        <QuestionPage
-          page={page}
+        <QuestionScreen
+          key={q.id}
+          q={q}
           answers={rec.answers}
           onAnswer={setAnswer}
-          onNext={() => goTo(i + 1 < SURVEY.length ? (`survey-${i + 1}` as Step) : "finish")}
-          nextLabel={i + 1 < SURVEY.length ? "Next" : "Finish"}
-          pageNote={`Survey ${i + 1} of ${SURVEY.length}`}
+          onNext={() => goTo(last ? "finish" : (`survey-${i + 1}` as Step))}
+          nextLabel={last ? "Finish" : "Next"}
+          kicker={`${page.title} · Question ${i + 1} of ${SURVEY_QUESTIONS.length}`}
+          hint={q.kind === "compare" ? COMPARE_HINT : firstOfPage ? page.intro : undefined}
         />
       );
     }
@@ -617,12 +623,6 @@ function TaskPhase({
 
   const easeA: Question = { id: `${task.id}_ease_a`, kind: "pair", prompt: TASK_EASE.prompt, scale: TASK_EASE.scale, why: TASK_EASE.why };
   const easeB: Question = { id: `${task.id}_ease_b`, kind: "pair", prompt: ALT_EASE.prompt(task.alternative), scale: ALT_EASE.scale, why: ALT_EASE.why };
-  const gate = (q: Question, then: () => void) => () => {
-    if (isAnswered(q, rec.answers)) {
-      setTried(false);
-      then();
-    } else setTried(true);
-  };
 
   const label = `Task ${i + 1} of ${TASKS.length}`;
 
@@ -693,13 +693,15 @@ function TaskPhase({
           <div className="study-overlay">
             <div className="study-card study-card-pop">
               {phase === "before" ? (
-                <>
-                  <p className="study-kicker">{label} · first, think about what you do today</p>
-                  <QuestionField q={easeB} answers={rec.answers} onAnswer={setAnswer} missing={tried && !isAnswered(easeB, rec.answers)} />
-                  <button className="btn-primary study-big mt-6" onClick={gate(easeB, () => setPhase("intro"))}>
-                    Continue
-                  </button>
-                </>
+                <QuestionScreen
+                  key={`${task.id}-before`}
+                  q={easeB}
+                  answers={rec.answers}
+                  onAnswer={setAnswer}
+                  onNext={() => setPhase("intro")}
+                  kicker={`${label} · first, think about what you do today`}
+                  nextLabel="Continue"
+                />
               ) : null}
               {phase === "intro" ? (
                 <>
@@ -717,22 +719,26 @@ function TaskPhase({
                 </>
               ) : null}
               {phase === "after-a" ? (
-                <>
-                  <p className="study-kicker">{label} · how did that go?</p>
-                  <QuestionField q={easeA} answers={rec.answers} onAnswer={setAnswer} missing={tried && !isAnswered(easeA, rec.answers)} />
-                  <button className="btn-primary study-big mt-6" onClick={gate(easeA, () => (bFirst ? next() : setPhase("after-b")))}>
-                    Continue
-                  </button>
-                </>
+                <QuestionScreen
+                  key={`${task.id}-after-a`}
+                  q={easeA}
+                  answers={rec.answers}
+                  onAnswer={setAnswer}
+                  onNext={() => (bFirst ? next() : setPhase("after-b"))}
+                  kicker={`${label} · how did that go?`}
+                  nextLabel={bFirst ? (i + 1 < TASKS.length ? "Next task" : "On to the survey") : "Continue"}
+                />
               ) : null}
               {phase === "after-b" ? (
-                <>
-                  <p className="study-kicker">{label} · compared to what you do today</p>
-                  <QuestionField q={easeB} answers={rec.answers} onAnswer={setAnswer} missing={tried && !isAnswered(easeB, rec.answers)} />
-                  <button className="btn-primary study-big mt-6" onClick={gate(easeB, next)}>
-                    {i + 1 < TASKS.length ? "Next task" : "On to the survey"}
-                  </button>
-                </>
+                <QuestionScreen
+                  key={`${task.id}-after-b`}
+                  q={easeB}
+                  answers={rec.answers}
+                  onAnswer={setAnswer}
+                  onNext={next}
+                  kicker={`${label} · compared to what you do today`}
+                  nextLabel={i + 1 < TASKS.length ? "Next task" : "On to the survey"}
+                />
               ) : null}
             </div>
           </div>

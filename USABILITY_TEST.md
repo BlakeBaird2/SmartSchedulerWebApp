@@ -17,7 +17,7 @@ the results page.
 | 3. Think aloud + recording | ~1 min | Explains thinking aloud with a written example, then a practice line while a mic meter shows "We can hear you". Then **Share this tab** (Chrome/Edge offer the current tab, one click). Can continue without recording. |
 | 4. Scenario | ~30 s | The same imaginary context for everyone: a full-time student with four classes and a part-time job whose calendars are already connected (sample data). How tasks work. |
 | 5. Four tasks | ~5 min | The real app opens under a task bar, on fresh sample data kept apart from the participant's own (a `study:` storage prefix; no account sync). Each task: read the goal → **Start task** → do it while thinking aloud (reminder every task) → **I'm done** or **I'm stuck**. Then the paired questions (below). |
-| 6. Survey | ~2–3 min | Three short pages: A vs B outcomes, core features, overall. |
+| 6. Survey | ~3 min | One question per screen ("Question 4 of 13"). A comparison shows both ratings, Schedule Smart and what I use now, in one compact grid under a single set of end labels, then a one-line "why" box that grows as they type. Keyboard: 1–7 picks a rating, Enter goes on, Shift+Enter starts a new line. The questions between tasks work the same way. |
 | 7. Done | | Recording stops and finishes uploading; they get a completion code. If the upload failed, they can download the recording to send it to you. |
 
 ### Tasks (goal-driven, matched A/B)

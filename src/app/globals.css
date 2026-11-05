@@ -2243,3 +2243,53 @@ h2 {
   border-bottom: 1px solid var(--line);
   line-height: 1.45;
 }
+
+/* Rating grid: one set of end labels over one or two rows of buttons. */
+.study-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+}
+.study-grid-labelled {
+  grid-template-columns: 8.5rem repeat(var(--n), minmax(0, 1fr));
+}
+.study-grid-row {
+  display: contents;
+}
+.study-grid-anchor {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.2;
+}
+.study-grid-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding-right: 6px;
+}
+@media (max-width: 560px) {
+  .study-grid-labelled {
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  }
+  .study-grid-corner {
+    display: none;
+  }
+  .study-grid-label {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+}
+.study-why {
+  min-height: 44px;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.45;
+}
+.study-kbd {
+  font: inherit;
+  font-size: 0.8rem;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 1px 6px;
+}
