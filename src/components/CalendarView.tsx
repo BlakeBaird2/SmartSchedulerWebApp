@@ -288,10 +288,18 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    const update = () => setFrame({ height: el.clientHeight, phone: window.matchMedia(PHONE_QUERY).matches });
+    const update = () => {
+      setFrame({ height: el.clientHeight, phone: window.matchMedia(PHONE_QUERY).matches });
+      // The rows above the hours (the days, all day) leave exactly the room the hours'
+      // scroll bar takes, so their columns line up. That's 0 where scroll bars float
+      // over the page (a Mac's usual setting), and the bar's width where they don't.
+      frameRef.current?.style.setProperty("--ss-scrollbar", `${el.offsetWidth - el.clientWidth}px`);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
+    // A scroll bar can come or go as the content changes height, without the box resizing.
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
     return () => ro.disconnect();
   }, []);
 
