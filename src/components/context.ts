@@ -111,8 +111,6 @@ export interface AppContextValue {
   /** The same on a phone, where they start folded to leave room for the work itself. */
   plannerFiltersPhone: boolean;
   setPlannerFiltersPhone: (open: boolean) => void;
-  /** Reopen the goal-setting instructions (same dialog as after the prototype notice). */
-  openGoal: () => void;
   /** Mark done and optionally show the completion success panel. */
   completeTask: (task: Task, opts?: { celebrate?: boolean }) => void;
   calCursor: Date;

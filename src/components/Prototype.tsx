@@ -1,154 +1,25 @@
 "use client";
 
 /**
- * First-visit notices shared by every entry screen:
+ * Pieces shared by every entry screen:
  *
- * - EntryNotices: prototype notice first, then the goal-setting pop-up. Each dismissal
- *   is remembered in this browser (localStorage) so returning users are not interrupted.
- * - PrototypeBadge: reopens the welcome pop-up (prototype notice and goal) from every header.
+ * - PrototypeBadge: the "Prototype" tag in each header, saying this is an early version.
  * - CapabilityHero / WirePlaceholder: shared entry-screen pieces.
  * - DevStateSwitcher: development-only shortcuts to each entry state.
+ *
+ * (There is no longer a welcome pop-up with a goal to try; the tag says it's a prototype.)
  */
-import { useEffect, useState } from "react";
-import { ArrowRight, CircleCheckBig, Clock, Compass, FlaskConical, MousePointerClick, Target } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { startTour } from "./AppTour";
-import { KEYS, readStored, useHydrated, useStored, writeStored } from "./store";
-import { Button, Dialog } from "./ui";
+import { FlaskConical } from "lucide-react";
+import { KEYS, readStored, useHydrated, writeStored } from "./store";
 
 export const CAPABILITY = "See exactly what to work on in every free gap of your day.";
-export const PROTOTYPE_MESSAGE = "This is an early prototype. Some things are placeholders, and nothing is saved to an account.";
-export const GOAL_TITLE = "Your goal in this prototype";
-/** The goal, step by step, for the welcome pop-up's picture. */
-const GOAL_STEPS = [
-  { label: "Find your free time", icon: Clock },
-  { label: "Open the task", icon: MousePointerClick },
-  { label: "Mark it done", icon: CircleCheckBig },
-];
-
-export const GOAL_EXAMPLE = "You have 45 minutes between class and work. Find something productive to work on and mark it done.";
-export const GOAL_BODY =
-  "Schedule Smart finds free gaps on your day and fills them with the work that is due soonest. Use Plan, Calendar or Upcoming. Any path that gets you to a task and a Done mark counts.";
-
-const OPEN_PROTO = "prio:open-prototype-notice";
-const OPEN_GOAL = "prio:open-goal-notice";
-
-/** Shows the prototype notice again, from anywhere. */
-export function openPrototypeNotice() {
-  window.dispatchEvent(new Event(OPEN_PROTO));
-}
-
-/** Shows the goal instructions again, from anywhere. */
-export function openGoalNotice() {
-  window.dispatchEvent(new Event(OPEN_GOAL));
-}
-
-/**
- * One welcome pop-up on the first visit, whichever page someone lands on. It does
- * the two jobs the prototype has to do up front, in one place rather than a chain
- * of pop-ups: say plainly that this is an early prototype, and give the goal to try.
- *
- * Inside the app it also offers an optional walkthrough ("Show me around"); the
- * main button just starts. The Prototype tag, Help and Settings all
- * reopen it. Returning visitors see nothing.
- */
-export function EntryNotices() {
-  const hydrated = useHydrated();
-  const pathname = usePathname();
-  const protoDismissed = useStored(KEYS.prototypeNotice);
-  const goalDismissed = useStored(KEYS.goalNotice);
-  const [reopened, setReopened] = useState(false);
-
-  useEffect(() => {
-    const onOpen = () => setReopened(true);
-    window.addEventListener(OPEN_PROTO, onOpen);
-    window.addEventListener(OPEN_GOAL, onOpen);
-    return () => {
-      window.removeEventListener(OPEN_PROTO, onOpen);
-      window.removeEventListener(OPEN_GOAL, onOpen);
-    };
-  }, []);
-
-  if (!hydrated) return null;
-  if (!reopened && protoDismissed !== null && goalDismissed !== null) return null;
-
-  const inApp = pathname?.startsWith("/app") ?? false;
-  const close = () => {
-    const at = new Date().toISOString();
-    writeStored(KEYS.prototypeNotice, at);
-    writeStored(KEYS.goalNotice, at);
-    setReopened(false);
-  };
-
-  return (
-    <Dialog elevated label="Welcome to Schedule Smart" onClose={close} size="md" className="!p-5 sm:!p-6 [@media(max-height:640px)]:!top-3 [@media(max-height:640px)]:!max-h-[calc(100dvh-24px)]">
-      <span className="proto-badge pointer-events-none" aria-hidden>
-        <FlaskConical size={14} />
-        Prototype
-      </span>
-      <h2 className="mt-2.5 sm:mt-3 text-xl sm:text-2xl font-bold leading-snug">This is an early prototype.</h2>
-      <p className="mt-1 text-[15px] sm:text-base text-muted leading-normal sm:leading-relaxed">
-        Some things are placeholders and nothing is saved to an account, but it really works: it plans your free time from your calendars or from sample data.
-      </p>
-
-      <div className="mt-4 sm:mt-5 rounded-xl border border-accent/30 bg-accent-soft p-3.5 sm:p-4">
-        <span className="section-title inline-flex items-center gap-1.5">
-          <Target size={14} aria-hidden />
-          Your goal
-        </span>
-        <p className="mt-1.5 text-base sm:text-lg font-semibold leading-snug">{GOAL_EXAMPLE}</p>
-        {/* The goal as three steps, so it can be taken in at a glance. */}
-        <ol className="mt-3 grid grid-cols-3 gap-2" aria-label="The goal in three steps">
-          {GOAL_STEPS.map((step, i) => (
-            <li key={step.label} className="relative rounded-lg bg-surface border border-line px-1.5 py-2 sm:px-2 sm:py-2.5 text-center">
-              <span className="mx-auto [@media(max-height:640px)]:hidden grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full bg-accent-soft text-accent">
-                <step.icon size={15} strokeWidth={2.4} aria-hidden />
-              </span>
-              <span className="mt-1.5 [@media(max-height:640px)]:mt-0 block text-xs font-semibold leading-tight">
-                {i + 1}. {step.label}
-              </span>
-              {i < GOAL_STEPS.length - 1 ? (
-                <ArrowRight size={14} className="absolute top-1/2 -right-[13px] -translate-y-1/2 text-muted z-[1] hidden sm:block" aria-hidden />
-              ) : null}
-            </li>
-          ))}
-        </ol>
-        <p className="mt-2 sm:mt-2.5 text-[13px] sm:text-sm text-muted leading-snug sm:leading-relaxed">Any route works: Plan, Calendar or Upcoming.</p>
-      </div>
-
-      <div className="mt-4 sm:mt-5 flex items-center gap-2 flex-wrap">
-        {inApp ? (
-          <Button
-            icon={Compass}
-            className="max-sm:flex-1 max-sm:justify-center"
-            onClick={() => {
-              close();
-              startTour();
-            }}
-          >
-            Show me around
-          </Button>
-        ) : null}
-        <Button variant="primary" className="ml-auto max-sm:flex-1 max-sm:justify-center" trailingIcon={ArrowRight} onClick={close} data-autofocus>
-          {inApp ? "Start" : "Got it"}
-        </Button>
-      </div>
-      <p className="mt-3 text-xs text-muted [@media(max-height:640px)]:hidden">Reopen this any time from the Prototype tag or Help.</p>
-    </Dialog>
-  );
-}
-
-/** @deprecated Prefer EntryNotices — kept for older imports. */
-export function PrototypeNotice() {
-  return <EntryNotices />;
-}
 
 export function PrototypeBadge({ className = "" }: { className?: string }) {
   return (
-    <button type="button" className={`proto-badge ${className}`} onClick={openPrototypeNotice} title="About this prototype" aria-haspopup="dialog">
+    <span className={`proto-badge pointer-events-none ${className}`} title="An early prototype">
       <FlaskConical size={14} className="hidden sm:block" aria-hidden />
       Prototype
-    </button>
+    </span>
   );
 }
 
@@ -190,20 +61,14 @@ export function WirePlaceholder({ label, className = "" }: { label: string; clas
   );
 }
 
-function clearPrioStorage({ keepNotices }: { keepNotices: boolean }) {
+function clearPrioStorage({ keepTour }: { keepTour: boolean }) {
   const theme = readStored(KEYS.theme);
   for (const key of Object.values(KEYS)) {
     if (key === KEYS.theme) continue;
-    if (keepNotices && (key === KEYS.prototypeNotice || key === KEYS.goalNotice || key === KEYS.tour)) continue;
+    if (keepTour && key === KEYS.tour) continue;
     writeStored(key, null);
   }
   if (theme) writeStored(KEYS.theme, theme);
-}
-
-function markNoticesRead() {
-  const now = new Date().toISOString();
-  writeStored(KEYS.prototypeNotice, now);
-  writeStored(KEYS.goalNotice, now);
 }
 
 export function DevStateSwitcher() {
@@ -217,49 +82,33 @@ export function DevStateSwitcher() {
 
   const states: { label: string; run: () => void }[] = [
     {
-      label: "First visit (blank, notices show)",
+      label: "First visit (blank)",
       run: () => {
-        clearPrioStorage({ keepNotices: false });
+        clearPrioStorage({ keepTour: false });
         go("/");
       },
     },
     {
-      label: "New user at /app (notices already read)",
+      label: "New user at /app",
       run: () => {
-        clearPrioStorage({ keepNotices: true });
-        markNoticesRead();
+        clearPrioStorage({ keepTour: true });
         go("/app");
       },
     },
     {
       label: "Sample data at /app#demo",
       run: () => {
-        clearPrioStorage({ keepNotices: true });
-        markNoticesRead();
+        clearPrioStorage({ keepTour: true });
         go("/app#demo");
       },
     },
     {
       label: "Returning user at /app (keeps current data)",
-      run: () => {
-        markNoticesRead();
-        go("/app");
-      },
+      run: () => go("/app"),
     },
     {
       label: "Show the walkthrough",
-      run: () => {
-        markNoticesRead();
-        go("/app#tour");
-      },
-    },
-    {
-      label: "Show the welcome pop-up on next load",
-      run: () => {
-        writeStored(KEYS.prototypeNotice, null);
-        writeStored(KEYS.goalNotice, null);
-        window.location.reload();
-      },
+      run: () => go("/app#tour"),
     },
   ];
 

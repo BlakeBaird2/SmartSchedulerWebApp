@@ -4,7 +4,7 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./globals.css";
 import "./schedule-smart.css";
-import { DevStateSwitcher, EntryNotices } from "@/components/Prototype";
+import { DevStateSwitcher } from "@/components/Prototype";
 
 export const metadata: Metadata = {
   title: "Schedule Smart — Plan your open time",
@@ -42,8 +42,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
-        {/* Prototype notice first, then the goal pop-up; each can be reopened from badges / Help. */}
-        <EntryNotices />
         <DevStateSwitcher />
       </body>
     </html>

@@ -991,7 +991,7 @@ function CompletedDetail({ task, onClose }: { task: Task; onClose: () => void })
       </header>
       <div className="p-4 space-y-4 overflow-y-auto">
         <p className="text-sm text-muted leading-relaxed">
-          That counts for the prototype goal. Your plan updates everywhere: Plan, Calendar and Upcoming stay in sync.
+          Your plan updates everywhere: the calendar and Tasks stay in sync.
         </p>
         {next ? (
           <div className="rounded-xl border border-line p-3 space-y-2">

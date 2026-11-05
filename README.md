@@ -298,8 +298,7 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 
 | Key | Meaning |
 | --- | --- |
-| `prio:prototype-notice`, `prio:goal-notice` | Set when the welcome pop-up (prototype notice + goal) is closed. Missing = it shows on the next page load. |
-| `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Show me around, Settings, or `/app#tour`). |
+| `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Settings → About, or `/app#tour`). |
 | `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
 | `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
@@ -314,14 +313,14 @@ in development (`NODE_ENV=development`) and is not in production builds.
 
 | State | How to reach it | What to check |
 | --- | --- | --- |
-| First visit: welcome pop-up | New private window → `/` (or `/about`, `/app`, `/app#demo`) | One pop-up says it is an early prototype and gives the 45-minute goal. In the app it offers **Show me around** (the walkthrough) and **Start**. It doesn't return on refresh; the **Prototype** tag, **Goal** tag (wide screens) and Help reopen it. |
+| First visit | New private window → `/` (or `/about`, `/app`, `/app#demo`) | No pop-up: the page opens straight away. The **Prototype** tag in the header marks it as an early version. |
 | Home `/` | Private window → `/` | Capability sentence is the biggest thing; **Start planning** is the only accent button. |
 | About `/about` | `/about` (never redirects) | Same, with **Open SmartScheduler** as the primary button. |
 | New user `/app` | Private window → `/app` | Onboarding: capability first, then (when sign-in is set up) sign in with Google or **Not now**; on the calendars step, **Try sample data** (soft yellow, beside **Continue** at the bottom right) opens the app with sample data, and **Continue** goes on once a calendar is added; then class meeting times (when a school calendar has classes) with **Back**, and **Open my calendar**. Working hours are set in Settings, not during setup. |
 | Sample data `/app#demo` | Private window → `/app#demo` | Plan screen with the capability above the "Sample data" note; **Done** is primary. |
-| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary; goal/prototype do not auto-interrupt. |
+| Returning user `/app` | After the demo (or real calendars), open `/app` again, or `/` (redirects to `/app`) | Plan screen, capability first, **Done** primary; nothing pops up. |
 
-**Goal routes (same outcome: mark productive work done):**
+**Ways to get work done (same outcome: mark productive work done):**
 
 1. **Plan** → open a free gap → choose a task → review / Why this task? → **Done**
 2. **Calendar** → drag the next task from the to-do list onto a free time (or open a free gap → **Put it here**) → tick it off
@@ -332,7 +331,7 @@ Help (header) lists these routes. See [`SUBMISSION_NOTES.md`](SUBMISSION_NOTES.m
 To start over without a private window, run this in the browser console, then
 reload: `Object.keys(localStorage).filter(k => k.startsWith("prio:")).forEach(k => localStorage.removeItem(k))`.
 Settings → Start over → **Remove everything** clears calendars and settings but keeps the theme and
-the prototype-notice dismissal.
+whether the walkthrough was seen.
 
 See [`FIVE_SECOND_TEST.md`](FIVE_SECOND_TEST.md) for five-second test results (preliminary; two participants).
 
