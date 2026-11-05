@@ -124,23 +124,24 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             {ws.feeds.length > 0 && !hasSchool ? <p className="text-xs text-muted">No school calendar yet. You can still add work by hand.</p> : null}
             <div className="flex items-center gap-2 flex-wrap pt-1">
               {asksAccount && !cloud.user ? <Button icon={ArrowLeft} iconOnly label="Back" onClick={() => setStep(0)} /> : null}
-              {/* No link handy: the sample route, in a soft yellow so it reads as a side door, not the way forward. */}
-              {ws.feeds.length === 0 ? (
-                <Button icon={Sparkles} className="ss-sample-button" onClick={trySample} data-smart-event="sample_data_started">
-                  Try sample data
+              {/* Both ways forward sit together on the right: sample data (soft yellow) beside Continue (blue once a calendar is added). */}
+              <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
+                {ws.feeds.length === 0 ? (
+                  <Button icon={Sparkles} className="ss-sample-button" onClick={trySample} data-smart-event="sample_data_started">
+                    Try sample data
+                  </Button>
+                ) : null}
+                <Button
+                  variant={ws.feeds.length === 0 ? "secondary" : "primary"}
+                  trailingIcon={ArrowRight}
+                  disabled={ws.feeds.length === 0}
+                  title={ws.feeds.length === 0 ? "Add a calendar first, or try sample data" : undefined}
+                  onClick={hasClasses ? () => setStep(2) : onFinish}
+                  data-smart-event={hasClasses ? undefined : "setup_finished"}
+                >
+                  {hasClasses || ws.feeds.length === 0 ? "Continue" : "Open my calendar"}
                 </Button>
-              ) : null}
-              <Button
-                variant={ws.feeds.length === 0 ? "secondary" : "primary"}
-                trailingIcon={ArrowRight}
-                className="ml-auto"
-                disabled={ws.feeds.length === 0}
-                title={ws.feeds.length === 0 ? "Add a calendar first, or try sample data" : undefined}
-                onClick={hasClasses ? () => setStep(2) : onFinish}
-                data-smart-event={hasClasses ? undefined : "setup_finished"}
-              >
-                {hasClasses || ws.feeds.length === 0 ? "Continue" : "Open my calendar"}
-              </Button>
+              </div>
             </div>
           </Card>
         ) : step === 2 ? (
