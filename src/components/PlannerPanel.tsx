@@ -9,8 +9,6 @@ import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag } from "./planDr
 import { SsIcon } from "./SsIcon";
 
 /** How many tasks the planner shows, and how many with "Show more items" on. */
-const FEW = 5;
-const MANY = 15;
 
 /** Everything still to schedule, in order, narrowed by "Stack with class". */
 export function useTodos(): Task[] {
@@ -66,7 +64,7 @@ const SORTS: { id: TodoSort; label: string }[] = [
  * scheduled work back here takes it off the calendar.
  */
 export function PlannerPanel({ onClose }: { onClose: () => void }) {
-  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, plannerMore, setPlannerMore, openAddTask } = useApp();
+  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, openAddTask } = useApp();
   const app = useApp();
   // On a phone the filters start folded, to leave room for the work; they open and close on their own there.
   const phone = useIsPhone();
@@ -76,7 +74,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
   const allTodos = useAllTodos();
   const drag = usePlanDrag();
   // Search: typed into `draft`, run on Enter. It looks through everything still to
-  // schedule (every class, past the filters and the 5 or 15 shown), and lists every match.
+  // schedule (every class, past the class filter), and lists every match.
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
@@ -87,8 +85,8 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
       return `${t.title} ${course ? `${course.code} ${course.title ?? ""}` : "Personal"}`.toLowerCase().includes(q);
     });
   }, [allTodos, q, model.courseById]);
-  const listed = todos.slice(0, plannerMore ? MANY : FEW);
-  const shown = results ?? listed;
+  // Everything still to schedule is listed; the list scrolls.
+  const shown = results ?? todos;
   const clearSearch = () => {
     setDraft("");
     setQuery("");
@@ -97,7 +95,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
   // What the filters are set to, in a few words, for when they are folded away.
   const stackLabel =
     stack === "all" ? "All classes" : stack === "school" ? "School only" : stack === "personal" ? "Personal" : (model.courseById.get(stack)?.code ?? "One class");
-  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel} · ${plannerMore ? 15 : 5}`;
+  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel}`;
 
   const setStack = (value: string) => {
     if (value === "all" || value === "school" || value === "personal") {
@@ -201,21 +199,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
                 <option value="personal">Personal</option>
               </select>
             </label>
-            <div className="ss-density">
-              <div>
-                <strong>Show more items</strong>
-                <span>{plannerMore ? `Showing all ${listed.length}` : `Showing ${listed.length} of ${todos.length}`}</span>
-              </div>
-              <button
-                className="ss-switch"
-                onClick={() => setPlannerMore(!plannerMore)}
-                role="switch"
-                aria-checked={plannerMore}
-                aria-label={`Show up to ${MANY} planner items`}
-              >
-                <i />
-              </button>
-            </div>
+
           </div>
         ) : null}
       </div>

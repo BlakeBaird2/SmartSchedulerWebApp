@@ -102,9 +102,6 @@ export interface AppContextValue {
   todoSort: TodoSort;
   setTodoSort: (sort: TodoSort) => void;
   setCalSidebar: (open: boolean) => void;
-  /** Whether the planner lists up to 15 tasks rather than 5. */
-  plannerMore: boolean;
-  setPlannerMore: (more: boolean) => void;
   /** Whether the planner's filters (order, class, how many) are open or folded to one line. */
   plannerFilters: boolean;
   setPlannerFilters: (open: boolean) => void;

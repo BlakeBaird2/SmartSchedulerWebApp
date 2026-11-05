@@ -55,7 +55,6 @@ interface UiPrefs {
   settingsPanel: SettingsPanel;
   /** Whether the calendar's sidebar (small month and to-do list) is open on a computer. */
   calSidebar: boolean;
-  plannerMore: boolean;
   plannerFilters: boolean;
   /** The planner's filters on a phone, kept apart: folded away there unless opened. */
   plannerFiltersPhone: boolean;
@@ -87,7 +86,6 @@ const DEFAULT_UI: UiPrefs = {
   hideClassTimesTip: false,
   settingsPanel: "main",
   calSidebar: true,
-  plannerMore: false,
   plannerFilters: true,
   plannerFiltersPhone: false,
   todoScope: "all",
@@ -115,7 +113,6 @@ function parseUi(raw: string | null): UiPrefs {
     hideClassTimesTip: p.hideClassTimesTip === true,
     settingsPanel: p.settingsPanel && SETTINGS_PANELS.includes(p.settingsPanel) ? p.settingsPanel : DEFAULT_UI.settingsPanel,
     calSidebar: p.calSidebar !== false,
-    plannerMore: p.plannerMore === true,
     plannerFilters: p.plannerFilters !== false,
     plannerFiltersPhone: p.plannerFiltersPhone === true,
     todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
@@ -872,8 +869,6 @@ export function App() {
     setDueMode,
     calSidebar: ui.calSidebar,
     setCalSidebar: (open: boolean) => writeUi({ calSidebar: open }),
-    plannerMore: ui.plannerMore,
-    setPlannerMore: (more: boolean) => writeUi({ plannerMore: more }),
     plannerFilters: ui.plannerFilters,
     setPlannerFilters: (open: boolean) => writeUi({ plannerFilters: open }),
     plannerFiltersPhone: ui.plannerFiltersPhone,

@@ -211,8 +211,13 @@
   padding: 0 2px;
   color: var(--ss-muted);
   background: none;
-  font-size: 15px;
+  /* A little bigger, to sit with the Schedule Smart name beside them. */
+  font-size: 17px;
   font-weight: 600;
+}
+.ss-nav button > svg {
+  width: 20px;
+  height: 20px;
 }
 .ss-nav-short {
   display: none;
@@ -491,7 +496,7 @@
   justify-content: center;
   margin-top: 18px;
 }
-/* Search every task still to schedule; it runs on Enter. */
+/* Search every task still to schedule; it runs on Enter. A plain white box with no outline, lifted by a soft shadow. */
 .ss-planner-search {
   margin-top: 12px;
   height: 40px;
@@ -499,14 +504,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--ss-line);
+  border: 0;
   border-radius: 10px;
   color: var(--ss-faint);
   background: var(--ss-surface);
+  box-shadow: 0 1px 2px rgba(30, 30, 27, 0.06);
 }
+/* Focused: a soft glow, so it's clear where typing goes, without a hard outline. */
 .ss-planner-search:focus-within {
-  border-color: var(--ss-accent);
-  box-shadow: 0 0 0 3px var(--ss-accent-ring);
+  box-shadow:
+    0 1px 2px rgba(30, 30, 27, 0.06),
+    0 0 0 3px var(--ss-accent-ring);
 }
 .ss-planner-search input {
   flex: 1;
@@ -658,59 +666,6 @@
   background: var(--ss-surface);
   font-size: 14px;
   font-weight: 600;
-}
-.ss-density {
-  margin-top: 14px;
-  padding-top: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-top: 1px solid var(--ss-line-soft);
-}
-.ss-density > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ss-density strong {
-  color: var(--ss-text-2);
-  font-size: 13.5px;
-}
-.ss-density span {
-  color: var(--ss-faint);
-  font-size: 12px;
-}
-.ss-switch {
-  position: relative;
-  width: 38px;
-  height: 22px;
-  flex: none;
-  padding: 0;
-  border: 0;
-  border-radius: 99px;
-  background: #d9d9d3;
-  transition: background 0.2s ease;
-}
-:root[data-theme="dark"] .ss-switch {
-  background: #3a3a3e;
-}
-.ss-switch i {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  left: 2px;
-  top: 2px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(30, 30, 27, 0.2);
-  transition: transform 0.2s ease;
-}
-.ss-switch[aria-checked="true"] {
-  background: var(--ss-accent);
-}
-.ss-switch[aria-checked="true"] i {
-  transform: translateX(16px);
 }
 .ss-queue-label {
   margin: 26px 2px 12px;
@@ -3199,7 +3154,7 @@ section.ss-due-page {
   }
   .ss-nav button {
     min-height: 44px;
-    font-size: 14px;
+    font-size: 16px;
   }
   .ss-avatar {
     width: 36px;
@@ -3271,12 +3226,6 @@ section.ss-due-page {
   .ss-filters select {
     height: 40px;
     font-size: 13px;
-  }
-  .ss-density strong {
-    font-size: 12.5px;
-  }
-  .ss-density span {
-    font-size: 11px;
   }
   .ss-queue-label {
     margin-top: 18px;
@@ -3546,7 +3495,7 @@ section.ss-due-page {
   }
   .ss-nav button {
     gap: 5px;
-    font-size: 13.5px;
+    font-size: 15px;
   }
   /* Three tabs on a phone: words only, and the short one for Due dates. */
   .ss-nav svg,
