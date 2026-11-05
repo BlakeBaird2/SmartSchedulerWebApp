@@ -3624,26 +3624,39 @@ section.ss-due-page {
   justify-content: center;
   gap: 12px;
 }
-/* Bigger, friendlier buttons than the app's: this is where people start. */
+/*
+ * Bigger, friendlier buttons than the app's, drawn like the doodles: round
+ * pills with a marker outline and a little offset shadow, like a sticker,
+ * that press in when clicked or tapped.
+ */
 .ss-home-actions > a {
   min-height: 56px;
-  padding: 0 28px;
+  padding: 0 30px;
   justify-content: center;
-  border-radius: 14px;
+  border: 2px solid var(--ss-ink);
+  border-radius: 999px;
+  box-shadow: 3px 4px 0 var(--ss-ink);
   font-family: var(--ss-home-font);
   font-size: 17.5px;
-  font-weight: 700;
-}
-.ss-home-actions .ss-primary {
-  box-shadow:
-    0 2px 4px color-mix(in oklab, var(--ss-brand) 30%, transparent),
-    0 14px 30px -12px color-mix(in oklab, var(--ss-brand) 70%, transparent);
+  font-weight: 750;
   transition:
-    background-color 0.15s ease,
-    transform 0.15s ease;
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background-color 0.15s ease;
 }
-.ss-home-actions .ss-primary:hover {
-  transform: translateY(-1px);
+.ss-home-actions > a:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 5px 0 var(--ss-ink);
+}
+.ss-home-actions > a:active {
+  transform: translate(2px, 3px);
+  box-shadow: 1px 1px 0 var(--ss-ink);
+}
+.ss-home-actions .ss-home-quiet {
+  background: var(--ss-surface);
+}
+.ss-home-actions .ss-home-quiet:hover {
+  background: var(--ss-chip);
 }
 /* The hand-drawn arrow to Get started, from the left; on a computer only. */
 .ss-home-pointer {
@@ -4294,12 +4307,16 @@ section.ss-due-page {
   .ss-home-hero > p {
     font-size: 16px;
   }
+  /* Stacked on a phone, a little narrower than the screen, centred. */
   .ss-home-actions {
     width: 100%;
     flex-direction: column;
+    align-items: center;
+    gap: 14px;
   }
-  .ss-home-actions > * {
-    justify-content: center;
+  .ss-home-actions > a {
+    width: min(100%, 310px);
+    min-height: 54px;
   }
   .ss-laptop {
     width: 86%;
