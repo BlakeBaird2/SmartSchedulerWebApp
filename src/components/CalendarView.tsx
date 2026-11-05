@@ -251,14 +251,6 @@ function useNarrow(): boolean {
   return narrow;
 }
 
-/** "GMT−6": the time zone the times are in, as the prototype labels it. */
-function gmtLabel(now: Date): string {
-  const off = -now.getTimezoneOffset();
-  const h = Math.trunc(Math.abs(off) / 60);
-  const m = Math.abs(off) % 60;
-  return `GMT${off < 0 ? "−" : "+"}${h}${m ? `:${String(m).padStart(2, "0")}` : ""}`;
-}
-
 // ---------------------------------------------------------------------------
 // Week and day: a time grid that fits the screen
 // ---------------------------------------------------------------------------
@@ -391,7 +383,8 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   return (
     <div ref={frameRef} className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
       <div className="ss-week-row">
-        <div className="ss-day-head ss-time-head">{gmtLabel(now)}</div>
+        {/* The corner over the hours stays empty: every time is the device's own. */}
+        <div className="ss-day-head ss-time-head" aria-hidden />
         {columns.map((c) => (
           <button
             key={c.from}

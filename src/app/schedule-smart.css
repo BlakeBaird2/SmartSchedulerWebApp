@@ -3239,9 +3239,10 @@ section.ss-due-page {
   .ss-calendar-area {
     padding: 8px 8px 10px;
   }
+  /* Phones: a slightly roomier header, every button the same 40px square. */
   .ss-toolbar {
     min-width: 0;
-    height: 46px;
+    height: 54px;
     gap: 6px;
     margin-bottom: 8px;
   }
@@ -3249,14 +3250,15 @@ section.ss-due-page {
     gap: 8px;
   }
   .ss-date-title h1 {
-    font-size: 20px;
+    padding-left: 6px;
+    font-size: 21px;
   }
   .ss-date-title span {
     font-size: 10px;
   }
   .ss-open-panel {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
   }
   .ss-controls {
     gap: 5px;
@@ -3264,8 +3266,14 @@ section.ss-due-page {
   .ss-controls .ss-today {
     display: none;
   }
+  /* Today: the same size and outline as the arrows beside it. */
   .ss-controls .ss-today-mini {
     display: grid;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--ss-line);
+    border-radius: 9px;
+    background: var(--ss-surface);
   }
   /* Sideways moves belong to the day swipe (daySwipe.ts) and two-finger pinches to
      the hours' zoom (pinchZoom.ts); up and down still scroll. */
@@ -3274,30 +3282,31 @@ section.ss-due-page {
     touch-action: pan-y;
   }
   .ss-controls select {
-    width: 78px;
-    height: 36px;
+    width: 80px;
+    height: 40px;
     padding: 0 6px;
-    font-size: 13px;
+    font-size: 14px;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-controls select {
     display: none;
   }
   .ss-arrows button {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
   }
   .ss-key {
     display: none;
   }
+  /* Just room for "10 AM": the calendar gets the rest. */
   .ss-week {
-    --ss-gutter: 46px;
+    --ss-gutter: 38px;
     border-radius: 10px;
   }
   .ss-week.ss-day-view {
-    --ss-gutter: 46px;
+    --ss-gutter: 38px;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-week {
-    --ss-gutter: 40px;
+    --ss-gutter: 34px;
   }
   .ss-week-row,
   .ss-week-scroll {
@@ -3482,17 +3491,18 @@ section.ss-due-page {
   .ss-calendar-page:not(.ss-panel-closed) .ss-date-title h1 {
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 18px;
+    font-size: 20px;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-date-title span {
     display: none;
   }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-arrows button {
-    width: 32px;
-    height: 34px;
+  .ss-calendar-page:not(.ss-panel-closed) .ss-arrows button,
+  .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
+    width: 36px;
+    height: 36px;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-week {
-    --ss-gutter: 34px;
+    --ss-gutter: 30px;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-time-column span {
     padding-right: 4px;
@@ -3529,6 +3539,32 @@ section.ss-due-page {
   .ss-form-row {
     flex-direction: column;
     gap: 16px;
+  }
+}
+
+/* The narrowest phones (320px): the header's buttons a little smaller, so the month still fits. */
+@media (max-width: 360px) {
+  .ss-open-panel,
+  .ss-arrows button,
+  .ss-controls .ss-today-mini,
+  .ss-calendar-page:not(.ss-panel-closed) .ss-arrows button,
+  .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
+    width: 34px;
+    height: 34px;
+  }
+  .ss-controls select {
+    width: 70px;
+    height: 34px;
+    font-size: 13px;
+  }
+  .ss-date-title h1,
+  .ss-calendar-page:not(.ss-panel-closed) .ss-date-title h1 {
+    padding-left: 2px;
+    font-size: 18px;
+  }
+  /* Beside the open planner there is only room for the month and the arrows. */
+  .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
+    display: none;
   }
 }
 
