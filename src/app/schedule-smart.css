@@ -3173,9 +3173,9 @@ section.ss-due-page {
   .ss-notice-actions a {
     display: none;
   }
-  /* Phones: the planner takes 38% and the calendar the rest, so the calendar isn't crammed. */
+  /* Phones: the planner takes 43% and the calendar the rest, so the calendar isn't crammed. */
   .ss-calendar-page {
-    grid-template-columns: 38% 62%;
+    grid-template-columns: 43% 57%;
     overflow: hidden;
   }
   .ss-calendar-page.ss-panel-closed {
@@ -3469,8 +3469,9 @@ section.ss-due-page {
   .ss-island-divider {
     display: none;
   }
+  /* Phones, top to bottom: Planned / Not planned / Everything, then the classes, then search and Done. */
   .ss-filter {
-    order: 3;
+    order: 2;
     flex-basis: 100%;
   }
   .ss-filter-button {
@@ -3485,7 +3486,7 @@ section.ss-due-page {
   }
   .ss-island-end {
     flex: 1 1 100%;
-    order: 2;
+    order: 3;
   }
   .ss-island-search {
     flex: 1;
@@ -3532,7 +3533,7 @@ section.ss-due-page {
     font-size: 11px;
   }
   .ss-calendar-page:not(.ss-panel-closed) {
-    grid-template-columns: 38% 62%;
+    grid-template-columns: 43% 57%;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-suggestions {
     padding: 14px 10px;
