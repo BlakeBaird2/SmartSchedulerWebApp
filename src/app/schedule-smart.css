@@ -3173,9 +3173,9 @@ section.ss-due-page {
   .ss-notice-actions a {
     display: none;
   }
-  /* Phones: the planner takes 43% and the calendar the rest, so the calendar isn't crammed. */
+  /* Phones: the planner and the calendar split the screen down the middle. */
   .ss-calendar-page {
-    grid-template-columns: 43% 57%;
+    grid-template-columns: 50% 50%;
     overflow: hidden;
   }
   .ss-calendar-page.ss-panel-closed {
@@ -3533,7 +3533,7 @@ section.ss-due-page {
     font-size: 11px;
   }
   .ss-calendar-page:not(.ss-panel-closed) {
-    grid-template-columns: 43% 57%;
+    grid-template-columns: 50% 50%;
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-suggestions {
     padding: 14px 10px;
