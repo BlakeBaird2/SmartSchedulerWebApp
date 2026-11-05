@@ -3690,7 +3690,7 @@ section.ss-due-page {
 .ss-home-pointer {
   position: absolute;
   right: calc(100% + 8px);
-  top: -30px;
+  top: -12px;
   width: 104px;
   height: 61px;
   overflow: visible;
@@ -3700,6 +3700,7 @@ section.ss-due-page {
   fill: none;
   stroke: var(--ss-ink);
   stroke-width: 3;
+/* Its tip level with the middle of Get started. */
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -3708,10 +3709,11 @@ section.ss-due-page {
   color: var(--ss-faint);
   font-size: 13.5px;
 }
-/* Under the call to action: the drag-to-plan drawing, in the same sketched style as the laptop above. */
+/* Above the buttons: the drag-to-plan drawing, as big as the laptop at the top and in the same sketched style. */
 .ss-home-how {
-  max-width: 760px;
-  margin: -24px auto 96px;
+  width: 100%;
+  max-width: 940px;
+  margin: 40px auto 0;
 }
 .ss-home-how img {
   display: block;
@@ -3873,7 +3875,7 @@ section.ss-due-page {
     padding: 48px 0 56px;
   }
   .ss-home-how {
-    margin: -16px auto 48px;
+    margin-top: 28px;
   }
   .ss-home-hero h2 {
     font-size: 36px;
