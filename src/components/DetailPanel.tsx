@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { addDays, format, startOfDay } from "date-fns";
-import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, Flag, HelpCircle, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
 import { PRIORITIES, type CalEvent, type ScheduledBlock, type Task } from "@/lib/types";
-import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue, typeMeta } from "@/lib/ui";
+import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue } from "@/lib/ui";
 import { PRIORITY_LABEL, todoState, urgencyColor } from "@/lib/todos";
 import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
 import { deleteEvent } from "@/lib/deleted";
@@ -15,7 +15,7 @@ import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
 import { useTodos } from "./PlannerPanel";
-import { Button, buttonClass, ChoicePill, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
+import { Button, buttonClass, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
 import { cloudAvailable } from "./cloud";
 import { ClassEditForm } from "./ClassSummary";
 import { AddItemForm, AddKindToggle, type AddKind } from "./AddItem";
@@ -141,7 +141,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const history = useMemo(() => changes.filter((c) => c.taskId === task.id).slice(0, 6), [changes, task.id]);
   const typeDefault = ws.prefs.estimates[task.type];
   const options = [...new Set([...ESTIMATES, task.estimate])].sort((a, b) => a - b);
-  const rank = index.rank.get(task.id);
 
   const openDay = (date: Date) => {
     setCalCursor(date);
@@ -170,107 +169,106 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
       <div className="p-4 space-y-5 overflow-y-auto">
         {/* The same main action as the Plan screen's Done button, so finishing work looks the same everywhere. */}
-        <div className="flex flex-col gap-2">
-          <Button
-            variant={task.done ? "secondary" : "primary"}
-            block
-            icon={task.done ? Undo2 : Check}
-            data-smart-event={task.done ? "task_uncompleted" : "task_completed"}
-            onClick={() => (task.done ? toggleDone(task) : completeTask(task))}
-          >
-            {task.done ? "Mark as not done" : "Mark as done"}
-          </Button>
-          {!task.done ? (
-            <Button icon={HelpCircle} block onClick={() => select({ kind: "why", id: task.id })}>
-              Why this task?
-            </Button>
-          ) : null}
-        </div>
+        <Button
+          variant={task.done ? "secondary" : "primary"}
+          block
+          icon={task.done ? Undo2 : Check}
+          data-smart-event={task.done ? "task_uncompleted" : "task_completed"}
+          onClick={() => (task.done ? toggleDone(task) : completeTask(task))}
+        >
+          {task.done ? "Mark as not done" : "Mark as done"}
+        </Button>
 
-        <div>
-          <SectionLabel className="mb-1 inline-flex items-center gap-1.5">
-            <Flag size={12} className={overdue ? "text-danger" : "text-warn"} aria-hidden />
-            Due (the deadline)
-          </SectionLabel>
-          <div className={`text-[0.9375rem] font-medium ${overdue ? "text-danger" : ""}`}>
-            {d ? `${format(d, "EEEE, MMMM d")}${task.allDay ? "" : ` at ${format(d, "h:mm a")}`}` : "No due date"}
-          </div>
-          {d ? <div className="text-xs text-muted mt-0.5">{relativeDue(d, now)}</div> : null}
-          {rank ? <div className="text-xs text-muted mt-0.5">Priority #{rank} among unfinished work (soonest deadline first).</div> : null}
-        </div>
-
-        <div>
-          <Label>Time it needs</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {options.map((m) => (
-              <ChoicePill key={m} selected={task.estimate === m} onClick={() => setEstimate(task.id, m === typeDefault ? null : m)}>
-                {duration(m)}
-              </ChoicePill>
-            ))}
-          </div>
-          <p className="mt-1.5 text-xs text-muted">
-            {task.customEstimate ? (
+        {/* The facts, one short row each: a label, then the value or a dropdown to change it. */}
+        <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3 text-sm">
+          <dt className="text-muted">Due</dt>
+          <dd className={`font-medium ${overdue ? "text-danger" : ""}`}>
+            {d ? (
               <>
-                Set by you.{" "}
-                <TextButton onClick={() => setEstimate(task.id, null)}>
-                  Use the {typeMeta(task.type).label.toLowerCase()} default ({duration(typeDefault)})
-                </TextButton>
+                {format(d, "EEE, MMM d")}
+                {task.allDay ? "" : `, ${format(d, "h:mm a")}`}
+                <span className="font-normal text-muted"> · {relativeDue(d, now)}</span>
               </>
             ) : (
-              `The default for ${typeMeta(task.type).plural.toLowerCase()}. Part-way through? Lower it to what's left.`
+              "No due date"
             )}
-          </p>
-        </div>
+          </dd>
 
-        {/* Points are for real assignments (what they're worth in the class); work added by hand has none. */}
-        <div className={task.manual ? "" : "grid grid-cols-[minmax(0,1fr)_7rem] gap-4"}>
-          <div>
-            <Label>Priority</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {PRIORITIES.map((p) => (
-                <ChoicePill key={p} selected={task.priority === p} onClick={() => setTaskMeta(task.id, { priority: p })}>
-                  {PRIORITY_LABEL[p]}
-                </ChoicePill>
+          <dt className="text-muted">
+            <label htmlFor={`time-${task.id}`}>Time needed</label>
+          </dt>
+          <dd>
+            <select
+              id={`time-${task.id}`}
+              className="input input-sm"
+              value={task.estimate}
+              onChange={(e) => {
+                const m = Number(e.target.value);
+                setEstimate(task.id, m === typeDefault ? null : m);
+              }}
+            >
+              {options.map((m) => (
+                <option key={m} value={m}>
+                  {duration(m)}
+                  {m === typeDefault ? " (usual)" : ""}
+                </option>
               ))}
-            </div>
-            <p className="mt-1.5 text-xs text-muted">
-              {task.customPriority ? (
-                <TextButton onClick={() => setTaskMeta(task.id, { priority: null })}>Follow the due date</TextButton>
-              ) : (
-                "Follows the due date until you pick one."
-              )}
-            </p>
-          </div>
+            </select>
+          </dd>
+
+          <dt className="text-muted">
+            <label htmlFor={`priority-${task.id}`}>Priority</label>
+          </dt>
+          <dd>
+            {/* "By due date" until the student picks one. */}
+            <select
+              id={`priority-${task.id}`}
+              className="input input-sm"
+              value={task.customPriority ? task.priority : ""}
+              onChange={(e) => setTaskMeta(task.id, { priority: e.target.value ? (e.target.value as (typeof PRIORITIES)[number]) : null })}
+            >
+              <option value="">{`${PRIORITY_LABEL[task.priority]} (by due date)`}</option>
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {PRIORITY_LABEL[p]}
+                </option>
+              ))}
+            </select>
+          </dd>
+
+          {/* Points are for real assignments (what they're worth in the class); work added by hand has none. */}
           {task.manual ? null : (
-            <div>
-              <Label>Points</Label>
-              <input
-                className="input input-sm w-full"
-                type="number"
-                min={0}
-                max={10000}
-                inputMode="numeric"
-                placeholder="None"
-                aria-label={`Points for ${task.title}`}
-                defaultValue={task.points ?? ""}
-                key={`${task.id}:${task.points ?? ""}`}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  const next = v === "" ? null : Number(v);
-                  if (next === task.points || (next !== null && !Number.isFinite(next))) return;
-                  setTaskMeta(task.id, { points: next });
-                }}
-              />
-            </div>
+            <>
+              <dt className="text-muted">
+                <label htmlFor={`points-${task.id}`}>Points</label>
+              </dt>
+              <dd>
+                <input
+                  id={`points-${task.id}`}
+                  className="input input-sm w-24"
+                  type="number"
+                  min={0}
+                  max={10000}
+                  inputMode="numeric"
+                  placeholder="None"
+                  defaultValue={task.points ?? ""}
+                  key={`${task.id}:${task.points ?? ""}`}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    const next = v === "" ? null : Number(v);
+                    if (next === task.points || (next !== null && !Number.isFinite(next))) return;
+                    setTaskMeta(task.id, { points: next });
+                  }}
+                />
+              </dd>
+            </>
           )}
-        </div>
+        </dl>
 
         {!task.done ? (
           <div>
-            <SectionLabel className="mb-1 inline-flex items-center gap-1.5">
-              <CalendarClock size={12} className="text-ok" aria-hidden />
-              On your calendar
-            </SectionLabel>
+            {/* Nothing on the calendar yet: just the button. Otherwise the times it's on, each a link to that day. */}
+            {scheduled.length > 0 ? <Label>On your calendar</Label> : null}
             {scheduled.length > 0 ? (
               <ul className="space-y-1">
                 {scheduled.map((b) => {
@@ -296,9 +294,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   );
                 })}
               </ul>
-            ) : (
-              <p className="text-sm text-muted">Not yet. Drag it from your to-do list onto a free time, or pick one here.</p>
-            )}
+            ) : null}
             {d && !overdue && lastEnd > d.getTime() ? (
               <p className="mt-1.5 text-sm text-danger font-semibold flex gap-1.5">
                 <CircleAlert size={15} className="shrink-0 mt-0.5" />
@@ -330,7 +326,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             {picking ? (
               <PickTime task={task} onDone={() => setPicking(false)} />
             ) : (
-              <Button size="sm" icon={CalendarClock} className="mt-2" onClick={() => setPicking(true)}>
+              <Button size="sm" icon={CalendarClock} className={scheduled.length > 0 ? "mt-2" : ""} onClick={() => setPicking(true)}>
                 {ahead ? "Add another time" : "Schedule it"}
               </Button>
             )}
@@ -343,7 +339,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </p>
         )}
 
-        {task.description ? (
+        {task.description && task.description.trim() !== task.title.trim() ? (
           <div>
             <Label>Details</Label>
             <p className="text-sm leading-relaxed whitespace-pre-line text-fg/90">{task.description}</p>
@@ -380,11 +376,20 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </a>
         ) : null}
 
-        <div>
+        <div className="flex items-center justify-between gap-3 pt-1">
+          {!task.done ? (
+            <TextButton className="text-sm text-muted" onClick={() => select({ kind: "why", id: task.id })}>
+              Why this task?
+            </TextButton>
+          ) : (
+            <span />
+          )}
           <Button
-            variant="danger"
-            block
+            variant="quiet"
+            size="sm"
             icon={Trash}
+            className="text-danger"
+            title={task.manual ? "Added by you." : `Only hides it here; ${feed?.name ?? "the calendar"} isn't changed. Put it back from Settings → Calendars.`}
             onClick={() => {
               // Its time on the calendar goes with it; Undo brings both back.
               const before = { manualTasks: ws.manualTasks, deletedTasks: ws.deletedTasks, blocks: ws.blocks };
@@ -398,13 +403,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               toast(`Deleted ${task.title}`, { undo: () => update((w) => ({ ...w, ...before })) });
             }}
           >
-            Delete this task
+            Delete
           </Button>
-          <p className="mt-1.5 text-xs text-muted">
-            {task.manual
-              ? "Added by you."
-              : `From ${feed?.name ?? "a calendar"}, which isn't changed. Put it back any time from Settings → Calendars.`}
-          </p>
         </div>
       </div>
     </>
