@@ -36,7 +36,6 @@ import { Toast } from "./ui";
 import { AppTour } from "./AppTour";
 import { ViewHeading } from "./ViewHeading";
 import { UnfinishedPrompt } from "./UnfinishedPrompt";
-import { openGoalNotice } from "./Prototype";
 import { trackEvent } from "./smartEvents";
 
 // ---------------------------------------------------------------------------
@@ -901,7 +900,6 @@ export function App() {
     clearChanges,
     seeWork,
     toast,
-    openGoal: openGoalNotice,
     completeTask,
   };
 

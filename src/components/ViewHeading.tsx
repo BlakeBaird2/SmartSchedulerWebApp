@@ -12,7 +12,7 @@ export function ViewHeading() {
   const { view, settingsPanel, setSettingsPanel } = useApp();
 
   if (view === "help") {
-    return <Heading eyebrow="HELP" title="How Schedule Smart works." description="Your goal in this prototype, and the different ways to reach it." />;
+    return <Heading eyebrow="HELP" title="How Schedule Smart works." description="The ways to find your work and get it done." />;
   }
   if (view !== "settings") return null;
   const section = SETTINGS_SECTIONS.find((s) => s.id === settingsPanel);

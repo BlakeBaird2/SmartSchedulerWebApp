@@ -68,11 +68,11 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const hasSchool = ws.feeds.some((f) => f.role === "school");
   const hasClasses = model.visibleCourses.length > 0;
 
-  /** No link handy: leave setup with the sample calendars loaded, so the goal can still be tried. */
+  /** No link handy: leave setup with the sample calendars loaded, to try it out. */
   const trySample = () => {
     startDemo();
     onFinish();
-    toast("Sample data loaded so you can try the goal.");
+    toast("Sample data loaded so you can try it out.");
   };
 
   return (

@@ -1,13 +1,12 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarRange, ListChecks, Target } from "lucide-react";
-import { GOAL_BODY, GOAL_EXAMPLE, GOAL_TITLE, openGoalNotice, openPrototypeNotice } from "./Prototype";
+import { ArrowLeft, ArrowRight, CalendarRange, ListChecks } from "lucide-react";
 import { useApp } from "./context";
 import { Button, Card, CardHeader } from "./ui";
 
 /**
- * Help for the prototype goal: what to do, three routes that get there, and how
- * to reopen notices. Reachable from the header Help control and from Settings.
+ * Help: the two ways to find work and get it done, and what to do if something
+ * looks empty. Reachable from the header Help control and from Settings.
  */
 export function HelpView() {
   const { setView, setSettingsPanel, setCalMode } = useApp();
@@ -33,19 +32,7 @@ export function HelpView() {
       </div>
 
       <Card>
-        <CardHeader level={2} title={GOAL_TITLE} />
-        <p className="mt-3 text-[0.9375rem] leading-relaxed">{GOAL_EXAMPLE}</p>
-        <p className="mt-2 text-sm text-muted leading-relaxed">{GOAL_BODY}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button variant="primary" icon={Target} onClick={openGoalNotice}>
-            Reopen goal instructions
-          </Button>
-          <Button onClick={openPrototypeNotice}>Prototype notice</Button>
-        </div>
-      </Card>
-
-      <Card>
-        <CardHeader level={2} title="Two ways to finish the goal" hint="Each path ends the same way: find the work, then tick it off. The planner, the calendar and Tasks always agree." />
+        <CardHeader level={2} title="Two ways to get work done" hint="Each path ends the same way: find the work, then tick it off. The planner, the calendar and Tasks always agree." />
         <ol className="mt-4 space-y-3">
           <RouteRow
             icon={CalendarRange}
@@ -79,7 +66,7 @@ function RouteRow({
   steps,
   onOpen,
 }: {
-  icon: typeof Target;
+  icon: typeof ListChecks;
   title: string;
   steps: string;
   onOpen: () => void;

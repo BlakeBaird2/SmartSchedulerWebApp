@@ -5,7 +5,6 @@ import Link from "next/link";
 import { timeAgo } from "@/lib/ui";
 import { useApp } from "./context";
 import { ChangesDialog, useUnseenChanges } from "./ChangesDialog";
-import { openGoalNotice } from "./Prototype";
 import { resetEverything } from "./store";
 import { SsIcon } from "./SsIcon";
 import { AccountMenuSection } from "./Account";
@@ -109,9 +108,6 @@ function ProfileMenu() {
           </button>
           <button role="menuitem" onClick={go(() => setView("help"))}>
             <SsIcon name="help" size={16} /> Help
-          </button>
-          <button role="menuitem" onClick={go(openGoalNotice)}>
-            <SsIcon name="spark" size={16} /> Prototype goal
           </button>
           <Link role="menuitem" href="/about">
             <SsIcon name="home" size={16} /> Home page

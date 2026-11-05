@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Palette, ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, Target, House } from "lucide-react";
+import { Palette, ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
 import { classRank } from "@/lib/todos";
 import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
@@ -11,7 +11,6 @@ import { courseStyle, useApp, type SettingsPanel } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
-import { openGoalNotice } from "./Prototype";
 import { resetEverything, useTheme } from "./store";
 import { startTour } from "./AppTour";
 import { EventLog } from "./EventLog";
@@ -39,7 +38,7 @@ export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
   { id: "browser", label: "This browser", hint: "Theme, another device, start over", icon: MonitorSmartphone },
-  { id: "about", label: "About, Help & walkthrough", hint: "Goal instructions, tour, design library", icon: CircleHelp },
+  { id: "about", label: "About, Help & walkthrough", hint: "Help, walkthrough, design library", icon: CircleHelp },
 ];
 
 /**
@@ -120,9 +119,6 @@ function SettingsSidebar({ active }: { active: SettingsPanel }) {
         <Button variant="quiet" size="sm" icon={CircleHelp} onClick={() => setView("help")}>
           Open Help
         </Button>
-        <Button variant="quiet" size="sm" icon={Target} onClick={openGoalNotice}>
-          Reopen goal
-        </Button>
       </div>
     </aside>
   );
@@ -153,9 +149,6 @@ function SettingsHub() {
       <div className="flex flex-wrap gap-2">
         <Button icon={CircleHelp} onClick={() => setView("help")}>
           Open Help
-        </Button>
-        <Button icon={Target} onClick={openGoalNotice}>
-          Reopen goal
         </Button>
       </div>
 
@@ -528,11 +521,8 @@ function BrowserPanel() {
 function AboutPanel() {
   const { setView } = useApp();
   return (
-    <Section title="About Schedule Smart" hint="Goal instructions, a four-step walkthrough, how planning works, and the parts the app is built from.">
+    <Section title="About Schedule Smart" hint="A four-step walkthrough, how planning works, and the parts the app is built from.">
       <div className="flex gap-2 flex-wrap">
-        <Button icon={Target} onClick={openGoalNotice}>
-          Reopen goal
-        </Button>
         <Button trailingIcon={ArrowRight} onClick={() => setView("help")}>
           Open Help
         </Button>
