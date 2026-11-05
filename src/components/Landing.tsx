@@ -8,8 +8,6 @@
  * The same page is served at /about (`variant="about"`) for people who already use
  * Schedule Smart, where the main button opens the app instead of starting setup.
  */
-import "@fontsource-variable/fredoka";
-import "@fontsource-variable/caveat";
 import Link from "next/link";
 import { CalendarFunnel } from "./CalendarFunnel";
 import { PrototypeBadge } from "./Prototype";
@@ -43,35 +41,18 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
           <Preview />
         </CalendarFunnel>
 
-        {/* Where they act: a bright card, with a doodle or two to match the icons above. */}
         <section className="ss-home-hero" aria-labelledby="home-title">
-          <Doodles />
-          <span className="ss-home-kicker">
+          <span className="ss-eyebrow">
             <SsIcon name="spark" size={14} /> YOUR PERSONAL PLANNER
           </span>
-          <h2 id="home-title">
-            Plan your{" "}
-            <span className="ss-home-scribble">
-              open time.
-              <svg viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden>
-                <path d="M4 15 C 60 6, 120 20, 180 11 S 270 8, 296 13" />
-              </svg>
-            </span>
-          </h2>
+          <h2 id="home-title">Plan your open time.</h2>
           <p>Your classes, assignments, work and plans on one calendar. Drag what&apos;s due into the free time you have.</p>
           <div className="ss-home-actions">
-            <span className="ss-home-handnote" aria-hidden>
-              it&apos;s free!
-              <svg viewBox="0 0 90 50">
-                <path d="M6 12 C 30 4, 62 10, 80 34" />
-                <path d="M68 32 L 81 36 L 82 22" />
-              </svg>
-            </span>
-            <Link href="/app" className="ss-home-go">
-              {variant === "about" ? "Open Schedule Smart" : "Get started"} <SsIcon name="chevronRight" size={18} />
+            <Link href="/app" className="ss-primary">
+              {variant === "about" ? "Open Schedule Smart" : "Get started"} <SsIcon name="chevronRight" size={17} />
             </Link>
             {/* A full page load rather than next/link, so the app sees #demo as it starts. */}
-            <a href="/app#demo" className="ss-home-try" data-smart-event="sample_data_started">
+            <a href="/app#demo" className="ss-home-quiet" data-smart-event="sample_data_started">
               Try it with sample data
             </a>
           </div>
@@ -84,28 +65,6 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
         <Link href="/app">Open Schedule Smart</Link>
       </footer>
     </div>
-  );
-}
-
-/** A few hand-drawn sparkles and loops in the card's corners, like the icons' marker lines. */
-function Doodles() {
-  return (
-    <>
-      <svg className="ss-doodle ss-doodle-star" viewBox="0 0 40 40" aria-hidden>
-        <path d="M20 3 C 21 14, 26 19, 37 20 C 26 21, 21 26, 20 37 C 19 26, 14 21, 3 20 C 14 19, 19 14, 20 3 Z" />
-      </svg>
-      <svg className="ss-doodle ss-doodle-star-small" viewBox="0 0 40 40" aria-hidden>
-        <path d="M20 3 C 21 14, 26 19, 37 20 C 26 21, 21 26, 20 37 C 19 26, 14 21, 3 20 C 14 19, 19 14, 20 3 Z" />
-      </svg>
-      <svg className="ss-doodle ss-doodle-loop" viewBox="0 0 120 50" aria-hidden>
-        <path d="M4 36 C 20 8, 40 8, 44 26 C 48 44, 26 44, 32 26 C 38 8, 70 6, 78 28 C 84 44, 62 44, 68 26 C 74 8, 104 10, 116 20" />
-      </svg>
-      <svg className="ss-doodle ss-doodle-dots" viewBox="0 0 60 20" aria-hidden>
-        <circle cx="8" cy="10" r="3.5" />
-        <circle cx="30" cy="10" r="3.5" />
-        <circle cx="52" cy="10" r="3.5" />
-      </svg>
-    </>
   );
 }
 

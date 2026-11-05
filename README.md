@@ -22,11 +22,8 @@ needs no environment variables at all.
   (`public/landing/`) in an arch, with arrows curving down from each into a still
   of the calendar page on a drawn laptop, with an iPhone beside it showing the
   phone layout (plainly a picture, not something to click; both keep their
-  layouts, scaled down, on a phone). Below it, a bright blue card with what
-  SmartScheduler does and big **Get started** and **Try it with sample data**
-  buttons, with a few marker doodles. The page's headings and buttons are in
-  Fredoka and its scribbled note in Caveat, to suit the hand-drawn icons (the
-  app keeps DM Sans and Manrope). Where to find each calendar
+  layouts, scaled down, on a phone). Below it, what SmartScheduler does, with
+  **Get started** and **Try it with sample data**. Where to find each calendar
   link is explained during setup. It is rendered on the server, so it shows up at
   once and search engines can read it. Anyone who already has calendars in their
   browser skips it and goes straight to their plan.
