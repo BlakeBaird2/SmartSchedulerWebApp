@@ -675,6 +675,7 @@ export function App() {
         updatedAt: new Date().toISOString(),
       };
       changeBlock(null, block, `Added ${when(start)}: ${title}`);
+      trackEvent("event_added", { title, at: block.start });
     },
     [changeBlock],
   );

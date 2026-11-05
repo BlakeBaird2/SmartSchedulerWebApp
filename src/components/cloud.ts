@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { firstSync, hasOwnData, readCloudWorkspace, resync, sameWorkspace } from "@/lib/cloud";
 import { sanitizeWorkspace } from "@/lib/workspace";
-import { KEYS, onStoredChange, parseJson, readStored, writeStored } from "./store";
+import { KEYS, inStudy, onStoredChange, parseJson, readStored, writeStored } from "./store";
 
 /*
  * Signing in with Google to keep the same setup on a phone and a laptop
@@ -27,8 +27,11 @@ const CONFIG = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-/** Whether this deployment has a Firebase project to sign in to. */
-export const cloudAvailable = Boolean(CONFIG.apiKey && CONFIG.authDomain && CONFIG.projectId && CONFIG.appId);
+/**
+ * Whether this deployment has a Firebase project to sign in to. Never inside the
+ * usability study: it runs on sample data and must not sync with anyone's account.
+ */
+export const cloudAvailable = Boolean(CONFIG.apiKey && CONFIG.authDomain && CONFIG.projectId && CONFIG.appId) && !inStudy;
 
 export type CloudStatus = "off" | "loading" | "signed-out" | "connecting" | "synced" | "saving" | "error";
 

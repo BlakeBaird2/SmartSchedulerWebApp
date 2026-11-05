@@ -35,6 +35,10 @@ needs no environment variables at all.
   from, drawn live, with when to use it and why it exists. Code in
   [`src/components/ui`](src/components/ui); the screen-by-screen usability review
   is in [`DESIGN_REVIEW.md`](DESIGN_REVIEW.md).
+- **`/study`** — the unmoderated usability test: one link for participants
+  (instructions, four tasks in the app with screen + voice recording, survey).
+  **`/study/results`** is the team's page for the CSV export and video clips.
+  See [`USABILITY_TEST.md`](USABILITY_TEST.md).
 - **`/app`** — SmartScheduler itself. `/app#demo` opens it with sample data, unless that
   browser already has calendars of its own.
 
