@@ -473,6 +473,66 @@
   justify-content: center;
   margin-top: 18px;
 }
+/* Search every task still to schedule; it runs on Enter. */
+.ss-planner-search {
+  margin-top: 12px;
+  height: 40px;
+  padding: 0 6px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ss-line);
+  border-radius: 10px;
+  color: var(--ss-faint);
+  background: var(--ss-surface);
+}
+.ss-planner-search:focus-within {
+  border-color: var(--ss-accent);
+  box-shadow: 0 0 0 3px var(--ss-accent-ring);
+}
+.ss-planner-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ss-text);
+  font-size: 14px;
+}
+/* The box itself shows the focus ring, not the field inside it. */
+.ss-planner-search input:focus,
+.ss-planner-search input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+/* Our own clear button instead of the browser's. */
+.ss-planner-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.ss-planner-search-clear {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ss-faint);
+  background: transparent;
+}
+.ss-planner-search-clear:hover {
+  color: var(--ss-ink);
+  background: var(--ss-chip);
+}
+.ss-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ss-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 .ss-filters {
   margin-top: 16px;
   padding: 16px;
@@ -3158,6 +3218,15 @@ section.ss-due-page {
     margin-top: 12px;
     padding: 9px 12px;
     font-size: 13.5px;
+  }
+  .ss-planner-search {
+    margin-top: 10px;
+    height: 38px;
+    padding-left: 10px;
+  }
+  /* 16px, so iPhones don't zoom in when the box is tapped. */
+  .ss-planner-search input {
+    font-size: 16px;
   }
   .ss-filters {
     margin-top: 12px;
