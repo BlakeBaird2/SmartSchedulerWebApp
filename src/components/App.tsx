@@ -934,7 +934,7 @@ export function App() {
         </div>
       )}
       <CloudChoiceDialog />
-      <SignInDialog />
+      <SignInDialog duringSetup={!ready} />
       {/* Here rather than in the shell, so setup can open it too. */}
       {pickerFeed !== undefined ? <ClassPicker feedId={pickerFeed} onClose={() => setPickerFeed(undefined)} /> : null}
       {incoming.pending ? (
