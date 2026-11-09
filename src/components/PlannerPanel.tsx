@@ -22,11 +22,11 @@ export function useTodos(): Task[] {
       now,
       scope: todoScope,
       sort: todoSort,
-      classOrder: ws.classOrder,
+      classOrder: [], // (Class priority was retired: no class comes before another.)
       policy: ws.unfinished,
       answers: ws.unfinishedAnswers,
     });
-  }, [model.tasks, ws.blocks, ws.classOrder, ws.unfinished, ws.unfinishedAnswers, now, filters.courses, todoScope, todoSort]);
+  }, [model.tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, filters.courses, todoScope, todoSort]);
 }
 
 /**
@@ -43,11 +43,11 @@ function useAllTodos(): Task[] {
         now,
         scope: "all",
         sort: todoSort,
-        classOrder: ws.classOrder,
+        classOrder: [], // (Class priority was retired: no class comes before another.)
         policy: ws.unfinished,
         answers: ws.unfinishedAnswers,
       }),
-    [model.tasks, ws.blocks, ws.classOrder, ws.unfinished, ws.unfinishedAnswers, now, todoSort],
+    [model.tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoSort],
   );
 }
 

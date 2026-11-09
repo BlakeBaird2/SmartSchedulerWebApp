@@ -1,13 +1,14 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Moon, Sun } from "lucide-react";
 import { EVENT_COLORS } from "@/lib/eventColors";
 import { CUSTOM_THEME, presetById, readable, ROLE_LABEL, THEME_ROLES, THEMES, themeColors, inkFor, type ThemeColors, type ThemeRole } from "@/lib/themes";
 import { useApp } from "./context";
-import { Card, CardHeader, ColorSwatches } from "./ui";
+import { useTheme } from "./store";
+import { Card, CardHeader, ColorSwatches, SegmentedControl } from "./ui";
 
 /*
- * Settings → Colours & themes: pick a theme, make one of your own, and give a
+ * Settings → Colours & themes: light or dark, pick a theme, make one of your own, and give a
  * single calendar or class its own colour. One event's colour is picked from the
  * event itself, on the calendar.
  */
@@ -88,9 +89,21 @@ export function ColorsPanel() {
   const setPrefs = (patch: Partial<typeof prefs>) => update((w) => ({ ...w, colors: { ...w.colors, ...patch } }));
   const setOwn = (role: ThemeRole, hex: string) => setPrefs({ theme: CUSTOM_THEME, custom: { ...current, [role]: hex } });
   const feedThemeHex = (role: "school" | "personal") => current[role];
+  const { theme: mode, toggle } = useTheme();
 
   return (
     <div className="space-y-4">
+      <Section title="Light or dark" hint="For this device. Everything else stays the same.">
+        <SegmentedControl
+          label="Light or dark"
+          value={mode}
+          onChange={(t) => (t !== mode ? toggle() : undefined)}
+          options={[
+            { id: "light", label: "Light", icon: Sun },
+            { id: "dark", label: "Dark", icon: Moon },
+          ]}
+        />
+      </Section>
       <Section title="Theme" hint="Colours for each kind of calendar. Text on every one stays easy to read.">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           {THEMES.map((t) => (

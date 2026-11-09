@@ -81,49 +81,88 @@ export function AccountMenuSection({ onDone }: { onDone: () => void }) {
   );
 }
 
-/** Settings → This browser: the account, with sign in or out and a way to delete what it holds. */
+/** "Blake Baird" → "BB"; an email → its first letter. */
+function initialsOf(name: string | null, email: string | null): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length) return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+  return (email ?? "?")[0].toUpperCase();
+}
+
+/**
+ * Settings → Account: who's signed in (picture, name, email, how, and how saving
+ * is going) with Sign out, Switch account and Delete; or, signed out, Sign in.
+ */
 export function AccountCard() {
   const cloud = useCloud();
   const { now } = useApp();
   const [busy, setBusy] = useState(false);
   if (!cloudAvailable) return null;
-  return (
-    <div className="ss-account-card">
-      <div>
-        <strong>{cloud.user ? `Signed in as ${cloud.user.email ?? cloud.user.name}` : "You're not signed in"}</strong>
-        <p>
-          {cloud.user
-            ? `${cloud.user.method ? `With ${METHOD_LABEL[cloud.user.method]}. ` : ""}${cloudStatusText(cloud, now)}. Your calendars, classes, plan and settings are saved to your account and are the same on every device you sign in on.`
-            : "Your calendars and plan are saved in this browser only. Sign in to keep them in your account and use them on your phone and laptop."}
-        </p>
-      </div>
-      <div className="ss-account-actions">
-        {cloud.user ? (
-          <>
-            <button className="ss-quiet-button" onClick={() => void signOutCloud()}>
-              Sign out
-            </button>
-            <button
-              className="ss-quiet-button ss-danger-text"
-              disabled={busy}
-              onClick={async () => {
-                if (!window.confirm("Delete everything saved in your account and sign out? This device keeps its own copy.")) return;
-                setBusy(true);
-                try {
-                  await deleteCloudData();
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              Delete my account data
-            </button>
-          </>
-        ) : (
+  const user = cloud.user;
+  if (!user) {
+    return (
+      <div className="ss-account-card">
+        <div>
+          <strong>You&apos;re not signed in</strong>
+          <p>Your calendars and plan are saved in this browser only. Sign in to keep them in your account and use them on your phone and laptop.</p>
+        </div>
+        <div className="ss-account-actions">
           <button className="ss-primary" onClick={openSignIn} disabled={cloud.status === "loading"}>
             Sign in
           </button>
-        )}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="ss-account">
+      <div className="ss-account-who">
+        <span className="ss-account-pic" aria-hidden>
+          {user.photo ? (
+            // Their account picture, from Google.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.photo} alt="" referrerPolicy="no-referrer" />
+          ) : (
+            initialsOf(user.name, user.email)
+          )}
+        </span>
+        <div className="min-w-0">
+          <strong>{user.name ?? user.email}</strong>
+          {user.name && user.email ? <span>{user.email}</span> : null}
+          <span>
+            {user.method ? `Signed in with ${METHOD_LABEL[user.method]} · ` : ""}
+            <em data-tone={cloud.status === "error" ? "error" : undefined}>{cloudStatusText(cloud, now)}</em>
+          </span>
+        </div>
+      </div>
+      <p className="ss-account-note">Your calendars, classes, plan and settings are saved to this account and are the same on every device you sign in on.</p>
+      <div className="ss-account-actions">
+        <button className="ss-quiet-button" onClick={() => void signOutCloud()}>
+          Sign out
+        </button>
+        <button
+          className="ss-quiet-button"
+          onClick={async () => {
+            await signOutCloud();
+            openSignIn();
+          }}
+        >
+          Switch account
+        </button>
+        <button
+          className="ss-quiet-button ss-danger-text"
+          disabled={busy}
+          onClick={async () => {
+            if (!window.confirm("Delete everything saved in your account and sign out? This device keeps its own copy.")) return;
+            setBusy(true);
+            try {
+              await deleteCloudData();
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Delete my account data
+        </button>
       </div>
     </div>
   );

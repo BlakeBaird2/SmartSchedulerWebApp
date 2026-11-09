@@ -16,7 +16,7 @@ downloaded.
 - Only the signed-in owner can read, change or delete their document
   ([`firestore.rules`](firestore.rules)). Nothing else in the database is
   readable or writable.
-- **Delete my account data** (Settings → This browser) deletes the document and
+- **Delete my account data** (Settings → Account) deletes the document and
   signs out. Signing out keeps what's on that device.
 
 ## Set it up (about 10 minutes)

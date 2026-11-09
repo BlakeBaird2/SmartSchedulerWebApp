@@ -1,20 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Palette, ArrowDown, ArrowRight, ArrowUp, CalendarDays, CircleHelp, Clock, Compass, ListOrdered, MonitorSmartphone, Timer, type LucideIcon, Copy, LayoutTemplate, Moon, RefreshCw, RotateCcw, Sparkles, Sun, House } from "lucide-react";
+import { Palette, ArrowRight, CalendarDays, CircleHelp, CircleUserRound, Clock, Compass, Timer, type LucideIcon, Copy, LayoutTemplate, RefreshCw, RotateCcw, Sparkles, House } from "lucide-react";
 import { encodeSetup } from "@/lib/workspace";
-import { classRank } from "@/lib/todos";
 import { ASSIGNMENT_TYPES, type AssignmentType, type UnfinishedPolicy } from "@/lib/types";
 import { clockRange, duration, typeIconClass, typeMeta } from "@/lib/ui";
 import { format, startOfDay } from "date-fns";
-import { courseStyle, useApp, type SettingsPanel } from "./context";
+import { useApp, type SettingsPanel } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { HoursForm, WeeklyEditor } from "./ScheduleSettings";
 import { ClassTimesEditor } from "./ClassTimes";
-import { resetEverything, useTheme } from "./store";
+import { resetEverything } from "./store";
 import { startTour } from "./AppTour";
 import { EventLog } from "./EventLog";
-import { Button, ButtonLink, Card, CardHeader, SegmentedControl, TextButton } from "./ui";
+import { Button, ButtonLink, Card, CardHeader, TextButton } from "./ui";
 import { AccountCard } from "./Account";
 import { cloudAvailable } from "./cloud";
 import { ColorsPanel } from "./ColorSettings";
@@ -32,12 +31,11 @@ const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 
 
 /** Each section has its own icon, so the menu can be scanned by shape as well as by name. */
 export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
+  { id: "account", label: "Account", hint: "Sign in or out, switch accounts, another device, start over", icon: CircleUserRound },
   { id: "calendars", label: "Calendars & class times", hint: "Links Schedule Smart reads, and when classes meet", icon: CalendarDays },
-  { id: "colors", label: "Colours & themes", hint: "A colour theme, your own, and colours for each calendar", icon: Palette },
-  { id: "classes", label: "Class priority", hint: "Which class comes first when work is due at the same time", icon: ListOrdered },
+  { id: "colors", label: "Colours & themes", hint: "Light or dark, a colour theme, and colours for each calendar", icon: Palette },
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
-  { id: "browser", label: "This browser", hint: "Theme, another device, start over", icon: MonitorSmartphone },
   { id: "about", label: "About, Help & walkthrough", hint: "Help, walkthrough, design library", icon: CircleHelp },
 ];
 
@@ -70,11 +68,10 @@ export function SettingsView() {
           <SectionHeading id={desktopPanel} />
           <div className="space-y-4">
             {desktopPanel === "calendars" ? <CalendarsPanel /> : null}
-            {desktopPanel === "classes" ? <ClassesPanel /> : null}
             {desktopPanel === "schedule" ? <SchedulePanel /> : null}
             {desktopPanel === "estimates" ? <EstimatesPanel /> : null}
             {desktopPanel === "colors" ? <ColorsPanel /> : null}
-            {desktopPanel === "browser" ? <BrowserPanel /> : null}
+            {desktopPanel === "account" ? <AccountPanel /> : null}
             {desktopPanel === "about" ? <AboutPanel /> : null}
           </div>
         </div>
@@ -272,81 +269,6 @@ function DeletedItems() {
  * The student's own ranking of their classes. Work due at the same moment (most
  * class work is due at 11:59 PM) is listed by it on the to-do list.
  */
-function ClassesPanel() {
-  const { model, ws, update } = useApp();
-  const rank = classRank(ws.classOrder);
-  // Classes never ranked keep their calendar order, after the ranked ones.
-  const ranked = model.courses.filter((c) => !c.hidden).sort((a, b) => rank(a.id) - rank(b.id));
-  const custom = ws.classOrder.length > 0;
-
-  const move = (from: number, by: -1 | 1) => {
-    const ids = ranked.map((c) => c.id);
-    const to = from + by;
-    [ids[from], ids[to]] = [ids[to], ids[from]];
-    // Hidden classes keep their place at the end, in case they come back.
-    update((w) => ({ ...w, classOrder: [...ids, ...w.classOrder.filter((id) => !ids.includes(id))] }));
-    // Keep the keyboard on the class that moved, even at the top or bottom of the list.
-    const id = ids[to];
-    requestAnimationFrame(() => {
-      const buttons = [...document.querySelectorAll<HTMLButtonElement>(`[data-rank="${CSS.escape(id)}"]`)];
-      (buttons.find((b) => b.dataset.dir === (by < 0 ? "up" : "down") && !b.disabled) ?? buttons.find((b) => !b.disabled))?.focus();
-    });
-  };
-
-  return (
-    <Section
-      title="Class priority"
-      hint="When two things are due at the same time, work for the class higher on this list comes first on your to-do list. Most class work is due at 11:59 PM, so this decides a lot."
-    >
-      {ranked.length === 0 ? (
-        <p className="text-sm text-muted">No classes yet. Add a school calendar and its classes show up here.</p>
-      ) : (
-        <ol className="divide-y divide-line" aria-label="Classes, most important first">
-          {ranked.map((c, i) => (
-            <li key={c.id} className="flex items-center gap-3 py-2" style={courseStyle(c.color)}>
-              <span className="w-5 text-center text-sm font-semibold tabular-nums text-muted" aria-hidden>
-                {i + 1}
-              </span>
-              <span className="course-dot shrink-0" aria-hidden />
-              <span className="min-w-0 flex-1 text-sm">
-                <span className="course-text font-semibold">{c.code}</span>
-                {c.title !== c.code ? <span className="block text-xs text-muted truncate">{c.title}</span> : null}
-              </span>
-              <Button
-                iconOnly
-                size="sm"
-                variant="quiet"
-                icon={ArrowUp}
-                label={`Move ${c.code} up`}
-                disabled={i === 0}
-                data-rank={c.id}
-                data-dir="up"
-                onClick={() => move(i, -1)}
-              />
-              <Button
-                iconOnly
-                size="sm"
-                variant="quiet"
-                icon={ArrowDown}
-                label={`Move ${c.code} down`}
-                disabled={i === ranked.length - 1}
-                data-rank={c.id}
-                data-dir="down"
-                onClick={() => move(i, 1)}
-              />
-            </li>
-          ))}
-        </ol>
-      )}
-      {custom ? (
-        <TextButton className="mt-3 text-sm" onClick={() => update((w) => ({ ...w, classOrder: [] }))}>
-          Back to calendar order
-        </TextButton>
-      ) : null}
-    </Section>
-  );
-}
-
 function SchedulePanel() {
   return (
     <div className="space-y-4">
@@ -440,9 +362,9 @@ function EstimatesPanel() {
   );
 }
 
-function BrowserPanel() {
+/** Account: who's signed in (or Sign in), another device, and starting over. */
+function AccountPanel() {
   const { ws, setSettingsPanel } = useApp();
-  const { theme, toggle } = useTheme();
   const [copied, setCopied] = useState(false);
 
   const copySetup = async () => {
@@ -459,7 +381,7 @@ function BrowserPanel() {
   return (
     <div className="space-y-4">
       {cloudAvailable ? (
-        <Section title="Your account" hint="Optional. Sign in to keep the same setup on your phone and laptop.">
+        <Section title="Your account">
           <AccountCard />
         </Section>
       ) : null}
@@ -483,18 +405,6 @@ function BrowserPanel() {
           </Button>
         </Section>
       )}
-
-      <Section title="Appearance" hint="Light or dark. Everything else stays the same.">
-        <SegmentedControl
-          label="Theme"
-          value={theme}
-          onChange={(t) => (t !== theme ? toggle() : undefined)}
-          options={[
-            { id: "light", label: "Light", icon: Sun },
-            { id: "dark", label: "Dark", icon: Moon },
-          ]}
-        />
-      </Section>
 
       <Section
         title="Start over"

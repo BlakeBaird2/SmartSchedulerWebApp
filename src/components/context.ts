@@ -13,7 +13,7 @@ export type View = "calendar" | "tasks" | "due" | "settings" | "help";
 /** On phones "week" shows three days at a time (one beside the open planner), as in the prototype. */
 export type CalMode = "month" | "week" | "day";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */
-export type SettingsPanel = "main" | "calendars" | "colors" | "classes" | "schedule" | "estimates" | "browser" | "about";
+export type SettingsPanel = "main" | "calendars" | "colors" | "schedule" | "estimates" | "account" | "about";
 /** What the student fills in to add a task. */
 export interface NewTask {
   title: string;
