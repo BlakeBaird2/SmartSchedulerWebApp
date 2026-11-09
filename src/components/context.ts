@@ -127,7 +127,6 @@ export interface AppContextValue {
   /** Whether the "add your class times" suggestion was dismissed. */
   classTimesTipHidden: boolean;
   hideClassTimesTip: () => void;
-  clearChanges: () => void;
   /** The student has seen these tasks, so they stop saying "New". */
   seeWork: (taskIds: string[]) => void;
   /** Confirm what just happened. Pass `undo` when the action can be taken back; the message then offers Undo. */

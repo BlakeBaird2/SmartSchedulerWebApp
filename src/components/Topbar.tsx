@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { timeAgo } from "@/lib/ui";
 import { useApp } from "./context";
-import { ChangesDialog, useUnseenChanges } from "./ChangesDialog";
+import { NotificationsButton } from "./Notifications";
 import { resetEverything } from "./store";
 import { SsIcon } from "./SsIcon";
 import { AccountMenuSection, openSignIn } from "./Account";
@@ -35,6 +35,7 @@ export function Topbar() {
       </nav>
       <div className="ss-actions">
         <SignInButton />
+        <NotificationsButton />
         <ProfileMenu />
       </div>
     </header>
@@ -62,8 +63,6 @@ function ProfileMenu() {
   const { ws, snapshot, now, syncing, sync, setView } = useApp();
   const cloud = useCloud();
   const [open, setOpen] = useState(false);
-  const [changesOpen, setChangesOpen] = useState(false);
-  const unseen = useUnseenChanges();
   const ref = useRef<HTMLDivElement>(null);
   const status = syncing ? "Refreshing…" : snapshot.at ? `Calendars refreshed ${timeAgo(snapshot.at, now)}` : "Calendars not read yet";
 
@@ -93,7 +92,7 @@ function ProfileMenu() {
       <button
         className="ss-avatar"
         onClick={() => setOpen((o) => !o)}
-        aria-label={unseen ? `Open profile, ${unseen} changes in your classes` : "Open profile"}
+        aria-label="Open profile"
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -106,7 +105,6 @@ function ProfileMenu() {
         ) : (
           (initials(cloud.user?.name ?? cloud.user?.email) ?? "ME")
         )}
-        {unseen > 0 ? <span className="ss-avatar-dot">{unseen > 9 ? "9+" : unseen}</span> : null}
       </button>
       {open ? (
         <div className="ss-menu" role="menu" aria-label="Profile">
@@ -117,10 +115,6 @@ function ProfileMenu() {
           <AccountMenuSection onDone={() => setOpen(false)} />
           <button role="menuitem" onClick={() => void sync()} disabled={syncing}>
             <SsIcon name="refresh" size={16} /> {syncing ? "Refreshing…" : "Refresh calendars"}
-          </button>
-          <button role="menuitem" onClick={go(() => setChangesOpen(true))}>
-            <SsIcon name="bell" size={16} /> What changed
-            {unseen > 0 ? <span className="ss-menu-count">{unseen}</span> : null}
           </button>
           <hr />
           <button role="menuitem" onClick={go(() => setView("settings"))}>
@@ -142,7 +136,6 @@ function ProfileMenu() {
           ) : null}
         </div>
       ) : null}
-      {changesOpen ? <ChangesDialog onClose={() => setChangesOpen(false)} /> : null}
     </div>
   );
 }

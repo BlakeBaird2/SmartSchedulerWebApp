@@ -34,6 +34,8 @@ export const KEYS = {
   snapshot: "prio:snap",
   changes: "prio:changes",
   seen: "prio:seen",
+  /** Notifications the student cleared: when, and which changes, so they never come back. */
+  changesCleared: "prio:changes-cleared",
   /** Work added to class calendars that the student hasn't looked at yet. */
   newWork: "prio:new",
   ui: "prio:ui",

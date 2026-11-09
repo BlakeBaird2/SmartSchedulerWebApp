@@ -827,8 +827,6 @@ export function App() {
     [model.tasks, seeWork],
   );
 
-  const clearChanges = useCallback(() => writeStored(KEYS.changes, null), []);
-
   const ctx: AppContextValue = {
     ws,
     snapshot,
@@ -892,7 +890,6 @@ export function App() {
     openClassPicker: (feedId) => setPickerFeed(feedId ?? null),
     classTimesTipHidden: ui.hideClassTimesTip,
     hideClassTimesTip: () => writeUi({ hideClassTimesTip: true }),
-    clearChanges,
     seeWork,
     toast,
     completeTask,
