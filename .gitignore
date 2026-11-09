@@ -44,3 +44,4 @@ next-env.d.ts
 # tests
 /.test-build
 /data
+.env.local

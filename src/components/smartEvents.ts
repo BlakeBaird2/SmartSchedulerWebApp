@@ -13,6 +13,8 @@
  * tools can find them without guessing.
  */
 
+import posthog from "posthog-js";
+
 export type SmartEventName =
   | "task_completed"
   | "task_uncompleted"
@@ -49,9 +51,52 @@ declare global {
   }
 }
 
+/** Sends only bounded action metadata; task and event content stays out of analytics. */
+function capturePostHogEvent(name: SmartEventName, detail: SmartEvent["detail"]): void {
+  switch (name) {
+    case "setup_finished":
+      posthog.capture("setup_finished");
+      break;
+    case "sample_data_started":
+      posthog.capture("sample_data_started");
+      break;
+    case "calendar_added":
+      posthog.capture("calendar_added", { provider: detail.provider, role: detail.role, class_count: detail.classes });
+      break;
+    case "add_task_opened":
+      posthog.capture("add_task_opened");
+      break;
+    case "task_added":
+      posthog.capture("task_added", { task_type: detail.type, has_due_date: detail.hasDueDate, estimated_minutes: detail.minutes });
+      break;
+    case "event_added":
+      posthog.capture("event_added");
+      break;
+    case "task_planned":
+      posthog.capture("task_planned");
+      break;
+    case "task_unplanned":
+      posthog.capture("task_unplanned");
+      break;
+    case "task_completed":
+      posthog.capture("task_completed", { source_view: detail.from });
+      break;
+    case "task_uncompleted":
+      posthog.capture("task_uncompleted", { source_view: detail.from });
+      break;
+    case "unfinished_returned":
+      posthog.capture("unfinished_returned", { task_count: detail.count });
+      break;
+    case "unfinished_left_off":
+      posthog.capture("unfinished_left_off", { task_count: detail.count });
+      break;
+  }
+}
+
 export function trackEvent(name: SmartEventName, detail: SmartEvent["detail"] = {}): void {
   if (typeof window === "undefined") return;
   const entry: SmartEvent = { name, at: new Date().toISOString(), detail };
+  capturePostHogEvent(name, detail);
   try {
     window.dataLayer = window.dataLayer ?? [];
     window.dataLayer.push({ event: `smartscheduler_${name}`, ...detail });
