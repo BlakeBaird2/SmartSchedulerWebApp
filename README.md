@@ -71,13 +71,14 @@ text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy te
     classes are yours?** or added from any of its events (**Add its full name**).
     Coloured like Google Calendar: solid blocks with white titles in Google's
     own event colours — Work in Peacock blue, School in Tangerine, Personal in
-    Sage — and work you scheduled in Lavender with faint stripes (the home
-    page's example calendar uses the same colours); time a calendar marks free is outlined. Today is Google's blue
+    Sage — and work you scheduled in Lavender, drawn Soft by default (a light
+    tint with a bold edge; Solid, Outline and Striped are the other looks in
+    Settings → *Appearance*); time a calendar marks free is outlined. Today is Google's blue
     circle and now is its red line. In the month, timed events are a coloured
     dot, the time and the title; all-day events are filled bars. Anything that
     has ended turns a lighter tint of its colour. The colours were checked for
     colour-blind separation, light and dark.
-  - **Colour themes** (Settings → *Colours & themes*, or click the Work /
+  - **Colour themes** (Settings → *Appearance*, or click the Work /
     School / Personal key above the calendar): Classic (Google's colours, as
     above) and nine vivid palettes from coolors.co — Bright Spark, Neon Pop,
     Electric, Tropical, Sherbet, Ultraviolet, Rainbow, Retro Diner and Coastal,

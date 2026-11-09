@@ -27,8 +27,8 @@ test("text goes dark on light colours and white on dark ones", () => {
 });
 
 test("Classic leaves the stylesheet's colours alone; other themes set them", () => {
-  assert.deepEqual(themeVars({ theme: "classic", custom: null, calendars: {} }), {});
-  const vars = themeVars({ theme: "sherbet", custom: null, calendars: {} });
+  assert.deepEqual(themeVars({ theme: "classic", custom: null, calendars: {}, planned: "soft" }), {});
+  const vars = themeVars({ theme: "sherbet", custom: null, calendars: {}, planned: "soft" });
   assert.equal(vars["--ss-school"], "#ff70a6");
   assert.equal(vars["--ss-school-ink"], DARK_INK);
   assert.equal(vars["--ss-planned"], "#ff9770");
@@ -36,12 +36,14 @@ test("Classic leaves the stylesheet's colours alone; other themes set them", () 
 
 test("a theme of your own is used when picked, and kept when another is", () => {
   const custom = { school: "#111111", work: "#222222", personal: "#333333", tasks: "#444444" };
-  assert.equal(themeColors({ theme: CUSTOM_THEME, custom, calendars: {} }).work, "#222222");
-  assert.equal(themeColors({ theme: "tropical", custom, calendars: {} }).work, THEMES.find((t) => t.id === "tropical")!.colors.work);
+  assert.equal(themeColors({ theme: CUSTOM_THEME, custom, calendars: {}, planned: "soft" }).work, "#222222");
+  assert.equal(themeColors({ theme: "tropical", custom, calendars: {}, planned: "soft" }).work, THEMES.find((t) => t.id === "tropical")!.colors.work);
 });
 
 test("odd stored choices fall back safely", () => {
-  assert.deepEqual(sanitizeColorPrefs(null), { theme: "classic", custom: null, calendars: {} });
+  assert.deepEqual(sanitizeColorPrefs(null), { theme: "classic", custom: null, calendars: {}, planned: "soft" });
+  assert.equal(sanitizeColorPrefs({ planned: "outline" }).planned, "outline");
+  assert.equal(sanitizeColorPrefs({ planned: "sparkly" }).planned, "soft", "an unknown style falls back to the default");
   assert.equal(sanitizeColorPrefs({ theme: "nope" }).theme, "classic");
   assert.equal(sanitizeColorPrefs({ theme: CUSTOM_THEME }).theme, "classic", "custom without colours");
   const ok = sanitizeColorPrefs({ theme: CUSTOM_THEME, custom: { school: "#AABBCC", work: "#000000", personal: "#ffffff", tasks: "#123456" }, calendars: { a: "#FF0000", b: "red" } });

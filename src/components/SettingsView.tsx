@@ -33,7 +33,7 @@ const ESTIMATE_OPTIONS = [15, 20, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 
 export const SETTINGS_SECTIONS: { id: SettingsPanel; label: string; hint: string; icon: LucideIcon }[] = [
   { id: "account", label: "Account", hint: "Sign in or out, switch accounts, another device, start over", icon: CircleUserRound },
   { id: "calendars", label: "Calendars & class times", hint: "Links Schedule Smart reads, and when classes meet", icon: CalendarDays },
-  { id: "colors", label: "Colours & themes", hint: "Light or dark, a colour theme, and colours for each calendar", icon: Palette },
+  { id: "colors", label: "Appearance", hint: "Light or dark, how planned tasks look, and colours", icon: Palette },
   { id: "schedule", label: "Schedule", hint: "Working hours and weekly busy times", icon: Clock },
   { id: "estimates", label: "How long things take", hint: "Default estimates by kind of work", icon: Timer },
   { id: "about", label: "About, Help & walkthrough", hint: "Help, walkthrough, design library", icon: CircleHelp },
