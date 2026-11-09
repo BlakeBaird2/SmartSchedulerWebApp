@@ -153,7 +153,11 @@ text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy te
   calendar added since you last looked; each morning it asks whether to put
   yesterday's unfinished work back;
   any event can be recoloured with Google Calendar's colours.
-- **Profile menu** (top right) — refresh calendars, what changed, Settings, Help.
+- **Notifications** (the bell, top right) — due dates that moved and work added or
+  removed, with a red count of what's new. **Clear all** hides them for good: the
+  app remembers what was cleared, so a later refresh doesn't bring the same
+  changes back.
+- **Profile menu** (top right) — sign in, refresh calendars, Settings, Help.
 
 ## How the plan is made
 
