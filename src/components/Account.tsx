@@ -306,9 +306,10 @@ export function SignInPanel() {
 /**
  * The sign-in window: opened by any Sign in button (openSignIn), by /app#signin
  * (the home page's Sign in), or by an email link that needs its address. It
- * closes itself once signed in.
+ * closes itself once signed in. While setup is showing it stays shut: setup's
+ * first step is the same sign-in, so a window on top of it would ask twice.
  */
-export function SignInDialog() {
+export function SignInDialog({ duringSetup }: { duringSetup: boolean }) {
   const cloud = useCloud();
   const [open, setOpen] = useState(false);
 
@@ -318,7 +319,8 @@ export function SignInDialog() {
     // The home page's Sign in arrives as /app#signin. (Remembered outside the
     // effect, which React may run twice, so tidying the address doesn't lose it.)
     if (window.location.hash === "#signin") {
-      signInFromLink = true;
+      // During setup the sign-in step is already on screen; just tidy the address.
+      if (!duringSetup) signInFromLink = true;
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     const timer = signInFromLink
@@ -331,9 +333,11 @@ export function SignInDialog() {
       window.removeEventListener(OPEN_SIGN_IN, show);
       clearTimeout(timer);
     };
+    // Only how the page was opened matters, so this runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const shown = cloudAvailable && !cloud.user && (open || cloud.emailLinkNeedsEmail);
+  const shown = cloudAvailable && !duringSetup && !cloud.user && (open || cloud.emailLinkNeedsEmail);
   if (!shown) return null;
   return (
     <Dialog
