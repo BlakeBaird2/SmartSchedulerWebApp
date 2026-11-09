@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import posthog from "posthog-js";
 import { firstSync, hasOwnData, readCloudWorkspace, resync, sameWorkspace } from "@/lib/cloud";
 import { sanitizeWorkspace } from "@/lib/workspace";
 import { KEYS, inStudy, onStoredChange, parseJson, readStored, writeStored } from "./store";
@@ -81,6 +82,7 @@ let lastSynced: string | null = null;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let stops: (() => void)[] = [];
 let accountId: string | null = null;
+let posthogDistinctId: string | null = null;
 
 /** Remember the setup this device and the account now agree on, so the next visit knows what changed where. */
 function agreeOn(raw: string) {
@@ -114,9 +116,19 @@ export function startCloud() {
       auth.onAuthStateChanged(fb.authInstance, (user) => {
         stopLive();
         if (!user) {
+          if (posthogDistinctId) {
+            posthog.reset();
+            posthogDistinctId = null;
+          }
           set({ status: "signed-out", user: null, choice: null, error: null });
           return;
         }
+        if (posthogDistinctId && posthogDistinctId !== user.uid) posthog.reset();
+        posthog.identify(user.uid, {
+          email: user.email ?? undefined,
+          name: user.displayName ?? undefined,
+        });
+        posthogDistinctId = user.uid;
         set({ status: "connecting", user: { name: user.displayName, email: user.email, photo: user.photoURL }, error: null });
         void attach(user.uid);
       });
