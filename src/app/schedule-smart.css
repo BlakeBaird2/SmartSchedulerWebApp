@@ -275,6 +275,180 @@
   font-size: 13px;
   font-weight: 700;
 }
+.ss-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+/* Signed out: Sign in, beside the profile. (On a phone there's no room: it's the first thing in the profile menu.) */
+.ss-signin-top {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--ss-line-2);
+  border-radius: 10px;
+  color: var(--ss-ink);
+  background: var(--ss-surface);
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ss-signin-top:hover {
+  border-color: var(--ss-brand);
+  color: var(--ss-brand);
+}
+@media (max-width: 600px) {
+  .ss-signin-top {
+    display: none;
+  }
+}
+
+/*
+ * The sign-in panel (dialog, setup, reminder): the providers as full-width
+ * buttons in the usual order (Apple black, Google white), "or", then email.
+ */
+.ss-signin {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ss-signin-provider {
+  width: 100%;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--ss-line-2);
+  border-radius: 10px;
+  color: var(--ss-ink);
+  background: var(--ss-surface);
+  font-size: 15px;
+  font-weight: 650;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.ss-signin-provider:hover:not(:disabled) {
+  background: var(--ss-chip);
+}
+.ss-signin-provider:disabled,
+.ss-signin-email button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ss-signin-provider.ss-signin-apple {
+  border-color: #000;
+  color: #fff;
+  background: #000;
+}
+.ss-signin-provider.ss-signin-apple:hover:not(:disabled) {
+  background: #1d1d1f;
+}
+:root[data-theme="dark"] .ss-signin-provider.ss-signin-apple {
+  border-color: #fff;
+  color: #000;
+  background: #fff;
+}
+.ss-signin-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+  color: var(--ss-faint);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.ss-signin-or::before,
+.ss-signin-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ss-line);
+}
+.ss-signin-email {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ss-signin-email label {
+  color: var(--ss-text-2);
+  font-size: 13px;
+  font-weight: 650;
+}
+.ss-signin-email input {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--ss-line-2);
+  border-radius: 10px;
+  color: var(--ss-ink);
+  background: var(--ss-surface);
+  font-size: 16px;
+}
+.ss-signin-email input:focus {
+  outline: 0;
+  border-color: var(--ss-brand);
+  box-shadow: 0 0 0 3px var(--ss-accent-ring);
+}
+.ss-signin-email .ss-primary {
+  height: 46px;
+  justify-content: center;
+  font-size: 15px;
+}
+.ss-signin-error {
+  margin: 0;
+  color: var(--ss-danger);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ss-signin-fine,
+.ss-signin-note {
+  margin: 2px 0 0;
+  color: var(--ss-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-align: center;
+}
+.ss-signin-note {
+  text-align: left;
+  font-size: 14px;
+}
+.ss-signin-sent {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--ss-accent-soft);
+}
+.ss-signin-sent strong {
+  display: block;
+  color: var(--ss-ink);
+  font-size: 16px;
+}
+.ss-signin-sent p {
+  margin: 4px 0 0;
+  color: var(--ss-text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ss-signin-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+}
+.ss-signin-skip {
+  display: block;
+  margin: 0 auto;
+  padding: 6px 10px;
+  border: 0;
+  color: var(--ss-muted);
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ss-signin-skip:hover {
+  color: var(--ss-ink);
+}
+
 .ss-avatar-dot {
   position: absolute;
   top: -2px;
@@ -359,6 +533,29 @@
 .ss-menu button:disabled {
   opacity: 0.55;
   cursor: default;
+}
+/* Signed out: the menu opens with a clear Sign in. */
+.ss-menu-signin {
+  padding: 6px 6px 10px;
+}
+.ss-menu .ss-menu-signin .ss-primary {
+  justify-content: center;
+  color: var(--ss-on-brand);
+  background: var(--ss-brand);
+}
+.ss-menu .ss-menu-signin .ss-primary:hover {
+  background: var(--ss-brand-hover);
+}
+.ss-menu-signin span {
+  display: block;
+  margin-top: 7px;
+  color: var(--ss-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-align: center;
+}
+.ss-menu-account .ss-menu-email {
+  color: var(--ss-muted);
 }
 .ss-menu .ss-menu-count {
   margin-left: auto;
@@ -3673,6 +3870,19 @@ section.ss-due-page {
 }
 .ss-home-open {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ss-home-signin {
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: var(--ss-ink);
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.ss-home-signin:hover {
+  background: var(--ss-chip);
 }
 /* The quiet button beside the dark one, as on the app's toolbar. */
 .ss-home-quiet {

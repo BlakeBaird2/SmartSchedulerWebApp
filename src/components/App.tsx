@@ -27,7 +27,7 @@ import { withEventAt } from "@/lib/eventMoves";
 import { themeVars } from "@/lib/themes";
 import { isDateOnlyCorrection } from "@/lib/corrections";
 import { ClassPicker } from "./ClassPicker";
-import { CloudChoiceDialog, SignInPrompt } from "./Account";
+import { CloudChoiceDialog, SignInDialog, SignInPrompt } from "./Account";
 import { startCloud } from "./cloud";
 import { DueDatesPage } from "./DueDatesPage";
 import { ImportDialog } from "./ImportDialog";
@@ -934,6 +934,7 @@ export function App() {
         </div>
       )}
       <CloudChoiceDialog />
+      <SignInDialog />
       {/* Here rather than in the shell, so setup can open it too. */}
       {pickerFeed !== undefined ? <ClassPicker feedId={pickerFeed} onClose={() => setPickerFeed(undefined)} /> : null}
       {incoming.pending ? (

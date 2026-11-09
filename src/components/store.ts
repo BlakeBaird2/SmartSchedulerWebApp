@@ -46,6 +46,8 @@ export const KEYS = {
   cloud: "prio:cloud",
   /** When the "sign in to sync your devices?" pop-up may ask again ("never" once declined for good). */
   signInAsk: "prio:signin-ask",
+  /** The email an email sign-in link was just sent to, so opening the link on this device finishes without asking again. */
+  signInEmail: "prio:signin-email",
   /** How tall an hour is on the calendar, after pinching it (pinchZoom.ts). This device only. */
   calZoom: "prio:cal-zoom",
 } as const;
