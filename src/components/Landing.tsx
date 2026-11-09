@@ -27,9 +27,17 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
           <span>Schedule Smart</span>
         </Link>
         <PrototypeBadge />
-        <Link href="/app" className="ss-home-quiet ss-home-open">
-          Open app
-        </Link>
+        <span className="ss-home-open">
+          {/* A full page load, so the app sees #signin as it starts and opens the sign-in window. */}
+          {SYNCABLE ? (
+            <a href="/app#signin" className="ss-home-signin">
+              Sign in
+            </a>
+          ) : null}
+          <Link href="/app" className="ss-home-quiet">
+            Open app
+          </Link>
+        </span>
       </header>
 
       <main>
@@ -87,7 +95,7 @@ export function Landing({ variant = "home" }: { variant?: LandingVariant }) {
               Try it with sample data
             </a>
           </div>
-          <p className="ss-home-note">{SYNCABLE ? "Free · No account needed · Sign in to sync your phone and laptop" : "Free · No account · Saved only in your browser"}</p>
+          <p className="ss-home-note">{SYNCABLE ? "Free · Sign in to save your plan on every device" : "Free · No account · Saved only in your browser"}</p>
         </section>
       </main>
 

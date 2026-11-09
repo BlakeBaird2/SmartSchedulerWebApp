@@ -7,8 +7,9 @@ import { sanitizeWorkspace } from "@/lib/workspace";
 import { KEYS, inStudy, onStoredChange, parseJson, readStored, writeStored } from "./store";
 
 /*
- * Signing in with Google to keep the same setup on a phone and a laptop
- * (Firebase Authentication and Firestore). It is optional: without the Firebase
+ * Signing in (Apple, Google, or a link sent by email) to keep the same setup on
+ * a phone and a laptop (Firebase Authentication and Firestore). Signing in the
+ * first time creates the account; there are no passwords. It is optional: without the Firebase
  * keys, or until someone signs in, the app works as before, from this browser
  * alone.
  *
@@ -34,18 +35,37 @@ const CONFIG = {
  */
 export const cloudAvailable = Boolean(CONFIG.apiKey && CONFIG.authDomain && CONFIG.projectId && CONFIG.appId) && !inStudy;
 
+/**
+ * The ways to sign in this site offers, from NEXT_PUBLIC_SIGN_IN_METHODS (for
+ * example "apple,google,email"). Each must also be turned on in Firebase
+ * (FIREBASE_SETUP.md); Google alone when the setting is missing.
+ */
+const METHODS = (process.env.NEXT_PUBLIC_SIGN_IN_METHODS ?? "google")
+  .split(",")
+  .map((m) => m.trim().toLowerCase())
+  .filter(Boolean);
+export const signInMethods = {
+  apple: METHODS.includes("apple"),
+  google: METHODS.includes("google") || !METHODS.some((m) => m === "apple" || m === "email"),
+  email: METHODS.includes("email"),
+};
+
 export type CloudStatus = "off" | "loading" | "signed-out" | "connecting" | "synced" | "saving" | "error";
+/** How the account signs in, for "Signed in with …". */
+export type SignInMethod = "apple" | "google" | "email";
 
 export interface CloudState {
   status: CloudStatus;
-  user: { name: string | null; email: string | null; photo: string | null } | null;
+  user: { name: string | null; email: string | null; photo: string | null; method: SignInMethod | null } | null;
+  /** An email sign-in link was opened on a device that doesn't know which email it was sent to: ask for it. */
+  emailLinkNeedsEmail: boolean;
   /** Both this device and the account have a setup, and they differ: the student picks one. */
   choice: { local: string; remote: string } | null;
   error: string | null;
   savedAt: number | null;
 }
 
-let state: CloudState = { status: cloudAvailable ? "loading" : "off", user: null, choice: null, error: null, savedAt: null };
+let state: CloudState = { status: cloudAvailable ? "loading" : "off", user: null, emailLinkNeedsEmail: false, choice: null, error: null, savedAt: null };
 const listeners = new Set<() => void>();
 const set = (patch: Partial<CloudState>) => {
   state = { ...state, ...patch };
@@ -129,9 +149,15 @@ export function startCloud() {
           name: user.displayName ?? undefined,
         });
         posthogDistinctId = user.uid;
-        set({ status: "connecting", user: { name: user.displayName, email: user.email, photo: user.photoURL }, error: null });
+        set({ status: "connecting", user: { name: user.displayName, email: user.email, photo: user.photoURL, method: methodOf(user) }, error: null });
         void attach(user.uid);
       });
+      // Opened the link from a sign-in email: finish signing in.
+      if (auth.isSignInWithEmailLink(fb.authInstance, window.location.href)) {
+        const email = readStored(KEYS.signInEmail);
+        if (email) void finishEmailSignIn(email);
+        else set({ emailLinkNeedsEmail: true });
+      }
       // Leaving the page saves a change that was still waiting.
       window.addEventListener("pagehide", () => {
         if (saveTimer) void save();
@@ -264,18 +290,99 @@ async function save() {
   }
 }
 
-export async function signInCloud() {
-  if (!fb) return;
-  const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = fb.auth;
-  const provider = new GoogleAuthProvider();
+function methodOf(user: import("firebase/auth").User): SignInMethod | null {
+  const ids = user.providerData.map((p) => p.providerId);
+  if (ids.includes("apple.com")) return "apple";
+  if (ids.includes("google.com")) return "google";
+  if (ids.includes("password") || ids.includes("emailLink") || user.email) return "email";
+  return null;
+}
+
+/** What went wrong, in a sentence for the sign-in screen; null when the person just closed the window. */
+function signInError(e: unknown): string | null {
+  const code = (e as { code?: string }).code ?? "";
+  switch (code) {
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+    case "auth/user-cancelled":
+      return null;
+    case "auth/account-exists-with-different-credential":
+      return "That email already has a Schedule Smart account. Sign in the way you did before (Apple, Google or email).";
+    case "auth/invalid-email":
+      return "That doesn't look like an email address.";
+    case "auth/invalid-action-code":
+    case "auth/expired-action-code":
+      return "That sign-in link has expired or was already used. Send yourself a new one.";
+    case "auth/operation-not-allowed":
+      return "This way of signing in isn't turned on yet. Try another.";
+    case "auth/network-request-failed":
+      return "Couldn't reach the internet. Check your connection and try again.";
+    case "auth/too-many-requests":
+      return "Too many tries. Wait a minute and try again.";
+    default:
+      return "Couldn't sign in. Try again.";
+  }
+}
+
+/** Sign in with Apple or Google, in a pop-up (or by going there and back where pop-ups are blocked). Returns an error to show, if any. */
+export async function signInWith(method: "apple" | "google"): Promise<string | null> {
+  if (!fb) return "Sign-in is still loading. Try again in a moment.";
+  const { GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect } = fb.auth;
+  let provider: import("firebase/auth").AuthProvider;
+  if (method === "apple") {
+    const apple = new OAuthProvider("apple.com");
+    apple.addScope("email");
+    apple.addScope("name");
+    provider = apple;
+  } else provider = new GoogleAuthProvider();
   try {
     await signInWithPopup(fb.authInstance, provider);
+    return null;
   } catch (e) {
     const code = (e as { code?: string }).code ?? "";
-    // Some phones block pop-ups; going to Google and back works there.
-    if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") await signInWithRedirect(fb.authInstance, provider);
-    else if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") set({ error: "Couldn't sign in. Try again." });
+    // Some phones block pop-ups; going there and back works.
+    if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
+      await signInWithRedirect(fb.authInstance, provider);
+      return null;
+    }
+    return signInError(e);
   }
+}
+
+/** Email a sign-in link. Opening it signs in (and makes the account the first time). Returns an error to show, if any. */
+export async function sendEmailSignIn(email: string): Promise<string | null> {
+  if (!fb) return "Sign-in is still loading. Try again in a moment.";
+  try {
+    await fb.auth.sendSignInLinkToEmail(fb.authInstance, email, { url: `${window.location.origin}/app`, handleCodeInApp: true });
+    writeStored(KEYS.signInEmail, email);
+    return null;
+  } catch (e) {
+    return signInError(e);
+  }
+}
+
+/** Finish signing in from an email link opened on this page. Returns an error to show, if any. */
+export async function finishEmailSignIn(email: string): Promise<string | null> {
+  if (!fb) return "Sign-in is still loading. Try again in a moment.";
+  try {
+    await fb.auth.signInWithEmailLink(fb.authInstance, email, window.location.href);
+    writeStored(KEYS.signInEmail, null);
+    set({ emailLinkNeedsEmail: false });
+    // Tidy the sign-in code out of the address bar.
+    const url = new URL(window.location.href);
+    for (const k of ["apiKey", "oobCode", "mode", "lang", "continueUrl", "tenantId"]) url.searchParams.delete(k);
+    window.history.replaceState(null, "", url);
+    return null;
+  } catch (e) {
+    const message = signInError(e);
+    set({ error: message });
+    return message;
+  }
+}
+
+/** Stop waiting on an email link (the person gave up, or will send a new one). */
+export function forgetEmailLink() {
+  set({ emailLinkNeedsEmail: false });
 }
 
 /** Sign out. What's on this device stays; the account keeps its copy. */

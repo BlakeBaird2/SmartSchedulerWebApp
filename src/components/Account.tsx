@@ -4,7 +4,20 @@ import { useEffect, useState } from "react";
 import { describeWorkspace, hasOwnData } from "@/lib/cloud";
 import { sanitizeWorkspace } from "@/lib/workspace";
 import { timeAgo } from "@/lib/ui";
-import { chooseSetup, cloudAvailable, deleteCloudData, signInCloud, signOutCloud, useCloud, type CloudState } from "./cloud";
+import {
+  chooseSetup,
+  cloudAvailable,
+  deleteCloudData,
+  finishEmailSignIn,
+  forgetEmailLink,
+  sendEmailSignIn,
+  signInMethods,
+  signInWith,
+  signOutCloud,
+  useCloud,
+  type CloudState,
+  type SignInMethod,
+} from "./cloud";
 import { KEYS, parseJson, readStored, writeStored } from "./store";
 import { useApp } from "./context";
 import { SsIcon } from "./SsIcon";
@@ -26,7 +39,9 @@ export function cloudStatusText(cloud: CloudState, now: Date): string {
   }
 }
 
-/** In the profile menu: sign in to sync, or who's signed in and how sync is going. */
+const METHOD_LABEL: Record<SignInMethod, string> = { apple: "Apple", google: "Google", email: "email" };
+
+/** In the profile menu: a clear Sign in, or who's signed in and how saving is going. */
 export function AccountMenuSection({ onDone }: { onDone: () => void }) {
   const cloud = useCloud();
   const { now } = useApp();
@@ -34,9 +49,19 @@ export function AccountMenuSection({ onDone }: { onDone: () => void }) {
   if (!cloud.user) {
     return (
       <>
-        <button role="menuitem" onClick={() => void signInCloud().then(onDone)} disabled={cloud.status === "loading"}>
-          <SsIcon name="refresh" size={16} /> Sign in to sync your devices
-        </button>
+        <div className="ss-menu-signin">
+          <button
+            className="ss-primary"
+            onClick={() => {
+              onDone();
+              openSignIn();
+            }}
+            disabled={cloud.status === "loading"}
+          >
+            Sign in
+          </button>
+          <span>Save your calendars and plan to an account, on every device.</span>
+        </div>
         <hr />
       </>
     );
@@ -45,6 +70,7 @@ export function AccountMenuSection({ onDone }: { onDone: () => void }) {
     <>
       <div className="ss-menu-account">
         <strong>{cloud.user.name ?? cloud.user.email}</strong>
+        {cloud.user.name && cloud.user.email ? <span className="ss-menu-email">{cloud.user.email}</span> : null}
         <span data-tone={cloud.status === "error" ? "error" : undefined}>{cloudStatusText(cloud, now)}</span>
       </div>
       <button role="menuitem" onClick={() => void signOutCloud().then(onDone)}>
@@ -64,11 +90,11 @@ export function AccountCard() {
   return (
     <div className="ss-account-card">
       <div>
-        <strong>{cloud.user ? `Signed in as ${cloud.user.email ?? cloud.user.name}` : "Sync your phone and laptop"}</strong>
+        <strong>{cloud.user ? `Signed in as ${cloud.user.email ?? cloud.user.name}` : "You're not signed in"}</strong>
         <p>
           {cloud.user
-            ? `${cloudStatusText(cloud, now)}. Your calendars, classes, schedule and settings are kept in your account and stay the same on every device you sign in on.`
-            : "Sign in with Google and your calendars, classes, schedule and settings are kept in your account, the same on every device you sign in on. Without signing in, everything stays in this browser only."}
+            ? `${cloud.user.method ? `With ${METHOD_LABEL[cloud.user.method]}. ` : ""}${cloudStatusText(cloud, now)}. Your calendars, classes, plan and settings are saved to your account and are the same on every device you sign in on.`
+            : "Your calendars and plan are saved in this browser only. Sign in to keep them in your account and use them on your phone and laptop."}
         </p>
       </div>
       <div className="ss-account-actions">
@@ -94,26 +120,12 @@ export function AccountCard() {
             </button>
           </>
         ) : (
-          <button className="ss-primary" onClick={() => void signInCloud()} disabled={cloud.status === "loading"}>
-            Sign in with Google
+          <button className="ss-primary" onClick={openSignIn} disabled={cloud.status === "loading"}>
+            Sign in
           </button>
         )}
       </div>
     </div>
-  );
-}
-
-/** During setup: someone who already uses Schedule Smart elsewhere signs in instead. */
-export function SetupSignIn() {
-  const cloud = useCloud();
-  if (!cloudAvailable || cloud.user) return null;
-  return (
-    <p className="ss-setup-signin">
-      Already use Schedule Smart on another device?{" "}
-      <button type="button" onClick={() => void signInCloud()} disabled={cloud.status === "loading"}>
-        Sign in to bring your calendars
-      </button>
-    </p>
   );
 }
 
@@ -165,6 +177,179 @@ export function GoogleMark({ size = 18 }: { size?: number }) {
   );
 }
 
+/** Apple's logo, for the Sign in with Apple button. */
+function AppleMark({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M16.37 12.62c-.03-2.66 2.17-3.94 2.27-4-1.24-1.81-3.16-2.06-3.84-2.09-1.63-.17-3.19.96-4.02.96-.84 0-2.11-.94-3.47-.91-1.78.03-3.43 1.04-4.35 2.63-1.86 3.22-.47 7.98 1.33 10.6.89 1.27 1.93 2.71 3.3 2.66 1.33-.05 1.83-.86 3.43-.86 1.6 0 2.05.86 3.45.83 1.43-.02 2.33-1.29 3.2-2.58 1.01-1.47 1.42-2.9 1.44-2.97-.03-.01-2.76-1.06-2.79-4.21ZM13.73 4.81c.73-.89 1.23-2.12 1.09-3.35-1.05.04-2.33.7-3.08 1.58-.67.78-1.27 2.04-1.11 3.24 1.17.09 2.37-.6 3.1-1.47Z" />
+    </svg>
+  );
+}
+
+const OPEN_SIGN_IN = "prio:open-sign-in";
+/** Set when the page was opened as /app#signin, until the sign-in window opens. */
+let signInFromLink = false;
+
+/** Open the sign-in window from anywhere. */
+export function openSignIn() {
+  window.dispatchEvent(new Event(OPEN_SIGN_IN));
+}
+
+/**
+ * The one way to sign in, used everywhere: Continue with Apple, Continue with
+ * Google, or an email link. Signing in the first time makes the account, so
+ * there is no separate sign-up and no password to remember.
+ */
+export function SignInPanel() {
+  const cloud = useCloud();
+  const [busy, setBusy] = useState<SignInMethod | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const loading = cloud.status === "loading";
+  const confirming = cloud.emailLinkNeedsEmail;
+
+  const withProvider = async (method: "apple" | "google") => {
+    setBusy(method);
+    setError(null);
+    answeredThisVisit = true;
+    const problem = await signInWith(method);
+    setBusy(null);
+    if (problem) setError(problem);
+  };
+
+  const withEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const address = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      setError("Enter your email address, like name@school.edu.");
+      return;
+    }
+    setBusy("email");
+    setError(null);
+    answeredThisVisit = true;
+    const problem = confirming ? await finishEmailSignIn(address) : await sendEmailSignIn(address);
+    setBusy(null);
+    if (problem) setError(problem);
+    else if (!confirming) setSentTo(address);
+  };
+
+  if (sentTo) {
+    return (
+      <div className="ss-signin" aria-live="polite">
+        <div className="ss-signin-sent">
+          <strong>Check your email</strong>
+          <p>
+            We sent a sign-in link to <b>{sentTo}</b>. Open it on this device to finish signing in. It can take a minute; check spam if it doesn&apos;t
+            show up.
+          </p>
+        </div>
+        <div className="ss-signin-row">
+          <TextButton onClick={() => setSentTo(null)}>Use a different email</TextButton>
+          <TextButton onClick={() => void sendEmailSignIn(sentTo)}>Send it again</TextButton>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ss-signin">
+      {confirming ? (
+        <p className="ss-signin-note">You opened a sign-in link. Enter the email it was sent to, to finish signing in.</p>
+      ) : (
+        <>
+          {signInMethods.apple ? (
+            <button type="button" className="ss-signin-provider ss-signin-apple" disabled={loading || busy !== null} onClick={() => void withProvider("apple")}>
+              <AppleMark />
+              {busy === "apple" ? "Signing in…" : "Continue with Apple"}
+            </button>
+          ) : null}
+          {signInMethods.google ? (
+            <button type="button" className="ss-signin-provider" disabled={loading || busy !== null} onClick={() => void withProvider("google")}>
+              <GoogleMark />
+              {busy === "google" ? "Signing in…" : "Continue with Google"}
+            </button>
+          ) : null}
+          {signInMethods.email ? <div className="ss-signin-or">or</div> : null}
+        </>
+      )}
+      {signInMethods.email || confirming ? (
+        <form className="ss-signin-email" onSubmit={(e) => void withEmail(e)} noValidate>
+          <label htmlFor="signin-email">Email</label>
+          <input
+            id="signin-email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="name@school.edu"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading || busy !== null}
+          />
+          <button type="submit" className="ss-primary" disabled={loading || busy !== null}>
+            {busy === "email" ? (confirming ? "Signing in…" : "Sending…") : confirming ? "Finish signing in" : "Continue with email"}
+          </button>
+        </form>
+      ) : null}
+      {error ? (
+        <p className="ss-signin-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {confirming ? null : (
+        <p className="ss-signin-fine">New here? Signing in creates your free account. No password needed.</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The sign-in window: opened by any Sign in button (openSignIn), by /app#signin
+ * (the home page's Sign in), or by an email link that needs its address. It
+ * closes itself once signed in.
+ */
+export function SignInDialog() {
+  const cloud = useCloud();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener(OPEN_SIGN_IN, show);
+    // The home page's Sign in arrives as /app#signin. (Remembered outside the
+    // effect, which React may run twice, so tidying the address doesn't lose it.)
+    if (window.location.hash === "#signin") {
+      signInFromLink = true;
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    const timer = signInFromLink
+      ? setTimeout(() => {
+          signInFromLink = false;
+          show();
+        }, 0)
+      : undefined;
+    return () => {
+      window.removeEventListener(OPEN_SIGN_IN, show);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const shown = cloudAvailable && !cloud.user && (open || cloud.emailLinkNeedsEmail);
+  if (!shown) return null;
+  return (
+    <Dialog
+      title={cloud.emailLinkNeedsEmail ? "Finish signing in" : "Sign in to Schedule Smart"}
+      description={cloud.emailLinkNeedsEmail ? undefined : "Save your calendars and plan to your account, and pick up where you left off on any device."}
+      onClose={() => {
+        setOpen(false);
+        forgetEmailLink();
+      }}
+      size="sm"
+    >
+      <SignInPanel />
+    </Dialog>
+  );
+}
+
 /** How long "Not now" keeps the sign-in pop-up away. */
 const ASK_AGAIN_DAYS = 7;
 /** Set once the student has answered the question this visit (during setup, or in the pop-up). */
@@ -184,47 +369,28 @@ function mayAsk(now: Date): boolean {
 }
 
 /**
- * The first step of setup when sign-in is available: sign in with Google so the
- * setup is kept in an account, or carry on with this browser only. Someone who
- * already has a setup in their account gets it straight away and skips the rest.
+ * The first step of setup when sign-in is available: sign in (Apple, Google or
+ * email) so the setup is kept in an account, or carry on without one. Someone
+ * who already has a setup in their account gets it straight away and skips the rest.
  */
 export function AccountStep({ onNext }: { onNext: () => void }) {
-  const cloud = useCloud();
-  const checking = cloud.status === "loading" || cloud.status === "connecting";
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-semibold">Save your schedule to your Google account?</h2>
-        <p className="mt-1 text-sm text-muted leading-relaxed">
-          Sign in and your calendars, classes and plan are kept in your account, the same on your phone and your laptop. If you already use Schedule Smart
-          on another device, everything comes across. Or skip it and keep everything in this browser only. You can sign in any time from your profile menu.
-        </p>
+        <h2 className="text-xl font-semibold">Sign in to save your schedule</h2>
+        <p className="mt-1 text-sm text-muted leading-relaxed">Your calendars and plan are saved to your account, so they&apos;re on your phone and laptop.</p>
       </div>
-      <div className="flex flex-col gap-2.5">
-        <Button
-          variant="primary"
-          block
-          data-autofocus
-          disabled={checking}
-          onClick={() => {
-            answeredThisVisit = true;
-            void signInCloud();
-          }}
-        >
-          <GoogleMark />
-          {checking ? "Checking your account…" : "Continue with Google"}
-        </Button>
-        <Button
-          block
-          onClick={() => {
-            snoozeSignIn(ASK_AGAIN_DAYS);
-            onNext();
-          }}
-        >
-          Not now, use this browser only
-        </Button>
-      </div>
-      {cloud.error ? <p className="text-sm text-danger">{cloud.error}</p> : null}
+      <SignInPanel />
+      <button
+        type="button"
+        className="ss-signin-skip"
+        onClick={() => {
+          snoozeSignIn(ASK_AGAIN_DAYS);
+          onNext();
+        }}
+      >
+        Continue without an account
+      </button>
     </div>
   );
 }
@@ -260,24 +426,12 @@ export function SignInPrompt({ blocked }: { blocked: boolean }) {
 
   return (
     <Dialog
-      title="Keep your schedule on all your devices?"
-      description="Right now your calendars and plan are saved in this browser only. Sign in with Google to keep them in your account and see the same schedule on your phone and laptop."
+      title="Save your schedule to an account?"
+      description="Right now your calendars and plan are only in this browser. Sign in to keep them safe and see the same schedule on your phone and laptop."
       onClose={() => close(ASK_AGAIN_DAYS)}
       size="sm"
     >
-      <Button
-        variant="primary"
-        block
-        data-autofocus
-        onClick={() => {
-          answeredThisVisit = true;
-          setOpen(false);
-          void signInCloud();
-        }}
-      >
-        <GoogleMark />
-        Sign in with Google
-      </Button>
+      <SignInPanel />
       <DialogActions
         aside={
           <TextButton className="text-xs text-muted" onClick={() => close("never")}>

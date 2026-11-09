@@ -1,8 +1,9 @@
 # Signing in and syncing devices (Firebase)
 
-SmartScheduler can keep the same setup on a phone and a laptop: sign in with
-Google once on each and your calendars, classes, schedule, done marks and
-settings stay the same on both, updating live. It uses Firebase's free plan
+SmartScheduler can keep the same setup on a phone and a laptop: sign in once on
+each (with Apple, Google, or a link sent to your email) and your calendars,
+classes, schedule, done marks and settings stay the same on both, updating live.
+Signing in the first time creates the account; there are no passwords. It uses Firebase's free plan
 (Authentication + Firestore). It is **optional**: without the keys below, the app
 works exactly as before, from the browser alone, and Firebase is never
 downloaded.
@@ -56,6 +57,66 @@ security rules (step 5) and the authorized domains (step 3).
 **Docker:** `NEXT_PUBLIC_` values are read at build time, so pass them to
 `docker build` (for example as `--build-arg`s exported to the environment of
 `npm run build`).
+
+## Sign-in methods: Apple, Google and email
+
+Which buttons the sign-in window shows comes from one setting in Vercel:
+
+| Name | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SIGN_IN_METHODS` | `apple,google,email` (any of the three; Google alone if it's missing) |
+
+Turn each one on in Firebase **before** adding it here, then **Redeploy**. A
+method listed here but not turned on in Firebase shows a button that fails.
+
+### Google (done in step 2 above)
+
+Authentication → Sign-in method → Google → Enabled.
+
+### Email (a sign-in link, no password)
+
+1. Authentication → **Sign-in method** → **Add new provider** → **Email/Password**.
+2. Turn on **Email/Password** *and* **Email link (passwordless sign-in)** → **Save**.
+   (The first switch has to be on for the second to work. The app never asks
+   for a password.)
+3. Authentication → **Settings → Authorized domains**: make sure
+   `smartschedulerwebapp.vercel.app` is listed (it already is if Google sign-in works).
+4. Optional: Authentication → **Templates → Email address sign-in**: set the
+   sender name to `Schedule Smart` so the email is easy to recognise. The
+   link email comes from `noreply@<your-project>.firebaseapp.com`; ask testers
+   to check spam the first time.
+
+The person types their email, gets a link, and opens it **on the same device**
+to finish. Opened on another device, the app asks for the email once more.
+
+### Apple (needs a paid Apple Developer account, $99/year)
+
+Sign in with Apple can only be set up from an Apple Developer Program
+membership (developer.apple.com/programs). With one:
+
+1. In **Certificates, Identifiers & Profiles → Identifiers**, open (or create) an
+   **App ID** and tick **Sign In with Apple**.
+2. **Identifiers → + → Services IDs**: create one (e.g. `com.smartscheduler.web`;
+   this is the *Services ID*). Tick **Sign In with Apple** → **Configure**:
+   - Primary App ID: the one from step 1.
+   - Domains: `<your-project>.firebaseapp.com`
+   - Return URLs: `https://<your-project>.firebaseapp.com/__/auth/handler`
+   (Use your project's `authDomain`, the `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` value.)
+3. **Keys → +**: name it, tick **Sign In with Apple** → Configure → pick the App
+   ID → Register. **Download the .p8 file** (only once) and note the **Key ID**.
+   Your **Team ID** is at the top right of the developer site.
+4. Firebase: Authentication → **Sign-in method** → **Add new provider** →
+   **Apple** → Enable, and fill in the **Services ID**, **Apple team ID**,
+   **Key ID** and the **private key** (paste the contents of the .p8) → Save.
+5. Add `apple` to `NEXT_PUBLIC_SIGN_IN_METHODS` in Vercel and redeploy.
+
+People who choose "Hide my email" get a private relay address; that's fine,
+the app only uses it as their account name.
+
+**One account per email.** Firebase keeps one account per email address by
+default, so someone who signed in with Google and later asks for an email link
+to the same address reaches the same account. If they try a different method
+whose email clashes, the window tells them to sign in the way they did before.
 
 ## How syncing behaves
 

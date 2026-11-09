@@ -7,8 +7,8 @@ import { useApp } from "./context";
 import { ChangesDialog, useUnseenChanges } from "./ChangesDialog";
 import { resetEverything } from "./store";
 import { SsIcon } from "./SsIcon";
-import { AccountMenuSection } from "./Account";
-import { useCloud } from "./cloud";
+import { AccountMenuSection, openSignIn } from "./Account";
+import { cloudAvailable, useCloud } from "./cloud";
 
 /**
  * The bar across the top, as in the Figma prototype: the name on the left, the
@@ -34,9 +34,21 @@ export function Topbar() {
         </button>
       </nav>
       <div className="ss-actions">
+        <SignInButton />
         <ProfileMenu />
       </div>
     </header>
+  );
+}
+
+/** Signed out: a plain Sign in button beside the profile, where people look for it. */
+function SignInButton() {
+  const cloud = useCloud();
+  if (!cloudAvailable || cloud.user || cloud.status === "loading") return null;
+  return (
+    <button className="ss-signin-top" onClick={openSignIn}>
+      Sign in
+    </button>
   );
 }
 
@@ -85,7 +97,15 @@ function ProfileMenu() {
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        {ws.demo ? "SS" : (initials(cloud.user?.name) ?? "ME")}
+        {cloud.user?.photo ? (
+          // Their account picture, from Google or Apple.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={cloud.user.photo} alt="" referrerPolicy="no-referrer" />
+        ) : ws.demo ? (
+          "SS"
+        ) : (
+          (initials(cloud.user?.name ?? cloud.user?.email) ?? "ME")
+        )}
         {unseen > 0 ? <span className="ss-avatar-dot">{unseen > 9 ? "9+" : unseen}</span> : null}
       </button>
       {open ? (
