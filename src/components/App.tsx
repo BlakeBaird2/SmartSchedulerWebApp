@@ -75,7 +75,7 @@ function viewFrom(v: unknown): View | null {
   if (v === "due") return "calendar";
   return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
 }
-const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "colors", "classes", "schedule", "estimates", "browser", "about"];
+const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "colors", "schedule", "estimates", "account", "about"];
 const DEFAULT_UI: UiPrefs = {
   view: "calendar",
   calMode: "day",

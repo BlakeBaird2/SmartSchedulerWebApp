@@ -67,7 +67,8 @@ export function TasksPage() {
   const [search, setSearch] = useState("");
   const [showDone, setShowDone] = useState(true);
   const nowMs = now.getTime();
-  const rank = classRank(ws.classOrder);
+  // (Class priority was retired: no class comes before another.)
+  const rank = classRank([]);
 
   const doneAt = (t: Task) => {
     const at = ws.done[t.id];

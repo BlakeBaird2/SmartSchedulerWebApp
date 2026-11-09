@@ -151,7 +151,7 @@ text at 4.9:1. In dark mode it becomes a light sky blue (`#6aa9ff`) with navy te
   what an assignment is worth.)
 - Also: ticking work off folds it away with Undo; **New** marks work a class
   calendar added since you last looked; each morning it asks whether to put
-  yesterday's unfinished work back; **Class priority** (Settings) breaks ties;
+  yesterday's unfinished work back;
   any event can be recoloured with Google Calendar's colours.
 - **Profile menu** (top right) — refresh calendars, what changed, Settings, Help.
 
@@ -302,7 +302,7 @@ Keys keep a legacy `prio:` prefix for compatibility; the product name is **Smart
 | Key | Meaning |
 | --- | --- |
 | `prio:tour` | Set when the walkthrough is finished or skipped. It only runs when asked for (Settings → About, or `/app#tour`). |
-| `prio:ws` | Calendars and choices, including scheduled time, estimates, class priority, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
+| `prio:ws` | Calendars and choices, including scheduled time, estimates, event colours and what happens to unfinished work. Calendars here + finished setup = returning user. |
 | `prio:new` | Work a class calendar added since you last looked (task id → when it showed up). |
 | `prio:ui` | Includes `setupDone`, current view, and settings sub-panel. |
 | `prio:signin-ask` | When the "keep your schedule on all your devices?" pop-up may ask again, or `never`. |
