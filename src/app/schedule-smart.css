@@ -1572,7 +1572,20 @@ button.ss-day-head:hover {
   background: color-mix(in oklab, var(--ev) 30%, var(--ss-surface));
   color: color-mix(in oklab, var(--ev) 72%, var(--ss-ink));
 }
+/* Planned work that has ended, in each look (see "Work you scheduled" below). */
 .ss-event.ss-planned[data-past] {
+  background:
+    linear-gradient(color-mix(in oklab, var(--ev) 55%, var(--ss-surface)), color-mix(in oklab, var(--ev) 55%, var(--ss-surface))) left / 4px 100% no-repeat,
+    color-mix(in oklab, var(--ev) 12%, var(--ss-surface));
+}
+.ss-event.ss-planned[data-look="solid"][data-past] {
+  background: color-mix(in oklab, var(--ev) 30%, var(--ss-surface));
+}
+.ss-event.ss-planned[data-look="outline"][data-past] {
+  background: var(--ss-surface);
+  border-color: color-mix(in oklab, var(--ev) 45%, var(--ss-surface));
+}
+.ss-event.ss-planned[data-look="striped"][data-past] {
   background:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 6px, transparent 6px 12px),
     color-mix(in oklab, var(--ev) 30%, var(--ss-surface));
@@ -1748,14 +1761,52 @@ button.ss-day-head:hover {
   background: var(--ss-surface);
   color: color-mix(in oklab, var(--ev) 80%, var(--ss-ink));
 }
-/* Work you scheduled: its own colour, with faint stripes, so it never reads as a calendar's event. */
+/*
+ * Work you scheduled: drawn so it never reads as a calendar's event, in the look
+ * picked in Settings → Appearance (data-look on the block):
+ *   Soft (the default): a light tint of its colour with a bold edge.
+ *   Solid: filled, like other events.  Outline: a dashed border.  Striped: faint stripes.
+ */
 .ss-event.ss-planned {
   --ev: var(--ss-planned);
   --ev-ink: var(--ss-planned-ink, #fff);
+  border-color: color-mix(in oklab, var(--ev) 30%, var(--ss-surface));
+  background:
+    linear-gradient(var(--ev), var(--ev)) left / 4px 100% no-repeat,
+    color-mix(in oklab, var(--ev) 20%, var(--ss-surface));
+  color: color-mix(in oklab, var(--ev) 62%, var(--ss-ink));
+  padding-left: 10px;
+  z-index: 2;
+}
+.ss-event.ss-planned[data-look="solid"] {
+  border-color: var(--ss-surface);
+  background: var(--ev);
+  color: var(--ev-ink);
+  padding-left: 8px;
+}
+.ss-event.ss-planned[data-look="outline"] {
+  border: 1.5px dashed var(--ev);
+  background: color-mix(in oklab, var(--ev) 7%, var(--ss-surface));
+  color: color-mix(in oklab, var(--ev) 62%, var(--ss-ink));
+  padding-left: 8px;
+}
+.ss-event.ss-planned[data-look="striped"] {
+  border-color: var(--ss-surface);
   background:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0 6px, transparent 6px 12px),
     var(--ev);
-  z-index: 2;
+  color: var(--ev-ink);
+  padding-left: 8px;
+}
+/* The tick on done work: white on the filled looks, filled on the light ones. */
+.ss-event.ss-planned .ss-event-check {
+  background: var(--ev);
+  color: #fff;
+}
+.ss-event.ss-planned[data-look="solid"] .ss-event-check,
+.ss-event.ss-planned[data-look="striped"] .ss-event-check {
+  background: #fff;
+  color: var(--ev);
 }
 .ss-event.ss-movable {
   cursor: grab;
@@ -2274,8 +2325,8 @@ button.ss-day-head:hover {
     box-shadow 0.16s ease,
     color 0.16s ease;
 }
-/* Scheduled work keeps its faint stripes; a moved event is plain. */
-.ss-ghost[data-slot]::before {
+/* Scheduled work keeps its faint stripes while dragged, in the Striped look; a moved event is plain. */
+.ss-ghost[data-slot][data-look="striped"]::before {
   background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0 6px, transparent 6px 12px);
   opacity: 1;
 }
@@ -4440,5 +4491,185 @@ section.ss-due-page {
   }
   .ss-home-foot {
     padding: 18px 16px;
+  }
+}
+
+/*
+ * Settings → Appearance: groups that open on click (a native <details>), each
+ * showing its current choice while closed.
+ */
+.ss-setting-group {
+  border: 1px solid var(--ss-line);
+  border-radius: 14px;
+  background: var(--ss-surface);
+  overflow: hidden;
+}
+.ss-setting-group > summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.ss-setting-group > summary::-webkit-details-marker {
+  display: none;
+}
+.ss-setting-group > summary:hover {
+  background: var(--ss-chip);
+}
+.ss-setting-icon {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--ss-accent);
+  background: var(--ss-accent-soft);
+}
+.ss-setting-text {
+  min-width: 0;
+  flex: 1;
+}
+.ss-setting-text strong {
+  display: block;
+  color: var(--ss-ink);
+  font-size: 15.5px;
+}
+.ss-setting-text span {
+  display: block;
+  margin-top: 1px;
+  color: var(--ss-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.ss-setting-value {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 99px;
+  color: var(--ss-text-2);
+  background: var(--ss-chip);
+  font-size: 12.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.ss-setting-chevron {
+  flex: none;
+  color: var(--ss-faint);
+  transition: rotate 0.15s ease;
+}
+.ss-setting-group[open] > summary .ss-setting-chevron {
+  rotate: 180deg;
+}
+.ss-setting-group[open] > summary {
+  border-bottom: 1px solid var(--ss-line-soft);
+}
+.ss-setting-body {
+  padding: 16px 18px 18px;
+}
+.ss-setting-sub {
+  margin-top: 14px;
+  border-top: 1px solid var(--ss-line-soft);
+  padding-top: 12px;
+}
+.ss-setting-sub > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ss-accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.ss-setting-sub > summary::-webkit-details-marker {
+  display: none;
+}
+.ss-setting-sub[open] > summary svg {
+  rotate: 180deg;
+}
+.ss-setting-sub > ul {
+  margin-top: 12px;
+}
+.ss-setting-subhead {
+  margin: 0 0 10px;
+  color: var(--ss-text-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ss-setting-subhead:not(:first-child) {
+  margin-top: 22px;
+}
+.ss-setting-note {
+  margin: 8px 0 12px;
+  color: var(--ss-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ss-setting-body > .ss-setting-note:last-child {
+  margin: 18px 0 0;
+}
+/* The planned-task looks, each shown as a small block in that look. */
+.ss-style-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.ss-style-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--ss-line);
+  border-radius: 12px;
+  background: var(--ss-surface);
+  text-align: left;
+}
+.ss-style-card:hover {
+  border-color: var(--ss-line-2);
+}
+.ss-style-card.is-picked {
+  border-color: var(--ss-accent);
+  box-shadow: 0 0 0 2px var(--ss-accent-ring);
+}
+.ss-style-preview {
+  display: block;
+  margin-bottom: 6px;
+}
+.ss-style-preview .ss-event-sample {
+  position: relative;
+  display: block;
+  height: 48px;
+  border-radius: 6px;
+}
+.ss-style-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ss-ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+.ss-style-name svg {
+  color: var(--ss-accent);
+}
+.ss-style-blurb {
+  color: var(--ss-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+@media (max-width: 640px) {
+  .ss-style-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ss-setting-group > summary {
+    gap: 10px;
+    padding: 14px;
+  }
+  .ss-setting-text span {
+    display: none;
   }
 }

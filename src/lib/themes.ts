@@ -55,6 +55,18 @@ export const DEFAULT_THEME = "classic";
 export const CUSTOM_THEME = "custom";
 
 /** The student's colour choices, kept with the rest of their setup. */
+/** How work you've planned onto the calendar is drawn, so it never reads as a calendar's own event. */
+export type PlannedStyle = "soft" | "solid" | "outline" | "striped";
+
+export const PLANNED_STYLES: { id: PlannedStyle; name: string; blurb: string }[] = [
+  { id: "soft", name: "Soft", blurb: "A light tint with a bold edge" },
+  { id: "solid", name: "Solid", blurb: "Filled, like your other events" },
+  { id: "outline", name: "Outline", blurb: "A dashed border" },
+  { id: "striped", name: "Striped", blurb: "Diagonal stripes" },
+];
+
+export const DEFAULT_PLANNED_STYLE: PlannedStyle = "soft";
+
 export interface ColorPrefs {
   /** A theme's id, or "custom" for their own. */
   theme: string;
@@ -62,10 +74,12 @@ export interface ColorPrefs {
   custom: ThemeColors | null;
   /** Calendar (feed) id -> its colour. */
   calendars: Record<string, string>;
+  /** How planned work looks on the calendar. */
+  planned: PlannedStyle;
 }
 
 export function defaultColorPrefs(): ColorPrefs {
-  return { theme: DEFAULT_THEME, custom: null, calendars: {} };
+  return { theme: DEFAULT_THEME, custom: null, calendars: {}, planned: DEFAULT_PLANNED_STYLE };
 }
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -173,6 +187,7 @@ export function sanitizeColorPrefs(raw: unknown): ColorPrefs {
     }
   }
   if (typeof r.theme === "string" && (presetById(r.theme) || (r.theme === CUSTOM_THEME && out.custom))) out.theme = r.theme;
+  if (PLANNED_STYLES.some((s) => s.id === r.planned)) out.planned = r.planned as PlannedStyle;
   if (r.calendars && typeof r.calendars === "object" && !Array.isArray(r.calendars)) {
     for (const [id, hex] of Object.entries(r.calendars as Record<string, unknown>).slice(0, 200)) {
       if (id && id.length <= 200 && typeof hex === "string" && HEX.test(hex)) out.calendars[id] = hex.toLowerCase();

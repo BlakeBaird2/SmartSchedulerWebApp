@@ -806,7 +806,7 @@ function PlannedBlock({
   past: boolean;
   course?: string;
 }) {
-  const { select, moveScheduled, resizeScheduled, unschedule } = useApp();
+  const { select, moveScheduled, resizeScheduled, unschedule, ws } = useApp();
   const { task, start, end, minutes, title } = cal;
   const done = Boolean(task?.done);
   // Time with no task behind it is an event the student added: it looks and opens like an event.
@@ -858,6 +858,8 @@ function PlannedBlock({
       data-picked={dragging || undefined}
       data-compact={h < 40 || undefined}
       data-past={past || undefined}
+      // How planned work looks (Settings → Appearance); Soft, the default, needs none.
+      data-look={own || ws.colors.planned === "soft" ? undefined : ws.colors.planned}
       style={{ ...style, ...evVars(custom), pointerEvents: passThrough ? "none" : undefined } as React.CSSProperties}
       title={`${title} · ${minutes} min. Drag to move, or drag the bottom edge to change its length.`}
       aria-label={`${own ? "Event" : "Scheduled"}: ${title}, ${clock(start)} – ${clock(end)}${done ? ", done" : ""}. Open details`}

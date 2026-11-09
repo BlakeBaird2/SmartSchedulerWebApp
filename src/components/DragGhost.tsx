@@ -4,6 +4,7 @@ import { useEffect, useReducer } from "react";
 import { createPortal } from "react-dom";
 import { clock } from "@/lib/ui";
 import { slotRect, targetStart, usePlanDrag } from "./planDrag";
+import { useApp } from "./context";
 
 /**
  * What is being dragged. It starts out the size of what was picked up (a planner
@@ -14,6 +15,8 @@ import { slotRect, targetStart, usePlanDrag } from "./planDrag";
  */
 export function DragGhost() {
   const drag = usePlanDrag();
+  const { ws } = useApp();
+  const look = ws.colors.planned === "soft" ? undefined : ws.colors.planned;
   // Scrolling the hours by hand moves the slot under the ghost.
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const dragging = Boolean(drag);
@@ -54,6 +57,8 @@ export function DragGhost() {
       style={{ ...style, "--gc": drag.color } as React.CSSProperties}
       data-slot={slot ? true : undefined}
       data-event={drag.eventId ? true : undefined}
+      // Planned work keeps its look (Settings → Appearance) while it's dragged.
+      data-look={look}
       data-compact={(slot && slot.height < 40) || undefined}
       aria-hidden
     >
