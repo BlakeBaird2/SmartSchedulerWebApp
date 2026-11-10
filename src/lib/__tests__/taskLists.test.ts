@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULT_LISTS, LIST_COLORS, MAX_LISTS, inAreas, inDays, listColor, newList, parseLists } from "../taskLists";
+import { DEFAULT_LISTS, LIST_COLORS, MAX_LISTS, inAreas, inDays, listColor, listIcon, newList, parseLists } from "../taskLists";
 import type { Task } from "../types";
 
 // Tests run with TZ=America/Denver. October 1, 2026 is a Thursday.
@@ -46,10 +46,12 @@ test("stored lists are checked, and capped", () => {
   const many = Array.from({ length: 9 }, (_, i) => ({ id: `l${i}`, name: `L${i}`, show: "planned", areas: null, days: 14 }));
   assert.equal(parseLists(many).length, MAX_LISTS);
   const [l] = parseLists([{ id: "x", name: 5, show: "nope", areas: [], days: 3 }, { id: "x" }, null]);
-  assert.deepEqual(l, { id: "x", name: "List", show: "all", areas: null, days: 7, color: null });
+  assert.deepEqual(l, { id: "x", name: "List", show: "all", areas: null, days: 7, color: null, icon: null });
   assert.equal(parseLists([{ id: "y", days: null }])[0].days, null, "any time");
   assert.equal(parseLists([{ id: "y", color: LIST_COLORS[2] }])[0].color, LIST_COLORS[2]);
   assert.equal(parseLists([{ id: "y", color: "url(x)" }])[0].color, null, "only the list colours");
+  assert.equal(parseLists([{ id: "y", icon: "gym" }])[0].icon, "gym");
+  assert.equal(parseLists([{ id: "y", icon: "<svg>" }])[0].icon, null, "only the list icons");
 });
 
 test("a new list gets a name not already taken", () => {
@@ -86,4 +88,13 @@ test("each list has a colour of its own: the one picked, or the one for its plac
   assert.equal(listColor(b, 1), LIST_COLORS[1]);
   assert.notEqual(listColor(a, 0), listColor(b, 1));
   assert.equal(listColor({ ...a, color: LIST_COLORS[3] }, 0), LIST_COLORS[3]);
+});
+
+test("a list's icon: the one picked, or one for the work it holds", () => {
+  const [school, life] = DEFAULT_LISTS;
+  assert.equal(listIcon(school), "cap");
+  assert.equal(listIcon(life), "home");
+  assert.equal(listIcon({ ...school, areas: ["f:cs"] }), "book");
+  assert.equal(listIcon({ ...school, areas: null }), "list");
+  assert.equal(listIcon({ ...life, icon: "gym" }), "gym");
 });

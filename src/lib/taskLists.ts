@@ -22,13 +22,64 @@ export interface TaskListConfig {
   days: number | null;
   /** The list's colour, or null for the one its place gives it. */
   color: string | null;
+  /** The icon on the list's badge, or null for the one its work gives it. */
+  icon: string | null;
 }
 
 /**
  * Each list's colour, so lists side by side are easy to tell apart. A list
  * takes the one for its place unless another is picked.
  */
-export const LIST_COLORS = ["#2563eb", "#16a34a", "#9333ea", "#ea580c", "#0891b2", "#db2777"];
+export const LIST_COLORS = [
+  "#2563eb", // blue
+  "#16a34a", // green
+  "#9333ea", // purple
+  "#ea580c", // orange
+  "#0891b2", // teal
+  "#db2777", // pink
+  "#dc2626", // red
+  "#d97706", // amber
+  "#65a30d", // lime
+  "#4f46e5", // indigo
+  "#c026d3", // magenta
+  "#475569", // slate
+];
+
+/** Icons a list's badge can show, by name (TaskLists.tsx draws them). */
+export const LIST_ICONS = [
+  "list",
+  "cap",
+  "book",
+  "home",
+  "work",
+  "gym",
+  "heart",
+  "shop",
+  "travel",
+  "music",
+  "code",
+  "science",
+  "art",
+  "food",
+  "people",
+  "star",
+  "coffee",
+  "money",
+  "math",
+  "write",
+  "games",
+  "nature",
+  "sparkle",
+  "goal",
+] as const;
+export type ListIcon = (typeof LIST_ICONS)[number];
+
+/** The icon a list shows: the one picked, or a cap for School, a house for Personal, a book for one class, a list for a mix. */
+export function listIcon(list: TaskListConfig): ListIcon {
+  if (list.icon && (LIST_ICONS as readonly string[]).includes(list.icon)) return list.icon as ListIcon;
+  const only = list.areas?.length === 1 ? list.areas[0] : null;
+  return only === "school" ? "cap" : only === "personal" ? "home" : only ? "book" : "list";
+}
 
 /** The colour a list shows: the one picked, or the one for its place. */
 export function listColor(list: TaskListConfig, index: number): string {
@@ -44,8 +95,8 @@ const SHOWS: ListShow[] = ["planned", "unplanned", "all"];
 
 /** What split view starts with: school work for the week, and life's plan for the week. */
 export const DEFAULT_LISTS: TaskListConfig[] = [
-  { id: "school", name: "School", show: "all", areas: ["school"], days: 7, color: null },
-  { id: "life", name: "Life", show: "planned", areas: ["personal"], days: 7, color: null },
+  { id: "school", name: "School", show: "all", areas: ["school"], days: 7, color: null, icon: null },
+  { id: "life", name: "Life", show: "planned", areas: ["personal"], days: 7, color: null, icon: null },
 ];
 
 /** A new list: everything for the week, with a name not already taken. */
@@ -53,7 +104,7 @@ export function newList(lists: TaskListConfig[], id: string): TaskListConfig {
   const names = new Set(lists.map((l) => l.name.trim().toLowerCase()));
   let n = lists.length + 1;
   while (names.has(`list ${n}`)) n++;
-  return { id, name: `List ${n}`, show: "all", areas: null, days: 7, color: null };
+  return { id, name: `List ${n}`, show: "all", areas: null, days: 7, color: null, icon: null };
 }
 
 /** Lists as stored, checked: anything damaged is dropped, and there are never more than the cap. */
@@ -63,7 +114,7 @@ export function parseLists(raw: unknown): TaskListConfig[] {
   const ids = new Set<string>();
   for (const l of raw) {
     if (!l || typeof l !== "object") continue;
-    const { id, name, show, areas, days, color } = l as Partial<TaskListConfig>;
+    const { id, name, show, areas, days, color, icon } = l as Partial<TaskListConfig>;
     if (typeof id !== "string" || !id || ids.has(id)) continue;
     ids.add(id);
     out.push({
@@ -73,6 +124,7 @@ export function parseLists(raw: unknown): TaskListConfig[] {
       areas: Array.isArray(areas) && areas.length && areas.every((a) => typeof a === "string") ? areas : null,
       days: days === null || LIST_WINDOWS.includes(days as number) ? (days as number | null) : 7,
       color: typeof color === "string" && LIST_COLORS.includes(color) ? color : null,
+      icon: typeof icon === "string" && (LIST_ICONS as readonly string[]).includes(icon) ? icon : null,
     });
     if (out.length === MAX_LISTS) break;
   }

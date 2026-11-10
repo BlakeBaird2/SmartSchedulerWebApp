@@ -2,8 +2,35 @@
 
 import { useEffect, useRef, useState } from "react";
 import { addDays, format } from "date-fns";
-import { ChevronDown } from "lucide-react";
-import { LIST_COLORS, LIST_WINDOWS, inAreas, inDays, listColor, type ListShow, type TaskListConfig } from "@/lib/taskLists";
+import {
+  BookOpen,
+  Briefcase,
+  Calculator,
+  ChevronDown,
+  Code,
+  Coffee,
+  Dumbbell,
+  FlaskConical,
+  Gamepad2,
+  GraduationCap,
+  Heart,
+  House,
+  Leaf,
+  ListTodo,
+  Music,
+  Palette,
+  PenLine,
+  Plane,
+  ShoppingCart,
+  Sparkles,
+  Star,
+  Target,
+  Users,
+  Utensils,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import { LIST_COLORS, LIST_ICONS, LIST_WINDOWS, inAreas, inDays, listColor, listIcon, type ListIcon, type ListShow, type TaskListConfig } from "@/lib/taskLists";
 import { windowEnd } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { useApp } from "./context";
@@ -21,6 +48,34 @@ const SHOWS: { id: ListShow; label: string }[] = [
   { id: "unplanned", label: "Not planned" },
   { id: "all", label: "All" },
 ];
+
+/** Each badge icon, with a name for anyone who can't see it. */
+const ICONS: Record<ListIcon, { Icon: LucideIcon; label: string }> = {
+  list: { Icon: ListTodo, label: "List" },
+  cap: { Icon: GraduationCap, label: "School" },
+  book: { Icon: BookOpen, label: "Book" },
+  home: { Icon: House, label: "Home" },
+  work: { Icon: Briefcase, label: "Work" },
+  gym: { Icon: Dumbbell, label: "Workout" },
+  heart: { Icon: Heart, label: "Heart" },
+  shop: { Icon: ShoppingCart, label: "Shopping" },
+  travel: { Icon: Plane, label: "Travel" },
+  music: { Icon: Music, label: "Music" },
+  code: { Icon: Code, label: "Code" },
+  science: { Icon: FlaskConical, label: "Science" },
+  art: { Icon: Palette, label: "Art" },
+  food: { Icon: Utensils, label: "Food" },
+  people: { Icon: Users, label: "People" },
+  star: { Icon: Star, label: "Star" },
+  coffee: { Icon: Coffee, label: "Coffee" },
+  money: { Icon: Wallet, label: "Money" },
+  math: { Icon: Calculator, label: "Math" },
+  write: { Icon: PenLine, label: "Writing" },
+  games: { Icon: Gamepad2, label: "Games" },
+  nature: { Icon: Leaf, label: "Nature" },
+  sparkle: { Icon: Sparkles, label: "Sparkle" },
+  goal: { Icon: Target, label: "Goal" },
+};
 
 function daysLabel(days: number | null): string {
   return days === null ? "Any time" : `${days} days`;
@@ -120,15 +175,13 @@ function ListColumn({
   const groups = groupRows(open, list.show, now);
 
   const lastDay = list.days === null ? null : addDays(windowEnd(now, list.days), -1);
-  // The icon on the list's badge: a cap for school, a house for life, a list for the rest.
-  const only = list.areas?.length === 1 ? list.areas[0] : null;
-  const icon = only === "school" ? "cap" : only === "personal" ? "home" : only ? "book" : "list";
+  const icon = listIcon(list);
 
   return (
     <section className="ss-list" style={{ "--list": color } as React.CSSProperties} aria-label={list.name || "List"}>
       <header className="ss-list-head">
         <div className="ss-list-title">
-          <ColorPicker color={color} picked={list.color} icon={icon} name={list.name} onPick={(c) => onChange({ color: c })} />
+          <BadgePicker list={list} color={color} icon={icon} onChange={onChange} />
           <div className="ss-list-heading">
           <input
             ref={nameBox}
@@ -232,20 +285,18 @@ function ListColumn({
 
 /**
  * The list's badge: its colour, with an icon for what it holds. Tap it to pick
- * another colour from a few that sit well side by side.
+ * another colour, or another icon.
  */
-function ColorPicker({
+function BadgePicker({
+  list,
   color,
-  picked,
   icon,
-  name,
-  onPick,
+  onChange,
 }: {
+  list: TaskListConfig;
   color: string;
-  picked: string | null;
-  icon: "cap" | "home" | "book" | "list";
-  name: string;
-  onPick: (color: string | null) => void;
+  icon: ListIcon;
+  onChange: (patch: Partial<TaskListConfig>) => void;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -264,30 +315,42 @@ function ColorPicker({
       document.removeEventListener("keydown", key);
     };
   }, [open]);
+  const { Icon } = ICONS[icon];
 
   return (
     <div className="ss-list-badge-wrap" ref={box}>
-      <button type="button" className="ss-list-badge" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen((o) => !o)} aria-label={`${name} list colour`} title="Change the colour">
-        <SsIcon name={icon} size={20} />
+      <button
+        type="button"
+        className="ss-list-badge"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        aria-label={`${list.name} list colour and icon`}
+        title="Change the colour or icon"
+      >
+        <Icon size={21} strokeWidth={2.2} aria-hidden />
       </button>
       {open ? (
-        <div className="ss-list-swatches" role="group" aria-label={`Colour for ${name}`}>
-          {LIST_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              style={{ background: c }}
-              aria-pressed={c === color}
-              aria-label={c === color ? "Current colour" : "Use this colour"}
-              onClick={() => {
-                // Picking the colour a list already has by its place leaves it following its place.
-                onPick(c === color && !picked ? null : c);
-                setOpen(false);
-              }}
-            >
-              {c === color ? <SsIcon name="check" size={14} /> : null}
-            </button>
-          ))}
+        <div className="ss-list-picker" role="group" aria-label={`Colour and icon for ${list.name}`}>
+          <span className="ss-list-picker-label">Colour</span>
+          <div className="ss-list-swatches">
+            {LIST_COLORS.map((c) => (
+              <button key={c} type="button" style={{ background: c }} aria-pressed={c === color} aria-label={c === color ? "Current colour" : "Use this colour"} onClick={() => onChange({ color: c })}>
+                {c === color ? <SsIcon name="check" size={14} /> : null}
+              </button>
+            ))}
+          </div>
+          <span className="ss-list-picker-label">Icon</span>
+          <div className="ss-list-icons">
+            {LIST_ICONS.map((id) => {
+              const { Icon: Choice, label } = ICONS[id];
+              return (
+                <button key={id} type="button" aria-pressed={id === icon} aria-label={label} title={label} onClick={() => onChange({ icon: id })}>
+                  <Choice size={18} aria-hidden />
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </div>

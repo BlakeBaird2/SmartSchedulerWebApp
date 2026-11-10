@@ -3765,32 +3765,71 @@ section.ss-due-page {
 .ss-list-badge:hover {
   transform: scale(1.05);
 }
-.ss-list-swatches {
+/* The badge's picker: a grid of colours, then a grid of icons, in the list's colour. */
+.ss-list-picker {
   position: absolute;
   z-index: 25;
   top: calc(100% + 8px);
   left: 0;
-  padding: 8px;
-  display: grid;
-  grid-template-columns: repeat(3, 28px);
-  gap: 8px;
+  width: 264px;
+  padding: 12px;
   border: 1px solid var(--ss-line);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--ss-surface);
-  box-shadow: 0 18px 40px rgba(20, 20, 18, 0.16);
+  box-shadow: 0 18px 40px rgba(20, 20, 18, 0.18);
+}
+.ss-list-picker-label {
+  display: block;
+  margin: 0 2px 8px;
+  color: var(--ss-faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ss-list-picker-label + div + .ss-list-picker-label {
+  margin-top: 14px;
+}
+.ss-list-swatches,
+.ss-list-icons {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
 }
 .ss-list-swatches button {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
+  justify-self: center;
   display: grid;
   place-items: center;
   border: 0;
   border-radius: 50%;
   color: #fff;
+  transition: transform 0.12s ease;
+}
+.ss-list-swatches button:hover {
+  transform: scale(1.12);
 }
 .ss-list-swatches button[aria-pressed="true"] {
   outline: 2px solid var(--ss-ink);
   outline-offset: 2px;
+}
+.ss-list-icons button {
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  color: var(--ss-text-4);
+  background: transparent;
+}
+.ss-list-icons button:hover {
+  color: var(--list-ink);
+  background: color-mix(in oklab, var(--list) 12%, var(--ss-surface));
+}
+.ss-list-icons button[aria-pressed="true"] {
+  color: #fff;
+  background: var(--list);
 }
 .ss-list-heading {
   min-width: 0;
