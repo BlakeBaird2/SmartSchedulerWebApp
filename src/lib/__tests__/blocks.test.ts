@@ -11,6 +11,7 @@ test("times snap to the nearest quarter hour", () => {
   assert.equal(snapMinutes(9 * 60 + 7), 9 * 60);
   assert.equal(snapMinutes(9 * 60 + 8), 9 * 60 + 15);
   assert.equal(snapMinutes(9 * 60 + 52), 9 * 60 + 45);
+  assert.equal(snapMinutes(9 * 60 + 12, 5), 9 * 60 + 10, "a dragged bottom edge goes in five-minute steps");
 });
 
 test("new time for a task is as long as its estimate, and looks like a calendar event", () => {
@@ -25,7 +26,7 @@ test("new time for a task is as long as its estimate, and looks like a calendar 
     externalId: null,
     updatedAt: NOW.toISOString(),
   });
-  assert.equal(blockMinutes(makeBlock("b2", task, at(1, 14), 5, NOW)), 15, "never shorter than a quarter hour");
+  assert.equal(blockMinutes(makeBlock("b2", task, at(1, 14), 5, NOW)), 10, "never shorter than ten minutes");
 });
 
 test("moving keeps the length; resizing keeps the start", () => {
@@ -39,7 +40,8 @@ test("moving keeps the length; resizing keeps the start", () => {
   const longer = resizeBlock(b, at(1, 16), later);
   assert.equal(longer.start, b.start);
   assert.equal(blockMinutes(longer), 120);
-  assert.equal(blockMinutes(resizeBlock(b, at(1, 13), later)), 15, "dragging the end above the start leaves the shortest block");
+  assert.equal(blockMinutes(resizeBlock(b, at(1, 14, 10), later)), 10, "a block can be cut down to ten minutes");
+  assert.equal(blockMinutes(resizeBlock(b, at(1, 13), later)), 10, "dragging the end above the start leaves the shortest block");
 });
 
 test("a changed block replaces the old one; a new one is added; a removed one goes", () => {

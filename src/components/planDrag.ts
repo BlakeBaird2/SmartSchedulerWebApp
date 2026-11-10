@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { MIN_BLOCK_MINUTES, snapMinutes } from "@/lib/blocks";
+import { MIN_BLOCK_MINUTES, RESIZE_SNAP_MINUTES, snapMinutes } from "@/lib/blocks";
 import { pinching } from "./pinchZoom";
 import { haptic } from "./haptics";
 
@@ -122,8 +122,9 @@ function targetAt(x: number, y: number, d: DragPayload): DropTarget | null {
 
   if (d.kind === "resize" && d.start !== undefined) {
     const startMinute = Math.round((d.start - dayStart) / 60_000);
-    // The end moves as far as the pointer does, wherever on the edge it was grabbed.
-    const endMinute = Math.min(24 * 60, Math.max(startMinute + MIN_BLOCK_MINUTES, snapMinutes(minute - d.grab + d.minutes)));
+    // The end moves as far as the pointer does, wherever on the edge it was grabbed, in
+    // five-minute steps, down to the shortest block.
+    const endMinute = Math.min(24 * 60, Math.max(startMinute + MIN_BLOCK_MINUTES, snapMinutes(minute - d.grab + d.minutes, RESIZE_SNAP_MINUTES)));
     return { kind: "grid", dayStart, startMinute, endMinute };
   }
   const latest = Math.max(min, max - Math.min(d.minutes, 60));
