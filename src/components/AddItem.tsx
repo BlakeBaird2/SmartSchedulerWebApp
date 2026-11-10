@@ -4,10 +4,11 @@ import { useState } from "react";
 import { addDays, addMinutes, endOfWeek, format, isSameDay, startOfDay } from "date-fns";
 import { PRIORITIES, type Priority } from "@/lib/types";
 import { PRIORITY_LABEL } from "@/lib/todos";
-import { clock, LENGTH_CHOICES, lengthLabel } from "@/lib/ui";
+import { clock } from "@/lib/ui";
 import { useApp } from "./context";
 import { SsIcon } from "./SsIcon";
 import { SegmentedControl } from "./ui";
+import { LengthField, WhenFields } from "./TimeField";
 
 /*
  * Adding something of the student's own, from the Add button or by clicking
@@ -38,11 +39,11 @@ function nextHalfHour(now: Date): Date {
   return addMinutes(d, 30 - (d.getMinutes() % 30));
 }
 
-/** A time picked on the calendar, with its length still adjustable. */
+/** A time picked on the calendar, still adjustable on the form. */
 export interface PickedTime {
   start: Date;
   minutes: number;
-  onMinutes: (minutes: number) => void;
+  onChange: (start: Date, minutes: number) => void;
 }
 
 export function AddKindToggle({ kind, onKind }: { kind: AddKind; onKind: (k: AddKind) => void }) {
@@ -73,7 +74,10 @@ export function AddItemForm({ kind, picked, onDone }: { kind: AddKind; picked?: 
     !pickedDay || isSameDay(pickedDay, now) ? "today" : isSameDay(pickedDay, addDays(now, 1)) ? "tomorrow" : "date",
   );
   const [error, setError] = useState<string | null>(null);
-  const lengths = (m: number) => (LENGTH_CHOICES.includes(m) ? LENGTH_CHOICES : [...LENGTH_CHOICES, m].sort((a, b) => a - b));
+  // Without a time from the calendar, the form keeps its own: an event's, and a task's estimate.
+  const [own, setOwn] = useState({ start: firstStart, minutes: 60 });
+  const [estimate, setEstimate] = useState(30);
+  const when = picked ?? { ...own, onChange: (start: Date, minutes: number) => setOwn({ start, minutes }) };
   const past = picked ? picked.start.getTime() + picked.minutes * 60_000 <= now.getTime() : false;
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -82,21 +86,10 @@ export function AddItemForm({ kind, picked, onDone }: { kind: AddKind; picked?: 
     const title = String(data.get("title") ?? "").trim().slice(0, 140);
     if (!title) return;
     if (kind === "event") {
-      let start: Date;
-      let end: Date;
-      if (picked) {
-        start = picked.start;
-        end = addMinutes(start, picked.minutes);
-      } else {
-        const date = String(data.get("date") ?? "");
-        start = new Date(`${date}T${data.get("start") || "09:00"}`);
-        end = new Date(`${date}T${data.get("end") || "10:00"}`);
-        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return setError("Pick a date and times.");
-        if (end <= start) return setError("It has to end after it starts.");
-      }
-      addEvent(title, start, end);
+      if (when.minutes <= 0) return setError("It has to end after it starts.");
+      addEvent(title, when.start, addMinutes(when.start, when.minutes));
     } else {
-      const minutes = picked ? picked.minutes : Number(data.get("minutes"));
+      const minutes = picked ? picked.minutes : estimate;
       const dueAt = dueAtFrom(due, String(data.get("dueDate") ?? ""), String(data.get("dueTime") ?? ""), now);
       addTask(
         { title, courseId: String(data.get("course") ?? "") || null, dueAt, minutes, priority: String(data.get("priority")) as Priority },
@@ -106,28 +99,7 @@ export function AddItemForm({ kind, picked, onDone }: { kind: AddKind; picked?: 
     onDone();
   };
 
-  const lengthSelect = (
-    <label>
-      <span>{kind === "event" ? "How long" : "Estimate"}</span>
-      {picked ? (
-        <select name="minutes" value={picked.minutes} onChange={(e) => picked.onMinutes(Number(e.target.value))}>
-          {lengths(picked.minutes).map((m) => (
-            <option key={m} value={m}>
-              {lengthLabel(m)}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <select name="minutes" defaultValue="30">
-          {LENGTH_CHOICES.map((m) => (
-            <option key={m} value={m}>
-              {lengthLabel(m)}
-            </option>
-          ))}
-        </select>
-      )}
-    </label>
-  );
+  const whenFields = <WhenFields start={when.start} minutes={when.minutes} onChange={when.onChange} />;
 
   return (
     <form className="ss-add-form" onSubmit={submit} onChange={() => setError(null)}>
@@ -144,28 +116,11 @@ export function AddItemForm({ kind, picked, onDone }: { kind: AddKind; picked?: 
       </label>
 
       {kind === "event" ? (
-        picked ? (
-          lengthSelect
-        ) : (
-          <>
-            <label>
-              <span>Date</span>
-              <input name="date" type="date" required defaultValue={format(firstStart, "yyyy-MM-dd")} />
-            </label>
-            <div className="ss-form-row">
-              <label>
-                <span>Starts</span>
-                <input name="start" type="time" required defaultValue={format(firstStart, "HH:mm")} />
-              </label>
-              <label>
-                <span>Ends</span>
-                <input name="end" type="time" required defaultValue={format(addMinutes(firstStart, 60), "HH:mm")} />
-              </label>
-            </div>
-          </>
-        )
+        whenFields
       ) : (
         <>
+          {/* A task added on the calendar takes that time; its length is how long it needs. */}
+          {picked ? whenFields : null}
           <div className="ss-form-row">
             <label>
               <span>Class or area</span>
@@ -204,7 +159,12 @@ export function AddItemForm({ kind, picked, onDone }: { kind: AddKind; picked?: 
             </div>
           ) : null}
           <div className="ss-form-row">
-            {lengthSelect}
+            {picked ? null : (
+              <label>
+                <span>Estimate</span>
+                <LengthField label="Estimate" className="" value={estimate} onChange={setEstimate} />
+              </label>
+            )}
             <label>
               <span>Priority</span>
               <select name="priority" defaultValue="medium">

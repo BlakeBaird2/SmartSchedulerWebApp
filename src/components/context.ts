@@ -56,8 +56,8 @@ export interface AppContextValue {
   setTaskMeta: (taskId: string, patch: { priority?: Priority | null }) => void;
   /** Set how long a task needs (null goes back to the default for its kind). */
   setEstimate: (taskId: string, minutes: number | null, source?: EstimateSource) => void;
-  /** Put a task on the calendar at `start`, for as long as it's expected to take. */
-  scheduleTask: (task: Task, start: Date) => void;
+  /** Put a task on the calendar at `start`, for as long as it's expected to take (or `minutes`). */
+  scheduleTask: (task: Task, start: Date, minutes?: number) => void;
   /** Add a task of the student's own; with `at`, it's also scheduled then for its length. */
   addTask: (task: NewTask, at?: Date) => void;
   /** Add an event of the student's own: time taken on the calendar, with no due date or work behind it. */
@@ -73,6 +73,10 @@ export interface AppContextValue {
   resetEventTime: (eventId: string) => void;
   /** Change when scheduled time ends. */
   resizeScheduled: (blockId: string, end: Date) => void;
+  /** Set exactly when scheduled time starts and ends (typed in, as in Google Calendar). */
+  retimeScheduled: (blockId: string, start: Date, end: Date) => void;
+  /** The same for an event from a calendar or a weekly time, in Schedule Smart only. */
+  retimeEvent: (eventId: string, start: Date, end: Date) => void;
   /** Take scheduled time off the calendar; its work goes back on the to-do list. */
   unschedule: (blockId: string) => void;
   /** Answer "put this unfinished work back on the to-do list?" for these tasks. */

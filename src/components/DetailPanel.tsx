@@ -1,25 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { addDays, format, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { ArrowLeft, ArrowRight, CalendarClock, Check, CircleAlert, Clock3, ExternalLink, MapPin, Pencil, Trash, Undo2, X } from "lucide-react";
 import { PROVIDER_LABEL } from "@/lib/feeds/url";
 import { parseWeeklyId } from "@/lib/model";
 import { daysLabel, meetingKey, meetingPatterns } from "@/lib/meetings";
 import { PRIORITIES, type CalEvent, type ScheduledBlock, type Task } from "@/lib/types";
-import { approxDuration, clock, clockRange, dayKey, dueDate, duration, relativeDue } from "@/lib/ui";
+import { approxDuration, clock, clockRange, dueDate, duration, relativeDue } from "@/lib/ui";
 import { PRIORITY_LABEL, todoState, urgencyColor } from "@/lib/todos";
 import { EVENT_COLORS, repeats, seriesKey } from "@/lib/eventColors";
 import { deleteEvent } from "@/lib/deleted";
-import { PLAN_DAYS } from "@/lib/schedule";
 import { courseStyle, useApp, type Selection } from "./context";
 import { DoneToggle } from "./TaskRow";
 import { useTodos } from "./PlannerPanel";
-import { Button, buttonClass, ClassChip, ColorSwatches, Dialog, Field, SectionLabel, TextButton, TypeChip } from "./ui";
+import { Button, buttonClass, ClassChip, ColorSwatches, Dialog, SectionLabel, TextButton, TypeChip } from "./ui";
 import { cloudAvailable } from "./cloud";
 import { ClassEditForm } from "./ClassSummary";
 import { AddItemForm, AddKindToggle, type AddKind } from "./AddItem";
 import { ClassTimeForm, useClassTimeActions, valuesFromBlock, valuesFromPattern } from "./ClassTimes";
+import { LengthField, WhenFields } from "./TimeField";
 
 export function DetailPanel({ selection, onClose }: { selection: NonNullable<Selection>; onClose: () => void }) {
   const { model } = useApp();
@@ -66,45 +66,36 @@ export function DetailPanel({ selection, onClose }: { selection: NonNullable<Sel
 }
 
 /**
- * Choose when to work on a task: a day and a start time. The same as dragging it
- * onto the calendar, for keyboards and anyone who'd rather type.
+ * Choose when to work on a task: a day, a start and an end, typed or picked as
+ * in Google Calendar. The same as dragging it onto the calendar, for keyboards
+ * and anyone who'd rather type. The end starts at the task's estimate.
  */
 function PickTime({ task, start, onDone }: { task: Task; start?: Date; onDone: () => void }) {
   const { scheduleTask, now } = useApp();
-  const today = startOfDay(now);
-  const days = Array.from({ length: PLAN_DAYS }, (_, i) => addDays(today, i));
   // Start from the scheduled time, or the next whole hour.
-  const initial = start ?? new Date(Math.ceil((now.getTime() + 1) / 3_600_000) * 3_600_000);
-  const [day, setDay] = useState(dayKey(initial < addDays(today, PLAN_DAYS) ? initial : today));
-  const [time, setTime] = useState(format(initial, "HH:mm"));
+  const [at, setAt] = useState(start ?? new Date(Math.ceil((now.getTime() + 1) / 3_600_000) * 3_600_000));
+  const [minutes, setMinutes] = useState(task.estimate);
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
-    const [h, m] = time.split(":").map(Number);
-    const at = days.find((d) => dayKey(d) === day) ?? today;
-    const when = new Date(at);
-    when.setHours(h, m, 0, 0);
-    scheduleTask(task, when);
+    scheduleTask(task, at, minutes);
     onDone();
   };
 
   return (
     <form onSubmit={save} className="mt-2 rounded-xl border border-line bg-surface-2/60 p-3 space-y-3" aria-label={`Pick a time for ${task.title}`}>
-      <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
-        <Field label="Day">
-          <select className="input" value={day} onChange={(e) => setDay(e.target.value)}>
-            {days.map((d, i) => (
-              <option key={dayKey(d)} value={dayKey(d)}>
-                {i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(d, "EEE, MMM d")}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Start">
-          <input className="input" type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} required />
-        </Field>
-      </div>
-      <p className="text-xs text-muted">Takes {approxDuration(task.estimate)}. It goes on your calendar and comes off your to-do list.</p>
+      <WhenFields
+        start={at}
+        minutes={minutes}
+        minDate={now}
+        onChange={(s, m) => {
+          setAt(s);
+          setMinutes(m);
+        }}
+      />
+      <p className="text-xs text-muted">
+        {minutes === task.estimate ? `Takes about ${approxDuration(task.estimate).replace("~", "")}. ` : ""}It goes on your calendar and comes off your to-do list.
+      </p>
       <div className="flex justify-end gap-2">
         <Button size="sm" onClick={onDone}>
           Cancel
@@ -117,15 +108,49 @@ function PickTime({ task, start, onDone }: { task: Task; start?: Date; onDone: (
   );
 }
 
+/** Change when time already on the calendar starts and ends. */
+function RetimeBlock({ block, onDone }: { block: ScheduledBlock; onDone: () => void }) {
+  const { retimeScheduled } = useApp();
+  const [at, setAt] = useState(new Date(block.start));
+  const [minutes, setMinutes] = useState(Math.round((Date.parse(block.end) - Date.parse(block.start)) / 60_000));
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        retimeScheduled(block.id, at, new Date(at.getTime() + minutes * 60_000));
+        onDone();
+      }}
+      className="mt-1 mb-2 rounded-xl border border-line bg-surface-2/60 p-3 space-y-3"
+      aria-label="Change the time"
+    >
+      <WhenFields
+        start={at}
+        minutes={minutes}
+        onChange={(s, m) => {
+          setAt(s);
+          setMinutes(m);
+        }}
+      />
+      <div className="flex justify-end gap-2">
+        <Button size="sm" onClick={onDone}>
+          Cancel
+        </Button>
+        <Button size="sm" variant="primary" type="submit">
+          Save
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function Label({ children }: { children: React.ReactNode }) {
   return <SectionLabel className="mb-1">{children}</SectionLabel>;
 }
 
-const ESTIMATES = [15, 30, 45, 60, 90, 120, 180, 240, 360];
-
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const { model, index, now, changes, ws, setEstimate, setTaskMeta, update, setView, setCalCursor, toggleDone, select, completeTask, toast, unschedule, answerUnfinished } = useApp();
   const [picking, setPicking] = useState(false);
+  const [retiming, setRetiming] = useState<string | null>(null);
   const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
   const feed = task.feedId ? model.feedById.get(task.feedId) : undefined;
   const d = dueDate(task);
@@ -140,7 +165,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const risk = ahead ? undefined : index.atRisk.get(task.id);
   const history = useMemo(() => changes.filter((c) => c.taskId === task.id).slice(0, 6), [changes, task.id]);
   const typeDefault = ws.prefs.estimates[task.type];
-  const options = [...new Set([...ESTIMATES, task.estimate])].sort((a, b) => a - b);
 
   const openDay = (date: Date) => {
     setCalCursor(date);
@@ -195,25 +219,17 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </dd>
 
           <dt className="text-muted">
-            <label htmlFor={`time-${task.id}`}>Time needed</label>
+            Time needed
           </dt>
-          <dd>
-            <select
-              id={`time-${task.id}`}
+          <dd id={`time-${task.id}`}>
+            {/* Pick a usual length, or type any ("50", "1h 20m"). */}
+            <LengthField
+              label="Time needed"
               className="input input-sm"
               value={task.estimate}
-              onChange={(e) => {
-                const m = Number(e.target.value);
-                setEstimate(task.id, m === typeDefault ? null : m);
-              }}
-            >
-              {options.map((m) => (
-                <option key={m} value={m}>
-                  {duration(m)}
-                  {m === typeDefault ? " (usual)" : ""}
-                </option>
-              ))}
-            </select>
+              usual={typeDefault}
+              onChange={(m) => setEstimate(task.id, m === typeDefault ? null : m)}
+            />
           </dd>
 
           <dt className="text-muted">
@@ -248,6 +264,12 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   const start = new Date(b.start);
                   const end = new Date(b.end);
                   const past = end.getTime() <= now.getTime();
+                  if (retiming === b.id)
+                    return (
+                      <li key={b.id}>
+                        <RetimeBlock block={b} onDone={() => setRetiming(null)} />
+                      </li>
+                    );
                   return (
                     <li key={b.id} className={`flex items-stretch rounded-lg border border-ok/30 bg-ok-soft text-sm ${past ? "opacity-60" : ""}`}>
                       <button
@@ -262,6 +284,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                         <span className="text-xs text-muted tabular-nums">{duration((end.getTime() - start.getTime()) / 60_000)}</span>
                         <ArrowRight size={13} className="text-muted" aria-label="Show it on the calendar" />
                       </button>
+                      <Button iconOnly size="sm" variant="quiet" icon={Pencil} label={`Change the time of ${format(start, "EEE h:mm a")}`} onClick={() => setRetiming(b.id)} />
                       <Button iconOnly size="sm" variant="quiet" icon={X} label={`Take ${format(start, "EEE h:mm a")} off the calendar`} onClick={() => unschedule(b.id)} />
                     </li>
                   );
@@ -385,7 +408,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void }) {
-  const { model, ws, now, setView, update, openClassTimes, resetEventTime, toast, setSettingsPanel } = useApp();
+  const { model, ws, now, setView, update, openClassTimes, resetEventTime, retimeEvent, toast, setSettingsPanel } = useApp();
   const course = event.courseId ? model.courseById.get(event.courseId) : undefined;
   const feed = event.feedId ? model.feedById.get(event.feedId) : undefined;
   const start = new Date(event.start);
@@ -449,19 +472,27 @@ function EventDetail({ event, onClose }: { event: CalEvent; onClose: () => void 
       <div className="p-4 space-y-5 overflow-y-auto">
         <div>
           <Label>When</Label>
-          <div className="text-[0.9375rem] font-medium">
-            {event.allDay ? format(start, "EEEE, MMMM d") : `${format(start, "EEEE, MMMM d")} · ${clockRange(start, end)}`}
-          </div>
-          {event.allDay ? <div className="text-xs text-muted mt-0.5">All day</div> : null}
+          {event.allDay ? (
+            <>
+              <div className="text-[0.9375rem] font-medium">{format(start, "EEEE, MMMM d")}</div>
+              <div className="text-xs text-muted mt-0.5">All day</div>
+            </>
+          ) : (
+            <WhenFields
+              start={start}
+              minutes={Math.round((end.getTime() - start.getTime()) / 60_000)}
+              onChange={(s, m) => retimeEvent(event.id, s, new Date(s.getTime() + m * 60_000))}
+            />
+          )}
           {event.original ? (
             // Moved by dragging: only here, since calendars can't be changed from Schedule Smart.
             <p className="mt-1.5 text-xs text-muted">
-              Moved here in Schedule Smart. {feed ? `${feed.name} still has it` : "It usually is"}{" "}
+              Changed here in Schedule Smart. {feed ? `${feed.name} still has it` : "It usually is"}{" "}
               {format(new Date(event.original.start), "EEE")} {clockRange(new Date(event.original.start), new Date(event.original.end))}.{" "}
               <TextButton onClick={() => resetEventTime(event.id)}>Put it back</TextButton>
             </p>
           ) : !event.allDay ? (
-            <p className="mt-1.5 text-xs text-muted">Drag it on the calendar to move it.{feed ? ` ${feed.name} keeps its own time.` : ""}</p>
+            <p className="mt-2 text-xs text-muted">Type a time or pick one, or drag it on the calendar.{feed ? ` ${feed.name} keeps its own time.` : ""}</p>
           ) : null}
         </div>
         {event.location ? (
@@ -725,7 +756,7 @@ function SlotDetail({ startMs, minutes, onClose }: { startMs: number; minutes: n
           <AddKindToggle kind={kind} onKind={setKind} />
           <AddItemForm
             kind={kind}
-            picked={{ start, minutes, onMinutes: (m) => select({ kind: "slot", startMs, minutes: m }) }}
+            picked={{ start, minutes, onChange: (s, m) => select({ kind: "slot", startMs: s.getTime(), minutes: m }) }}
             onDone={onClose}
           />
         </div>
@@ -773,7 +804,7 @@ function SlotDetail({ startMs, minutes, onClose }: { startMs: number; minutes: n
  * delete it. Drag it on the calendar to move it or change its length.
  */
 function BlockDetail({ blockId, onClose }: { blockId: string; onClose: () => void }) {
-  const { ws, update, toast } = useApp();
+  const { ws, update, toast, retimeScheduled } = useApp();
   const block = ws.blocks.find((b) => b.id === blockId);
   const [title, setTitle] = useState(block?.title ?? "");
   if (!block) return null;
@@ -814,10 +845,12 @@ function BlockDetail({ blockId, onClose }: { blockId: string; onClose: () => voi
         </div>
         <div>
           <Label>When</Label>
-          <div className="text-[0.9375rem] font-medium">
-            {format(start, "EEEE, MMMM d")} · {clockRange(start, end)}
-          </div>
-          <p className="mt-1.5 text-xs text-muted">Drag it on the calendar to move it, or drag its bottom edge to change its length.</p>
+          <WhenFields
+            start={start}
+            minutes={Math.round((end.getTime() - start.getTime()) / 60_000)}
+            onChange={(s, m) => retimeScheduled(blockId, s, new Date(s.getTime() + m * 60_000))}
+          />
+          <p className="mt-2 text-xs text-muted">Type a time or pick one, or drag it on the calendar.</p>
         </div>
         <div>
           <Label>Colour</Label>

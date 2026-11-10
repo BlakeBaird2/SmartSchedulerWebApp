@@ -10,7 +10,7 @@ import { feedIdFor, PROVIDER_LABEL } from "@/lib/feeds/url";
 import { decodeSetup, nextPersonalColor, pastDueIds, randomId, sanitizeWorkspace } from "@/lib/workspace";
 import { type CalEvent, type Change, type EstimateSource, type FeedResult, type FeedRole, type Priority, type ScheduledBlock, type Snapshot, type Task, type Workspace } from "@/lib/types";
 import { format } from "date-fns";
-import { clock, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
+import { clock, clockRange, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
 import type { TodoScope, TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type View } from "./context";
@@ -629,8 +629,8 @@ export function App() {
   const when = (d: Date) => `${format(d, "EEE")} ${clock(d)}`;
 
   const scheduleTask = useCallback(
-    (task: Task, start: Date) => {
-      const block = makeBlock(randomId(), task, start, task.estimate, new Date());
+    (task: Task, start: Date, minutes?: number) => {
+      const block = makeBlock(randomId(), task, start, minutes ?? task.estimate, new Date());
       if (Date.parse(block.end) <= Date.now()) {
         toast("That time has already passed. Pick a time from now on.");
         return;
@@ -729,6 +729,22 @@ export function App() {
     [changeBlock, blockTitle],
   );
 
+  const retimeScheduled = useCallback(
+    (blockId: string, start: Date, end: Date) => {
+      const before = readWorkspace().blocks.find((b) => b.id === blockId);
+      if (!before || end.getTime() <= start.getTime()) return;
+      if (Date.parse(before.start) === start.getTime() && Date.parse(before.end) === end.getTime()) return;
+      if (end.getTime() <= Date.now() && Date.parse(before.end) > Date.now()) {
+        toast("That time has already passed. Pick a time from now on.");
+        return;
+      }
+      const after: ScheduledBlock = { ...before, start: start.toISOString(), end: end.toISOString(), updatedAt: new Date().toISOString() };
+      if (before.taskId) trackEvent("task_planned", { taskId: before.taskId, at: after.start });
+      changeBlock(before, after, `${blockTitle(before)}: ${format(start, "EEE")} ${clockRange(start, end)}`);
+    },
+    [changeBlock, toast, blockTitle],
+  );
+
   // Events from calendars can't be changed there, so a move lives here (eventMoves.ts).
   const placeEvent = useCallback(
     (eventId: string, start: Date, end: Date, message: (e: CalEvent) => string) => {
@@ -760,6 +776,12 @@ export function App() {
       placeEvent(eventId, new Date(event.start), end, (e) => `${e.title}: now until ${clock(end)}${source(e) ? ", here only" : ""}.`);
     },
     [model.events, placeEvent, source],
+  );
+
+  const retimeEvent = useCallback(
+    (eventId: string, start: Date, end: Date) =>
+      placeEvent(eventId, start, end, (e) => `${e.title}: ${format(start, "EEE")} ${clockRange(start, end)}${source(e) ? ", here only" : ""}.`),
+    [placeEvent, source],
   );
 
   const resetEventTime = useCallback(
@@ -857,6 +879,8 @@ export function App() {
     resizeEvent,
     resetEventTime,
     resizeScheduled,
+    retimeScheduled,
+    retimeEvent,
     unschedule,
     answerUnfinished,
     addFeed,
