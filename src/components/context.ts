@@ -6,11 +6,7 @@ import type { Plan } from "@/lib/planner";
 import type { PlanIndex } from "@/lib/schedule";
 import type { Change, EstimateSource, FeedResult, FeedRole, Priority, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
-import type { TaskListConfig } from "@/lib/taskLists";
 import type { TodoScope, TodoSort } from "@/lib/todos";
-
-/** Tasks as one list, or as several side by side. */
-export type TasksLayout = "list" | "split";
 
 /** The two main views of the prototype, plus Settings and Help from the profile menu. */
 export type View = "calendar" | "tasks" | "due" | "settings" | "help";
@@ -109,15 +105,6 @@ export interface AppContextValue {
   /** The to-do list's order: most urgent first, or shortest first. */
   todoSort: TodoSort;
   setTodoSort: (sort: TodoSort) => void;
-  /** How many days ahead the planner looks (today counts as the first), or null for everything. */
-  todoDays: number | null;
-  setTodoDays: (days: number | null) => void;
-  /** Tasks as one list, or as several side by side. */
-  tasksLayout: TasksLayout;
-  setTasksLayout: (layout: TasksLayout) => void;
-  /** The lists split view shows, each with its own filters. */
-  taskLists: TaskListConfig[];
-  setTaskLists: (lists: TaskListConfig[]) => void;
   setCalSidebar: (open: boolean) => void;
   /** Whether the planner's filters (order, class, how many) are open or folded to one line. */
   plannerFilters: boolean;
