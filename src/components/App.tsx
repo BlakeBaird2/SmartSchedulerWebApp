@@ -12,8 +12,9 @@ import { type CalEvent, type Change, type EstimateSource, type FeedResult, type 
 import { format } from "date-fns";
 import { clock, clockRange, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
+import { DEFAULT_LISTS, parseLists, type TaskListConfig } from "@/lib/taskLists";
 import { DEFAULT_TODO_DAYS, TODO_WINDOWS, type TodoScope, type TodoSort } from "@/lib/todos";
-import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type View } from "./context";
+import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type TasksLayout, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Notices, Topbar } from "./Topbar";
 import { Onboarding, startDemo } from "./Onboarding";
@@ -64,6 +65,10 @@ interface UiPrefs {
   todoSort: TodoSort;
   /** How many days ahead the planner looks, or null for everything. */
   todoDays: number | null;
+  /** Tasks as one list, or as several side by side. */
+  tasksLayout: TasksLayout;
+  /** The lists split view shows, each with its own filters. */
+  taskLists: TaskListConfig[];
 }
 
 // The Due dates page is off for now (DueDatesPage.tsx is kept for when it comes back).
@@ -93,6 +98,8 @@ const DEFAULT_UI: UiPrefs = {
   todoScope: "all",
   todoSort: "due",
   todoDays: DEFAULT_TODO_DAYS,
+  tasksLayout: "list",
+  taskLists: DEFAULT_LISTS,
 };
 
 function parseUi(raw: string | null): UiPrefs {
@@ -121,6 +128,8 @@ function parseUi(raw: string | null): UiPrefs {
     todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
     // (A sort by points, from older versions, falls back to the due date.)
     todoSort: p.todoSort === "duration" ? p.todoSort : "due",
+    tasksLayout: p.tasksLayout === "split" ? "split" : "list",
+    taskLists: parseLists(p.taskLists),
     todoDays: p.todoDays === null || TODO_WINDOWS.includes(p.todoDays as number) ? (p.todoDays as number | null) : DEFAULT_TODO_DAYS,
   };
 }
@@ -912,6 +921,10 @@ export function App() {
     setTodoSort: (sort: TodoSort) => writeUi({ todoSort: sort }),
     todoDays: ui.todoDays,
     setTodoDays: (days: number | null) => writeUi({ todoDays: days }),
+    tasksLayout: ui.tasksLayout,
+    setTasksLayout: (layout: TasksLayout) => writeUi({ tasksLayout: layout }),
+    taskLists: ui.taskLists,
+    setTaskLists: (lists: TaskListConfig[]) => writeUi({ taskLists: lists }),
     calCursor,
     setCalCursor,
     filters: ui.filters,
