@@ -161,6 +161,9 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Always keep room for the scrollbar, so a page that scrolls sits exactly
+     where one that doesn't does (switching settings sections never shifts). */
+  scrollbar-gutter: stable;
 }
 
 .ss-topbar {
