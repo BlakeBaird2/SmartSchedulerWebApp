@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Columns2, LayoutList } from "lucide-react";
+import { Check, ChevronDown, ChevronsDownUp, ChevronsUpDown, Columns2, LayoutList } from "lucide-react";
 import { flushSync } from "react-dom";
 import { differenceInCalendarDays, format, startOfDay } from "date-fns";
 import { byUrgency, classRank, isSchoolWork } from "@/lib/todos";
 import type { ScheduledBlock, Task } from "@/lib/types";
 import { clockRange, dueLabel, duration, plural } from "@/lib/ui";
 import { MAX_LISTS, newList } from "@/lib/taskLists";
-import { useApp } from "./context";
+import { useApp, useIsPhone } from "./context";
 import { SsIcon } from "./SsIcon";
 import { SplitLists } from "./TaskLists";
 
@@ -153,6 +153,11 @@ export function TasksPage() {
   const split = tasksLayout === "split";
   // A list just added, so its name can be typed straight away.
   const [added, setAdded] = useState<string | null>(null);
+  // On a phone the lists stack and fold to their headers: all folded each time Tasks opens, until opened.
+  const phone = useIsPhone();
+  const [openLists, setOpenLists] = useState<string[]>([]);
+  const allOpen = taskLists.every((l) => openLists.includes(l.id));
+  const toggleList = (id: string) => setOpenLists((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
   const { rows, doneAt } = useTaskRows();
   const tick = useTick();
   const areas = useAreas();
@@ -177,6 +182,8 @@ export function TasksPage() {
     const id = `l${Date.now().toString(36)}`;
     setTaskLists([...taskLists, newList(taskLists, id)]);
     setAdded(id);
+    // A new list opens, so its name and filters are there to set.
+    setOpenLists((o) => [...o, id]);
   };
 
   return (
@@ -226,6 +233,12 @@ export function TasksPage() {
             <span className="ss-island-note">
               {taskLists.length} of {MAX_LISTS} lists
             </span>
+            {phone ? (
+              <button type="button" className="ss-island-fold" onClick={() => setOpenLists(allOpen ? [] : taskLists.map((l) => l.id))} aria-label={allOpen ? "Collapse all lists" : "Expand all lists"}>
+                {allOpen ? <ChevronsDownUp size={16} aria-hidden /> : <ChevronsUpDown size={16} aria-hidden />}
+                {allOpen ? "Collapse all" : "Expand all"}
+              </button>
+            ) : null}
           </>
         ) : (
           <>
@@ -260,7 +273,7 @@ export function TasksPage() {
       </div>
 
       {split ? (
-        <SplitLists rows={rows} doneAt={doneAt} search={q} showDone={showDone} onTick={tick} focus={added} />
+        <SplitLists rows={rows} doneAt={doneAt} search={q} showDone={showDone} onTick={tick} focus={added} open={phone ? openLists : null} onToggle={toggleList} />
       ) : (
       <div className="ss-plan-list">
         {open.length === 0 ? (

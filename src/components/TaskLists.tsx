@@ -88,6 +88,8 @@ export function SplitLists({
   showDone,
   onTick,
   focus,
+  open,
+  onToggle,
 }: {
   rows: Row[];
   doneAt: (t: Task) => number | null;
@@ -97,13 +99,16 @@ export function SplitLists({
   onTick: (t: Task) => void;
   /** A list just added, whose name gets the cursor. */
   focus: string | null;
+  /** On a phone, the lists open past their headers; null where lists don't fold (wider screens). */
+  open: string[] | null;
+  onToggle: (id: string) => void;
 }) {
   const { taskLists, setTaskLists } = useApp();
   const change = (id: string, patch: Partial<TaskListConfig>) => setTaskLists(taskLists.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   const remove = (id: string) => setTaskLists(taskLists.filter((l) => l.id !== id));
 
   return (
-    <div className="ss-lists" style={{ "--lists": taskLists.length } as React.CSSProperties}>
+    <div className="ss-lists" data-stacked={open ? true : undefined} style={{ "--lists": taskLists.length } as React.CSSProperties}>
       {taskLists.map((list, i) => (
         <ListColumn
           key={list.id}
@@ -115,6 +120,8 @@ export function SplitLists({
           showDone={showDone}
           onTick={onTick}
           autoFocus={focus === list.id}
+          collapsed={open ? !open.includes(list.id) : null}
+          onToggle={() => onToggle(list.id)}
           onChange={(patch) => change(list.id, patch)}
           onRemove={taskLists.length > 1 ? () => remove(list.id) : undefined}
         />
@@ -132,6 +139,8 @@ function ListColumn({
   showDone,
   onTick,
   autoFocus,
+  collapsed,
+  onToggle,
   onChange,
   onRemove,
 }: {
@@ -144,10 +153,14 @@ function ListColumn({
   showDone: boolean;
   onTick: (t: Task) => void;
   autoFocus: boolean;
+  /** Whether it's folded to its header, or null where lists don't fold. */
+  collapsed: boolean | null;
+  onToggle: () => void;
   onChange: (patch: Partial<TaskListConfig>) => void;
   onRemove?: () => void;
 }) {
   const { model, now, select } = useApp();
+  const bodyId = `list-${list.id}`;
   const areas = useAreas();
   const nameBox = useRef<HTMLInputElement>(null);
   // What's typed while the name is emptied out; the saved name otherwise.
@@ -178,7 +191,7 @@ function ListColumn({
   const icon = listIcon(list);
 
   return (
-    <section className="ss-list" style={{ "--list": color } as React.CSSProperties} aria-label={list.name || "List"}>
+    <section className="ss-list" data-collapsed={collapsed || undefined} style={{ "--list": color } as React.CSSProperties} aria-label={list.name || "List"}>
       <header className="ss-list-head">
         <div className="ss-list-title">
           <BadgePicker list={list} color={color} icon={icon} onChange={onChange} />
@@ -201,84 +214,102 @@ function ListColumn({
               if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
             }}
           />
-          <span className="ss-list-sub">
+          {/* On a phone, the line under the name opens and closes the list too: a bigger target than the arrow. */}
+          <span className="ss-list-sub" onClick={collapsed !== null ? onToggle : undefined} data-toggles={collapsed !== null || undefined}>
             <b>{open.length}</b> {list.show === "planned" ? "planned" : "to do"} · {list.days === null ? "any time" : `next ${list.days} days`}
           </span>
           </div>
-          {onRemove ? (
+          {/* Folded, a list is just its header: no remove button to hit by mistake. */}
+          {onRemove && !collapsed ? (
             <button type="button" className="ss-list-remove" onClick={onRemove} aria-label={`Remove the ${list.name} list`} title="Remove this list">
               <SsIcon name="x" size={16} />
             </button>
           ) : null}
+          {collapsed !== null ? (
+            <button
+              type="button"
+              className="ss-list-toggle"
+              aria-expanded={!collapsed}
+              aria-controls={bodyId}
+              aria-label={collapsed ? `Open ${list.name}` : `Close ${list.name}`}
+              onClick={onToggle}
+            >
+              <ChevronDown size={20} aria-hidden />
+            </button>
+          ) : null}
         </div>
-        <div className="ss-list-filters">
-          <div className="ss-list-seg" role="group" aria-label="Show">
-            {SHOWS.map((s) => (
-              <button key={s.id} type="button" aria-pressed={list.show === s.id} onClick={() => onChange({ show: s.id })}>
-                {s.label}
-              </button>
-            ))}
+        {collapsed ? null : (
+          <div className="ss-list-filters">
+            <div className="ss-list-seg" role="group" aria-label="Show">
+              {SHOWS.map((s) => (
+                <button key={s.id} type="button" aria-pressed={list.show === s.id} onClick={() => onChange({ show: s.id })}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="ss-list-pickers">
+              <ClassFilter areas={areas} shown={list.areas} onChange={(ids) => onChange({ areas: ids })} school allLabel="Everything" />
+              <label className="ss-list-days">
+                <SsIcon name="calendar" size={15} />
+                <select value={list.days ?? "any"} onChange={(e) => onChange({ days: e.target.value === "any" ? null : Number(e.target.value) })} aria-label="How many days ahead, counting today" title="How many days ahead, counting today">
+                  {LIST_WINDOWS.map((d) => (
+                    <option key={d ?? "any"} value={d ?? "any"}>
+                      {daysLabel(d)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={15} aria-hidden className="ss-filter-chevron" />
+              </label>
+            </div>
           </div>
-          <div className="ss-list-pickers">
-            <ClassFilter areas={areas} shown={list.areas} onChange={(ids) => onChange({ areas: ids })} school allLabel="Everything" />
-            <label className="ss-list-days">
-              <SsIcon name="calendar" size={15} />
-              <select value={list.days ?? "any"} onChange={(e) => onChange({ days: e.target.value === "any" ? null : Number(e.target.value) })} aria-label="How many days ahead, counting today" title="How many days ahead, counting today">
-                {LIST_WINDOWS.map((d) => (
-                  <option key={d ?? "any"} value={d ?? "any"}>
-                    {daysLabel(d)}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={15} aria-hidden className="ss-filter-chevron" />
-            </label>
-          </div>
-        </div>
+        )}
       </header>
 
-      <div className="ss-list-body">
-        {open.length === 0 ? (
-          <div className="ss-list-empty">
-            {search ? (
-              <p>Nothing here matches.</p>
-            ) : (
-              <>
-                <strong>{list.show === "planned" ? "Nothing planned" : "Nothing to do"}</strong>
-                <p>{lastDay ? `through ${format(lastDay, "EEE, MMM d")}. Nice.` : "Nice."}</p>
-              </>
-            )}
-          </div>
-        ) : null}
-        {groups.map((g) =>
-          g.rows.length ? (
-            <section key={g.key} className="ss-plan-group" data-missed={g.key === "missed" || undefined}>
-              {g.title ? (
-                <h2>
-                  {g.title}
-                  {g.sub ? <span>{g.sub}</span> : null}
-                </h2>
-              ) : null}
+      {collapsed ? null : (
+        <div className="ss-list-body" id={bodyId}>
+          {open.length === 0 ? (
+            <div className="ss-list-empty">
+              {search ? (
+                <p>Nothing here matches.</p>
+              ) : (
+                <>
+                  <strong>{list.show === "planned" ? "Nothing planned" : "Nothing to do"}</strong>
+                  <p>{lastDay ? `through ${format(lastDay, "EEE, MMM d")}. Nice.` : "Nice."}</p>
+                </>
+              )}
+            </div>
+          ) : null}
+          {groups.map((g) =>
+            g.rows.length ? (
+              <section key={g.key} className="ss-plan-group" data-missed={g.key === "missed" || undefined}>
+                {g.title ? (
+                  <h2>
+                    {g.title}
+                    {g.sub ? <span>{g.sub}</span> : null}
+                  </h2>
+                ) : null}
+                <ul>
+                  {g.rows.map((r) => (
+                    <TaskLine key={r.task.id} row={r} view={list.show} onTick={onTick} onOpen={() => select({ kind: "task", id: r.task.id })} compact scope={list.id} />
+                  ))}
+                </ul>
+              </section>
+            ) : null,
+          )}
+          {showDone && done.length ? (
+            <section className="ss-plan-group ss-plan-done">
+              <h2>
+                Done<span>{done.length}</span>
+              </h2>
               <ul>
-                {g.rows.map((r) => (
+                {done.map((r) => (
                   <TaskLine key={r.task.id} row={r} view={list.show} onTick={onTick} onOpen={() => select({ kind: "task", id: r.task.id })} compact scope={list.id} />
                 ))}
               </ul>
             </section>
-          ) : null,
-        )}
-        {showDone && done.length ? (
-          <section className="ss-plan-group ss-plan-done">
-            <h2>
-              Done<span>{done.length}</span>
-            </h2>
-            <ul>
-              {done.map((r) => (
-                <TaskLine key={r.task.id} row={r} view={list.show} onTick={onTick} onOpen={() => select({ kind: "task", id: r.task.id })} compact scope={list.id} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
