@@ -3629,6 +3629,85 @@ section.ss-due-page {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* A time or a length, typed or picked from a list, as in Google Calendar (TimeField.tsx). */
+.ss-combo {
+  position: relative;
+  min-width: 0;
+}
+.ss-combo-list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  max-height: 236px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--ss-line-2);
+  border-radius: 10px;
+  color: var(--ss-ink);
+  background: var(--ss-surface);
+  box-shadow: 0 12px 28px rgba(20, 20, 18, 0.16);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.ss-combo-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ss-combo-list li span {
+  color: var(--ss-muted);
+  font-weight: 400;
+}
+.ss-combo-list li:hover,
+.ss-combo-list li[data-active] {
+  background: var(--ss-chip);
+}
+.ss-combo-list li[aria-selected="true"] {
+  color: var(--ss-accent);
+  background: var(--ss-accent-soft);
+  font-weight: 700;
+}
+/* A day, then start – end on one row. */
+.ss-when {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ss-when label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ss-when label > span {
+  color: var(--ss-text-4);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.ss-when-times {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.ss-when-times .ss-when-dash {
+  flex: none;
+  padding-bottom: 10px;
+  color: var(--ss-muted);
+}
+.ss-add-form .ss-when-times .ss-when-dash {
+  padding-bottom: 13px;
+}
+
 .ss-add-error,
 .ss-add-note {
   margin: 0;
