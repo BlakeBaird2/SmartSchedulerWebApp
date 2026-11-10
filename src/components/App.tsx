@@ -266,6 +266,13 @@ export function App() {
   const changes = useMemo(() => parseChanges(changesRaw), [changesRaw]);
   const ui = useMemo(() => parseUi(uiRaw), [uiRaw]);
 
+  // Switching settings sections swaps only the section, so the menu beside it
+  // stays still; the page just goes back to the top, as a new page would.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [ui.settingsPanel]);
+
   // Each screen has its own address (/app?view=calendar), so the browser's Back
   // button works, a link can open a screen, and testing tools can tell screens apart.
   const firstView = useRef(true);
@@ -911,7 +918,7 @@ export function App() {
           {ui.view === "calendar" ? (
             <CalendarView />
           ) : (
-            <main className="ss-scroll" key={ui.view === "settings" ? `settings:${ui.settingsPanel}` : ui.view}>
+            <main className="ss-scroll" key={ui.view} ref={mainRef}>
               {ui.view === "tasks" ? <TasksPage /> : null}
               {ui.view === "due" ? <DueDatesPage /> : null}
               {ui.view === "settings" || ui.view === "help" ? (
