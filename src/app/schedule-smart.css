@@ -1051,6 +1051,98 @@
   font-size: 14px;
   text-align: center;
 }
+.ss-filters-body > .ss-filters-gap {
+  margin-top: 14px;
+}
+.ss-sort-tabs[data-four] {
+  grid-template-columns: repeat(4, 1fr);
+}
+/*
+ * The days the planner looks ahead, as a goal (PlannerPanel WindowCard): how
+ * much of the work due in them is planned, with a bar that fills, then turns
+ * green when it's all planned.
+ */
+.ss-window {
+  --fill: var(--ss-accent);
+  margin-top: 16px;
+  padding: 14px 16px 13px;
+  border: 1px solid var(--ss-line);
+  border-radius: 12px;
+  background: var(--ss-surface);
+}
+.ss-window[data-complete] {
+  --fill: var(--ss-success, #16a34a);
+}
+.ss-window-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+}
+.ss-window-head strong {
+  white-space: nowrap;
+}
+.ss-window-head strong {
+  color: var(--ss-ink);
+  font: 700 15px "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.01em;
+}
+.ss-window-head span {
+  color: var(--ss-faint);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ss-window-bar {
+  height: 8px;
+  margin: 10px 0 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ss-chip);
+}
+.ss-window-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--fill);
+  transition: width 0.4s ease;
+}
+.ss-window p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  color: var(--ss-text-4);
+  font-size: 13px;
+  font-weight: 600;
+}
+.ss-window p svg {
+  display: inline;
+  margin-right: 3px;
+  vertical-align: -2px;
+}
+.ss-window p b {
+  color: var(--ss-ink);
+}
+.ss-window[data-complete] p {
+  color: var(--fill);
+}
+.ss-window p em {
+  margin-left: auto;
+  color: var(--ss-faint);
+  font-style: normal;
+  font-weight: 600;
+}
+.ss-window-done strong {
+  display: block;
+  color: var(--ss-ink);
+  font-size: 15px;
+}
+.ss-window-done p {
+  margin: 6px auto 10px;
+  max-width: 280px;
+}
 
 /*
  * Each task is a card you can pick up anywhere: raised off the panel, with a

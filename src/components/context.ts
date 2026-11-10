@@ -105,6 +105,9 @@ export interface AppContextValue {
   /** The to-do list's order: most urgent first, or shortest first. */
   todoSort: TodoSort;
   setTodoSort: (sort: TodoSort) => void;
+  /** How many days ahead the planner looks (today counts as the first), or null for everything. */
+  todoDays: number | null;
+  setTodoDays: (days: number | null) => void;
   setCalSidebar: (open: boolean) => void;
   /** Whether the planner's filters (order, class, how many) are open or folded to one line. */
   plannerFilters: boolean;

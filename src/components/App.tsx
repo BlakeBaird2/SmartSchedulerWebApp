@@ -12,7 +12,7 @@ import { type CalEvent, type Change, type EstimateSource, type FeedResult, type 
 import { format } from "date-fns";
 import { clock, clockRange, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
-import type { TodoScope, TodoSort } from "@/lib/todos";
+import { DEFAULT_TODO_DAYS, TODO_WINDOWS, type TodoScope, type TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Notices, Topbar } from "./Topbar";
@@ -62,6 +62,8 @@ interface UiPrefs {
   todoScope: TodoScope;
   /** The to-do list's order: most urgent first, or shortest first. */
   todoSort: TodoSort;
+  /** How many days ahead the planner looks, or null for everything. */
+  todoDays: number | null;
 }
 
 // The Due dates page is off for now (DueDatesPage.tsx is kept for when it comes back).
@@ -90,6 +92,7 @@ const DEFAULT_UI: UiPrefs = {
   plannerFiltersPhone: false,
   todoScope: "all",
   todoSort: "due",
+  todoDays: DEFAULT_TODO_DAYS,
 };
 
 function parseUi(raw: string | null): UiPrefs {
@@ -118,6 +121,7 @@ function parseUi(raw: string | null): UiPrefs {
     todoScope: p.todoScope === "school" || p.todoScope === "personal" ? p.todoScope : "all",
     // (A sort by points, from older versions, falls back to the due date.)
     todoSort: p.todoSort === "duration" ? p.todoSort : "due",
+    todoDays: p.todoDays === null || TODO_WINDOWS.includes(p.todoDays as number) ? (p.todoDays as number | null) : DEFAULT_TODO_DAYS,
   };
 }
 
@@ -906,6 +910,8 @@ export function App() {
     setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
     todoSort: ui.todoSort,
     setTodoSort: (sort: TodoSort) => writeUi({ todoSort: sort }),
+    todoDays: ui.todoDays,
+    setTodoDays: (days: number | null) => writeUi({ todoDays: days }),
     calCursor,
     setCalCursor,
     filters: ui.filters,
