@@ -165,6 +165,12 @@
      where one that doesn't does (switching settings sections never shifts). */
   scrollbar-gutter: stable;
 }
+/* Browsers without scrollbar-gutter (older Safari) keep the track showing instead. */
+@supports not (scrollbar-gutter: stable) {
+  .ss-scroll {
+    overflow-y: scroll;
+  }
+}
 
 .ss-topbar {
   flex: none;
