@@ -27,7 +27,7 @@ import { useDaySwipe } from "./daySwipe";
 import { readHourPx, usePinchZoom } from "./pinchZoom";
 import { DragGhost } from "./DragGhost";
 import { PlannerPanel } from "./PlannerPanel";
-import { beginPlanDrag, dragSourceRef, RESIZE_HOLD_MS, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
+import { beginPlanDrag, blockBox, dragSourceRef, drawnMs, RESIZE_HOLD_MS, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
 const WEEK = { weekStartsOn: 1 } as const;
@@ -433,7 +433,8 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
           </div>
           {columns.map((c) => {
             // Overlaps as in Google Calendar: columns when they start close together, otherwise the later one on top.
-            const placed = layoutStack(c.items, (i) => i.start, (i) => i.end, Math.ceil(SIDE_BY_SIDE_PX / ppm) * MIN);
+            // A short block counts for as long as it looks, so one drawn into the next sits beside it, not over it.
+            const placed = layoutStack(c.items, (i) => i.start, (i) => i.start + drawnMs(i.end - i.start, ppm), Math.ceil(SIDE_BY_SIDE_PX / ppm) * MIN);
             const preview = drag?.target?.kind === "grid" && drag.target.dayStart === c.from ? drag.target : null;
             const dayEnd = addDays(c.day, 1).getTime();
             const shadeFrom =
@@ -490,8 +491,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
                       );
                     })}
                     {placed.map(({ item, left, leftPx, width, widthPx, z }) => {
-                      const top = y(item.start, c.from) + 3;
-                      const h = Math.max(16, y(item.end, c.from) - y(item.start, c.from) - 6);
+                      const { top, height: h } = blockBox(y(item.start, c.from), y(item.end, c.from) - y(item.start, c.from));
                       // 5px in from the column's edges (where a dragged block lands too, see slotRect); where
                       // items meet, their page-coloured borders keep them apart.
                       const inL = left < 0.001 ? 5 : 0;
@@ -543,7 +543,9 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
                       <div
                         className="ss-draft"
                         aria-hidden
-                        style={{ top: y(slot.startMs, c.from) + 3, height: Math.max(16, slot.minutes * ppm - 6) }}
+                        data-compact={slot.minutes * ppm < 42 || undefined}
+                        data-tiny={slot.minutes * ppm < 22 || undefined}
+                        style={blockBox(y(slot.startMs, c.from), slot.minutes * ppm)}
                       >
                         <b>(No title)</b>
                         <span>{shortRange(new Date(slot.startMs), new Date(slot.startMs + slot.minutes * MIN))}</span>
@@ -642,6 +644,7 @@ function GridEvent({
       className={`ss-event ss-${kind} ss-movable ${e.busy ? "" : "ss-free"}`}
       data-custom={custom ? true : undefined}
       data-compact={h < 40 || undefined}
+      data-tiny={h < 20 || undefined}
       data-past={past || undefined}
       data-picked={dragging || undefined}
       data-moved={e.original ? true : undefined}
@@ -676,7 +679,8 @@ function GridEvent({
     >
       <strong>{title}</strong>
       {compact ? (
-        h >= 22 ? <span>{classLine ?? format(start, "h:mm")}</span> : null
+        // One line, as in Google Calendar: the title, then when it starts.
+        <span>{clock(start)}</span>
       ) : (
         <>
           {classLine ? (
@@ -769,12 +773,11 @@ function EventChip({ event: e, past }: { event: CalEvent; past: boolean }) {
 
 /** Where dragged work would land, and the time it would take. */
 function DropPreview({ target, title, y }: { target: Extract<DropTarget, { kind: "grid" }>; title: string; y: (minute: number) => number }) {
-  const top = y(target.startMinute) + 3;
-  const h = Math.max(16, y(target.endMinute) - y(target.startMinute) - 6);
+  const { top, height: h } = blockBox(y(target.startMinute), y(target.endMinute) - y(target.startMinute));
   const start = targetStart(target);
   const end = new Date(start.getTime() + (target.endMinute - target.startMinute) * MIN);
   return (
-    <div className="ss-drop" style={{ top, height: h }} aria-hidden>
+    <div className="ss-drop" style={{ top, height: h }} data-compact={h < 30 || undefined} data-tiny={h < 20 || undefined} aria-hidden>
       {h >= 30 ? <strong>{title}</strong> : null}
       {clock(start)} – {clock(end)}
     </div>
@@ -857,6 +860,7 @@ function PlannedBlock({
       data-done={done || undefined}
       data-picked={dragging || undefined}
       data-compact={h < 40 || undefined}
+      data-tiny={h < 20 || undefined}
       data-past={past || undefined}
       // How planned work looks (Settings → Appearance); Soft, the default, needs none.
       data-look={own || ws.colors.planned === "soft" ? undefined : ws.colors.planned}
@@ -872,12 +876,7 @@ function PlannedBlock({
         ) : null}
         {title}
       </strong>
-      {h >= 22 ? (
-        <span>
-          {format(start, "h:mm")}
-          {h >= 40 ? ` · ${minutes} min${course ? ` · ${course}` : ""}` : ""}
-        </span>
-      ) : null}
+      <span>{h >= 40 ? `${format(start, "h:mm")} · ${minutes} min${course ? ` · ${course}` : ""}` : clock(start)}</span>
       {/* The bottom edge changes how long it is. Fingers get it straight away; it never scrolls anything. */}
       <span
         data-resize
