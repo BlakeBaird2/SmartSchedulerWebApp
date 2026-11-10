@@ -3711,61 +3711,128 @@ section.ss-due-page {
   overflow-x: auto;
   padding-bottom: 6px;
 }
+/*
+ * Each list is its own card in its own colour (--list): a tinted header with a
+ * solid badge, ticks and headings in that colour, and a soft wash of it behind
+ * the work, so lists side by side read as separate at a glance.
+ */
 .ss-list {
   --list: var(--ss-accent);
+  --list-ink: color-mix(in oklab, var(--list) 78%, var(--ss-ink));
+  --list-line: color-mix(in oklab, var(--list) 24%, var(--ss-line));
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--ss-line);
-  border-top: 4px solid var(--list);
-  border-radius: 18px;
-  background: color-mix(in oklab, var(--ss-chip) 40%, var(--ss-surface));
+  overflow: visible;
+  border: 1px solid var(--list-line);
+  border-radius: 20px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--list) 7%, var(--ss-surface)) 0,
+    color-mix(in oklab, var(--list) 3%, var(--ss-surface)) 320px
+  );
+  box-shadow:
+    0 1px 2px rgba(20, 20, 18, 0.04),
+    0 12px 28px -18px color-mix(in oklab, var(--list) 55%, transparent);
 }
 .ss-list-head {
-  padding: 16px 16px 14px;
+  padding: 18px 18px 16px;
+  border-bottom: 1px solid var(--list-line);
+  border-radius: 19px 19px 0 0;
+  background: color-mix(in oklab, var(--list) 14%, var(--ss-surface));
 }
 .ss-list-title {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+.ss-list-badge-wrap {
+  position: relative;
+  flex: none;
+}
+.ss-list-badge {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 13px;
+  color: #fff;
+  background: var(--list);
+  box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--list) 80%, transparent);
+  transition: transform 0.15s ease;
+}
+.ss-list-badge:hover {
+  transform: scale(1.05);
+}
+.ss-list-swatches {
+  position: absolute;
+  z-index: 25;
+  top: calc(100% + 8px);
+  left: 0;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
   gap: 8px;
+  border: 1px solid var(--ss-line);
+  border-radius: 14px;
+  background: var(--ss-surface);
+  box-shadow: 0 18px 40px rgba(20, 20, 18, 0.16);
+}
+.ss-list-swatches button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+}
+.ss-list-swatches button[aria-pressed="true"] {
+  outline: 2px solid var(--ss-ink);
+  outline-offset: 2px;
+}
+.ss-list-heading {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .ss-list-name {
   min-width: 0;
-  flex: 1;
   margin-left: -6px;
-  padding: 2px 6px;
+  padding: 0 6px;
   border: 1px solid transparent;
   border-radius: 8px;
   outline: 0;
   color: var(--ss-ink);
   background: transparent;
-  font: 700 22px/1.25 "Manrope Variable", "Manrope", sans-serif;
+  font: 800 22px/1.25 "Manrope Variable", "Manrope", sans-serif;
   letter-spacing: -0.03em;
   text-overflow: ellipsis;
 }
 .ss-list-name:hover {
-  border-color: var(--ss-line-2);
+  border-color: var(--list-line);
 }
 .ss-list-name:focus {
-  border-color: var(--ss-accent-ring);
+  border-color: var(--list);
   background: var(--ss-surface);
-  box-shadow: 0 0 0 2px var(--ss-accent-ring);
 }
-.ss-list-count {
-  flex: none;
-  min-width: 28px;
-  padding: 0 8px;
-  border-radius: 999px;
-  color: var(--ss-ink);
-  background: color-mix(in oklab, var(--list) 18%, var(--ss-surface));
+.ss-list-sub {
+  color: var(--ss-text-4);
   font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-list-sub b {
+  color: var(--list-ink);
   font-weight: 800;
-  line-height: 26px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
 }
 .ss-list-remove {
   flex: none;
+  align-self: flex-start;
   width: 32px;
   height: 32px;
   display: grid;
@@ -3777,10 +3844,41 @@ section.ss-due-page {
 }
 .ss-list-remove:hover {
   color: var(--ss-ink);
-  background: var(--ss-chip);
+  background: color-mix(in oklab, var(--list) 14%, var(--ss-surface));
+}
+/* The list's colour carries through its controls, ticks, headings and rows. */
+.ss-list .ss-list-seg {
+  background: color-mix(in oklab, var(--list) 10%, var(--ss-surface));
+}
+.ss-list .ss-list-seg button[aria-pressed="true"] {
+  color: var(--list-ink);
+}
+.ss-list .ss-filter-button[data-active] {
+  color: var(--list-ink);
+  border-color: color-mix(in oklab, var(--list) 45%, var(--ss-line));
+  background: var(--ss-surface);
+}
+.ss-list .ss-plan-group:not([data-missed]):not(.ss-plan-done) h2 {
+  color: var(--list-ink);
+}
+.ss-list .ss-plan-group ul {
+  border-color: var(--list-line);
+  box-shadow: 0 1px 2px rgba(20, 20, 18, 0.04);
+}
+.ss-list .ss-check:hover {
+  border-color: var(--list);
+  color: color-mix(in oklab, var(--list) 45%, transparent);
+}
+.ss-list .ss-check[aria-checked="true"] {
+  border-color: var(--list);
+  background: var(--list);
+}
+.ss-list .ss-list-empty {
+  border-color: var(--list-line);
+  background: color-mix(in oklab, var(--ss-surface) 60%, transparent);
 }
 .ss-list-filters {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3867,7 +3965,7 @@ section.ss-due-page {
   cursor: pointer;
 }
 .ss-list-body {
-  padding: 0 12px 14px;
+  padding: 16px 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 18px;

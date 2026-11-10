@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULT_LISTS, MAX_LISTS, inAreas, inDays, newList, parseLists } from "../taskLists";
+import { DEFAULT_LISTS, LIST_COLORS, MAX_LISTS, inAreas, inDays, listColor, newList, parseLists } from "../taskLists";
 import type { Task } from "../types";
 
 // Tests run with TZ=America/Denver. October 1, 2026 is a Thursday.
@@ -46,8 +46,10 @@ test("stored lists are checked, and capped", () => {
   const many = Array.from({ length: 9 }, (_, i) => ({ id: `l${i}`, name: `L${i}`, show: "planned", areas: null, days: 14 }));
   assert.equal(parseLists(many).length, MAX_LISTS);
   const [l] = parseLists([{ id: "x", name: 5, show: "nope", areas: [], days: 3 }, { id: "x" }, null]);
-  assert.deepEqual(l, { id: "x", name: "List", show: "all", areas: null, days: 7 });
+  assert.deepEqual(l, { id: "x", name: "List", show: "all", areas: null, days: 7, color: null });
   assert.equal(parseLists([{ id: "y", days: null }])[0].days, null, "any time");
+  assert.equal(parseLists([{ id: "y", color: LIST_COLORS[2] }])[0].color, LIST_COLORS[2]);
+  assert.equal(parseLists([{ id: "y", color: "url(x)" }])[0].color, null, "only the list colours");
 });
 
 test("a new list gets a name not already taken", () => {
@@ -76,4 +78,12 @@ test("a list's days count today as the first; earlier and undated work always sh
   assert.equal(inDays(at(1, 8).toISOString(), NOW, 7), true, "earlier today");
   assert.equal(inDays(null, NOW, 7), true, "no date");
   assert.equal(inDays(at(30, 0).toISOString(), NOW, null), true, "any time");
+});
+
+test("each list has a colour of its own: the one picked, or the one for its place", () => {
+  const [a, b] = DEFAULT_LISTS;
+  assert.equal(listColor(a, 0), LIST_COLORS[0]);
+  assert.equal(listColor(b, 1), LIST_COLORS[1]);
+  assert.notEqual(listColor(a, 0), listColor(b, 1));
+  assert.equal(listColor({ ...a, color: LIST_COLORS[3] }, 0), LIST_COLORS[3]);
 });

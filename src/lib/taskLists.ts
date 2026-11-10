@@ -20,6 +20,19 @@ export interface TaskListConfig {
   areas: string[] | null;
   /** How many days ahead, counting today, or null for any time. */
   days: number | null;
+  /** The list's colour, or null for the one its place gives it. */
+  color: string | null;
+}
+
+/**
+ * Each list's colour, so lists side by side are easy to tell apart. A list
+ * takes the one for its place unless another is picked.
+ */
+export const LIST_COLORS = ["#2563eb", "#16a34a", "#9333ea", "#ea580c", "#0891b2", "#db2777"];
+
+/** The colour a list shows: the one picked, or the one for its place. */
+export function listColor(list: TaskListConfig, index: number): string {
+  return list.color ?? LIST_COLORS[index % LIST_COLORS.length];
 }
 
 /** Room for this many lists side by side, and no more, to keep them easy to read. */
@@ -31,8 +44,8 @@ const SHOWS: ListShow[] = ["planned", "unplanned", "all"];
 
 /** What split view starts with: school work for the week, and life's plan for the week. */
 export const DEFAULT_LISTS: TaskListConfig[] = [
-  { id: "school", name: "School", show: "all", areas: ["school"], days: 7 },
-  { id: "life", name: "Life", show: "planned", areas: ["personal"], days: 7 },
+  { id: "school", name: "School", show: "all", areas: ["school"], days: 7, color: null },
+  { id: "life", name: "Life", show: "planned", areas: ["personal"], days: 7, color: null },
 ];
 
 /** A new list: everything for the week, with a name not already taken. */
@@ -40,7 +53,7 @@ export function newList(lists: TaskListConfig[], id: string): TaskListConfig {
   const names = new Set(lists.map((l) => l.name.trim().toLowerCase()));
   let n = lists.length + 1;
   while (names.has(`list ${n}`)) n++;
-  return { id, name: `List ${n}`, show: "all", areas: null, days: 7 };
+  return { id, name: `List ${n}`, show: "all", areas: null, days: 7, color: null };
 }
 
 /** Lists as stored, checked: anything damaged is dropped, and there are never more than the cap. */
@@ -50,7 +63,7 @@ export function parseLists(raw: unknown): TaskListConfig[] {
   const ids = new Set<string>();
   for (const l of raw) {
     if (!l || typeof l !== "object") continue;
-    const { id, name, show, areas, days } = l as Partial<TaskListConfig>;
+    const { id, name, show, areas, days, color } = l as Partial<TaskListConfig>;
     if (typeof id !== "string" || !id || ids.has(id)) continue;
     ids.add(id);
     out.push({
@@ -59,6 +72,7 @@ export function parseLists(raw: unknown): TaskListConfig[] {
       show: SHOWS.includes(show as ListShow) ? (show as ListShow) : "all",
       areas: Array.isArray(areas) && areas.length && areas.every((a) => typeof a === "string") ? areas : null,
       days: days === null || LIST_WINDOWS.includes(days as number) ? (days as number | null) : 7,
+      color: typeof color === "string" && LIST_COLORS.includes(color) ? color : null,
     });
     if (out.length === MAX_LISTS) break;
   }

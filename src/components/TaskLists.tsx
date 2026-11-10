@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { addDays, format } from "date-fns";
 import { ChevronDown } from "lucide-react";
-import { LIST_WINDOWS, inAreas, inDays, type ListShow, type TaskListConfig } from "@/lib/taskLists";
+import { LIST_COLORS, LIST_WINDOWS, inAreas, inDays, listColor, type ListShow, type TaskListConfig } from "@/lib/taskLists";
 import { windowEnd } from "@/lib/todos";
 import type { Task } from "@/lib/types";
-import { plural } from "@/lib/ui";
 import { useApp } from "./context";
 import { SsIcon } from "./SsIcon";
 import { ClassFilter, TaskLine, groupRows, useAreas, type Row } from "./TasksPage";
@@ -50,10 +49,11 @@ export function SplitLists({
 
   return (
     <div className="ss-lists" style={{ "--lists": taskLists.length } as React.CSSProperties}>
-      {taskLists.map((list) => (
+      {taskLists.map((list, i) => (
         <ListColumn
           key={list.id}
           list={list}
+          color={listColor(list, i)}
           rows={rows}
           doneAt={doneAt}
           search={search}
@@ -70,6 +70,7 @@ export function SplitLists({
 
 function ListColumn({
   list,
+  color,
   rows,
   doneAt,
   search,
@@ -80,6 +81,8 @@ function ListColumn({
   onRemove,
 }: {
   list: TaskListConfig;
+  /** The list's colour, which its header, ticks and headings take on. */
+  color: string;
   rows: Row[];
   doneAt: (t: Task) => number | null;
   search: string;
@@ -116,15 +119,17 @@ function ListColumn({
   const done = shown.filter((r) => r.task.done).sort((a, b) => (doneAt(b.task) ?? 0) - (doneAt(a.task) ?? 0));
   const groups = groupRows(open, list.show, now);
 
-  // The list's colour: its one class's, Personal's, or the app's.
-  const only = list.areas?.length === 1 ? list.areas[0] : null;
-  const color = only === "personal" ? "var(--ss-personal)" : only && only !== "school" ? (model.courseById.get(only)?.color ?? null) : null;
   const lastDay = list.days === null ? null : addDays(windowEnd(now, list.days), -1);
+  // The icon on the list's badge: a cap for school, a house for life, a list for the rest.
+  const only = list.areas?.length === 1 ? list.areas[0] : null;
+  const icon = only === "school" ? "cap" : only === "personal" ? "home" : only ? "book" : "list";
 
   return (
-    <section className="ss-list" style={color ? ({ "--list": color } as React.CSSProperties) : undefined} aria-label={list.name || "List"}>
+    <section className="ss-list" style={{ "--list": color } as React.CSSProperties} aria-label={list.name || "List"}>
       <header className="ss-list-head">
         <div className="ss-list-title">
+          <ColorPicker color={color} picked={list.color} icon={icon} name={list.name} onPick={(c) => onChange({ color: c })} />
+          <div className="ss-list-heading">
           <input
             ref={nameBox}
             className="ss-list-name"
@@ -143,9 +148,10 @@ function ListColumn({
               if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
             }}
           />
-          <span className="ss-list-count" aria-label={plural(open.length, "task") + " to do"}>
-            {open.length}
+          <span className="ss-list-sub">
+            <b>{open.length}</b> {list.show === "planned" ? "planned" : "to do"} · {list.days === null ? "any time" : `next ${list.days} days`}
           </span>
+          </div>
           {onRemove ? (
             <button type="button" className="ss-list-remove" onClick={onRemove} aria-label={`Remove the ${list.name} list`} title="Remove this list">
               <SsIcon name="x" size={16} />
@@ -221,5 +227,69 @@ function ListColumn({
         ) : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * The list's badge: its colour, with an icon for what it holds. Tap it to pick
+ * another colour from a few that sit well side by side.
+ */
+function ColorPicker({
+  color,
+  picked,
+  icon,
+  name,
+  onPick,
+}: {
+  color: string;
+  picked: string | null;
+  icon: "cap" | "home" | "book" | "list";
+  name: string;
+  onPick: (color: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+
+  return (
+    <div className="ss-list-badge-wrap" ref={box}>
+      <button type="button" className="ss-list-badge" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen((o) => !o)} aria-label={`${name} list colour`} title="Change the colour">
+        <SsIcon name={icon} size={20} />
+      </button>
+      {open ? (
+        <div className="ss-list-swatches" role="group" aria-label={`Colour for ${name}`}>
+          {LIST_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              style={{ background: c }}
+              aria-pressed={c === color}
+              aria-label={c === color ? "Current colour" : "Use this colour"}
+              onClick={() => {
+                // Picking the colour a list already has by its place leaves it following its place.
+                onPick(c === color && !picked ? null : c);
+                setOpen(false);
+              }}
+            >
+              {c === color ? <SsIcon name="check" size={14} /> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
