@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { MIN_BLOCK_MINUTES, snapMinutes } from "@/lib/blocks";
+import { MIN_BLOCK_MINUTES, RESIZE_SNAP_MINUTES, snapMinutes } from "@/lib/blocks";
 import { pinching } from "./pinchZoom";
 import { haptic } from "./haptics";
 
@@ -122,8 +122,9 @@ function targetAt(x: number, y: number, d: DragPayload): DropTarget | null {
 
   if (d.kind === "resize" && d.start !== undefined) {
     const startMinute = Math.round((d.start - dayStart) / 60_000);
-    // The end moves as far as the pointer does, wherever on the edge it was grabbed.
-    const endMinute = Math.min(24 * 60, Math.max(startMinute + MIN_BLOCK_MINUTES, snapMinutes(minute - d.grab + d.minutes)));
+    // The end moves as far as the pointer does, wherever on the edge it was grabbed, in
+    // five-minute steps, down to the shortest block.
+    const endMinute = Math.min(24 * 60, Math.max(startMinute + MIN_BLOCK_MINUTES, snapMinutes(minute - d.grab + d.minutes, RESIZE_SNAP_MINUTES)));
     return { kind: "grid", dayStart, startMinute, endMinute };
   }
   const latest = Math.max(min, max - Math.min(d.minutes, 60));
@@ -347,6 +348,25 @@ export function beginPlanDrag(
   }
 }
 
+/**
+ * How a block is drawn on the hours, as in Google Calendar: exactly as tall as
+ * its time, less a slim gap so back-to-back blocks stay apart, and never shorter
+ * than one line of small text.
+ */
+export const BLOCK_TOP_GAP_PX = 1;
+export const BLOCK_BOTTOM_GAP_PX = 1;
+export const MIN_BLOCK_PX = 12;
+
+/** Where a block starting `topPx` down the day and `spanPx` long is drawn. */
+export function blockBox(topPx: number, spanPx: number): { top: number; height: number } {
+  return { top: topPx + BLOCK_TOP_GAP_PX, height: Math.max(MIN_BLOCK_PX, spanPx - BLOCK_TOP_GAP_PX - BLOCK_BOTTOM_GAP_PX) };
+}
+
+/** How long, in ms, a block looks on the hours: a short one takes up its minimum height. */
+export function drawnMs(ms: number, ppm: number): number {
+  return Math.max(ms, ((MIN_BLOCK_PX + BLOCK_TOP_GAP_PX + BLOCK_BOTTOM_GAP_PX) / ppm) * 60_000);
+}
+
 /** The time a drop target starts, as a date. */
 /** Where a time slot is on screen right now, as the calendar would draw a block there. */
 export function slotRect(t: Extract<DropTarget, { kind: "grid" }>): { left: number; top: number; width: number; height: number; clipTop: number; clipBottom: number } | null {
@@ -355,9 +375,10 @@ export function slotRect(t: Extract<DropTarget, { kind: "grid" }>): { left: numb
   const r = col.getBoundingClientRect();
   const min = Number(col.dataset.dropMin);
   const ppm = Number(col.dataset.dropPpm);
-  // Blocks sit inside the column's border, 5px from each side and 3px below their start.
-  const top = r.top + col.clientTop + Number(col.dataset.dropTop) + (t.startMinute - min) * ppm + 3;
-  const height = Math.max(16, (t.endMinute - t.startMinute) * ppm - 6);
+  // Blocks sit inside the column's border, 5px from each side, drawn as on the calendar (blockBox).
+  const box = blockBox((t.startMinute - min) * ppm, (t.endMinute - t.startMinute) * ppm);
+  const top = r.top + col.clientTop + Number(col.dataset.dropTop) + box.top;
+  const height = box.height;
   // The hours scroll inside a frame; the part of the block outside it is hidden, as on the calendar.
   const frame = col.closest<HTMLElement>("[data-drag-scroll]")?.getBoundingClientRect();
   return {

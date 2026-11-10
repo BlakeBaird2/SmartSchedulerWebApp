@@ -1646,6 +1646,20 @@ button.ss-day-head:hover {
 .ss-draft b {
   font-weight: 700;
 }
+.ss-draft[data-compact] {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-top: 0;
+  padding-bottom: 0;
+  white-space: nowrap;
+}
+.ss-draft[data-tiny],
+.ss-drop[data-tiny],
+.ss-ghost[data-tiny] {
+  font-size: 10.5px;
+  line-height: 1.1;
+}
 .ss-draft span {
   opacity: 0.9;
 }
@@ -1738,12 +1752,13 @@ button.ss-day-head:hover {
   font-weight: 500;
 }
 /* Short events: the time sits beside the title, on one line. */
+/* A short block is one line, centred top to bottom: the title, then when it starts. */
 .ss-event[data-compact] {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
-  padding-top: 3px;
-  padding-bottom: 3px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 /* When it's narrow (stacked on another, say), the time gives way before the title. */
 .ss-event[data-compact] strong {
@@ -1754,6 +1769,21 @@ button.ss-day-head:hover {
   flex: 0 1 auto;
   min-width: 0;
   margin-top: 0;
+}
+/* The shortest (ten or fifteen minutes): smaller type that fits the block whole. */
+.ss-event[data-tiny] {
+  border-radius: 4px;
+  gap: 4px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.ss-event[data-tiny] strong {
+  font-size: 10px;
+  line-height: 10px;
+}
+.ss-event[data-tiny] > span {
+  font-size: 9.5px;
+  line-height: 10px;
 }
 .ss-event.ss-school {
   --ev: var(--ss-school);
@@ -1889,7 +1919,18 @@ button.ss-day-head:hover {
     opacity: 0.3;
   }
 }
+/* On a one-line block the handle's bar would run through the text; the edge still works. */
+.ss-event[data-compact] .ss-resize::after {
+  display: none;
+}
 /* Where dragged work would land. */
+.ss-drop[data-compact] {
+  display: flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  white-space: nowrap;
+}
 .ss-drop {
   position: absolute;
   left: 5px;
@@ -2353,9 +2394,9 @@ button.ss-day-head:hover {
 }
 .ss-ghost[data-compact] {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
-  padding-top: 2px;
+  padding-top: 0;
   padding-bottom: 0;
 }
 .ss-ghost[data-compact] strong {

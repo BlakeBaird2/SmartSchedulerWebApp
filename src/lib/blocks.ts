@@ -1,17 +1,20 @@
 /**
  * Putting work on the calendar, moving it, resizing it and taking it off again.
  *
- * Times snap to the quarter hour, and a block is never shorter than a quarter of
- * an hour. Every change stamps `updatedAt`, which a sync with Google Calendar can
+ * Moves snap to the quarter hour. A bottom edge dragged to change the length
+ * snaps to five minutes, so a block can be as short as ten minutes. Every change stamps `updatedAt`, which a sync with Google Calendar can
  * use later to tell which side changed last.
  */
 import type { ScheduledBlock } from "./types";
 
 export const SNAP_MINUTES = 15;
-export const MIN_BLOCK_MINUTES = 15;
+/** How finely a dragged bottom edge sets the length. */
+export const RESIZE_SNAP_MINUTES = 5;
+/** The shortest a block can be. */
+export const MIN_BLOCK_MINUTES = 10;
 const MINUTE = 60_000;
 
-/** The nearest quarter hour, in minutes. */
+/** The nearest quarter hour (or other step), in minutes. */
 export function snapMinutes(minutes: number, step = SNAP_MINUTES): number {
   return Math.round(minutes / step) * step;
 }

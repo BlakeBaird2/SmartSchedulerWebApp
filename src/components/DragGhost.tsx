@@ -60,6 +60,7 @@ export function DragGhost() {
       // Planned work keeps its look (Settings → Appearance) while it's dragged.
       data-look={look}
       data-compact={(slot && slot.height < 40) || undefined}
+      data-tiny={(slot && slot.height < 20) || undefined}
       aria-hidden
     >
       <strong>{drag.title}</strong>
