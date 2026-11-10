@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { autoPriority, blocksByTask, classRank, isSchoolWork, sortTodos, todoList, todoState, unfinishedToAsk, urgency, urgencyColor, weekLoad, NO_DUE_COLOR } from "../todos";
+import { autoPriority, blocksByTask, classRank, dueWithin, isSchoolWork, sortTodos, todoList, todoState, unfinishedToAsk, urgency, urgencyColor, weekLoad, windowEnd, windowProgress, NO_DUE_COLOR } from "../todos";
 import { approxDuration, dueLabel } from "../ui";
 import type { ScheduledBlock, Task } from "../types";
 
@@ -96,7 +96,7 @@ test("by due date: late work first, then soonest, with class priority breaking t
     task("later", { dueAt: at(5, 9).toISOString() }),
     task("finance", { courseId: "f:fin", dueAt: due }),
     task("cs", { courseId: "f:cs", dueAt: due }),
-    task("late", { dueAt: at(1, 9).toISOString() }),
+    task("late", { dueAt: at(0, 9).toISOString() }),
     task("someday", { dueAt: null }),
     task("unranked", { courseId: "f:art", dueAt: due }),
   ];
@@ -199,4 +199,43 @@ test("the week at a glance adds up each day's work by its estimate, and what of 
       [4, 1, 1, 45, 45],
     ],
   );
+});
+
+// ---------------------------------------------------------------------------
+// Looking a set number of days ahead
+// ---------------------------------------------------------------------------
+
+test("the days in view count today as the first", () => {
+  assert.equal(windowEnd(NOW, 1).getTime(), at(2, 0).getTime());
+  assert.equal(windowEnd(NOW, 7).getTime(), at(8, 0).getTime());
+});
+
+test("work due after the last day in view waits; late and undated work is always in view", () => {
+  assert.equal(dueWithin(task("a", { dueAt: at(7, 23, 59).toISOString() }), NOW, 7), true);
+  assert.equal(dueWithin(task("b", { dueAt: at(8, 0).toISOString() }), NOW, 7), false);
+  assert.equal(dueWithin(task("c", { dueAt: at(1, 9).toISOString() }), NOW, 7), true, "late");
+  assert.equal(dueWithin(task("d", { dueAt: null }), NOW, 7), true, "no due date");
+  assert.equal(dueWithin(task("e", { dueAt: at(30, 9).toISOString() }), NOW, null), true, "everything");
+});
+
+test("the list stops at the last day in view", () => {
+  const tasks = [task("soon", { dueAt: at(5, 9).toISOString() }), task("later", { dueAt: at(20, 9).toISOString() }), task("someday", { dueAt: null, manual: true, courseId: null })];
+  const ids = (days: number | null) => todoList({ tasks, blocks: [], now: NOW, scope: "all", sort: "due", classOrder: [], days }).map((t) => t.id);
+  assert.deepEqual(ids(7), ["soon", "someday"]);
+  assert.deepEqual(ids(null), ["soon", "later", "someday"]);
+});
+
+test("progress through the days in view", () => {
+  const tasks = [
+    task("planned", { dueAt: at(4, 9).toISOString() }),
+    task("left", { dueAt: at(5, 9).toISOString() }),
+    task("done", { dueAt: at(6, 9).toISOString(), done: true }),
+    task("done long ago", { dueAt: at(0, 9).toISOString(), done: true }),
+    task("late", { dueAt: at(0, 9).toISOString() }),
+    task("later", { dueAt: at(20, 9).toISOString() }),
+    task("later planned", { dueAt: at(21, 9).toISOString() }),
+  ];
+  const blocks = [block("planned", at(2, 9), at(2, 10)), block("later planned", at(2, 11), at(2, 12))];
+  const p = windowProgress({ tasks, blocks, now: NOW, scope: "all", sort: "due", classOrder: [], days: 7 });
+  assert.deepEqual(p, { left: 2, planned: 2, later: 1 });
 });
