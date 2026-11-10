@@ -144,78 +144,16 @@ export interface TodoListInput {
   classOrder: string[];
   policy?: UnfinishedPolicy;
   answers?: Record<string, UnfinishedAnswer>;
-  /**
-   * How many days ahead the list looks (today counts as the first), or null for
-   * everything. Work due later stays off the list until its day comes into view.
-   */
-  days?: number | null;
 }
 
-// ---------------------------------------------------------------------------
-// Looking a set number of days ahead
-// ---------------------------------------------------------------------------
-
-/** How far ahead the planner can look: a week, ten days, two weeks, or everything (null). */
-export const TODO_WINDOWS: (number | null)[] = [7, 10, 14, null];
-export const DEFAULT_TODO_DAYS = 10;
-
-/** Midnight at the end of the last day in view: `days` days counting today. */
-export function windowEnd(now: Date, days: number): Date {
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
-}
-
-/**
- * Whether work is in view `days` days ahead. Late work always is; so is work
- * with no due date, which has no day to wait for.
- */
-export function dueWithin(task: Task, now: Date, days: number | null | undefined): boolean {
-  if (days == null || !task.dueAt) return true;
-  return Date.parse(task.dueAt) < windowEnd(now, days).getTime();
-}
-
-function inScope(task: Task, scope: TodoScope): boolean {
-  return scope === "all" || (scope === "school") === isSchoolWork(task);
-}
-
-/** The list as shown: on the list, in scope, in view, in order. */
+/** The list as shown: on the list, in scope, in order. */
 export function todoList(input: TodoListInput): Task[] {
   const mine = blocksByTask(input.blocks);
   const answers = input.answers ?? {};
   const open = input.tasks.filter(
-    (t) => inScope(t, input.scope) && dueWithin(t, input.now, input.days) && todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]) === "todo",
+    (t) => (input.scope === "all" || (input.scope === "school") === isSchoolWork(t)) && todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]) === "todo",
   );
   return sortTodos(open, input.sort, classRank(input.classOrder));
-}
-
-export interface WindowProgress {
-  /** Work in view still to plan: what the list shows. */
-  left: number;
-  /** Work in view that's on the calendar or done. */
-  planned: number;
-  /** Work still to plan that's due after the last day in view. */
-  later: number;
-}
-
-/**
- * How far through the days in view the student is: of the work due in them
- * (and anything late), how much is planned or done and how much is left. Work
- * done that was due before today, and finished work with no due date, has
- * dropped out of view, so the count doesn't grow forever.
- */
-export function windowProgress(input: TodoListInput & { days: number }): WindowProgress {
-  const mine = blocksByTask(input.blocks);
-  const answers = input.answers ?? {};
-  const today = startOfLocalDay(input.now);
-  const out: WindowProgress = { left: 0, planned: 0, later: 0 };
-  for (const t of input.tasks) {
-    if (!inScope(t, input.scope)) continue;
-    const state = todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]);
-    if (!dueWithin(t, input.now, input.days)) {
-      if (state === "todo") out.later++;
-    } else if (state === "todo") out.left++;
-    else if (state !== "done" || (t.dueAt && Date.parse(t.dueAt) >= today)) out.planned++;
-  }
-  return out;
 }
 
 // ---------------------------------------------------------------------------

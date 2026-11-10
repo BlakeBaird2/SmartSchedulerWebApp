@@ -1,73 +1,32 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { addDays, format } from "date-fns";
-import { TODO_WINDOWS, todoList, windowEnd, windowProgress, type TodoSort, type WindowProgress } from "@/lib/todos";
+import { todoList, type TodoSort } from "@/lib/todos";
 import type { Task } from "@/lib/types";
-import { dueLabel, plural } from "@/lib/ui";
+import { dueLabel } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
 import { beginPlanDrag, dragSourceRef, targetStart, usePlanDrag } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
-/** The work the planner's filters cover: everything, or one class's. */
-function usePlannerTasks(): Task[] {
-  const { model, filters } = useApp();
+/** How many tasks the planner shows, and how many with "Show more items" on. */
+
+/** Everything still to schedule, in order, narrowed by "Stack with class". */
+export function useTodos(): Task[] {
+  const { model, ws, now, filters, todoScope, todoSort } = useApp();
   return useMemo(() => {
     const courseSet = filters.courses ? new Set(filters.courses) : null;
-    return courseSet ? model.tasks.filter((t) => t.courseId && courseSet.has(t.courseId)) : model.tasks;
-  }, [model.tasks, filters.courses]);
-}
-
-/**
- * Everything still to schedule in the days the planner looks ahead, in order,
- * narrowed by "Stack with class". Work due later waits until its day comes into view.
- */
-export function useTodos(): Task[] {
-  const { ws, now, todoScope, todoSort, todoDays } = useApp();
-  const tasks = usePlannerTasks();
-  return useMemo(
-    () =>
-      todoList({
-        tasks,
-        blocks: ws.blocks,
-        now,
-        scope: todoScope,
-        sort: todoSort,
-        classOrder: [], // (Class priority was retired: no class comes before another.)
-        policy: ws.unfinished,
-        answers: ws.unfinishedAnswers,
-        days: todoDays,
-      }),
-    [tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoScope, todoSort, todoDays],
-  );
-}
-
-/** How much of the work in the days ahead is planned, or null when the planner shows everything. */
-function useWindowProgress(): WindowProgress | null {
-  const { ws, now, todoScope, todoSort, todoDays } = useApp();
-  const tasks = usePlannerTasks();
-  return useMemo(
-    () =>
-      todoDays === null
-        ? null
-        : windowProgress({
-            tasks,
-            blocks: ws.blocks,
-            now,
-            scope: todoScope,
-            sort: todoSort,
-            classOrder: [],
-            policy: ws.unfinished,
-            answers: ws.unfinishedAnswers,
-            days: todoDays,
-          }),
-    [tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoScope, todoSort, todoDays],
-  );
-}
-
-/** "7 days", "10 days", "All": a choice of how far ahead to look. */
-function windowLabel(days: number | null): string {
-  return days === null ? "All" : `${days} days`;
+    const tasks = courseSet ? model.tasks.filter((t) => t.courseId && courseSet.has(t.courseId)) : model.tasks;
+    return todoList({
+      tasks,
+      blocks: ws.blocks,
+      now,
+      scope: todoScope,
+      sort: todoSort,
+      classOrder: [], // (Class priority was retired: no class comes before another.)
+      policy: ws.unfinished,
+      answers: ws.unfinishedAnswers,
+    });
+  }, [model.tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, filters.courses, todoScope, todoSort]);
 }
 
 /**
@@ -104,14 +63,13 @@ const SORTS: { id: TodoSort; label: string }[] = [
  * scheduled work back here takes it off the calendar.
  */
 export function PlannerPanel({ onClose }: { onClose: () => void }) {
-  const { model, now, todoScope, setTodoScope, todoSort, setTodoSort, todoDays, setTodoDays, filters, setFilters, setView, openAddTask } = useApp();
+  const { model, todoScope, setTodoScope, todoSort, setTodoSort, filters, setFilters, setView, openAddTask } = useApp();
   const app = useApp();
   // On a phone the filters start folded, to leave room for the work; they open and close on their own there.
   const phone = useIsPhone();
   const plannerFilters = phone ? app.plannerFiltersPhone : app.plannerFilters;
   const setPlannerFilters = phone ? app.setPlannerFiltersPhone : app.setPlannerFilters;
   const todos = useTodos();
-  const progress = useWindowProgress();
   const allTodos = useAllTodos();
   const drag = usePlanDrag();
   // Search: typed into `draft`, run on Enter. It looks through everything still to
@@ -136,11 +94,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
   // What the filters are set to, in a few words, for when they are folded away.
   const stackLabel =
     stack === "all" ? "All classes" : stack === "school" ? "School only" : stack === "personal" ? "Personal" : (model.courseById.get(stack)?.code ?? "One class");
-  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel} · ${todoDays === null ? "Everything" : `Next ${todoDays} days`}`;
-  // The last day in view, for "through Thu, Nov 20".
-  const lastDay = todoDays === null ? null : addDays(windowEnd(now, todoDays), -1);
-  // The next choice further out, for when the days in view are all planned.
-  const further = todoDays === null ? undefined : TODO_WINDOWS[TODO_WINDOWS.indexOf(todoDays) + 1];
+  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel}`;
 
   const setStack = (value: string) => {
     if (value === "all" || value === "school" || value === "personal") {
@@ -244,19 +198,10 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
                 <option value="personal">Personal</option>
               </select>
             </label>
-            <span className="ss-filters-gap">LOOK AHEAD</span>
-            <div className="ss-sort-tabs" data-four role="group" aria-label="How many days ahead to look">
-              {TODO_WINDOWS.map((d) => (
-                <button key={d ?? "all"} aria-pressed={todoDays === d} onClick={() => setTodoDays(d)} title={d === null ? "Everything still to plan" : `Work due in the next ${d} days`}>
-                  {windowLabel(d)}
-                </button>
-              ))}
-            </div>
+
           </div>
         ) : null}
       </div>
-
-      {progress && lastDay && !results ? <WindowCard days={todoDays!} lastDay={lastDay} progress={progress} /> : null}
 
       <div className="ss-queue-label">
         <span className="inline-flex items-center gap-1.5">
@@ -273,25 +218,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
             </button>
           </p>
         ) : null}
-        {!results && shown.length === 0 ? (
-          progress && lastDay ? (
-            <div className="ss-empty ss-window-done">
-              <strong>{progress.planned ? `Everything due by ${format(lastDay, "EEE, MMM d")} is planned.` : `Nothing due by ${format(lastDay, "EEE, MMM d")}.`}</strong>
-              <p>
-                {progress.later
-                  ? `${plural(progress.later, "more task")} ${progress.later === 1 ? "comes" : "come"} after that. ${progress.later === 1 ? "It shows" : "They show"} up here as the days go by.`
-                  : "Nothing else is waiting either. Nice work."}
-              </p>
-              {progress.later && further !== undefined ? (
-                <button type="button" className="ss-link-button" onClick={() => setTodoDays(further)}>
-                  {further === null ? "Show everything" : `Look ${further} days ahead`}
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <p className="ss-empty">Nothing left to schedule. Nice work.</p>
-          )
-        ) : null}
+        {!results && shown.length === 0 ? <p className="ss-empty">Nothing left to schedule. Nice work.</p> : null}
         {shown.map((task) => (
           <PlannerTask key={task.id} task={task} />
         ))}
@@ -300,50 +227,6 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         View all tasks <SsIcon name="chevronRight" />
       </button>
     </aside>
-  );
-}
-
-/**
- * The days in view, as a goal: how much of the work due in them is on the
- * calendar or done, with a bar that fills as it's planned.
- */
-function WindowCard({ days, lastDay, progress }: { days: number; lastDay: Date; progress: WindowProgress }) {
-  const total = progress.left + progress.planned;
-  const share = total ? progress.planned / total : 1;
-  const all = progress.left === 0;
-  return (
-    <section className="ss-window" data-complete={(all && total > 0) || undefined} aria-label={`The next ${days} days`}>
-      <div className="ss-window-head">
-        <strong>Next {days} days</strong>
-        <span>through {format(lastDay, "EEE, MMM d")}</span>
-      </div>
-      <div
-        className="ss-window-bar"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-valuenow={progress.planned}
-        aria-label={`${progress.planned} of ${total} planned`}
-      >
-        <i style={{ width: `${Math.round(share * 100)}%` }} />
-      </div>
-      <p>
-        <span>
-          {total === 0 ? (
-            "Nothing due in these days."
-          ) : all ? (
-            <>
-              <SsIcon name="check" size={13} /> All {total} planned
-            </>
-          ) : (
-            <>
-              <b>{progress.planned}</b> of {total} planned
-            </>
-          )}
-        </span>
-        {progress.later ? <em>{progress.later} due later</em> : null}
-      </p>
-    </section>
   );
 }
 
