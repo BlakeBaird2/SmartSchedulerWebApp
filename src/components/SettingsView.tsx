@@ -66,7 +66,7 @@ export function SettingsView() {
         <SettingsSidebar active={desktopPanel} />
         <div className="min-w-0 max-w-3xl">
           <SectionHeading id={desktopPanel} />
-          <div className="space-y-4">
+          <div className="space-y-4" key={desktopPanel}>
             {desktopPanel === "calendars" ? <CalendarsPanel /> : null}
             {desktopPanel === "schedule" ? <SchedulePanel /> : null}
             {desktopPanel === "estimates" ? <EstimatesPanel /> : null}
