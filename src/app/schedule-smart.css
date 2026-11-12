@@ -201,8 +201,14 @@
 .ss-brand > span:last-child {
   white-space: nowrap;
 }
-/* In the app's header the name is a little bigger; the bar centres it with the tabs beside it. */
+/*
+ * In the app's header the name is in the app's own clean Manrope (the home page
+ * keeps the rounded Nunito), a little bigger; the bar centres it with the tabs.
+ */
 .ss-topbar .ss-brand {
+  font-family: "Manrope Variable", "Manrope", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-size: 24px;
   line-height: 1;
 }
