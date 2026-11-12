@@ -130,9 +130,13 @@ The fix is to serve the helper from the app's own address. The app already
 passes `/__/auth/…` through to Firebase (`next.config.ts`); three settings
 switch it on. Do them **in this order**, or Google sign-in breaks in between:
 
-1. **Google:** [console.cloud.google.com](https://console.cloud.google.com) →
-   pick the Firebase project → **APIs & Services → Credentials** → under
-   **OAuth 2.0 Client IDs**, open **Web client (auto created by Google Service)**:
+1. **Google:** every Firebase project is also a Google Cloud project (made
+   automatically, same Google account), and the addresses Google sign-in may
+   return to can only be edited there, not in the Firebase console. Open
+   `https://console.cloud.google.com/apis/credentials?project=<your-project-id>`
+   (the `projectId`, e.g. `smart-scheduler-32091`), sign in with the account
+   you use for Firebase, and under **OAuth 2.0 Client IDs** open **Web client
+   (auto created by Google Service)**. Firebase made it for Google sign-in:
    - **Authorized JavaScript origins**: add `https://smartschedulerwebapp.vercel.app`
      if it isn't there.
    - **Authorized redirect URIs**: add
