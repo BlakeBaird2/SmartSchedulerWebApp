@@ -247,6 +247,8 @@ export function SignInPanel() {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const loading = cloud.status === "loading";
   const confirming = cloud.emailLinkNeedsEmail;
+  // A sign-in that failed after going to Google's or Apple's page and back reports here too.
+  const problem = error ?? cloud.signInProblem;
 
   const withProvider = async (method: "apple" | "google") => {
     setBusy(method);
@@ -330,9 +332,9 @@ export function SignInPanel() {
           </button>
         </form>
       ) : null}
-      {error ? (
+      {problem ? (
         <p className="ss-signin-error" role="alert">
-          {error}
+          {problem}
         </p>
       ) : null}
       {confirming ? null : (

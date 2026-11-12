@@ -62,10 +62,12 @@ export interface CloudState {
   /** Both this device and the account have a setup, and they differ: the student picks one. */
   choice: { local: string; remote: string } | null;
   error: string | null;
+  /** Why signing in on Google's or Apple's own page and coming back failed, for the sign-in screen. */
+  signInProblem: string | null;
   savedAt: number | null;
 }
 
-let state: CloudState = { status: cloudAvailable ? "loading" : "off", user: null, emailLinkNeedsEmail: false, choice: null, error: null, savedAt: null };
+let state: CloudState = { status: cloudAvailable ? "loading" : "off", user: null, emailLinkNeedsEmail: false, choice: null, error: null, signInProblem: null, savedAt: null };
 const listeners = new Set<() => void>();
 const set = (patch: Partial<CloudState>) => {
   state = { ...state, ...patch };
@@ -151,6 +153,11 @@ export function startCloud() {
         posthogDistinctId = user.uid;
         set({ status: "connecting", user: { name: user.displayName, email: user.email, photo: user.photoURL, method: methodOf(user) }, error: null });
         void attach(user.uid);
+      });
+      // Back from signing in on Google's or Apple's own page (where pop-ups were blocked): say if it failed.
+      auth.getRedirectResult(fb.authInstance).catch((e: unknown) => {
+        const message = signInError(e, "redirect");
+        if (message) set({ signInProblem: message });
       });
       // Opened the link from a sign-in email: finish signing in.
       if (auth.isSignInWithEmailLink(fb.authInstance, window.location.href)) {
@@ -298,9 +305,22 @@ function methodOf(user: import("firebase/auth").User): SignInMethod | null {
   return null;
 }
 
-/** What went wrong, in a sentence for the sign-in screen; null when the person just closed the window. */
-function signInError(e: unknown): string | null {
+/**
+ * What went wrong, in a sentence for the sign-in screen; null when the person
+ * just closed the window. Each failure is counted (its error code only), so
+ * problems on browsers we can't test show up.
+ */
+function signInError(e: unknown, how: string): string | null {
   const code = (e as { code?: string }).code ?? "";
+  const cancelled = code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled";
+  if (!cancelled) {
+    try {
+      posthog.capture("sign_in_failed", { how, code: code || "unknown" });
+    } catch {
+      // Analytics must never get in the way of signing in.
+    }
+  }
+  const tryEmail = signInMethods.email ? " Or sign in with an email link instead." : "";
   switch (code) {
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
@@ -319,14 +339,30 @@ function signInError(e: unknown): string | null {
       return "Couldn't reach the internet. Check your connection and try again.";
     case "auth/too-many-requests":
       return "Too many tries. Wait a minute and try again.";
+    // The browser keeps sign-in's helper page from storing anything: third-party
+    // cookies are blocked, which work and school computers often do.
+    case "auth/web-storage-unsupported":
+      return `This browser is blocking the cookies sign-in needs (work computers often do). Allow cookies for this site, or try another browser.${tryEmail}`;
+    case "auth/unauthorized-domain":
+      return `Sign-in isn't set up for ${window.location.host}. Open Schedule Smart at its usual address and try again.`;
+    // Usually a work or school Google account whose organisation only lets it sign in to approved apps.
+    case "auth/internal-error":
+    case "auth/admin-restricted-operation":
+      return `Google didn't let this sign-in finish. A work or school account may only be allowed into apps its organisation approves: try a personal account.${tryEmail}`;
+    case "auth/user-disabled":
+      return "This account has been turned off.";
+    case "auth/popup-blocked":
+      return "The sign-in window was blocked. Allow pop-ups for this site and try again.";
     default:
-      return "Couldn't sign in. Try again.";
+      // Show the code, so the problem can be told apart from others.
+      return `Couldn't sign in. Try again.${code ? ` (${code.replace("auth/", "")})` : ""}`;
   }
 }
 
 /** Sign in with Apple or Google, in a pop-up (or by going there and back where pop-ups are blocked). Returns an error to show, if any. */
 export async function signInWith(method: "apple" | "google"): Promise<string | null> {
   if (!fb) return "Sign-in is still loading. Try again in a moment.";
+  set({ signInProblem: null });
   const { GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect } = fb.auth;
   let provider: import("firebase/auth").AuthProvider;
   if (method === "apple") {
@@ -342,10 +378,14 @@ export async function signInWith(method: "apple" | "google"): Promise<string | n
     const code = (e as { code?: string }).code ?? "";
     // Some phones block pop-ups; going there and back works.
     if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment") {
-      await signInWithRedirect(fb.authInstance, provider);
-      return null;
+      try {
+        await signInWithRedirect(fb.authInstance, provider);
+        return null;
+      } catch (again) {
+        return signInError(again, `${method}-redirect`);
+      }
     }
-    return signInError(e);
+    return signInError(e, method);
   }
 }
 
@@ -357,7 +397,7 @@ export async function sendEmailSignIn(email: string): Promise<string | null> {
     writeStored(KEYS.signInEmail, email);
     return null;
   } catch (e) {
-    return signInError(e);
+    return signInError(e, "email-send");
   }
 }
 
@@ -374,7 +414,7 @@ export async function finishEmailSignIn(email: string): Promise<string | null> {
     window.history.replaceState(null, "", url);
     return null;
   } catch (e) {
-    const message = signInError(e);
+    const message = signInError(e, "email-link");
     set({ error: message });
     return message;
   }

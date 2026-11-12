@@ -118,6 +118,42 @@ default, so someone who signed in with Google and later asks for an email link
 to the same address reaches the same account. If they try a different method
 whose email clashes, the window tells them to sign in the way they did before.
 
+## Sign-in that works everywhere (browsers that block third-party cookies)
+
+Google and Apple sign-in open a helper page from `authDomain`. When that is
+`<your-project>.firebaseapp.com`, a different site from the app, browsers that
+block third-party cookies stop it: often work and school computers (a company
+policy), Chrome with "Block third-party cookies" on, and Safari. The app then
+says the browser is blocking the cookies sign-in needs.
+
+The fix is to serve the helper from the app's own address. The app already
+passes `/__/auth/…` through to Firebase (`next.config.ts`); three settings
+switch it on. Do them **in this order**, or Google sign-in breaks in between:
+
+1. **Google:** [console.cloud.google.com](https://console.cloud.google.com) →
+   pick the Firebase project → **APIs & Services → Credentials** → under
+   **OAuth 2.0 Client IDs**, open **Web client (auto created by Google Service)**:
+   - **Authorized JavaScript origins**: add `https://smartschedulerwebapp.vercel.app`
+     if it isn't there.
+   - **Authorized redirect URIs**: add
+     `https://smartschedulerwebapp.vercel.app/__/auth/handler`.
+   - **Save**. It can take a few minutes to apply.
+2. **Apple** (only if Apple sign-in is on): in the Services ID's **Sign In with
+   Apple → Configure**, add the domain `smartschedulerwebapp.vercel.app` and the
+   return URL `https://smartschedulerwebapp.vercel.app/__/auth/handler`.
+3. **Vercel:** **Settings → Environment Variables** → edit
+   `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` for **Production only** and set it to
+   `smartschedulerwebapp.vercel.app` (no `https://`). Leave Preview on
+   `<your-project>.firebaseapp.com`, since preview addresses change. Then
+   **Deployments → Redeploy**.
+
+To check: `https://smartschedulerwebapp.vercel.app/__/auth/handler` should show a
+blank Firebase page, not a 404. Then sign in with Google in a browser with
+third-party cookies blocked.
+
+To undo, set `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` back to
+`<your-project>.firebaseapp.com` and redeploy.
+
 ## How syncing behaves
 
 - The copy in the browser stays the one the app works from, so it opens
