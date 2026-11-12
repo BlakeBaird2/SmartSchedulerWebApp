@@ -7,7 +7,7 @@ import type { PlanIndex } from "@/lib/schedule";
 import type { Change, EstimateSource, FeedResult, FeedRole, Priority, Snapshot, Task, Workspace } from "@/lib/types";
 import type { Filters } from "@/lib/ui";
 import type { TaskListConfig } from "@/lib/taskLists";
-import type { TodoScope, TodoSort } from "@/lib/todos";
+import type { LookAhead, TodoScope, TodoSort } from "@/lib/todos";
 
 /** Tasks as one list, or as several side by side. */
 export type TasksLayout = "list" | "split";
@@ -109,9 +109,9 @@ export interface AppContextValue {
   /** The to-do list's order: most urgent first, or shortest first. */
   todoSort: TodoSort;
   setTodoSort: (sort: TodoSort) => void;
-  /** How many days ahead the planner looks (today counts as the first), or null for everything. */
-  todoDays: number | null;
-  setTodoDays: (days: number | null) => void;
+  /** How far ahead the planner looks: the rest of this week (the default), through next week, 30 days, or everything. */
+  lookAhead: LookAhead;
+  setLookAhead: (lookAhead: LookAhead) => void;
   /** Tasks as one list, or as several side by side. */
   tasksLayout: TasksLayout;
   setTasksLayout: (layout: TasksLayout) => void;

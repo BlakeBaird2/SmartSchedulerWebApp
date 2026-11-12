@@ -145,32 +145,47 @@ export interface TodoListInput {
   policy?: UnfinishedPolicy;
   answers?: Record<string, UnfinishedAnswer>;
   /**
-   * How many days ahead the list looks (today counts as the first), or null for
+   * Midnight after the last day the list looks ahead to, or null for
    * everything. Work due later stays off the list until its day comes into view.
    */
-  days?: number | null;
+  until?: Date | null;
 }
 
 // ---------------------------------------------------------------------------
 // Looking a set number of days ahead
 // ---------------------------------------------------------------------------
 
-/** How far ahead the planner can look: a week, ten days, two weeks, or everything (null). */
-export const TODO_WINDOWS: (number | null)[] = [7, 10, 14, null];
-export const DEFAULT_TODO_DAYS = 10;
+/**
+ * How far ahead the planner looks: the rest of this week (Monday to Sunday, as
+ * the calendar shows it), through the end of next week, the next 30 days, or
+ * everything.
+ */
+export type LookAhead = "week" | "2weeks" | "month" | "all";
+export const LOOK_AHEADS: LookAhead[] = ["week", "2weeks", "month", "all"];
+export const DEFAULT_LOOK_AHEAD: LookAhead = "week";
 
 /** Midnight at the end of the last day in view: `days` days counting today. */
 export function windowEnd(now: Date, days: number): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
 }
 
+/** Midnight at the end of the last day a look-ahead covers, or null for everything. */
+export function lookAheadEnd(choice: LookAhead, now: Date): Date | null {
+  // Days left in this week, counting today: Monday has 7, Sunday 1.
+  const thisWeek = 7 - ((now.getDay() + 6) % 7);
+  if (choice === "week") return windowEnd(now, thisWeek);
+  if (choice === "2weeks") return windowEnd(now, thisWeek + 7);
+  if (choice === "month") return windowEnd(now, 30);
+  return null;
+}
+
 /**
- * Whether work is in view `days` days ahead. Late work always is; so is work
- * with no due date, which has no day to wait for.
+ * Whether work is in view up to `until`. Late work always is; so is work with
+ * no due date, which has no day to wait for.
  */
-export function dueWithin(task: Task, now: Date, days: number | null | undefined): boolean {
-  if (days == null || !task.dueAt) return true;
-  return Date.parse(task.dueAt) < windowEnd(now, days).getTime();
+export function dueWithin(task: Task, until: Date | null | undefined): boolean {
+  if (!until || !task.dueAt) return true;
+  return Date.parse(task.dueAt) < until.getTime();
 }
 
 function inScope(task: Task, scope: TodoScope): boolean {
@@ -182,7 +197,7 @@ export function todoList(input: TodoListInput): Task[] {
   const mine = blocksByTask(input.blocks);
   const answers = input.answers ?? {};
   const open = input.tasks.filter(
-    (t) => inScope(t, input.scope) && dueWithin(t, input.now, input.days) && todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]) === "todo",
+    (t) => inScope(t, input.scope) && dueWithin(t, input.until) && todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]) === "todo",
   );
   return sortTodos(open, input.sort, classRank(input.classOrder));
 }
@@ -202,7 +217,7 @@ export interface WindowProgress {
  * done that was due before today, and finished work with no due date, has
  * dropped out of view, so the count doesn't grow forever.
  */
-export function windowProgress(input: TodoListInput & { days: number }): WindowProgress {
+export function windowProgress(input: TodoListInput & { until: Date }): WindowProgress {
   const mine = blocksByTask(input.blocks);
   const answers = input.answers ?? {};
   const today = startOfLocalDay(input.now);
@@ -210,7 +225,7 @@ export function windowProgress(input: TodoListInput & { days: number }): WindowP
   for (const t of input.tasks) {
     if (!inScope(t, input.scope)) continue;
     const state = todoState(t, mine.get(t.id) ?? [], input.now, input.policy, answers[t.id]);
-    if (!dueWithin(t, input.now, input.days)) {
+    if (!dueWithin(t, input.until)) {
       if (state === "todo") out.later++;
     } else if (state === "todo") out.left++;
     else if (state !== "done" || (t.dueAt && Date.parse(t.dueAt) >= today)) out.planned++;

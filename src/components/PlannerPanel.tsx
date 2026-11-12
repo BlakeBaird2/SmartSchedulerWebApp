@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { addDays, format } from "date-fns";
-import { TODO_WINDOWS, todoList, windowEnd, windowProgress, type TodoSort, type WindowProgress } from "@/lib/todos";
+import { LOOK_AHEADS, lookAheadEnd, todoList, windowProgress, type LookAhead, type TodoSort, type WindowProgress } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { dueLabel, plural } from "@/lib/ui";
 import { useApp, useIsPhone } from "./context";
@@ -23,8 +23,9 @@ function usePlannerTasks(): Task[] {
  * narrowed by "Stack with class". Work due later waits until its day comes into view.
  */
 export function useTodos(): Task[] {
-  const { ws, now, todoScope, todoSort, todoDays } = useApp();
+  const { ws, now, todoScope, todoSort } = useApp();
   const tasks = usePlannerTasks();
+  const until = useLookAheadEnd();
   return useMemo(
     () =>
       todoList({
@@ -36,19 +37,28 @@ export function useTodos(): Task[] {
         classOrder: [], // (Class priority was retired: no class comes before another.)
         policy: ws.unfinished,
         answers: ws.unfinishedAnswers,
-        days: todoDays,
+        until,
       }),
-    [tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoScope, todoSort, todoDays],
+    [tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoScope, todoSort, until],
   );
+}
+
+/** Midnight after the last day the planner looks ahead to, or null when it shows everything. */
+function useLookAheadEnd(): Date | null {
+  const { now, lookAhead } = useApp();
+  const dayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  // Changes only when the day does, not every minute `now` ticks.
+  return useMemo(() => lookAheadEnd(lookAhead, new Date(dayMs)), [lookAhead, dayMs]);
 }
 
 /** How much of the work in the days ahead is planned, or null when the planner shows everything. */
 function useWindowProgress(): WindowProgress | null {
-  const { ws, now, todoScope, todoSort, todoDays } = useApp();
+  const { ws, now, todoScope, todoSort } = useApp();
   const tasks = usePlannerTasks();
+  const until = useLookAheadEnd();
   return useMemo(
     () =>
-      todoDays === null
+      until === null
         ? null
         : windowProgress({
             tasks,
@@ -59,16 +69,19 @@ function useWindowProgress(): WindowProgress | null {
             classOrder: [],
             policy: ws.unfinished,
             answers: ws.unfinishedAnswers,
-            days: todoDays,
+            until,
           }),
-    [tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoScope, todoSort, todoDays],
+    [tasks, ws.blocks, ws.unfinished, ws.unfinishedAnswers, now, todoScope, todoSort, until],
   );
 }
 
-/** "7 days", "10 days", "All": a choice of how far ahead to look. */
-function windowLabel(days: number | null): string {
-  return days === null ? "All" : `${days} days`;
-}
+/** Each look-ahead: a short label for its button, a title for the progress card, and a line for its tooltip. */
+const LOOK: Record<LookAhead, { button: string; title: string; hint: string }> = {
+  week: { button: "Week", title: "This week", hint: "Work due from today through Sunday" },
+  "2weeks": { button: "2 weeks", title: "This week and next", hint: "Work due from today through next Sunday" },
+  month: { button: "Month", title: "Next 30 days", hint: "Work due in the next 30 days" },
+  all: { button: "All", title: "Everything", hint: "Everything still to plan" },
+};
 
 /**
  * Every task still to schedule, from every class, whatever the planner's filters
@@ -104,7 +117,7 @@ const SORTS: { id: TodoSort; label: string }[] = [
  * scheduled work back here takes it off the calendar.
  */
 export function PlannerPanel({ onClose }: { onClose: () => void }) {
-  const { model, now, todoScope, setTodoScope, todoSort, setTodoSort, todoDays, setTodoDays, filters, setFilters, setView, openAddTask } = useApp();
+  const { model, todoScope, setTodoScope, todoSort, setTodoSort, lookAhead, setLookAhead, filters, setFilters, setView, openAddTask } = useApp();
   const app = useApp();
   // On a phone the filters start folded, to leave room for the work; they open and close on their own there.
   const phone = useIsPhone();
@@ -136,11 +149,12 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
   // What the filters are set to, in a few words, for when they are folded away.
   const stackLabel =
     stack === "all" ? "All classes" : stack === "school" ? "School only" : stack === "personal" ? "Personal" : (model.courseById.get(stack)?.code ?? "One class");
-  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel} · ${todoDays === null ? "Everything" : `Next ${todoDays} days`}`;
+  const summary = `${SORTS.find((s) => s.id === todoSort)?.label} · ${stackLabel} · ${LOOK[lookAhead].title}`;
   // The last day in view, for "through Thu, Nov 20".
-  const lastDay = todoDays === null ? null : addDays(windowEnd(now, todoDays), -1);
+  const until = useLookAheadEnd();
+  const lastDay = until ? addDays(until, -1) : null;
   // The next choice further out, for when the days in view are all planned.
-  const further = todoDays === null ? undefined : TODO_WINDOWS[TODO_WINDOWS.indexOf(todoDays) + 1];
+  const further: LookAhead | undefined = LOOK_AHEADS[LOOK_AHEADS.indexOf(lookAhead) + 1];
 
   const setStack = (value: string) => {
     if (value === "all" || value === "school" || value === "personal") {
@@ -246,9 +260,9 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
             </label>
             <span className="ss-filters-gap">LOOK AHEAD</span>
             <div className="ss-sort-tabs" data-four role="group" aria-label="How many days ahead to look">
-              {TODO_WINDOWS.map((d) => (
-                <button key={d ?? "all"} aria-pressed={todoDays === d} onClick={() => setTodoDays(d)} title={d === null ? "Everything still to plan" : `Work due in the next ${d} days`}>
-                  {windowLabel(d)}
+              {LOOK_AHEADS.map((l) => (
+                <button key={l} aria-pressed={lookAhead === l} onClick={() => setLookAhead(l)} title={LOOK[l].hint}>
+                  {LOOK[l].button}
                 </button>
               ))}
             </div>
@@ -256,7 +270,7 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         ) : null}
       </div>
 
-      {progress && lastDay && !results ? <WindowCard days={todoDays!} lastDay={lastDay} progress={progress} /> : null}
+      {progress && lastDay && !results ? <WindowCard title={LOOK[lookAhead].title} lastDay={lastDay} progress={progress} /> : null}
 
       <div className="ss-queue-label">
         <span className="inline-flex items-center gap-1.5">
@@ -283,8 +297,8 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
                   : "Nothing else is waiting either. Nice work."}
               </p>
               {progress.later && further !== undefined ? (
-                <button type="button" className="ss-link-button" onClick={() => setTodoDays(further)}>
-                  {further === null ? "Show everything" : `Look ${further} days ahead`}
+                <button type="button" className="ss-link-button" onClick={() => setLookAhead(further)}>
+                  {further === "all" ? "Show everything" : `Look further: ${LOOK[further].title.toLowerCase()}`}
                 </button>
               ) : null}
             </div>
@@ -307,14 +321,14 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
  * The days in view, as a goal: how much of the work due in them is on the
  * calendar or done, with a bar that fills as it's planned.
  */
-function WindowCard({ days, lastDay, progress }: { days: number; lastDay: Date; progress: WindowProgress }) {
+function WindowCard({ title, lastDay, progress }: { title: string; lastDay: Date; progress: WindowProgress }) {
   const total = progress.left + progress.planned;
   const share = total ? progress.planned / total : 1;
   const all = progress.left === 0;
   return (
-    <section className="ss-window" data-complete={(all && total > 0) || undefined} aria-label={`The next ${days} days`}>
+    <section className="ss-window" data-complete={(all && total > 0) || undefined} aria-label={title}>
       <div className="ss-window-head">
-        <strong>Next {days} days</strong>
+        <strong>{title}</strong>
         <span>through {format(lastDay, "EEE, MMM d")}</span>
       </div>
       <div
