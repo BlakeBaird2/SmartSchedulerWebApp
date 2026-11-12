@@ -4352,6 +4352,10 @@ section.ss-due-page {
     padding: 8px;
     font-size: 13px;
   }
+  /* Week, 2 weeks, Month, All: two by two in the narrow panel. */
+  .ss-sort-tabs[data-four] {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .ss-filters select {
     height: 40px;
     font-size: 13px;

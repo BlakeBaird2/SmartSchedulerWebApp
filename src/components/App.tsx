@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { clock, clockRange, DEFAULT_FILTERS, duration, plural, type Filters } from "@/lib/ui";
 import { blockMinutes, dropBlock, makeBlock, moveBlock as moveBlockTo, putBlock, resizeBlock as resizeBlockTo } from "@/lib/blocks";
 import { DEFAULT_LISTS, parseLists, type TaskListConfig } from "@/lib/taskLists";
-import { DEFAULT_TODO_DAYS, TODO_WINDOWS, type TodoScope, type TodoSort } from "@/lib/todos";
+import { DEFAULT_LOOK_AHEAD, LOOK_AHEADS, type LookAhead, type TodoScope, type TodoSort } from "@/lib/todos";
 import { AppContext, type AppContextValue, type CalMode, type NewTask, type Selection, type SettingsPanel, type TasksLayout, type View } from "./context";
 import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Notices, Topbar } from "./Topbar";
@@ -63,8 +63,8 @@ interface UiPrefs {
   todoScope: TodoScope;
   /** The to-do list's order: most urgent first, or shortest first. */
   todoSort: TodoSort;
-  /** How many days ahead the planner looks, or null for everything. */
-  todoDays: number | null;
+  /** How far ahead the planner looks: the rest of this week, through next week, 30 days, or everything. */
+  lookAhead: LookAhead;
   /** Tasks as one list, or as several side by side. */
   tasksLayout: TasksLayout;
   /** The lists split view shows, each with its own filters. */
@@ -97,7 +97,7 @@ const DEFAULT_UI: UiPrefs = {
   plannerFiltersPhone: false,
   todoScope: "all",
   todoSort: "due",
-  todoDays: DEFAULT_TODO_DAYS,
+  lookAhead: DEFAULT_LOOK_AHEAD,
   tasksLayout: "list",
   taskLists: DEFAULT_LISTS,
 };
@@ -130,7 +130,8 @@ function parseUi(raw: string | null): UiPrefs {
     todoSort: p.todoSort === "duration" ? p.todoSort : "due",
     tasksLayout: p.tasksLayout === "split" ? "split" : "list",
     taskLists: parseLists(p.taskLists),
-    todoDays: p.todoDays === null || TODO_WINDOWS.includes(p.todoDays as number) ? (p.todoDays as number | null) : DEFAULT_TODO_DAYS,
+    // (A number of days, from before, starts over on the rest of this week.)
+    lookAhead: LOOK_AHEADS.includes(p.lookAhead as LookAhead) ? (p.lookAhead as LookAhead) : DEFAULT_LOOK_AHEAD,
   };
 }
 
@@ -919,8 +920,8 @@ export function App() {
     setTodoScope: (scope: TodoScope) => writeUi({ todoScope: scope }),
     todoSort: ui.todoSort,
     setTodoSort: (sort: TodoSort) => writeUi({ todoSort: sort }),
-    todoDays: ui.todoDays,
-    setTodoDays: (days: number | null) => writeUi({ todoDays: days }),
+    lookAhead: ui.lookAhead,
+    setLookAhead: (lookAhead: LookAhead) => writeUi({ lookAhead }),
     tasksLayout: ui.tasksLayout,
     setTasksLayout: (layout: TasksLayout) => writeUi({ tasksLayout: layout }),
     taskLists: ui.taskLists,
