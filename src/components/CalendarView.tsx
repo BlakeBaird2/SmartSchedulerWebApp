@@ -257,8 +257,12 @@ type GridItem =
   | { kind: "event"; id: string; start: number; end: number; event: CalEvent }
   | { kind: "work"; id: string; start: number; end: number; item: CalBlock };
 
-/** How tall an hour is, at least: room for a half-hour block's title and time. */
-const HOUR_PX = 64;
+/**
+ * How tall an hour is on a computer, at least: 48px, as in Google Calendar, so
+ * most of a working day fits on screen. An hour shows a block's title and
+ * time; a half hour, its title and time on one line.
+ */
+const HOUR_PX = 48;
 /**
  * Events starting closer together than this (px) share columns, as in Google
  * Calendar: otherwise the later one would cover the earlier one's title and time.
