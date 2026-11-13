@@ -327,17 +327,10 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   );
   const anyAllDay = columns.some((c) => c.allDay.length > 0);
 
-  // The working day, stretched to fit anything outside it.
-  let startHour = Math.floor(ws.prefs.dayStart / 60);
-  let endHour = Math.ceil(ws.prefs.dayEnd / 60);
-  for (const c of columns) {
-    for (const it of c.items) {
-      startHour = Math.min(startHour, Math.floor((it.start - c.from) / (60 * MIN)));
-      endHour = Math.max(endHour, Math.ceil((it.end - c.from) / (60 * MIN)));
-    }
-  }
-  startHour = Math.max(0, startHour);
-  endHour = Math.min(24, Math.max(endHour, startHour + 1));
+  // All 24 hours, every day, as Google Calendar shows them; the grid scrolls.
+  // (Working hours only decide when work gets planned.)
+  const startHour = 0;
+  const endHour = 24;
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
   const height = frame.height;
   // Hours fill the frame when the whole day fits; pinching makes them taller, down to that.
@@ -364,7 +357,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   const bodyHeight = hours.length * 60 * ppm;
   const y = (ms: number, from: number) => ((ms - from) / MIN - startHour * 60) * ppm;
 
-  // Open on what matters: an hour before now when today is showing, otherwise the start of the day.
+  // Open on what matters: an hour before now when today is showing, otherwise the start of the working day.
   const firstDay = days[0]?.getTime() ?? 0;
   const showsToday = columns.some((c) => isSameDay(c.day, now));
   useLayoutEffect(() => {
@@ -374,7 +367,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
       keepScroll.current = false;
       return;
     }
-    const minute = showsToday ? now.getHours() * 60 + now.getMinutes() - 60 : startHour * 60;
+    const minute = showsToday ? now.getHours() * 60 + now.getMinutes() - 60 : ws.prefs.dayStart;
     el.scrollTop = Math.max(0, (minute - startHour * 60) * ppm);
     // Only when the days shown change or the frame first gets its size, not on every tick of the clock.
     // eslint-disable-next-line react-hooks/exhaustive-deps
