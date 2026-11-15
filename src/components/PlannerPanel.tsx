@@ -77,8 +77,8 @@ function useWindowProgress(): WindowProgress | null {
 
 /** Each look-ahead: a short label for its button, a title for the progress card, and a line for its tooltip. */
 const LOOK: Record<LookAhead, { button: string; title: string; hint: string }> = {
-  week: { button: "Week", title: "This week", hint: "Work due from today through Sunday" },
-  "2weeks": { button: "2 weeks", title: "This week and next", hint: "Work due from today through next Sunday" },
+  week: { button: "Week", title: "This week", hint: "Work due from today through Saturday" },
+  "2weeks": { button: "2 weeks", title: "This week and next", hint: "Work due from today through next Saturday" },
   month: { button: "Month", title: "Next 30 days", hint: "Work due in the next 30 days" },
   all: { button: "All", title: "Everything", hint: "Everything still to plan" },
 };
