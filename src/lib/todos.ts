@@ -156,9 +156,10 @@ export interface TodoListInput {
 // ---------------------------------------------------------------------------
 
 /**
- * How far ahead the planner looks: the rest of this week (Monday to Sunday, as
- * the calendar shows it), through the end of next week, the next 30 days, or
- * everything.
+ * How far ahead the planner looks: the rest of this week, through the end of
+ * next week, the next 30 days, or everything. The planner's week ends on
+ * Saturday, when most work is due, and the next one starts Sunday morning so
+ * Sunday is for planning the week ahead.
  */
 export type LookAhead = "week" | "2weeks" | "month" | "all";
 export const LOOK_AHEADS: LookAhead[] = ["week", "2weeks", "month", "all"];
@@ -171,8 +172,8 @@ export function windowEnd(now: Date, days: number): Date {
 
 /** Midnight at the end of the last day a look-ahead covers, or null for everything. */
 export function lookAheadEnd(choice: LookAhead, now: Date): Date | null {
-  // Days left in this week, counting today: Monday has 7, Sunday 1.
-  const thisWeek = 7 - ((now.getDay() + 6) % 7);
+  // Days left in this week through Saturday, counting today: Sunday has 7, Monday 6, Saturday 1.
+  const thisWeek = 7 - now.getDay();
   if (choice === "week") return windowEnd(now, thisWeek);
   if (choice === "2weeks") return windowEnd(now, thisWeek + 7);
   if (choice === "month") return windowEnd(now, 30);

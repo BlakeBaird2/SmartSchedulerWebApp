@@ -211,14 +211,17 @@ test("the days in view count today as the first", () => {
 });
 
 test("looking ahead: the rest of this week, through next week, 30 days, or everything", () => {
-  // NOW is Thursday, October 1: this week runs through Sunday the 4th.
-  assert.equal(lookAheadEnd("week", NOW)!.getTime(), at(5, 0).getTime());
-  assert.equal(lookAheadEnd("2weeks", NOW)!.getTime(), at(12, 0).getTime());
+  // NOW is Thursday, October 1: this week runs through Saturday the 3rd.
+  assert.equal(lookAheadEnd("week", NOW)!.getTime(), at(4, 0).getTime());
+  assert.equal(lookAheadEnd("2weeks", NOW)!.getTime(), at(11, 0).getTime());
   assert.equal(lookAheadEnd("month", NOW)!.getTime(), at(31, 0).getTime());
   assert.equal(lookAheadEnd("all", NOW), null);
-  // On a Monday the week is all seven days; on a Sunday, just today.
-  assert.equal(lookAheadEnd("week", at(5, 9))!.getTime(), at(12, 0).getTime());
-  assert.equal(lookAheadEnd("week", at(4, 9))!.getTime(), at(5, 0).getTime());
+  // Sunday starts the next week, Sunday to Saturday, so it can be planned;
+  // Monday has the rest through Saturday, and Saturday just itself.
+  assert.equal(lookAheadEnd("week", at(4, 9))!.getTime(), at(11, 0).getTime());
+  assert.equal(lookAheadEnd("week", at(5, 9))!.getTime(), at(11, 0).getTime());
+  assert.equal(lookAheadEnd("week", at(3, 9))!.getTime(), at(4, 0).getTime());
+  assert.equal(lookAheadEnd("2weeks", at(4, 9))!.getTime(), at(18, 0).getTime());
 });
 
 test("work due after the last day in view waits; late and undated work is always in view", () => {
