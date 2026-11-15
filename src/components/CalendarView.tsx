@@ -30,7 +30,8 @@ import { PlannerPanel } from "./PlannerPanel";
 import { beginPlanDrag, blockBox, dragSourceRef, drawnMs, RESIZE_HOLD_MS, targetStart, usePlanDrag, type DropTarget } from "./planDrag";
 import { SsIcon } from "./SsIcon";
 
-const WEEK = { weekStartsOn: 1 } as const;
+/** The calendar's week starts on Sunday, the day for planning the week ahead. */
+const WEEK = { weekStartsOn: 0 } as const;
 const MIN = 60_000;
 /** Phones and narrow windows get the prototype's phone layout below this width. */
 const PHONE_QUERY = "(max-width: 820px)";
@@ -106,7 +107,7 @@ export function CalendarView() {
   const days = useMemo(() => {
     if (calMode === "day") return [startOfDay(calCursor)];
     if (phone) return Array.from({ length: panelOpen ? 1 : 3 }, (_, i) => addDays(startOfDay(calCursor), i));
-    // The whole week, Monday to Sunday.
+    // The whole week, Sunday to Saturday.
     return eachDayOfInterval({ start: startOfWeek(calCursor, WEEK), end: endOfWeek(calCursor, WEEK) });
   }, [calMode, calCursor, phone, panelOpen]);
 
