@@ -118,7 +118,7 @@ export function CalendarView() {
   };
   const unit = calMode === "month" ? "month" : calMode === "week" && !phone ? "week" : "day";
   // Phones: swiping turns to the next or previous days, as many as are showing (as in Google Calendar's app).
-  const swipe = (dir: 1 | -1) => setCalCursor(addDays(calCursor, dir * days.length));
+  const swipe = (n: number) => setCalCursor(addDays(calCursor, n));
 
   // Phones: just the month, as Google Calendar's app does (the year too, outside this one),
   // and its short name ("Nov") beside the open planner or on the narrowest phones. The dates
@@ -271,17 +271,29 @@ const HOUR_PX = 48;
 const SIDE_BY_SIDE_PX = 44;
 const HOUR_PX_PHONE = 56;
 
-function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalData; dayView: boolean; onSwipe: ((dir: 1 | -1) => void) | null }) {
+/**
+ * Days drawn off to each side of the ones showing on a phone, so sliding the
+ * calendar shows them as it moves (daySwipe.ts): up to a week either way.
+ */
+const SWIPE_DAYS = 7;
+
+function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalData; dayView: boolean; onSwipe: ((days: number) => void) | null }) {
   const { ws, now, select, selected, setCalCursor, setCalMode, plan, model } = useApp();
   const drag = usePlanDrag();
   const scroller = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   // Swiping to other days keeps the hours where they were, as Google Calendar does.
   const keepScroll = useRef(false);
-  useDaySwipe(frameRef, Boolean(onSwipe), (dir) => {
+  const buffer = onSwipe ? SWIPE_DAYS : 0;
+  useDaySwipe(frameRef, Boolean(onSwipe), buffer, (n) => {
     keepScroll.current = true;
-    onSwipe?.(dir);
+    onSwipe?.(n);
   });
+  // The days drawn: those showing, and on a phone a week either side of them.
+  const drawn = useMemo(
+    () => (buffer ? Array.from({ length: days.length + 2 * buffer }, (_, i) => addDays(startOfDay(days[0]), i - buffer)) : days),
+    [days, buffer],
+  );
   const [frame, setFrame] = useState({ height: 0, phone: false });
   // How tall an hour is after pinching it (pinchZoom.ts); until then, the default.
   const [pinchedHourPx, setPinchedHourPx] = useState<number | null>(readHourPx);
@@ -310,7 +322,8 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
 
   const columns = useMemo(
     () =>
-      days.map((day) => {
+      drawn.map((day, i) => {
+        const shown = i >= buffer && i < buffer + days.length;
         const from = startOfDay(day).getTime();
         const to = addDays(startOfDay(day), 1).getTime();
         const items: GridItem[] = [];
@@ -326,11 +339,11 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
           items.push({ kind: "work", id: item.id, start: Math.max(item.start.getTime(), from), end: Math.min(item.end.getTime(), to), item });
         }
         const gaps = plan.days.find((d) => dayKey(d.date) === dayKey(day))?.gaps ?? [];
-        return { day, from, items, allDay, gaps };
+        return { day, from, items, allDay, gaps, shown };
       }),
-    [days, data, plan.days],
+    [drawn, buffer, days.length, data, plan.days],
   );
-  const anyAllDay = columns.some((c) => c.allDay.length > 0);
+  const anyAllDay = columns.some((c) => c.shown && c.allDay.length > 0);
 
   // All 24 hours, every day, as Google Calendar shows them; the grid scrolls.
   // (Working hours only decide when work gets planned.)
@@ -364,7 +377,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
 
   // Open on what matters: an hour before now when today is showing, otherwise the start of the working day.
   const firstDay = days[0]?.getTime() ?? 0;
-  const showsToday = columns.some((c) => isSameDay(c.day, now));
+  const showsToday = days.some((d) => isSameDay(d, now));
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!el || height === 0) return;
@@ -385,13 +398,20 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   const nowMs = now.getTime();
 
   return (
-    <div ref={frameRef} className={`ss-week ${dayView ? "ss-day-view" : ""}`} style={{ "--ss-days": days.length } as React.CSSProperties}>
+    <div
+      ref={frameRef}
+      className={`ss-week ${dayView ? "ss-day-view" : ""}`}
+      data-buffer={buffer || undefined}
+      style={{ "--ss-days": days.length, "--ss-drawn": drawn.length, "--ss-buffer": buffer } as React.CSSProperties}
+    >
       <div className="ss-week-row">
         {/* The corner over the hours stays empty: every time is the device's own. */}
         <div className="ss-day-head ss-time-head" aria-hidden />
         {columns.map((c) => (
           <button
             key={c.from}
+            // Days off to the side are only there to slide in.
+            inert={!c.shown}
             className="ss-day-head"
             data-today={isToday(c.day) || undefined}
             onClick={() => {
@@ -409,7 +429,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
         <div className="ss-week-row">
           <div className="ss-allday-gutter">ALL DAY</div>
           {columns.map((c) => (
-            <div key={c.from} className="ss-allday">
+            <div key={c.from} className="ss-allday" inert={!c.shown}>
               {c.allDay.map((e) => (
                 <EventChip key={e.id} event={e} past={Date.parse(e.end) <= nowMs} />
               ))}
@@ -441,6 +461,7 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
             return (
               <div
                 key={c.from}
+                inert={!c.shown}
                 className="ss-day-column"
                 // Clicking empty time adds something there, as in Google Calendar: on the half
                 // hour clicked, an hour long. Events and scheduled work handle their own clicks.

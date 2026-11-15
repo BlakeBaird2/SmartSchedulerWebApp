@@ -6,24 +6,26 @@ import { planDragActive } from "./planDrag";
 
 /** How far a finger moves before it counts as a swipe rather than a tap or a scroll. */
 const SLOP = 10;
-/** A swipe past this share of the width, or a quick flick, turns the page. */
-const TURN_SHARE = 0.2;
+/** A quick flick moves at least a day, however short it was. */
 const FLICK_PX_PER_MS = 0.45;
-const OUT_MS = 170;
-const IN_MS = 220;
+/** How far a flick carries on after the finger lifts: its speed for this long. */
+const GLIDE_MS = 220;
+const BACK_MS = 170;
 
 /**
- * Swiping the calendar left or right on a phone, as in Google Calendar's app:
- * the days follow the finger, and a swipe far or fast enough slides them out and
- * the next (or previous) days in. Up and down still scroll the hours, and holding
- * still still picks up an event to move it (planDrag.ts); a swipe never opens
- * what it started on.
+ * Sliding the calendar left or right on a phone, as in Google Calendar's app: the
+ * days follow the finger, and when it lifts they glide on and settle on whichever
+ * day is nearest, so any day can be the first one shown. A flick carries further,
+ * up to `maxDays` (the days drawn off to each side). Up and down still scroll the
+ * hours, and holding still still picks up an event to move it (planDrag.ts); a
+ * swipe never opens what it started on.
  *
  * The days move by a CSS variable, --ss-swipe, set on the element while it moves;
  * the stylesheet moves the day columns and headers by it and leaves the hours where
- * they are. `turn` runs synchronously, so the new days are drawn before they slide in.
+ * they are. Once they settle, `turn` moves the first day shown by that many days,
+ * synchronously, so the days are redrawn in place without a jump.
  */
-export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: boolean, turn: (dir: 1 | -1) => void) {
+export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: boolean, maxDays: number, turn: (days: number) => void) {
   const turnRef = useRef(turn);
   useEffect(() => {
     turnRef.current = turn;
@@ -69,12 +71,14 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
         window.removeEventListener("pointercancel", onCancel);
       };
       const back = () => {
-        set(0, OUT_MS);
+        set(0, BACK_MS);
         timer = setTimeout(() => {
           timer = null;
           settle();
-        }, OUT_MS);
+        }, BACK_MS);
       };
+      const column = () => (el.querySelector(".ss-day-column") as HTMLElement | null)?.getBoundingClientRect().width || el.clientWidth || 1;
+      const limit = () => column() * maxDays;
       const onMove = (ev: PointerEvent) => {
         if (ev.pointerId !== id) return;
         dx = ev.clientX - x0;
@@ -99,33 +103,33 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
         if (dt > 0) speed = (ev.clientX - lastX) / dt;
         lastX = ev.clientX;
         lastT = ev.timeStamp;
-        set(dx, 0);
+        // No further than the days drawn off to the side.
+        set(Math.max(-limit(), Math.min(limit(), dx)), 0);
       };
-      /** The finger lifted, or the browser took the touch away: turn the page if the swipe went far or fast enough. */
+      /** The finger lifted, or the browser took the touch away: glide on and settle on the nearest day. */
       const release = () => {
-        const width = el.clientWidth || 1;
-        const far = Math.abs(dx) > width * TURN_SHARE;
+        const col = column();
+        const at = Math.max(-limit(), Math.min(limit(), dx));
         const flick = Math.abs(speed) > FLICK_PX_PER_MS && Math.sign(speed) === Math.sign(dx);
-        if (!far && !flick) return back();
         // Swiping left shows what comes next.
-        const dir: 1 | -1 = dx < 0 ? 1 : -1;
+        let days = Math.round(-(at + (flick ? speed * GLIDE_MS : 0)) / col);
+        if (days === 0 && flick) days = dx < 0 ? 1 : -1;
+        days = Math.max(-maxDays, Math.min(maxDays, days));
+        if (days === 0) return back();
         if (reduced) {
           settle();
-          turnRef.current(dir);
+          turnRef.current(days);
           return;
         }
-        set(-dir * width, OUT_MS);
+        // Longer glides take a little longer, as a flick slows down.
+        const ms = Math.round(Math.min(380, Math.max(180, 140 + Math.abs(-days * col - at) * 0.35)));
+        set(-days * col, ms);
         timer = setTimeout(() => {
-          flushSync(() => turnRef.current(dir));
-          set(dir * width, 0);
-          // Draw the new days off to the side before sliding them in.
-          void el.offsetWidth;
-          set(0, IN_MS);
-          timer = setTimeout(() => {
-            timer = null;
-            settle();
-          }, IN_MS);
-        }, OUT_MS);
+          timer = null;
+          // The days redraw starting from the one settled on, and the slide resets in the same frame.
+          flushSync(() => turnRef.current(days));
+          settle();
+        }, ms);
       };
       const onUp = (ev: PointerEvent) => {
         if (ev.pointerId !== id) return;
@@ -164,5 +168,5 @@ export function useDaySwipe(ref: React.RefObject<HTMLElement | null>, enabled: b
       if (timer) clearTimeout(timer);
       settle();
     };
-  }, [ref, enabled]);
+  }, [ref, enabled, maxDays]);
 }
