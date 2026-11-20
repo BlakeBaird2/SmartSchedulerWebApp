@@ -188,8 +188,8 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <button className="ss-primary ss-planner-add" onClick={openAddTask} data-smart-event="add_task_opened">
-        <SsIcon name="plus" /> Add task
+      <button className="ss-primary ss-planner-add" onClick={openAddTask} data-smart-event="add_task_opened" aria-label="New event or task">
+        <SsIcon name="plus" /> New
       </button>
 
       <form

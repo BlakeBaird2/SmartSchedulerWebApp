@@ -103,13 +103,14 @@ export function CalendarView() {
   const data = useCalendarData();
   const today = new Date();
 
-  // Phones: the week shows three days at a time, or one beside the open planner.
+  // Phones: the week shows three days at a time. The open planner sits above the calendar
+  // (stacked), so the calendar keeps the full width either way.
   const days = useMemo(() => {
     if (calMode === "day") return [startOfDay(calCursor)];
-    if (phone) return Array.from({ length: panelOpen ? 1 : 3 }, (_, i) => addDays(startOfDay(calCursor), i));
+    if (phone) return Array.from({ length: 3 }, (_, i) => addDays(startOfDay(calCursor), i));
     // The whole week, Sunday to Saturday.
     return eachDayOfInterval({ start: startOfWeek(calCursor, WEEK), end: endOfWeek(calCursor, WEEK) });
-  }, [calMode, calCursor, phone, panelOpen]);
+  }, [calMode, calCursor, phone]);
 
   const step = (dir: number) => {
     if (calMode === "month") setCalCursor(addMonths(calCursor, dir));
@@ -123,7 +124,7 @@ export function CalendarView() {
   // Phones: just the month, as Google Calendar's app does (the year too, outside this one),
   // and its short name ("Nov") beside the open planner or on the narrowest phones. The dates
   // already show along the top.
-  const month = panelOpen || tiny ? "MMM" : "MMMM";
+  const month = tiny ? "MMM" : "MMMM";
   const monthOnly = format(days[0], isSameYear(days[0], today) ? month : `${month} yyyy`);
   const fullTitle =
     calMode === "month"

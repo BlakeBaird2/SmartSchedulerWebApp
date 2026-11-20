@@ -4113,6 +4113,45 @@ section.ss-due-page {
   font: 700 26px "Manrope Variable", "Manrope", sans-serif;
   letter-spacing: -0.03em;
 }
+.ss-add-choice {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+.ss-add-choice button {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--ss-line);
+  border-radius: 14px;
+  background: var(--ss-surface);
+  color: var(--ss-ink);
+  text-align: left;
+}
+.ss-add-choice button:hover,
+.ss-add-choice button:focus-visible {
+  border-color: var(--ss-accent);
+  background: var(--ss-accent-tint);
+}
+.ss-add-choice button > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ss-accent);
+}
+.ss-add-choice strong {
+  display: block;
+  font: 700 17px "Manrope Variable", "Manrope", sans-serif;
+}
+.ss-add-choice em {
+  display: block;
+  margin-top: 3px;
+  color: var(--ss-muted);
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.45;
+}
 .ss-add-form {
   margin-top: 20px;
   display: flex;
@@ -4299,17 +4338,96 @@ section.ss-due-page {
   .ss-notice-actions a {
     display: none;
   }
-  /* Phones: the planner and the calendar split the screen down the middle. */
+  /*
+   * Phones: stacked. The task list on top, the calendar below at full width
+   * (P29), so a day has room and swiping left or right moves between days
+   * (daySwipe.ts). The list scrolls inside its own share of the screen; dragging
+   * a task down onto the calendar still schedules it.
+   */
   .ss-calendar-page {
-    grid-template-columns: 50% 50%;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 45%) minmax(0, 1fr);
     overflow: hidden;
   }
   .ss-calendar-page.ss-panel-closed {
-    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
   }
   .ss-suggestions {
     min-width: 0;
-    padding: 18px 12px;
+    padding: 12px 14px 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ss-sidebar-line);
+    box-shadow: 0 6px 18px -12px rgba(20, 30, 50, 0.28);
+  }
+  :root[data-theme="dark"] .ss-suggestions {
+    box-shadow: 0 6px 20px -12px rgba(0, 0, 0, 0.8);
+  }
+  /* The stacked planner: its title and New on one line, so the list gets the room. */
+  .ss-calendar-page:not(.ss-panel-closed) .ss-suggestions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-rows: min-content;
+    column-gap: 8px;
+    align-content: start;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-suggestions > * {
+    grid-column: 1 / -1;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-aside-head {
+    grid-column: 1;
+    align-items: center;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-aside-head h1 {
+    margin: 0;
+    font-size: 18px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-aside-head p {
+    display: none;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-planner-add {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    margin-top: 0;
+    padding: 8px 14px;
+  }
+  /*
+   * Tight above the list, so the tasks show without scrolling: search is on the
+   * Tasks page, and the week's progress is one slim card.
+   */
+  .ss-calendar-page:not(.ss-panel-closed) .ss-planner-search {
+    display: none;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-filters {
+    margin-top: 10px;
+    padding: 9px 12px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-window {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 8px 12px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-window-head span,
+  .ss-calendar-page:not(.ss-panel-closed) .ss-window p em {
+    display: none;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-window-head strong {
+    font-size: 13.5px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-window-bar {
+    flex: 1;
+    height: 6px;
+    margin: 0;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-window p {
+    margin: 0;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-queue-label {
+    margin: 12px 2px 8px;
   }
   /*
    * In the narrower planner: no "Personal planner" line over the title, no item
@@ -4469,9 +4587,6 @@ section.ss-due-page {
     padding: 0 6px;
     font-size: 14px;
   }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-controls select {
-    display: none;
-  }
   .ss-arrows button {
     width: 40px;
     height: 40px;
@@ -4486,9 +4601,6 @@ section.ss-due-page {
   }
   .ss-week.ss-day-view {
     --ss-gutter: 38px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-week {
-    --ss-gutter: 34px;
   }
   .ss-week-row,
   .ss-week-scroll {
@@ -4661,45 +4773,6 @@ section.ss-due-page {
     height: 29px;
     font-size: 10.5px;
   }
-  .ss-calendar-page:not(.ss-panel-closed) {
-    grid-template-columns: 50% 50%;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-suggestions {
-    padding: 14px 10px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-calendar-area {
-    padding-right: 5px;
-    padding-left: 5px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-toolbar {
-    align-items: center;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-date-title h1 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 20px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-arrows button,
-  .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
-    width: 36px;
-    height: 36px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-week {
-    --ss-gutter: 30px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-time-column span {
-    padding-right: 4px;
-    font-size: 9px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-day-head strong {
-    font-size: 14px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-aside-head h1 {
-    font-size: 17px;
-  }
-  .ss-calendar-page:not(.ss-panel-closed) .ss-mini-task h3 {
-    font-size: 13.5px;
-  }
   .ss-tasks-page,
   .ss-due-page {
     padding: 24px 14px 40px;
@@ -4729,9 +4802,7 @@ section.ss-due-page {
 @media (max-width: 360px) {
   .ss-open-panel,
   .ss-arrows button,
-  .ss-controls .ss-today-mini,
-  .ss-calendar-page:not(.ss-panel-closed) .ss-arrows button,
-  .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
+  .ss-controls .ss-today-mini {
     width: 34px;
     height: 34px;
   }
@@ -4740,14 +4811,9 @@ section.ss-due-page {
     height: 34px;
     font-size: 13px;
   }
-  .ss-date-title h1,
-  .ss-calendar-page:not(.ss-panel-closed) .ss-date-title h1 {
+  .ss-date-title h1 {
     padding-left: 2px;
     font-size: 18px;
-  }
-  /* Beside the open planner there is only room for the month and the arrows. */
-  .ss-calendar-page:not(.ss-panel-closed) .ss-controls .ss-today-mini {
-    display: none;
   }
 }
 

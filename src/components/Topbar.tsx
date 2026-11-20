@@ -12,7 +12,7 @@ import { cloudAvailable, useCloud } from "./cloud";
 
 /**
  * The bar across the top, as in the Figma prototype: the name on the left, the
- * two views in the middle (Calendar, Tasks; Due dates is off for now), the profile on the right. Add task lives in the
+ * two views in the middle (Calendar, Tasks; Due dates is off for now), the profile on the right. + New (event or task) lives in the
  * planner and on the Tasks page. Everything the prototype has no room for
  * (refreshing calendars, what changed, Settings, Help) is in the profile menu.
  */
