@@ -1147,6 +1147,113 @@
   font-style: normal;
   font-weight: 600;
 }
+/*
+ * "Next up" (PlannerPanel NextUpCard): the one task to do next, why, and a
+ * button that puts it in the free time it fits. Its edge is its class's colour.
+ */
+.ss-next-up {
+  --task: var(--ss-personal);
+  position: relative;
+  /* The label and task on the left, the button beside them, and the reason the full width below. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  margin-top: 16px;
+  padding: 13px 14px 13px 19px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--ss-brand) 28%, var(--ss-line));
+  border-radius: 14px;
+  background: var(--ss-accent-tint);
+}
+.ss-next-up::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: var(--task);
+}
+.ss-next-up-eyebrow {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ss-brand);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.ss-next-up-task {
+  grid-column: 1;
+  display: block;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: var(--ss-ink);
+  font: 700 16px "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ss-next-up-task:hover {
+  text-decoration: underline;
+}
+.ss-next-up p {
+  grid-column: 1 / -1;
+  margin-top: 5px;
+  color: var(--ss-text-4);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.ss-next-up-place {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ss-on-brand);
+  background: var(--ss-brand);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+.ss-next-up-place:hover {
+  background: var(--ss-brand-hover);
+}
+/* Past-due work, pinned above the rest of the planner's list. */
+.ss-overdue {
+  margin-bottom: 14px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed color-mix(in oklab, var(--ss-danger) 35%, var(--ss-line));
+}
+.ss-overdue-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 2px 8px;
+  color: var(--ss-danger);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.ss-overdue-label span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .ss-window-done strong {
   display: block;
   color: var(--ss-ink);
@@ -4428,6 +4535,29 @@ section.ss-due-page {
   }
   .ss-calendar-page:not(.ss-panel-closed) .ss-queue-label {
     margin: 12px 2px 8px;
+  }
+  /* Next up, slim: the list keeps its room. */
+  .ss-calendar-page:not(.ss-panel-closed) .ss-next-up {
+    column-gap: 10px;
+    margin-top: 10px;
+    padding: 8px 10px 8px 15px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-next-up-eyebrow {
+    font-size: 10px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-next-up-task {
+    margin-top: 1px;
+    font-size: 14.5px;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-next-up p {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .ss-calendar-page:not(.ss-panel-closed) .ss-next-up-place {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12.5px;
   }
   /*
    * In the narrower planner: no "Personal planner" line over the title, no item

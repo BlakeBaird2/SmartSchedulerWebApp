@@ -393,8 +393,9 @@ function TimeGrid({ days, data, dayView, onSwipe }: { days: Date[]; data: CalDat
   }, [firstDay, days.length, height > 0]);
 
   // While a task is dragged, everything after it is due greys out, with a red line at the deadline.
+  // Overdue work has no deadline left to show: any time from now on is the time to do it.
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
-  const deadline = draggedTask?.dueAt ? new Date(draggedTask.dueAt) : null;
+  const deadline = draggedTask?.dueAt && Date.parse(draggedTask.dueAt) > now.getTime() ? new Date(draggedTask.dueAt) : null;
   // Anything that has ended is faded.
   const nowMs = now.getTime();
 
@@ -938,7 +939,7 @@ function MonthGrid({ data }: { data: CalData }) {
     [calCursor],
   );
   const draggedTask = drag && drag.kind !== "resize" && drag.taskId ? (data.byId.get(drag.taskId) ?? null) : null;
-  const deadline = draggedTask?.dueAt ? startOfDay(new Date(draggedTask.dueAt)).getTime() : null;
+  const deadline = draggedTask?.dueAt && Date.parse(draggedTask.dueAt) > nowMs ? startOfDay(new Date(draggedTask.dueAt)).getTime() : null;
 
   type Entry = { key: string; sort: number; event?: CalEvent; block?: CalBlock };
   const entriesByDay = useMemo(() => {
