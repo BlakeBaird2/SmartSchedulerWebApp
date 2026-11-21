@@ -78,6 +78,37 @@ export function pickNextUp(tasks: Task[], gaps: Gap[], now: Date): NextUp | null
   return { task: best, slot: slots.find((s) => fitsIn(best, s, now)) ?? null };
 }
 
+/**
+ * Top suggestions for what to put on the calendar: each gets its own free
+ * stretch when one fits, so the list doesn't pile everything into the same gap.
+ * Tasks that still don't fit keep a null slot (shown, but without a place button).
+ */
+export function pickSuggestions(tasks: Task[], gaps: Gap[], now: Date, limit = 6): NextUp[] {
+  if (tasks.length === 0 || limit <= 0) return [];
+  const left = [...tasks];
+  const open = openSlots(gaps, now).map((s) => ({ ...s }));
+  const out: NextUp[] = [];
+  while (left.length > 0 && out.length < limit) {
+    const next = pickNextUp(left, open.map((s) => ({ start: s.start, end: s.end, minutes: s.minutes })), now);
+    if (!next) break;
+    out.push(next);
+    const i = left.findIndex((t) => t.id === next.task.id);
+    if (i >= 0) left.splice(i, 1);
+    if (next.slot) {
+      const used = next.task.estimate;
+      const si = open.findIndex((s) => s.start.getTime() === next.slot!.start.getTime() && s.end.getTime() === next.slot!.end.getTime());
+      if (si >= 0) {
+        const s = open[si];
+        const start = s.start.getTime() + used * MINUTE;
+        const minutes = Math.floor((s.end.getTime() - start) / MINUTE);
+        if (minutes > 0) open[si] = { start: new Date(start), end: s.end, minutes };
+        else open.splice(si, 1);
+      }
+    }
+  }
+  return out;
+}
+
 /** "45 min", "1 hr", "1.5 hr". */
 function length(m: number): string {
   return m < 60 ? `${m} min` : `${Math.round((m / 60) * 10) / 10} hr`;

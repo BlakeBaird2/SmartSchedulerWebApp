@@ -4199,6 +4199,16 @@ section.ss-due-page {
   background: rgba(27, 27, 25, 0.42);
   backdrop-filter: blur(4px);
 }
+/*
+ * Soft right-side dim for Add task/event: calendar (or the page behind) stays
+ * readable so students can check commitments while filling the form.
+ */
+.ss-backdrop-side {
+  display: block;
+  padding: 0;
+  background: rgba(27, 27, 25, 0.16);
+  backdrop-filter: none;
+}
 .ss-modal {
   width: min(560px, 100%);
   max-height: calc(100dvh - 40px);
@@ -4209,6 +4219,47 @@ section.ss-due-page {
   color: var(--ss-ink);
   box-shadow: 0 24px 70px rgba(20, 20, 18, 0.2);
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
+}
+.ss-modal-side {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 100%);
+  height: auto;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+  border-left: 1px solid var(--ss-line);
+  box-shadow: -16px 0 48px rgba(20, 20, 18, 0.12);
+  animation: ss-slide-in-right 180ms ease-out;
+}
+.ss-modal-side-hint {
+  margin: 8px 0 0;
+  max-width: 32ch;
+  color: var(--ss-muted);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+@keyframes ss-slide-in-right {
+  from {
+    transform: translateX(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes ss-slide-in-up {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 .ss-modal-head {
   display: flex;
@@ -4407,6 +4458,295 @@ section.ss-due-page {
   max-width: 1160px;
   margin: 0 auto;
   padding: 40px 40px 64px;
+}
+
+/*
+ * Suggest: first paint. One "Work on now" answer, then a list of what else to
+ * put on the calendar. Sample data opens here with a first-win coach.
+ */
+.ss-suggest-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 40px 72px;
+}
+.ss-suggest-coach,
+.ss-suggest-win {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 22px 0 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--ss-brand) 28%, var(--ss-line));
+  background: var(--ss-accent-tint);
+}
+.ss-suggest-coach > svg,
+.ss-suggest-win > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ss-brand);
+}
+.ss-suggest-win {
+  border-color: color-mix(in oklab, var(--ss-personal) 40%, var(--ss-line));
+  background: var(--ss-personal-bg);
+}
+.ss-suggest-win > svg {
+  color: var(--ss-personal-fg);
+}
+.ss-suggest-coach strong,
+.ss-suggest-win strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--ss-ink);
+}
+.ss-suggest-coach p,
+.ss-suggest-win p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ss-text-3);
+}
+.ss-suggest-win .ss-primary {
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
+}
+.ss-suggest-dismiss {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -4px -6px -4px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ss-muted);
+}
+.ss-suggest-dismiss:hover {
+  background: color-mix(in oklab, var(--ss-ink) 6%, transparent);
+  color: var(--ss-ink);
+}
+.ss-suggest-hero {
+  --task: var(--ss-personal);
+  position: relative;
+  margin-top: 28px;
+  padding: 22px 22px 22px 26px;
+  overflow: hidden;
+  border: 2px solid color-mix(in oklab, var(--ss-brand) 45%, var(--ss-line));
+  border-radius: 18px;
+  background: var(--ss-surface);
+  box-shadow: 0 12px 32px rgba(20, 20, 18, 0.08);
+}
+.ss-suggest-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  background: var(--task);
+}
+.ss-suggest-hero[data-aha="ready"] {
+  outline: 3px solid color-mix(in oklab, var(--ss-brand) 35%, transparent);
+  outline-offset: 3px;
+}
+.ss-suggest-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ss-brand);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.ss-suggest-hero-task {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ss-ink);
+  font: 800 28px/1.2 "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.03em;
+  text-align: left;
+}
+.ss-suggest-hero-task:hover {
+  text-decoration: underline;
+}
+.ss-suggest-hero-why {
+  margin-top: 8px;
+  color: var(--ss-text-3);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.ss-suggest-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ss-suggest-secondary {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--ss-line);
+  border-radius: 10px;
+  background: var(--ss-surface);
+  color: var(--ss-text-2);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.ss-suggest-secondary:hover {
+  border-color: var(--ss-line-2);
+  background: var(--ss-chip);
+}
+.ss-suggest-empty {
+  margin-top: 28px;
+  padding: 36px 24px;
+  text-align: center;
+  border: 1px dashed var(--ss-line);
+  border-radius: 18px;
+  background: var(--ss-panel);
+}
+.ss-suggest-empty > svg {
+  color: var(--ss-personal);
+}
+.ss-suggest-empty h2 {
+  margin: 12px 0 6px;
+  font: 750 22px/1.2 "Manrope Variable", "Manrope", sans-serif;
+}
+.ss-suggest-empty p {
+  margin: 0 auto 18px;
+  max-width: 36ch;
+  color: var(--ss-text-3);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.ss-suggest-list {
+  margin-top: 36px;
+}
+.ss-suggest-list-head h2 {
+  margin: 0;
+  font: 750 18px/1.25 "Manrope Variable", "Manrope", sans-serif;
+  letter-spacing: -0.02em;
+}
+.ss-suggest-list-head p {
+  margin: 6px 0 0;
+  color: var(--ss-text-4);
+  font-size: 13.5px;
+}
+.ss-suggest-list ul {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ss-suggest-row {
+  --task: var(--ss-personal);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+  border: 1px solid var(--ss-line);
+  border-radius: 14px;
+  background: var(--ss-surface);
+  box-shadow: inset 4px 0 0 var(--task);
+}
+.ss-suggest-row-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.ss-suggest-row-title {
+  display: block;
+  overflow: hidden;
+  color: var(--ss-ink);
+  font: 700 15.5px/1.3 "Manrope Variable", "Manrope", sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ss-suggest-row-meta {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--ss-text-4);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ss-suggest-row-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ss-on-brand);
+  background: var(--ss-brand);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ss-suggest-row-place:hover {
+  background: var(--ss-brand-hover);
+}
+.ss-suggest-row-place-quiet {
+  color: var(--ss-text-2);
+  background: var(--ss-chip);
+}
+.ss-suggest-row-place-quiet:hover {
+  background: var(--ss-track);
+}
+.ss-suggest-foot {
+  margin-top: 28px;
+  color: var(--ss-text-4);
+  font-size: 13.5px;
+}
+.ss-suggest-foot b {
+  color: var(--ss-text-2);
+  font-weight: 700;
+}
+.ss-text-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ss-brand);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ss-text-link:hover {
+  color: var(--ss-brand-hover);
+}
+
+@media (max-width: 820px) {
+  .ss-suggest-page {
+    padding: 28px 18px 96px;
+  }
+  .ss-suggest-hero-task {
+    font-size: 22px;
+  }
+  .ss-suggest-win {
+    flex-wrap: wrap;
+  }
+  .ss-suggest-win .ss-primary {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 /* -------------------------------------------------------------- phones */
@@ -4917,14 +5257,37 @@ section.ss-due-page {
     padding: 10px;
     align-items: end;
   }
+  .ss-backdrop-side {
+    padding: 0;
+  }
   .ss-modal {
     max-height: calc(100dvh - 20px);
     padding: 22px 18px;
     border-radius: 18px 18px 12px 12px;
   }
+  /* Tablets keep a right rail so the calendar stays visible; phones get a sheet. */
+  .ss-modal-side {
+    width: min(380px, 92vw);
+    padding: 22px 18px;
+  }
   .ss-form-row {
     flex-direction: column;
     gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ss-modal-side {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 88dvh;
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -12px 40px rgba(20, 20, 18, 0.16);
+    animation: ss-slide-in-up 180ms ease-out;
   }
 }
 

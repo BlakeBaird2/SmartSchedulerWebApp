@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dueWords, fitsIn, nextUpReason, openSlots, pickNextUp, slotWhen } from "../nextUp";
+import { dueWords, fitsIn, nextUpReason, openSlots, pickNextUp, pickSuggestions, slotWhen } from "../nextUp";
 import type { Gap } from "../planner";
 import type { Task } from "../types";
 
@@ -83,6 +83,25 @@ test("no free stretch long enough: still next up, with nowhere to put it", () =>
   const n = pickNextUp([task("huge", { estimate: 600 })], GAPS, NOW)!;
   assert.equal(n.slot, null);
   assert.equal(nextUpReason(n, NOW), "Due Saturday · ~10 hr · no free stretch that long before it's due");
+});
+
+test("suggestions assign each task its own free stretch", () => {
+  const list = pickSuggestions(
+    [
+      task("a", { dueAt: at(2, 9).toISOString(), estimate: 30 }),
+      task("b", { dueAt: at(2, 10).toISOString(), estimate: 30 }),
+      task("c", { dueAt: at(3, 9).toISOString(), estimate: 45 }),
+    ],
+    GAPS,
+    NOW,
+    3,
+  );
+  assert.equal(list.length, 3);
+  assert.equal(list[0].task.id, "a");
+  assert.equal(list[0].slot?.start.getTime(), at(1, 14).getTime());
+  assert.equal(list[1].task.id, "b");
+  assert.notEqual(list[1].slot?.start.getTime(), list[0].slot?.start.getTime());
+  assert.equal(pickSuggestions([], GAPS, NOW).length, 0);
 });
 
 test("the one-line reason", () => {

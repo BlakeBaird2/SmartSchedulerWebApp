@@ -19,6 +19,7 @@ import { KEYS, parseJson, readStored, useStored, writeStored } from "./store";
 import { Notices, Topbar } from "./Topbar";
 import { Onboarding, startDemo } from "./Onboarding";
 import { CalendarView } from "./CalendarView";
+import { SuggestionsPage } from "./SuggestionsPage";
 import { TasksPage } from "./TasksPage";
 import { SettingsView } from "./SettingsView";
 import { HelpView } from "./HelpView";
@@ -72,19 +73,19 @@ interface UiPrefs {
 }
 
 // The Due dates page is off for now (DueDatesPage.tsx is kept for when it comes back).
-const VIEWS: View[] = ["calendar", "tasks", "settings", "help"];
+const VIEWS: View[] = ["suggest", "calendar", "tasks", "settings", "help"];
 const CAL_MODES: CalMode[] = ["month", "week", "day"];
 
-/** Screens from before the redesign: Plan became the calendar, Upcoming and Classes the task list. */
+/** Screens from before the redesign: Plan became Suggest + Calendar; Upcoming and Classes the task list. */
 function viewFrom(v: unknown): View | null {
-  if (v === "plan") return "calendar";
+  if (v === "plan") return "suggest";
   if (v === "upcoming" || v === "classes") return "tasks";
   if (v === "due") return "calendar";
   return typeof v === "string" && VIEWS.includes(v as View) ? (v as View) : null;
 }
 const SETTINGS_PANELS: SettingsPanel[] = ["main", "calendars", "colors", "schedule", "estimates", "account", "about"];
 const DEFAULT_UI: UiPrefs = {
-  view: "calendar",
+  view: "suggest",
   calMode: "day",
   calModePicked: false,
   dueMode: "week",
@@ -184,7 +185,7 @@ function applyImport(ws: Workspace) {
   writeJson(KEYS.workspace, ws);
   writeStored(KEYS.snapshot, null);
   writeStored(KEYS.changes, null);
-  writeUi({ setupDone: true, view: "calendar" });
+  writeUi({ setupDone: true, view: "suggest" });
 }
 
 /**
@@ -225,12 +226,12 @@ let opened: Incoming | null = null;
 
 function takeFromUrl(): Incoming {
   if (!opened) {
-    // Every visit opens on the calendar unless the address names a screen
-    // (?view=tasks). The calendar mode and filters are still remembered.
+    // Every visit opens on Suggest (what to put on the calendar) unless the
+    // address names a screen (?view=calendar). Mode and filters are still remembered.
     const asked = viewFromUrl();
     const raw = readStored(KEYS.ui);
     if (asked) writeUi({ view: asked });
-    else if (raw && parseUi(raw).view !== "calendar") writeUi({ view: "calendar" });
+    else if (raw && parseUi(raw).view !== "suggest") writeUi({ view: "suggest" });
     opened = takeDemoFromUrl() ?? takeSetupFromUrl();
   }
   return opened;
@@ -935,6 +936,8 @@ export function App() {
     reveal,
     openAddTask: () => {
       trackEvent("add_task_opened");
+      // Drop any detail sheet so Add's side panel and the calendar aren't covered by two overlays.
+      setSelected(null);
       setAddOpen(true);
     },
     openClassTimes: () => setClassTimesOpen(true),
@@ -948,7 +951,7 @@ export function App() {
 
   const finishSetup = useCallback(() => {
     trackEvent("setup_finished");
-    writeUi({ setupDone: true, view: "calendar" });
+    writeUi({ setupDone: true, view: "suggest" });
   }, []);
 
   return (
@@ -963,6 +966,7 @@ export function App() {
             <CalendarView />
           ) : (
             <main className="ss-scroll" key={ui.view} ref={mainRef}>
+              {ui.view === "suggest" ? <SuggestionsPage /> : null}
               {ui.view === "tasks" ? <TasksPage /> : null}
               {ui.view === "due" ? <DueDatesPage /> : null}
               {ui.view === "settings" || ui.view === "help" ? (

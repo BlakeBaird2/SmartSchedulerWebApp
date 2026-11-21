@@ -1,17 +1,17 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarRange, ListChecks } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarRange, ListChecks, Sparkles } from "lucide-react";
 import { useApp } from "./context";
 import { Button, Card, CardHeader } from "./ui";
 
 /**
- * Help: the two ways to find work and get it done, and what to do if something
+ * Help: the ways to find work and get it done, and what to do if something
  * looks empty. Reachable from the header Help control and from Settings.
  */
 export function HelpView() {
   const { setView, setSettingsPanel, setCalMode } = useApp();
 
-  const go = (view: "calendar" | "tasks") => {
+  const go = (view: "suggest" | "calendar" | "tasks") => {
     if (view === "calendar") setCalMode("week");
     setView(view);
   };
@@ -19,8 +19,8 @@ export function HelpView() {
   return (
     <div className="max-w-2xl space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <Button icon={ArrowLeft} onClick={() => setView("calendar")}>
-          Back to the calendar
+        <Button icon={ArrowLeft} onClick={() => setView("suggest")}>
+          Back to suggestions
         </Button>
         <Button
           onClick={() => {
@@ -32,8 +32,14 @@ export function HelpView() {
       </div>
 
       <Card>
-        <CardHeader level={2} title="Two ways to get work done" hint="Each path ends the same way: find the work, then tick it off. The planner, the calendar and Tasks always agree." />
+        <CardHeader level={2} title="Three ways to get work done" hint="Each path ends the same way: find the work, put time aside if you need to, then tick it off. Suggest, Calendar and Tasks always agree." />
         <ol className="mt-4 space-y-3">
+          <RouteRow
+            icon={Sparkles}
+            title="Suggest"
+            steps="Open the top “Work on now” card → Put it on at the free time it fits → later, tick it off on Calendar or Tasks"
+            onOpen={() => go("suggest")}
+          />
           <RouteRow
             icon={CalendarRange}
             title="Calendar"

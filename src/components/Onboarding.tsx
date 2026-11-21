@@ -9,7 +9,7 @@ import type { FeedConfig, Workspace } from "@/lib/types";
 import { useApp } from "./context";
 import { FeedAdder, FeedList, ProviderHelp } from "./Feeds";
 import { ClassTimesEditor } from "./ClassTimes";
-import { KEYS, writeStored } from "./store";
+import { KEYS, writeFirstAha, writeStored } from "./store";
 import { CapabilityHero, PrototypeBadge } from "./Prototype";
 import { AccountStep } from "./Account";
 import { cloudAvailable, useCloud } from "./cloud";
@@ -47,7 +47,8 @@ export function startDemo() {
   writeStored(KEYS.workspace, JSON.stringify(demoWorkspace()));
   writeStored(KEYS.snapshot, null);
   writeStored(KEYS.changes, null);
-  writeStored(KEYS.ui, JSON.stringify({ view: "calendar", setupDone: true }));
+  writeStored(KEYS.ui, JSON.stringify({ view: "suggest", setupDone: true }));
+  writeFirstAha("ready");
   trackEvent("sample_data_started");
 }
 
@@ -139,7 +140,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                   onClick={hasClasses ? () => setStep(2) : onFinish}
                   data-smart-event={hasClasses ? undefined : "setup_finished"}
                 >
-                  {hasClasses || ws.feeds.length === 0 ? "Continue" : "Open my calendar"}
+                  {hasClasses || ws.feeds.length === 0 ? "Continue" : "See suggestions"}
                 </Button>
               </div>
             </div>
@@ -159,7 +160,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 Back
               </Button>
               <Button variant="primary" trailingIcon={ArrowRight} className="ml-auto" onClick={onFinish} data-smart-event="setup_finished">
-                Open my calendar
+                See suggestions
               </Button>
             </div>
           </Card>

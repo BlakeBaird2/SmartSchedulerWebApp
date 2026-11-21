@@ -42,6 +42,8 @@ export const KEYS = {
   theme: "prio:theme",
   /** When the quick tour of the Plan screen was finished or skipped. */
   tour: "prio:tour",
+  /** Sample-data first win on Suggest: "ready" until they place a task, then "won". */
+  firstAha: "prio:first-aha",
   /** This device's name for itself when syncing, so it can tell its own changes from another device's. */
   device: "prio:device",
   /** The account this device syncs with, and the setup it last agreed with it on. */
@@ -101,6 +103,18 @@ export function writeStored(key: string, value: string | null): boolean {
   }
   notify();
   return saved;
+}
+
+/** Sample-data first win on Suggest: ready until they place something, then won. */
+export type FirstAha = "ready" | "won" | null;
+
+export function readFirstAha(): FirstAha {
+  const v = readStored(KEYS.firstAha);
+  return v === "ready" || v === "won" ? v : null;
+}
+
+export function writeFirstAha(v: FirstAha) {
+  writeStored(KEYS.firstAha, v);
 }
 
 /** The stored string for `key`, or null. Null on the server and during hydration. */
