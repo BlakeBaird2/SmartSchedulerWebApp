@@ -11,19 +11,23 @@ import { AccountMenuSection, openSignIn } from "./Account";
 import { cloudAvailable, useCloud } from "./cloud";
 
 /**
- * The bar across the top, as in the Figma prototype: the name on the left, the
- * two views in the middle (Calendar, Tasks; Due dates is off for now), the profile on the right. Add task lives in the
- * planner and on the Tasks page. Everything the prototype has no room for
- * (refreshing calendars, what changed, Settings, Help) is in the profile menu.
+ * The bar across the top: the name on the left, the three views in the middle
+ * (Suggest, Calendar, Tasks; Due dates is off for now), the profile on the right.
+ * + New lives in the planner and on Tasks. Refresh, Settings and Help are in the
+ * profile menu.
  */
 export function Topbar() {
   const { view, setView } = useApp();
   return (
     <header className="ss-topbar">
-      <button className="ss-brand" onClick={() => setView("calendar")} aria-label="Schedule Smart, go to your calendar">
+      <button className="ss-brand" onClick={() => setView("suggest")} aria-label="Schedule Smart, go to suggestions">
         <span>Schedule Smart</span>
       </button>
       <nav className="ss-nav" aria-label="Primary navigation">
+        <button aria-current={view === "suggest" ? "page" : undefined} onClick={() => setView("suggest")}>
+          <SsIcon name="spark" />
+          Suggest
+        </button>
         <button aria-current={view === "calendar" ? "page" : undefined} onClick={() => setView("calendar")}>
           <SsIcon name="calendar" />
           Calendar

@@ -217,8 +217,8 @@ export function TasksPage() {
               <Columns2 size={16} aria-hidden /> Split
             </button>
           </div>
-          <button className="ss-primary" onClick={openAddTask} data-smart-event="add_task_opened">
-            <SsIcon name="plus" /> Add
+          <button className="ss-primary" onClick={openAddTask} data-smart-event="add_task_opened" aria-label="New event or task">
+            <SsIcon name="plus" /> New
           </button>
         </div>
       </div>

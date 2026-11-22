@@ -12,8 +12,8 @@ import type { LookAhead, TodoScope, TodoSort } from "@/lib/todos";
 /** Tasks as one list, or as several side by side. */
 export type TasksLayout = "list" | "split";
 
-/** The two main views of the prototype, plus Settings and Help from the profile menu. */
-export type View = "calendar" | "tasks" | "due" | "settings" | "help";
+/** The main views of the prototype, plus Settings and Help from the profile menu. */
+export type View = "suggest" | "calendar" | "tasks" | "due" | "settings" | "help";
 /** On phones "week" shows three days at a time (one beside the open planner), as in the prototype. */
 export type CalMode = "month" | "week" | "day";
 /** Settings hub and focused sub-pages (reachable from Settings and Help). */

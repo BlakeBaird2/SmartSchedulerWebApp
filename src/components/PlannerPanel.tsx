@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { addDays, format } from "date-fns";
+import { addDays, format, isSameDay } from "date-fns";
+import { nextUpReason, pickNextUp, slotWhen } from "@/lib/nextUp";
 import { LOOK_AHEADS, lookAheadEnd, todoList, windowProgress, type LookAhead, type TodoSort, type WindowProgress } from "@/lib/todos";
 import type { Task } from "@/lib/types";
 import { dueLabel, plural } from "@/lib/ui";
@@ -141,6 +142,10 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
   }, [allTodos, q, model.courseById]);
   // Everything still to schedule is listed; the list scrolls.
   const shown = results ?? todos;
+  // Past-due work is pinned above the rest of the list, whatever its order.
+  const nowMs = app.now.getTime();
+  const overdue = results ? [] : shown.filter((t) => t.dueAt !== null && Date.parse(t.dueAt) < nowMs);
+  const rest = overdue.length ? shown.filter((t) => !overdue.includes(t)) : shown;
   const clearSearch = () => {
     setDraft("");
     setQuery("");
@@ -188,8 +193,10 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <button className="ss-primary ss-planner-add" onClick={openAddTask} data-smart-event="add_task_opened">
-        <SsIcon name="plus" /> Add task
+      <NextUpCard tasks={todos} />
+
+      <button className="ss-primary ss-planner-add" onClick={openAddTask} data-smart-event="add_task_opened" aria-label="New event or task">
+        <SsIcon name="plus" /> New
       </button>
 
       <form
@@ -306,7 +313,20 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
             <p className="ss-empty">Nothing left to schedule. Nice work.</p>
           )
         ) : null}
-        {shown.map((task) => (
+        {overdue.length ? (
+          <section className="ss-overdue" aria-labelledby="overdue-title">
+            <div className="ss-overdue-label">
+              <span id="overdue-title">
+                <SsIcon name="flag" size={13} /> OVERDUE
+              </span>
+              <span>{overdue.length}</span>
+            </div>
+            {overdue.map((task) => (
+              <PlannerTask key={task.id} task={task} />
+            ))}
+          </section>
+        ) : null}
+        {rest.map((task) => (
           <PlannerTask key={task.id} task={task} />
         ))}
       </div>
@@ -314,6 +334,44 @@ export function PlannerPanel({ onClose }: { onClose: () => void }) {
         View all tasks <SsIcon name="chevronRight" />
       </button>
     </aside>
+  );
+}
+
+/**
+ * "Next up": the one task to do next from the planner's list, why, and a button
+ * that puts it in the free time it fits (see nextUp.ts).
+ */
+function NextUpCard({ tasks }: { tasks: Task[] }) {
+  const { plan, now, model, select, scheduleTask } = useApp();
+  const gaps = useMemo(() => plan.days.flatMap((d) => d.gaps), [plan.days]);
+  const next = useMemo(() => pickNextUp(tasks, gaps, now), [tasks, gaps, now]);
+  if (!next) return null;
+  const { task, slot } = next;
+  const course = task.courseId ? model.courseById.get(task.courseId) : undefined;
+  const reason = nextUpReason(next, now);
+  const when = slot ? slotWhen(slot.start, now) : null;
+  return (
+    <section className="ss-next-up" style={{ "--task": course?.color ?? "var(--ss-personal)" } as React.CSSProperties} aria-labelledby="next-up-title">
+      <span className="ss-next-up-eyebrow" id="next-up-title">
+        <SsIcon name="spark" size={12} /> NEXT UP · {course ? course.code : "Personal"}
+      </span>
+      <button type="button" className="ss-next-up-task" onClick={() => select({ kind: "task", id: task.id })} title="Open its details">
+        {task.title}
+      </button>
+      <p>{reason}</p>
+      {slot && when ? (
+        <button
+          type="button"
+          className="ss-next-up-place"
+          onClick={() => scheduleTask(task, slot.start)}
+          data-smart-event="next_up_placed"
+          aria-label={`Put ${task.title} on the calendar at ${when}`}
+        >
+          {/* "At 2 PM" today; "9 AM tomorrow", "Mon 9 AM" later. */}
+          <SsIcon name="calendar" size={14} /> {isSameDay(slot.start, now) ? `At ${when}` : when}
+        </button>
+      ) : null}
+    </section>
   );
 }
 
